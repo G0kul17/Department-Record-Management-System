@@ -1,0 +1,16 @@
+-- create DB and tables
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255),
+  role VARCHAR(20) CHECK (role IN ('admin', 'staff', 'student')),
+  is_verified BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS otp_verifications (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) REFERENCES users(email) ON DELETE CASCADE,
+  otp_code VARCHAR(6) NOT NULL,
+  expires_at TIMESTAMP NOT NULL
+);

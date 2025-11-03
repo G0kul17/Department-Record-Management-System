@@ -1,0 +1,28 @@
+# Auth RBAC Frontend (React + Vite + Tailwind)
+
+Requirements:
+- Node.js 18+ (npm)
+- Backend running at http://localhost:5000/api (or set VITE_API_BASE)
+
+Install & Run:
+1. Copy files into a folder `frontend/`.
+2. In terminal:
+   npm install
+3. Start dev server:
+   npm run dev
+4. Open http://localhost:3000
+
+Environment:
+- Create `.env` (or use `.env.example`) with:
+  VITE_API_BASE=http://localhost:5000/api
+
+Notes:
+- CORS must be enabled on backend for requests from port 3000.
+- The frontend expects backend endpoints:
+  POST /auth/register
+  POST /auth/verify
+  POST /auth/login
+  POST /auth/login-verify
+  POST /auth/forgot
+  POST /auth/reset
+- After successful verify/login-verify, backend should return { token, role } or { token, role } (current backend spec returns token and role).

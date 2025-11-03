@@ -1,0 +1,50 @@
+# Node / Express
+node_modules/
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data / pids
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage / testing
+coverage/
+.nyc_output/
+
+# Build / cache
+build/
+dist/
+.tmp/
+tmp/
+.DS_Store
+Thumbs.db
+.cache/
+.parcel-cache/
+.eslintcache
+
+# Tooling
+.vscode/
+.idea/
+
+# Uploads (untracked runtime files)
+uploads/
+
+# TypeScript
+*.tsbuildinfo
+
+# Misc
+*.local

@@ -36,15 +36,20 @@ const RegisterStaff = () => {
     setLoading(true);
 
     try {
-      await apiClient.post("/auth/register", {
+      const resp = await apiClient.post("/auth/register", {
         email: formData.email,
         password: formData.password,
+        name: formData.name,
       });
       setSuccess("Registration initiated. Check your email for OTP.");
       setTimeout(
         () =>
           navigate("/verify-otp", {
-            state: { email: formData.email, type: "register" },
+            state: {
+              email: formData.email,
+              type: "register",
+              devOtp: resp?.devOtp,
+            },
           }),
         1500
       );

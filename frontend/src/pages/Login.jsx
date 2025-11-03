@@ -24,10 +24,24 @@ const Login = () => {
 
     try {
       // Backend expects email+password here and sends an OTP
-      await apiClient.post("/auth/login", {
+      const resp = await apiClient.post("/auth/login", {
         email: formData.email,
         password: formData.password,
       });
+      if (resp?.needsVerification) {
+        // Account not verified yet: go to verification screen
+        navigate("/verify-otp", {
+          state: {
+            email: formData.email,
+            type: "register",
+            devOtp: resp.devOtp,
+          },
+        });
+        return;
+      }
+      if (resp?.devOtp) {
+        setOtp(resp.devOtp);
+      }
       setOtpSent(true);
     } catch (err) {
       setError(err.message || "Failed to send OTP");
@@ -42,12 +56,22 @@ const Login = () => {
     setError("");
 
     try {
-      const response = await apiClient.post("/auth/login-verify", {
+      const data = await apiClient.post("/auth/login-verify", {
         email: formData.email,
         otp,
       });
-      // For simplicity, return to login page
-      navigate("/");
+      if (data?.token && data?.role) {
+        login({ email: formData.email, role: data.role }, data.token);
+        const dest =
+          data.role === "admin"
+            ? "/admin"
+            : data.role === "staff"
+            ? "/staff"
+            : "/student";
+        navigate(dest);
+      } else {
+        navigate("/");
+      }
     } catch (err) {
       setError(err.message || "Login failed");
     } finally {
@@ -125,10 +149,7 @@ const Login = () => {
         )}
 
         <div className="mt-4 text-center space-y-2">
-          <Link
-            to="/forgot-password"
-            className="text-blue-600 hover:underline block"
-          >
+          <Link to="/forgot" className="text-blue-600 hover:underline block">
             Forgot Password?
           </Link>
           <div className="text-gray-600">

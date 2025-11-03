@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import InputField from "../components/InputField";
 import apiClient from "../api/axiosClient";
+import { useAuth } from "../hooks/useAuth";
 
 const VerifyOtp = () => {
   const navigate = useNavigate();
@@ -11,11 +12,13 @@ const VerifyOtp = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const email = location.state?.email;
+  const devOtp = location.state?.devOtp;
+  const { login } = useAuth();
 
   useEffect(() => {
-    if (!email) {
-      navigate("/forgot-password");
-    }
+    if (!email) navigate("/forgot");
+    // Pre-fill OTP in dev mode if provided by backend
+    if (devOtp) setOtp(devOtp);
   }, [email, navigate]);
 
   const handleSubmit = async (e) => {
@@ -26,16 +29,38 @@ const VerifyOtp = () => {
     try {
       if (type === "login") {
         const data = await apiClient.post("/auth/login-verify", { email, otp });
-        // On success, navigate to login page or dashboard; keep it simple:
-        navigate("/login");
+        // Expect: { token, role }
+        if (data?.token && data?.role) {
+          login({ email, role: data.role }, data.token);
+          const dest =
+            data.role === "admin"
+              ? "/admin"
+              : data.role === "staff"
+              ? "/staff"
+              : "/student";
+          navigate(dest);
+          return;
+        }
+        navigate("/");
       } else if (type === "forgot") {
         // Just verify presence then go to reset screen
         await apiClient.post("/auth/verify", { email, otp });
-        navigate("/reset-password", { state: { email, otp } });
+        navigate("/reset", { state: { email, otp } });
       } else {
-        // registration verification
-        await apiClient.post("/auth/verify", { email, otp });
-        navigate("/login");
+        // registration verification -> backend returns token + role
+        const data = await apiClient.post("/auth/verify", { email, otp });
+        if (data?.token && data?.role) {
+          login({ email, role: data.role }, data.token);
+          const dest =
+            data.role === "admin"
+              ? "/admin"
+              : data.role === "staff"
+              ? "/staff"
+              : "/student";
+          navigate(dest);
+          return;
+        }
+        navigate("/");
       }
     } catch (err) {
       setError(err.message || "Invalid OTP");

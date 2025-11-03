@@ -14,20 +14,33 @@ const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "")
   .filter(Boolean);
 
 export async function register(req, res) {
-  const { email, password } = req.body;
+  const { email, password, name } = req.body;
   if (!email || !password)
     return res.status(400).json({ message: "Email and password required" });
 
   const emailLower = email.toLowerCase();
+  const fullName = (name || "").trim() || null;
 
   try {
     // check duplicate
     const { rows: existing } = await pool.query(
-      "SELECT id FROM users WHERE email=$1",
+      "SELECT id, is_verified FROM users WHERE email=$1",
       [emailLower]
     );
-    if (existing.length)
-      return res.status(400).json({ message: "Email already registered" });
+    if (existing.length) {
+      // If user exists but isn't verified yet, allow updating the password hash
+      const userRow = existing[0];
+      if (!userRow.is_verified) {
+        const hashed = await bcrypt.hash(password, 10);
+        await pool.query(
+          "UPDATE users SET password_hash=$1, full_name=COALESCE($2, full_name) WHERE email=$3",
+          [hashed, fullName, emailLower]
+        );
+        // continue flow to send fresh OTP
+      } else {
+        return res.status(400).json({ message: "Email already registered" });
+      }
+    }
 
     // determine role
     let role = detectRole(emailLower);
@@ -37,19 +50,21 @@ export async function register(req, res) {
         .status(400)
         .json({ message: "Invalid email format or unauthorized domain" });
 
-    // hash
-    const hashed = await bcrypt.hash(password, 10);
-    try {
-      await pool.query(
-        "INSERT INTO users (email, password_hash, role) VALUES ($1, $2, $3)",
-        [emailLower, hashed, role]
-      );
-    } catch (e) {
-      // unique violation
-      if (e && e.code === "23505") {
-        return res.status(400).json({ message: "Email already registered" });
+    // If user didn't exist, create; if existed and unverified, we already updated password_hash above
+    if (!existing.length) {
+      const hashed = await bcrypt.hash(password, 10);
+      try {
+        await pool.query(
+          "INSERT INTO users (email, password_hash, role, full_name) VALUES ($1, $2, $3, $4)",
+          [emailLower, hashed, role, fullName]
+        );
+      } catch (e) {
+        // unique violation
+        if (e && e.code === "23505") {
+          return res.status(400).json({ message: "Email already registered" });
+        }
+        throw e;
       }
-      throw e;
     }
 
     // generate OTP and save
@@ -147,10 +162,32 @@ export async function login(req, res) {
     const match = await bcrypt.compare(password, user.password_hash || "");
     if (!match) return res.status(400).json({ message: "Invalid credentials" });
 
-    if (!user.is_verified)
-      return res
-        .status(400)
-        .json({ message: "Please verify your account via OTP" });
+    if (!user.is_verified) {
+      // User hasn't verified account yet: generate a fresh verification OTP and return it
+      const otp = generateOTP();
+      const expiresAt = getExpiryDate(OTP_EXPIRY_MIN);
+      await pool.query(
+        "INSERT INTO otp_verifications (email, otp_code, expires_at) VALUES ($1, $2, $3)",
+        [emailLower, otp, expiresAt]
+      );
+
+      await sendMail({
+        to: emailLower,
+        subject: "Account Verification OTP",
+        text: `Your verification OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
+      });
+
+      const devPayload =
+        process.env.RETURN_OTP === "true" ||
+        process.env.NODE_ENV !== "production"
+          ? { devOtp: otp }
+          : {};
+      return res.json({
+        message: "Please verify your account via OTP",
+        needsVerification: true,
+        ...devPayload,
+      });
+    }
 
     // generate OTP for login (two-step)
     const otp = generateOTP();

@@ -18,6 +18,15 @@ export async function register(req, res) {
   if (!email || !password)
     return res.status(400).json({ message: "Email and password required" });
 
+  // Password policy: min 8 chars, at least one digit, at least one special char
+  const passwordPolicy = /^(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+  if (!passwordPolicy.test(password)) {
+    return res.status(400).json({
+      message:
+        "Password must be at least 8 characters and include at least one number and one special character",
+    });
+  }
+
   const emailLower = email.toLowerCase();
   const fullName = (name || "").trim() || null;
 
@@ -130,7 +139,7 @@ export async function verifyOTP(req, res) {
 
     // return jwt
     const { rows: users } = await pool.query(
-      "SELECT id, email, role FROM users WHERE email=$1",
+      "SELECT id, email, role, full_name FROM users WHERE email=$1",
       [emailLower]
     );
     const user = users[0];
@@ -138,7 +147,12 @@ export async function verifyOTP(req, res) {
       { id: user.id, email: user.email, role: user.role },
       "6h"
     );
-    return res.json({ message: "Verified", token, role: user.role });
+    return res.json({
+      message: "Verified",
+      token,
+      role: user.role,
+      fullName: user.full_name || null,
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server error" });
@@ -243,7 +257,7 @@ export async function loginVerifyOTP(req, res) {
 
     // issue token
     const { rows: users } = await pool.query(
-      "SELECT id, email, role FROM users WHERE email=$1",
+      "SELECT id, email, role, full_name FROM users WHERE email=$1",
       [emailLower]
     );
     const user = users[0];
@@ -251,7 +265,12 @@ export async function loginVerifyOTP(req, res) {
       { id: user.id, email: user.email, role: user.role },
       "6h"
     );
-    return res.json({ message: "Login successful", token, role: user.role });
+    return res.json({
+      message: "Login successful",
+      token,
+      role: user.role,
+      fullName: user.full_name || null,
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server error" });
@@ -303,6 +322,14 @@ export async function resetPassword(req, res) {
     return res
       .status(400)
       .json({ message: "Email, OTP and newPassword required" });
+
+  const passwordPolicy = /^(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+  if (!passwordPolicy.test(newPassword)) {
+    return res.status(400).json({
+      message:
+        "Password must be at least 8 characters and include at least one number and one special character",
+    });
+  }
 
   const emailLower = email.toLowerCase();
   try {

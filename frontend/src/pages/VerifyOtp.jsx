@@ -11,15 +11,41 @@ const VerifyOtp = () => {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  // 5-minute OTP expiry timer
+  const [otpExpiresAt, setOtpExpiresAt] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(0);
   const email = location.state?.email;
-  const devOtp = location.state?.devOtp;
   const { login } = useAuth();
 
   useEffect(() => {
     if (!email) navigate("/forgot");
-    // Pre-fill OTP in dev mode if provided by backend
-    if (devOtp) setOtp(devOtp);
+    // Start a 5-minute timer upon landing on this screen
+    setOtp("");
+    setOtpExpiresAt(Date.now() + 5 * 60 * 1000);
   }, [email, navigate]);
+
+  useEffect(() => {
+    if (!otpExpiresAt) return;
+    const interval = setInterval(() => {
+      const remaining = Math.max(
+        0,
+        Math.floor((otpExpiresAt - Date.now()) / 1000)
+      );
+      setTimeLeft(remaining);
+    }, 1000);
+    setTimeLeft(Math.max(0, Math.floor((otpExpiresAt - Date.now()) / 1000)));
+    return () => clearInterval(interval);
+  }, [otpExpiresAt]);
+
+  const formatMMSS = (secs) => {
+    const m = Math.floor(secs / 60)
+      .toString()
+      .padStart(2, "0");
+    const s = Math.floor(secs % 60)
+      .toString()
+      .padStart(2, "0");
+    return `${m}:${s}`;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,7 +57,10 @@ const VerifyOtp = () => {
         const data = await apiClient.post("/auth/login-verify", { email, otp });
         // Expect: { token, role }
         if (data?.token && data?.role) {
-          login({ email, role: data.role }, data.token);
+          login(
+            { email, role: data.role, fullName: data.fullName },
+            data.token
+          );
           const dest =
             data.role === "admin"
               ? "/admin"
@@ -50,7 +79,10 @@ const VerifyOtp = () => {
         // registration verification -> backend returns token + role
         const data = await apiClient.post("/auth/verify", { email, otp });
         if (data?.token && data?.role) {
-          login({ email, role: data.role }, data.token);
+          login(
+            { email, role: data.role, fullName: data.fullName },
+            data.token
+          );
           const dest =
             data.role === "admin"
               ? "/admin"
@@ -90,10 +122,13 @@ const VerifyOtp = () => {
             placeholder="Enter 6-digit OTP"
             required
           />
+          <p className="text-sm text-gray-500 mb-4">
+            OTP expires in {formatMMSS(timeLeft)}.
+          </p>
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || timeLeft === 0}
             className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
           >
             {loading ? "Verifying..." : "Verify OTP"}

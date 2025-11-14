@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import apiClient from "../../api/axiosClient";
+import { useAuth } from "../../hooks/useAuth";
 
 const StaffDashboard = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [events, setEvents] = useState([]);
 
@@ -21,7 +23,10 @@ const StaffDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold mb-8">Staff Dashboard</h1>
+        <h1 className="text-4xl font-bold mb-2">{`Welcome, ${
+          user?.fullName || user?.email || "Staff"
+        }`}</h1>
+        <p className="text-gray-600 mb-8">Staff Portal</p>
 
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="flex border-b">

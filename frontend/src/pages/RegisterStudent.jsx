@@ -5,7 +5,8 @@ import apiClient from "../api/axiosClient";
 
 const RegisterStudent = () => {
   const [formData, setFormData] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -33,13 +34,18 @@ const RegisterStudent = () => {
       return;
     }
 
+    if (!formData.firstName.trim() || !formData.lastName.trim()) {
+      setError("First Name and Last Name are required");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const resp = await apiClient.post("/auth/register", {
         email: formData.email,
         password: formData.password,
-        name: formData.name,
+        name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
       });
       setSuccess("Registration initiated. Check your email for OTP.");
       setTimeout(
@@ -82,11 +88,19 @@ const RegisterStudent = () => {
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <InputField
-              label="Full Name"
-              name="name"
-              value={formData.name}
+              label="First Name"
+              name="firstName"
+              value={formData.firstName}
               onChange={handleChange}
-              placeholder="Enter your full name"
+              placeholder="Enter your first name"
+              required
+            />
+            <InputField
+              label="Last Name"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleChange}
+              placeholder="Enter your last name"
               required
             />
             <InputField
@@ -115,22 +129,44 @@ const RegisterStudent = () => {
               placeholder="Enter phone number"
               required
             />
-            <InputField
-              label="Department"
-              name="department"
-              value={formData.department}
-              onChange={handleChange}
-              placeholder="e.g., Computer Science"
-              required
-            />
-            <InputField
-              label="Year"
-              name="year"
-              value={formData.year}
-              onChange={handleChange}
-              placeholder="e.g., 1, 2, 3, 4"
-              required
-            />
+            <div className="flex flex-col">
+              <label className="mb-1 font-medium">
+                Department <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                required
+                className="border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select Department</option>
+                <option value="B.Tech Information Technology">
+                  B.Tech Information Technology
+                </option>
+                <option value="B.Tech Artificial Intelligence and Data Science">
+                  B.Tech Artificial Intelligence and Data Science
+                </option>
+              </select>
+            </div>
+            <div className="flex flex-col">
+              <label className="mb-1 font-medium">
+                Year <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="year"
+                value={formData.year}
+                onChange={handleChange}
+                required
+                className="border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select Year</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+              </select>
+            </div>
             <InputField
               label="Password"
               type="password"

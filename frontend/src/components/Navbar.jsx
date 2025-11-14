@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 const Navbar = () => {
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const nav = useNavigate();
 
   function handleLogout() {
@@ -25,11 +25,11 @@ const Navbar = () => {
             to="/"
             className="text-xl font-bold hover:text-blue-100 transition"
           >
-            DRMS - College Management
+            DRMS - Department Record Management Systems
           </Link>
 
           <div className="flex items-center gap-4">
-            {user?.token ? (
+            {token ? (
               <>
                 <button
                   onClick={goToDashboard}
@@ -37,9 +37,11 @@ const Navbar = () => {
                 >
                   Dashboard
                 </button>
-                <span className="text-sm bg-blue-700 px-3 py-1 rounded-full">
-                  {user.email} • {user.role?.toUpperCase()}
-                </span>
+                {user && (
+                  <span className="text-sm bg-blue-700 px-3 py-1 rounded-full">
+                    {user.email} • {user.role?.toUpperCase()}
+                  </span>
+                )}
                 <button
                   onClick={handleLogout}
                   className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg transition font-medium"

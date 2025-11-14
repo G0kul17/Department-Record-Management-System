@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import InputField from "../components/InputField";
@@ -10,6 +10,9 @@ const Login = () => {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  // OTP expiry timer (5 minutes)
+  const [otpExpiresAt, setOtpExpiresAt] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(0);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -39,10 +42,10 @@ const Login = () => {
         });
         return;
       }
-      if (resp?.devOtp) {
-        setOtp(resp.devOtp);
-      }
+      // Do NOT auto-fill OTP; just move to OTP step and start a 5-minute timer
+      setOtp("");
       setOtpSent(true);
+      setOtpExpiresAt(Date.now() + 5 * 60 * 1000);
     } catch (err) {
       setError(err.message || "Failed to send OTP");
     } finally {
@@ -61,7 +64,10 @@ const Login = () => {
         otp,
       });
       if (data?.token && data?.role) {
-        login({ email: formData.email, role: data.role }, data.token);
+        login(
+          { email: formData.email, role: data.role, fullName: data.fullName },
+          data.token
+        );
         const dest =
           data.role === "admin"
             ? "/admin"
@@ -77,6 +83,31 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Tick timer when on OTP step
+  useEffect(() => {
+    if (!otpSent || !otpExpiresAt) return;
+    const interval = setInterval(() => {
+      const remaining = Math.max(
+        0,
+        Math.floor((otpExpiresAt - Date.now()) / 1000)
+      );
+      setTimeLeft(remaining);
+    }, 1000);
+    // initialize immediately
+    setTimeLeft(Math.max(0, Math.floor((otpExpiresAt - Date.now()) / 1000)));
+    return () => clearInterval(interval);
+  }, [otpSent, otpExpiresAt]);
+
+  const formatMMSS = (secs) => {
+    const m = Math.floor(secs / 60)
+      .toString()
+      .padStart(2, "0");
+    const s = Math.floor(secs % 60)
+      .toString()
+      .padStart(2, "0");
+    return `${m}:${s}`;
   };
 
   return (
@@ -129,18 +160,12 @@ const Login = () => {
               placeholder="Enter OTP"
               required
             />
-            <InputField
-              label="Password"
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Enter your password"
-              required
-            />
+            <p className="text-sm text-gray-500 mb-4">
+              OTP expires in {formatMMSS(timeLeft)}.
+            </p>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || timeLeft === 0}
               className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
             >
               {loading ? "Logging in..." : "Login"}

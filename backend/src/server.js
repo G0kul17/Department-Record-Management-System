@@ -2,8 +2,8 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
-import projectRoutes from './routes/projectRoutes.js';
-import achievementRoutes from './routes/achievementRoutes.js';
+import projectRoutes from "./routes/projectRoutes.js";
+import achievementRoutes from "./routes/achievementRoutes.js";
 import pool from "./config/db.js";
 import fs from "fs";
 import path from "path";
@@ -27,15 +27,16 @@ app.use(
   })
 );
 
-
 // simple route
 app.get("/", (req, res) => res.json({ message: "Auth RBAC OTP API" }));
 
 app.use("/api/auth", authRoutes);
-app.use('/api/projects', projectRoutes);
-app.use('/api/achievements', achievementRoutes);
-app.use('/uploads', express.static(path.resolve(process.env.FILE_STORAGE_PATH || './uploads')));
-
+app.use("/api/projects", projectRoutes);
+app.use("/api/achievements", achievementRoutes);
+app.use(
+  "/uploads",
+  express.static(path.resolve(process.env.FILE_STORAGE_PATH || "./uploads"))
+);
 
 // optional: create tables if not exist on startup
 async function ensureTables() {
@@ -53,7 +54,10 @@ async function ensureTables() {
         await pool.query(stmt);
       } catch (e) {
         console.error(
-          `Error executing SQL statement #${i + 1}: ${statements[i].slice(0, 200)}`
+          `Error executing SQL statement #${i + 1}: ${statements[i].slice(
+            0,
+            200
+          )}`
         );
         throw e;
       }
@@ -132,3 +136,12 @@ ensureTables().then(() => {
   app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
 });
 
+// Global error handler to always return JSON (handles multer/file-filter errors too)
+// Keep this AFTER routes and server start to catch async route errors via next(err)
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err);
+  const status = err.status || 400; // default to 400 for validation-like issues
+  const message = err.message || "Server error";
+  res.status(status).json({ message });
+});

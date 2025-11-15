@@ -1,16 +1,22 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import apiClient from "../../api/axiosClient";
 import { useAuth } from "../../hooks/useAuth";
 
 const StudentDashboard = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
   const [achievements, setAchievements] = useState([]);
   const [projects, setProjects] = useState([]);
 
   useEffect(() => {
+    // initialize tab from query param when present
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
+    if (tab) setActiveTab(tab);
     fetchStudentData();
-  }, []);
+  }, [location.search]);
 
   const fetchStudentData = async () => {
     try {

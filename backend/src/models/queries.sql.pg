@@ -57,3 +57,15 @@ CREATE TABLE IF NOT EXISTS achievements (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (user_id, title, date)  -- prevent duplicates for same user
 );
+
+-- Backward-compatible columns for new features used by the UI/API
+ALTER TABLE achievements ADD COLUMN IF NOT EXISTS issuer VARCHAR(255);
+ALTER TABLE achievements ADD COLUMN IF NOT EXISTS date_of_award DATE;
+ALTER TABLE achievements ADD COLUMN IF NOT EXISTS proof_file_id INTEGER REFERENCES project_files(id);
+ALTER TABLE achievements ADD COLUMN IF NOT EXISTS name VARCHAR(255);
+-- uploader_name is deprecated; ensure it does not exist
+ALTER TABLE achievements DROP COLUMN IF EXISTS uploader_name;
+
+-- Columns for team member details on projects
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS team_members_count INTEGER;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS team_member_names TEXT; -- comma separated or free text list

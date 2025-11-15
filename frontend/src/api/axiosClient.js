@@ -84,12 +84,31 @@ class ApiClient {
       body: formData,
     });
 
+    const contentType = response.headers.get("content-type") || "";
+    const parseBody = async () => {
+      if (contentType.includes("application/json")) {
+        try {
+          return await response.json();
+        } catch (_) {
+          // fall through to text
+        }
+      }
+      const text = await response.text();
+      return { message: text };
+    };
+
+    const data = await parseBody();
+
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Upload failed");
+      const msg = (data && data.message) || "Upload failed";
+      // Friendly mapping for common upload errors
+      if (/file type not allowed/i.test(msg)) {
+        throw new Error("Please upload PDF or image");
+      }
+      throw new Error(msg);
     }
 
-    return response.json();
+    return data;
   }
 }
 

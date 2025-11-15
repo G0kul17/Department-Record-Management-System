@@ -61,13 +61,8 @@ const VerifyOtp = () => {
             { email, role: data.role, fullName: data.fullName },
             data.token
           );
-          const dest =
-            data.role === "admin"
-              ? "/admin"
-              : data.role === "staff"
-              ? "/staff"
-              : "/student";
-          navigate(dest);
+          // After OTP login, land on the new Home
+          navigate("/");
           return;
         }
         navigate("/");

@@ -12,8 +12,12 @@ import StaffDashboard from "./pages/staff/StaffDashboard";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./hooks/useAuth";
+import Home from "./pages/Home";
+import QuickActions from "./pages/QuickActions";
+import Achievements from "./pages/Achievements";
+import ProjectUpload from "./pages/ProjectUpload";
 
-function Home() {
+function RoleRedirect() {
   const { user } = useAuth();
   if (!user?.token) return <Navigate to="/login" />;
   if (user.role === "admin") return <Navigate to="/admin" />;
@@ -26,7 +30,41 @@ export default function App() {
     <>
       <Navbar />
       <Routes>
-        <Route path="/" element={<Home />} />
+        {/* New Home landing page (requires auth) */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "staff", "student"]}>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/achievements"
+          element={
+            <ProtectedRoute allowedRoles={["student", "alumni"]}>
+              <Achievements />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects/upload"
+          element={
+            <ProtectedRoute allowedRoles={["student", "staff", "admin"]}>
+              <ProjectUpload />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/quick-actions"
+          element={
+            <ProtectedRoute
+              allowedRoles={["admin", "staff", "student", "alumni"]}
+            >
+              <QuickActions />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/login" element={<Login />} />
         <Route path="/verify-otp" element={<VerifyOtp />} />
         <Route path="/register-student" element={<RegisterStudent />} />

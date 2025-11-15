@@ -1,0 +1,9 @@
+☐ After reg pg it will redirect to login pg
+✔ In a login pg password text box add show password option @done (11/15/2025, 3:54:52 PM)
+✔ design a formal home pg @done (11/15/2025, 3:23:05 PM)
+✔ design a project and acheivement upload section @done (11/15/2025, 3:22:30 PM)
+✔ in the project section add the inputs team, and rectify the file upload clm @done (11/15/2025, 4:17:31 PM)
+✔ in the acheivement section add the input date, file url , event id, name. @done (11/15/2025, 4:46:31 PM)
+✔ in db add the clm for the name in acheivement @done (11/15/2025, 5:02:47 PM)
+✔ in the home pg add a events tab as a sliding view with the right and left arrows @done (11/15/2025, 6:15:00 PM)
+✔ below that show the projects and acheivements statistical dashboard @done (11/15/2025, 6:28:00 PM)

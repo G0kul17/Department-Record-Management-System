@@ -68,13 +68,8 @@ const Login = () => {
           { email: formData.email, role: data.role, fullName: data.fullName },
           data.token
         );
-        const dest =
-          data.role === "admin"
-            ? "/admin"
-            : data.role === "staff"
-            ? "/staff"
-            : "/student";
-        navigate(dest);
+        // After successful login, always land on the new Home
+        navigate("/");
       } else {
         navigate("/");
       }
@@ -111,9 +106,11 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-        <h2 className="text-3xl font-bold text-center mb-6">Login</h2>
+    <div className="min-h-screen bg-gray-100 dark:bg-slate-900 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-slate-800 p-8 rounded-lg shadow-lg max-w-md w-full">
+        <h2 className="text-3xl font-bold text-center mb-6 text-slate-900 dark:text-slate-100">
+          Login
+        </h2>
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">

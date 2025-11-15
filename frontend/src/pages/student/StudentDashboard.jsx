@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Navbar from "../../components/Navbar";
 import apiClient from "../../api/axiosClient";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -25,11 +24,13 @@ const StudentDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <Navbar />
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold mb-8">
-          {user?.role === "alumni" ? "Alumni Dashboard" : "Student Dashboard"}
+        <h1 className="text-4xl font-bold mb-2">
+          {`Welcome, ${user?.fullName || user?.email || "Student"}`}
         </h1>
+        <p className="text-gray-600 mb-8">
+          {user?.role === "alumni" ? "Alumni Portal" : "Student Portal"}
+        </p>
 
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="flex border-b overflow-x-auto">

@@ -3,14 +3,57 @@ CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
   email VARCHAR(255) UNIQUE NOT NULL,
   password_hash VARCHAR(255),
-  role VARCHAR(20) CHECK (role IN ('admin', 'staff', 'student')),
+  role VARCHAR(20) CHECK (role IN ('admin', 'staff', 'student', 'alumni')),
+  profile_details JSONB,
   is_verified BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS otp_verifications (
   id SERIAL PRIMARY KEY,
-  email VARCHAR(255) REFERENCES users(email) ON DELETE CASCADE,
+  email VARCHAR(255) NOT NULL,
   otp_code VARCHAR(6) NOT NULL,
   expires_at TIMESTAMP NOT NULL
+);
+
+-- Projects table
+CREATE TABLE IF NOT EXISTS projects (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(500) NOT NULL,
+  description TEXT,
+  team INTEGER[] DEFAULT '{}', -- array of user ids
+  mentor_id INTEGER,
+  academic_year VARCHAR(10),        -- e.g., 22 (or '2022-2023')
+  status VARCHAR(20) DEFAULT 'ongoing', -- ongoing/completed
+  files JSONB, -- object with keys: srs_url, ppt_url, paper_url, code_zip_url, portal_file_url
+  verified BOOLEAN DEFAULT FALSE,
+  created_by INTEGER,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (title, mentor_id, academic_year)  -- basic duplicate prevention
+);
+
+-- Project files metadata (one row per uploaded file)
+CREATE TABLE IF NOT EXISTS project_files (
+  id SERIAL PRIMARY KEY,
+  project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+  filename VARCHAR(1024) NOT NULL,  -- stored filename on server
+  original_name VARCHAR(1024),
+  mime_type VARCHAR(255),
+  size BIGINT,
+  file_type VARCHAR(50),            -- srs, ppt, paper, code_zip, portal
+  uploaded_by INTEGER,
+  uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Achievements table
+CREATE TABLE IF NOT EXISTS achievements (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER,
+  title VARCHAR(500) NOT NULL,
+  date DATE,
+  proof_file_url VARCHAR(2048),
+  event_id INTEGER, -- optional FK to events table if you have events (left as integer)
+  verified BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (user_id, title, date)  -- prevent duplicates for same user
 );

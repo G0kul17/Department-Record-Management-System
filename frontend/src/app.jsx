@@ -33,6 +33,9 @@ export default function App() {
         <Route path="/register-staff" element={<RegisterStaff />} />
         <Route path="/forgot" element={<ForgotPassword />} />
         <Route path="/reset" element={<ResetPassword />} />
+        {/** Route aliases to avoid 404 on old links */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         <Route
           path="/admin/*"

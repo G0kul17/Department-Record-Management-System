@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Navbar from "../../components/Navbar";
 import apiClient from "../../api/axiosClient";
 
 const AdminDashboard = () => {
@@ -26,7 +25,6 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <Navbar />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
 

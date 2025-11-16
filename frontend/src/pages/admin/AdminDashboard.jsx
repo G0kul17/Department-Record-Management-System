@@ -8,7 +8,7 @@ const AdminDashboard = () => {
     projects: 0,
     events: 0,
   });
-  const [activeTab, setActiveTab] = useState("overview");
+  // tabs removed — show overview content directly
 
   useEffect(() => {
     fetchDashboardData();
@@ -57,104 +57,27 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow mb-6">
-          <div className="flex border-b">
-            <button
-              onClick={() => setActiveTab("overview")}
-              className={`px-6 py-3 font-semibold ${
-                activeTab === "overview"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600"
-              }`}
-            >
-              Overview
+        <div className="bg-white rounded-lg shadow mb-6 p-6">
+          <h3 className="text-xl font-bold mb-4">Quick Actions</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button className="bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition">
+              Manage Users
             </button>
-            <button
-              onClick={() => setActiveTab("users")}
-              className={`px-6 py-3 font-semibold ${
-                activeTab === "users"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600"
-              }`}
-            >
-              User Management
+            <button className="bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition">
+              View All Projects
             </button>
-            <button
-              onClick={() => setActiveTab("approvals")}
-              className={`px-6 py-3 font-semibold ${
-                activeTab === "approvals"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600"
-              }`}
-            >
-              Approvals
+            <button className="bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition">
+              Generate Reports
             </button>
-            <button
-              onClick={() => setActiveTab("reports")}
-              className={`px-6 py-3 font-semibold ${
-                activeTab === "reports"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600"
-              }`}
-            >
-              Reports
+            <button className="bg-orange-600 text-white py-3 px-4 rounded-lg hover:bg-orange-700 transition">
+              Manage Events
             </button>
-          </div>
-
-          <div className="p-6">
-            {activeTab === "overview" && (
-              <div className="space-y-4">
-                <h3 className="text-xl font-bold mb-4">Quick Actions</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <button className="bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition">
-                    Manage Users
-                  </button>
-                  <button className="bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition">
-                    View All Projects
-                  </button>
-                  <button className="bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition">
-                    Generate Reports
-                  </button>
-                  <button className="bg-orange-600 text-white py-3 px-4 rounded-lg hover:bg-orange-700 transition">
-                    Manage Events
-                  </button>
-                  <button className="bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 transition">
-                    Backup to OneDrive
-                  </button>
-                  <button className="bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition">
-                    Moderate Forums
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "users" && (
-              <div>
-                <h3 className="text-xl font-bold mb-4">User Management</h3>
-                <p className="text-gray-600">
-                  Manage students, staff, and their roles.
-                </p>
-              </div>
-            )}
-
-            {activeTab === "approvals" && (
-              <div>
-                <h3 className="text-xl font-bold mb-4">Pending Approvals</h3>
-                <p className="text-gray-600">
-                  Review and approve certificates, projects, and staff
-                  registrations.
-                </p>
-              </div>
-            )}
-
-            {activeTab === "reports" && (
-              <div>
-                <h3 className="text-xl font-bold mb-4">Audit Reports</h3>
-                <p className="text-gray-600">
-                  Generate and export reports by year.
-                </p>
-              </div>
-            )}
+            <button className="bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 transition">
+              Backup to OneDrive
+            </button>
+            <button className="bg-red-600 text-white py-3 px-4 rounded-lg hover:bg-red-700 transition">
+              Moderate Forums
+            </button>
           </div>
         </div>
       </div>

@@ -2,13 +2,18 @@ import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import apiClient from "../../api/axiosClient";
 import { useAuth } from "../../hooks/useAuth";
+import events from "../../data/events";
+import { Link } from "react-router-dom";
+import EventCard from "../../components/EventCard";
 
 const StudentDashboard = () => {
   const { user } = useAuth();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState("overview");
+  // tabs removed — show overview content directly and provide quick actions
   const [achievements, setAchievements] = useState([]);
   const [projects, setProjects] = useState([]);
+  // track which section is visible (was previously controlled by tabs)
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     // initialize tab from query param when present
@@ -31,75 +36,23 @@ const StudentDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold mb-2">
-          {`Welcome, ${user?.fullName || user?.email || "Student"}`}
-        </h1>
-        <p className="text-gray-600 mb-8">
-          {user?.role === "alumni" ? "Alumni Portal" : "Student Portal"}
-        </p>
+        {activeTab === "overview" && (
+          <>
+            <h1 className="text-4xl font-bold mb-2">
+              {`Welcome, ${user?.fullName || user?.email || "Student"}`}
+            </h1>
+            <p className="text-gray-600 mb-8">
+              {user?.role === "alumni" ? "Alumni Portal" : "Student Portal"}
+            </p>
+          </>
+        )}
 
         <div className="bg-white rounded-lg shadow mb-6">
-          <div className="flex border-b overflow-x-auto">
-            <button
-              onClick={() => setActiveTab("overview")}
-              className={`px-6 py-3 font-semibold whitespace-nowrap ${
-                activeTab === "overview"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600"
-              }`}
-            >
-              Overview
-            </button>
-            <button
-              onClick={() => setActiveTab("achievements")}
-              className={`px-6 py-3 font-semibold whitespace-nowrap ${
-                activeTab === "achievements"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600"
-              }`}
-            >
-              Achievements
-            </button>
-            <button
-              onClick={() => setActiveTab("projects")}
-              className={`px-6 py-3 font-semibold whitespace-nowrap ${
-                activeTab === "projects"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600"
-              }`}
-            >
-              Projects
-            </button>
-            <button
-              onClick={() => setActiveTab("community")}
-              className={`px-6 py-3 font-semibold whitespace-nowrap ${
-                activeTab === "community"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600"
-              }`}
-            >
-              Community
-            </button>
-            <button
-              onClick={() => setActiveTab("placement")}
-              className={`px-6 py-3 font-semibold whitespace-nowrap ${
-                activeTab === "placement"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600"
-              }`}
-            >
-              Placement DB
-            </button>
-            <button
-              onClick={() => setActiveTab("alumni")}
-              className={`px-6 py-3 font-semibold whitespace-nowrap ${
-                activeTab === "alumni"
-                  ? "border-b-2 border-blue-600 text-blue-600"
-                  : "text-gray-600"
-              }`}
-            >
-              Alumni Network
-            </button>
+          <div className="p-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Welcome</h3>
+              <div className="text-sm text-gray-500">Student Portal</div>
+            </div>
           </div>
 
           <div className="p-6">
@@ -192,6 +145,35 @@ const StudentDashboard = () => {
                       ))}
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === "events" && (
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-bold">Events</h3>
+                  <Link
+                    to="/events"
+                    className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition"
+                  >
+                    View All Events
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {events.map((ev) => (
+                    <EventCard
+                      key={ev.id}
+                      id={ev.id}
+                      title={ev.title}
+                      summary={ev.summary}
+                      date={ev.date}
+                      location={ev.location}
+                      grant={ev.grant}
+                      to={`/events/${ev.id}`}
+                    />
+                  ))}
                 </div>
               </div>
             )}

@@ -8,13 +8,15 @@ const Navbar = () => {
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
-    // Force default to light on first load
-    document.documentElement.classList.remove("dark");
-    setDark(false);
+    // Initialize theme from localStorage or OS preference
     const stored = localStorage.getItem("theme");
-    if (stored !== "dark") {
-      localStorage.setItem("theme", "light");
-    }
+    const prefersDark =
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const initialDark = stored ? stored === "dark" : prefersDark;
+    setDark(initialDark);
+    document.documentElement.classList.toggle("dark", initialDark);
   }, []);
 
   function toggleTheme() {

@@ -51,7 +51,6 @@ CREATE TABLE IF NOT EXISTS achievements (
   user_id INTEGER,
   title VARCHAR(500) NOT NULL,
   date DATE,
-  proof_file_url VARCHAR(2048),
   event_id INTEGER, -- optional FK to events table if you have events (left as integer)
   verified BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -65,7 +64,29 @@ ALTER TABLE achievements ADD COLUMN IF NOT EXISTS proof_file_id INTEGER REFERENC
 ALTER TABLE achievements ADD COLUMN IF NOT EXISTS name VARCHAR(255);
 -- uploader_name is deprecated; ensure it does not exist
 ALTER TABLE achievements DROP COLUMN IF EXISTS uploader_name;
+-- proof_file_url is deprecated; ensure it does not exist
+ALTER TABLE achievements DROP COLUMN IF EXISTS proof_file_url;
 
 -- Columns for team member details on projects
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS team_members_count INTEGER;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS team_member_names TEXT; -- comma separated or free text list
+-- Project repository URL
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS github_url TEXT;
+-- Mentor name (free-text) for projects when mentor_id is not provided
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS mentor_name VARCHAR(255);
+-- Prevent duplicates when mentor_name is used instead of mentor_id
+CREATE UNIQUE INDEX IF NOT EXISTS ux_projects_title_mentorname_year
+  ON projects (title, mentor_name, academic_year);
+
+-- Backfill mentor_name for existing rows using users table (prefer full_name, else email)
+UPDATE projects p
+SET mentor_name = COALESCE(u.full_name, u.email)
+FROM users u
+WHERE p.mentor_id = u.id
+  AND (p.mentor_name IS NULL OR p.mentor_name = '');
+
+-- Drop old unique constraint if it exists (based on mentor_id)
+ALTER TABLE projects DROP CONSTRAINT IF EXISTS projects_title_mentor_id_academic_year_key;
+
+-- Drop legacy mentor_id column now that mentor_name is in use
+ALTER TABLE projects DROP COLUMN IF EXISTS mentor_id;

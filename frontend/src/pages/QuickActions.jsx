@@ -32,7 +32,7 @@ export default function QuickActions() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-white to-slate-50 hero-gradient">
+    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-white to-slate-50 dark:from-slate-950 dark:to-slate-900 hero-gradient">
       <div className="mx-auto max-w-6xl px-6 py-12">
         <div className="text-center mb-10">
           <h2 className="text-4xl font-extrabold text-slate-800 dark:text-slate-100">

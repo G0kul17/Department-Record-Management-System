@@ -1,6 +1,6 @@
 import React from "react";
 import { useAuth } from "../hooks/useAuth";
-import { hasPermission } from "../utils/roleRoutes";
+import { Navigate } from "react-router-dom";
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { user, loading } = useAuth();
@@ -14,8 +14,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   }
 
   if (!user) {
-    window.location.hash = "/login";
-    return null;
+    return <Navigate to="/login" replace />;
   }
 
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
@@ -25,13 +24,8 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
           <h2 className="text-2xl font-bold text-red-600 mb-4">
             Access Denied
           </h2>
-          <p className="text-gray-600">
-            You don't have permission to access this page.
-          </p>
-          <a
-            href="#/"
-            className="text-blue-600 hover:underline mt-4 inline-block"
-          >
+          <p className="text-gray-600">You don't have permission to access this page.</p>
+          <a href="/" className="text-blue-600 hover:underline mt-4 inline-block">
             Go to Home
           </a>
         </div>

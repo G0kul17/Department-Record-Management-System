@@ -1,6 +1,7 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import BackButton from "./components/BackButton";
 import Login from "./pages/Login";
 import VerifyOtp from "./pages/VerifyOtp";
 import RegisterStudent from "./pages/RegisterStudent";
@@ -16,6 +17,7 @@ import Home from "./pages/Home";
 import QuickActions from "./pages/QuickActions";
 import Achievements from "./pages/Achievements";
 import ProjectUpload from "./pages/ProjectUpload";
+import Events from "./pages/Events";
 
 function RoleRedirect() {
   const { user } = useAuth();
@@ -29,6 +31,7 @@ export default function App() {
   return (
     <>
       <Navbar />
+      <BackButton />
       <Routes>
         {/* New Home landing page (requires auth) */}
         <Route
@@ -44,6 +47,22 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={["student", "alumni"]}>
               <Achievements />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/events"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "staff", "student"]}>
+              <Events />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/events/:id"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "staff", "student"]}>
+              <Events />
             </ProtectedRoute>
           }
         />

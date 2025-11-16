@@ -4,6 +4,7 @@ import Particles from "react-tsparticles";
 import { loadSlim } from "tsparticles-slim";
 import { useAuth } from "../hooks/useAuth";
 import apiClient from "../api/axiosClient";
+import events from "../data/events";
 
 export default function Home() {
   const nav = useNavigate();
@@ -13,36 +14,8 @@ export default function Home() {
   const [projCount, setProjCount] = useState(null);
   const [achCount, setAchCount] = useState(null);
 
-  const events = [
-    {
-      title: "Annual Tech Symposium",
-      summary:
-        "Join industry experts for talks and workshops on cutting-edge technologies.",
-      date: "2025-12-04",
-      location: "Auditorium A",
-    },
-    {
-      title: "Hackathon 2025",
-      summary:
-        "48-hour coding sprint to build innovative solutions with your peers.",
-      date: "2025-12-12",
-      location: "Innovation Lab",
-    },
-    {
-      title: "Research Showcase",
-      summary:
-        "Students present their research projects to faculty and industry mentors.",
-      date: "2026-01-10",
-      location: "Hall 3",
-    },
-    {
-      title: "Alumni Talk Series",
-      summary:
-        "Hear from successful alumni about career journeys and insights.",
-      date: "2026-02-05",
-      location: "Seminar Room B",
-    },
-  ];
+  // use shared events data
+  // events is imported from ../data/events
 
   const particlesInit = useCallback(async (engine) => {
     await loadSlim(engine);

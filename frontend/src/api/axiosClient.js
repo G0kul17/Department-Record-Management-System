@@ -35,7 +35,13 @@ class ApiClient {
       if (response.status === 401) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        window.location.hash = "/login";
+        // Use pathname so BrowserRouter picks up the change correctly
+        try {
+          window.location.pathname = "/login";
+        } catch (e) {
+          // fallback to assign
+          window.location.assign("/login");
+        }
         throw new Error("Unauthorized");
       }
 

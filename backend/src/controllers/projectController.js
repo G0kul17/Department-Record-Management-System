@@ -9,26 +9,46 @@ import fs from "fs";
 
 export async function createProject(req, res) {
   // route expects multipart/form-data with possible files
-  // fields: title, description, mentor_id, academic_year, status, team_members (comma separated user ids)
+  // fields: title, description, mentor_name, academic_year, status, team_members (comma separated names)
   try {
     const {
       title,
       description,
-      mentor_id,
+      mentor_name,
       academic_year,
       status,
       team_members_count,
       team_member_names,
+      github_url,
     } = req.body;
     const created_by = req.user?.id;
 
-    if (!title || !mentor_id)
-      return res.status(400).json({ message: "title and mentor_id required" });
+    if (!title || !mentor_name || !mentor_name.trim())
+      return res
+        .status(400)
+        .json({ message: "title and mentor_name required" });
 
-    // duplicate check (title + mentor + year)
+    // Require at least one attached file to match UI requirement
+    const files = req.files || [];
+    if (!files.length)
+      return res.status(400).json({ message: "At least one file is required" });
+
+    // Require GitHub URL and perform a basic validation (must be a GitHub link)
+    if (!github_url || typeof github_url !== "string" || !github_url.trim()) {
+      return res.status(400).json({ message: "github_url is required" });
+    }
+    const gh = github_url.trim();
+    const githubPattern = /^https?:\/\/(www\.)?github\.com\/.+/i;
+    if (!githubPattern.test(gh)) {
+      return res
+        .status(400)
+        .json({ message: "github_url must be a valid GitHub link" });
+    }
+
+    // duplicate check (title + mentor_name + year)
     const { rows: dup } = await pool.query(
-      "SELECT id FROM projects WHERE title=$1 AND mentor_id=$2 AND academic_year=$3",
-      [title.trim(), mentor_id, academic_year || null]
+      "SELECT id FROM projects WHERE title=$1 AND mentor_name=$2 AND academic_year=$3",
+      [title.trim(), mentor_name.trim(), academic_year || null]
     );
     if (dup.length)
       return res.status(409).json({
@@ -36,23 +56,23 @@ export async function createProject(req, res) {
       });
 
     const { rows } = await pool.query(
-      `INSERT INTO projects (title, description, mentor_id, academic_year, status, created_by, team_members_count, team_member_names)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+      `INSERT INTO projects (title, description, mentor_name, academic_year, status, created_by, team_members_count, team_member_names, github_url)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
       [
         title.trim(),
         description || null,
-        mentor_id,
+        mentor_name.trim(),
         academic_year || null,
         status || "ongoing",
         created_by || null,
         team_members_count ? Number(team_members_count) : null,
         team_member_names || null,
+        gh,
       ]
     );
     const project = rows[0];
 
-    // handle uploaded files (if any)
-    const files = req.files || []; // multer populates req.files
+    // handle uploaded files (validated above to exist)
     const insertedFiles = [];
     for (const f of files) {
       const fileType = detectFileTypeByField(f.fieldname);
@@ -146,7 +166,7 @@ export async function listProjects(req, res) {
   // optional query filters: year, mentor_id, status, verified
   const {
     year,
-    mentor_id,
+    mentor_name,
     status,
     verified,
     q,
@@ -154,8 +174,7 @@ export async function listProjects(req, res) {
     offset = 0,
   } = req.query;
   try {
-    let base =
-      "SELECT p.*, u.email as mentor_email FROM projects p LEFT JOIN users u ON p.mentor_id = u.id";
+    let base = "SELECT p.* FROM projects p";
     const conditions = [];
     const params = [];
 
@@ -163,9 +182,9 @@ export async function listProjects(req, res) {
       params.push(year);
       conditions.push(`p.academic_year = $${params.length}`);
     }
-    if (mentor_id) {
-      params.push(mentor_id);
-      conditions.push(`p.mentor_id = $${params.length}`);
+    if (mentor_name) {
+      params.push(mentor_name);
+      conditions.push(`p.mentor_name = $${params.length}`);
     }
     if (status) {
       params.push(status);
@@ -201,11 +220,7 @@ export async function getProjectDetails(req, res) {
   const id = Number(req.params.id);
   try {
     const { rows } = await pool.query(
-      `SELECT p.*, u.email as mentor_email, creator.email as created_by_email
-       FROM projects p 
-       LEFT JOIN users u ON p.mentor_id = u.id
-       LEFT JOIN users creator ON p.created_by = creator.id
-       WHERE p.id = $1`,
+      `SELECT p.* FROM projects p WHERE p.id = $1`,
       [id]
     );
     if (!rows.length) return res.status(404).json({ message: "Not found" });

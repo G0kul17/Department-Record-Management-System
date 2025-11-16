@@ -8,7 +8,6 @@ export default function Achievements() {
     title: "",
     issuer: "",
     date: "",
-    proof_file_url: "",
     event_id: "",
     name: "",
     post: false,
@@ -62,7 +61,6 @@ export default function Achievements() {
       if (form.issuer) fd.append("issuer", form.issuer);
       if (form.date) fd.append("date_of_award", form.date);
       if (form.date) fd.append("date", form.date); // also send generic 'date' for backend column
-      if (form.proof_file_url) fd.append("proof_file_url", form.proof_file_url);
       if (form.event_id) fd.append("event_id", form.event_id);
       if (form.name) fd.append("name", form.name);
       fd.append("post_to_community", form.post ? "true" : "false");
@@ -90,12 +88,12 @@ export default function Achievements() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-slate-50">
+    <div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950">
       <div className="mx-auto max-w-6xl px-6 py-10">
-        <h2 className="text-3xl font-extrabold text-slate-800">
+        <h2 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100">
           Add Achievement
         </h2>
-        <p className="text-slate-600 mb-6">
+        <p className="text-slate-600 dark:text-slate-300 mb-6">
           Provide details and optionally upload a proof document.
         </p>
 
@@ -103,8 +101,8 @@ export default function Achievements() {
           <div
             className={`mb-4 flex items-start gap-3 rounded-lg border px-4 py-3 ${
               success
-                ? "border-green-200 bg-green-50 text-green-800"
-                : "border-red-200 bg-red-50 text-red-800"
+                ? "border-green-200 bg-green-50 text-green-800 dark:border-green-700 dark:bg-green-900/30 dark:text-green-300"
+                : "border-red-200 bg-red-50 text-red-800 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300"
             }`}
           >
             {success ? (
@@ -146,14 +144,14 @@ export default function Achievements() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <form
             onSubmit={submit}
-            className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
+            className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
           >
-            <label className="block text-sm font-medium text-slate-700">
-              Title *
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+              Title <span className="text-red-600">*</span>
             </label>
             <input
               type="text"
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-400"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               required
@@ -161,23 +159,24 @@ export default function Achievements() {
 
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700">
-                  Issuer *
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Issuer <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="text"
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
                   value={form.issuer}
                   onChange={(e) => setForm({ ...form, issuer: e.target.value })}
+                  required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700">
-                  Date of Award *
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Date of Award <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="date"
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
                   value={form.date}
                   onChange={(e) => setForm({ ...form, date: e.target.value })}
                   required
@@ -187,55 +186,44 @@ export default function Achievements() {
 
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700">
-                  Project File URL *
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://..."
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={form.proof_file_url}
-                  onChange={(e) =>
-                    setForm({ ...form, proof_file_url: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700">
-                  Event ID
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Event ID <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="number"
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
                   value={form.event_id}
                   onChange={(e) =>
                     setForm({ ...form, event_id: e.target.value })
                   }
+                  required
                 />
               </div>
             </div>
 
             <div className="mt-4">
-              <label className="block text-sm font-medium text-slate-700">
-                Name of the Student
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                Name of the Student <span className="text-red-600">*</span>
               </label>
               <input
                 type="text"
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
+                required
               />
             </div>
 
             <div className="mt-4">
-              <label className="block text-sm font-medium text-slate-700">
-                Proof (PDF/Image) *
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                Proof (PDF/Image) <span className="text-red-600">*</span>
               </label>
               <input
                 type="file"
                 accept="application/pdf,image/*"
                 onChange={(e) => setProof(e.target.files?.[0] || null)}
-                className="mt-1 block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:text-white hover:file:bg-blue-700"
+                className="mt-1 block w-full text-sm text-slate-600 dark:text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:text-white hover:file:bg-blue-700"
+                required
               />
             </div>
 
@@ -245,7 +233,9 @@ export default function Achievements() {
                 checked={form.post}
                 onChange={(e) => setForm({ ...form, post: e.target.checked })}
               />
-              <span className="text-sm text-slate-700">Post to community</span>
+              <span className="text-sm text-slate-700 dark:text-slate-200">
+                Post to community
+              </span>
             </label>
 
             <div className="mt-6">
@@ -259,38 +249,42 @@ export default function Achievements() {
             </div>
           </form>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="text-xl font-bold text-slate-800">My Submissions</h3>
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+              My Submissions
+            </h3>
             <div className="mt-4 space-y-3">
               {list.length === 0 && (
-                <div className="text-slate-600">No achievements yet.</div>
+                <div className="text-slate-600 dark:text-slate-300">
+                  No achievements yet.
+                </div>
               )}
               {list.map((a) => (
                 <div
                   key={a.id}
-                  className="rounded-lg border border-slate-200 p-4"
+                  className="rounded-lg border border-slate-200 p-4 dark:border-slate-700"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="font-semibold text-slate-800">
+                      <div className="font-semibold text-slate-800 dark:text-slate-100">
                         {a.title}
                       </div>
-                      <div className="text-sm text-slate-600">
+                      <div className="text-sm text-slate-600 dark:text-slate-300">
                         {a.issuer || ""}
                       </div>
                     </div>
                     {a.verified ? (
-                      <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+                      <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-300">
                         Verified
                       </span>
                     ) : (
-                      <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700">
+                      <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
                         Pending
                       </span>
                     )}
                   </div>
                   {a.date_of_award && (
-                    <div className="mt-1 text-xs text-slate-500">
+                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                       Awarded: {new Date(a.date_of_award).toLocaleDateString()}
                     </div>
                   )}

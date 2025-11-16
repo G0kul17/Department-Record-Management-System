@@ -13,28 +13,32 @@ export async function createAchievement(req, res) {
       date_of_award,
       post_to_community,
       date,
-      proof_file_url,
       event_id,
       name,
     } = req.body;
     if (!title) return res.status(400).json({ message: "title required" });
-    // Mandatory fields (except event_id)
+    // Mandatory fields per UI: issuer, date, event_id, name, proof file
     if (!(date_of_award || date))
       return res.status(400).json({ message: "date required" });
-    if (!proof_file_url)
-      return res.status(400).json({ message: "proof_file_url required" });
+    if (!issuer || !issuer.trim())
+      return res.status(400).json({ message: "issuer required" });
+    if (!event_id)
+      return res.status(400).json({ message: "event_id required" });
+    if (!name || !name.trim())
+      return res.status(400).json({ message: "name required" });
 
-    // optional file proof (expect single file field 'proof')
+    // Require proof file upload (expect single file field 'proof')
     let proofFileId = null;
-    if (req.file) {
-      const f = req.file;
-      const fileType = "proof";
-      const ins = await pool.query(
-        "INSERT INTO project_files (filename, original_name, mime_type, size, file_type, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id",
-        [f.filename, f.originalname, f.mimetype, f.size, fileType, userId]
-      );
-      proofFileId = ins.rows[0].id;
+    if (!req.file) {
+      return res.status(400).json({ message: "proof file required" });
     }
+    const f = req.file;
+    const fileType = "proof";
+    const ins = await pool.query(
+      "INSERT INTO project_files (filename, original_name, mime_type, size, file_type, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id",
+      [f.filename, f.originalname, f.mimetype, f.size, fileType, userId]
+    );
+    proofFileId = ins.rows[0].id;
 
     // duplicate check for same user
     const dup = await pool.query(
@@ -45,17 +49,16 @@ export async function createAchievement(req, res) {
       return res.status(409).json({ message: "Duplicate achievement" });
 
     const result = await pool.query(
-      "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, date, proof_file_url, event_id, name) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *",
+      "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, date, event_id, name) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *",
       [
         userId,
         title.trim(),
-        issuer || null,
+        issuer.trim(),
         date_of_award || null,
         proofFileId,
         date || null,
-        proof_file_url || null,
-        event_id ? Number(event_id) : null,
-        name || null,
+        Number(event_id),
+        name.trim(),
       ]
     );
 

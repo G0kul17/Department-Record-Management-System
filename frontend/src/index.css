@@ -67,3 +67,84 @@ body {
       rgba(99, 102, 241, 0) 60%
     );
 }
+
+/* Global theming so all pages respond to dark mode */
+html {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
+body {
+  background-color: #f8fafc; /* slate-50 */
+  color: #0f172a; /* slate-900/800 */
+}
+.dark body {
+  background-color: #0b1220; /* approx slate-950 */
+  color: #f1f5f9; /* slate-100 */
+}
+
+/* Generic layout helpers used in a few pages */
+.container {
+  max-width: 72rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+.card {
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0; /* slate-200 */
+  background-color: #ffffff;
+  padding: 1.5rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.dark .card {
+  border-color: #1f2937; /* slate-800 */
+  background-color: #0f172a; /* slate-900 */
+}
+
+/* Utility overrides for pages that used light-only Tailwind utilities */
+.dark .bg-white {
+  background-color: #0f172a !important;
+}
+.dark .bg-gray-50 {
+  background-color: #0b1220 !important;
+}
+.dark .bg-gray-100 {
+  background-color: #0b1220 !important;
+}
+.dark .text-gray-600 {
+  color: #cbd5e1 !important;
+} /* slate-300 */
+.dark .text-gray-500 {
+  color: #94a3b8 !important;
+} /* slate-400 */
+.dark .border {
+  border-color: #334155 !important;
+} /* slate-700 */
+
+/* Normalize form controls so light theme stays light */
+input,
+select,
+textarea {
+  background-color: #ffffff;
+  color: #0f172a;
+  border-color: #cbd5e1; /* slate-300 */
+}
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #1f2937; /* slate-800 */
+  color: #f1f5f9; /* slate-100 */
+  border-color: #334155; /* slate-700 */
+}
+/* Placeholder color balance */
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8; /* slate-400 */
+}
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #94a3b8; /* slate-400 */
+}

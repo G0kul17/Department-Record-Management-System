@@ -19,7 +19,8 @@ export async function register(req, res) {
     return res.status(400).json({ message: "Email and password required" });
 
   // Password policy: min 8 chars, at least one digit, at least one special char
-  const passwordPolicy = /^(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+  const passwordPolicy =
+    /^(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
   if (!passwordPolicy.test(password)) {
     return res.status(400).json({
       message:
@@ -151,6 +152,7 @@ export async function verifyOTP(req, res) {
       message: "Verified",
       token,
       role: user.role,
+      id: user.id,
       fullName: user.full_name || null,
     });
   } catch (err) {
@@ -269,6 +271,7 @@ export async function loginVerifyOTP(req, res) {
       message: "Login successful",
       token,
       role: user.role,
+      id: user.id,
       fullName: user.full_name || null,
     });
   } catch (err) {
@@ -323,7 +326,8 @@ export async function resetPassword(req, res) {
       .status(400)
       .json({ message: "Email, OTP and newPassword required" });
 
-  const passwordPolicy = /^(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+  const passwordPolicy =
+    /^(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
   if (!passwordPolicy.test(newPassword)) {
     return res.status(400).json({
       message:

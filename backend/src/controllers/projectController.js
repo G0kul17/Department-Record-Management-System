@@ -28,10 +28,8 @@ export async function createProject(req, res) {
         .status(400)
         .json({ message: "title and mentor_name required" });
 
-    // Require at least one attached file to match UI requirement
+    // Files are optional now
     const files = req.files || [];
-    if (!files.length)
-      return res.status(400).json({ message: "At least one file is required" });
 
     // Require GitHub URL and perform a basic validation (must be a GitHub link)
     if (!github_url || typeof github_url !== "string" || !github_url.trim()) {
@@ -72,7 +70,7 @@ export async function createProject(req, res) {
     );
     const project = rows[0];
 
-    // handle uploaded files (validated above to exist)
+    // handle uploaded files if any
     const insertedFiles = [];
     for (const f of files) {
       const fileType = detectFileTypeByField(f.fieldname);
@@ -172,6 +170,7 @@ export async function listProjects(req, res) {
     q,
     limit = 20,
     offset = 0,
+    mine,
   } = req.query;
   try {
     let base = "SELECT p.* FROM projects p";
@@ -199,6 +198,10 @@ export async function listProjects(req, res) {
       conditions.push(
         `(p.title ILIKE $${params.length} OR p.description ILIKE $${params.length})`
       );
+    }
+    if (mine !== undefined && mine !== "false" && req.user?.id) {
+      params.push(req.user.id);
+      conditions.push(`p.created_by = $${params.length}`);
     }
 
     if (conditions.length) base += " WHERE " + conditions.join(" AND ");

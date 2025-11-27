@@ -79,11 +79,21 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_projects_title_mentorname_year
   ON projects (title, mentor_name, academic_year);
 
 -- Backfill mentor_name for existing rows using users table (prefer full_name, else email)
-UPDATE projects p
-SET mentor_name = COALESCE(u.full_name, u.email)
-FROM users u
-WHERE p.mentor_id = u.id
-  AND (p.mentor_name IS NULL OR p.mentor_name = '');
+-- Safe on repeated runs: only executes if legacy mentor_id column still exists.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name='projects' AND column_name='mentor_id'
+  ) THEN
+    EXECUTE 'UPDATE projects p
+             SET mentor_name = COALESCE(u.full_name, u.email)
+             FROM users u
+             WHERE p.mentor_id = u.id
+               AND (p.mentor_name IS NULL OR p.mentor_name = '''')';
+  END IF;
+END
+$$;
 
 -- Drop old unique constraint if it exists (based on mentor_id)
 ALTER TABLE projects DROP CONSTRAINT IF EXISTS projects_title_mentor_id_academic_year_key;

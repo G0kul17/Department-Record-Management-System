@@ -17,13 +17,12 @@ export async function createAchievement(req, res) {
       name,
     } = req.body;
     if (!title) return res.status(400).json({ message: "title required" });
-    // Mandatory fields per UI: issuer, date, event_id, name, proof file
+    // Mandatory fields per UI: issuer, date, name, proof file (event_id optional)
     if (!(date_of_award || date))
       return res.status(400).json({ message: "date required" });
     if (!issuer || !issuer.trim())
       return res.status(400).json({ message: "issuer required" });
-    if (!event_id)
-      return res.status(400).json({ message: "event_id required" });
+    // event_id is optional
     if (!name || !name.trim())
       return res.status(400).json({ message: "name required" });
 
@@ -32,7 +31,25 @@ export async function createAchievement(req, res) {
     if (!req.file) {
       return res.status(400).json({ message: "proof file required" });
     }
+    // Enforce allowed proof types: PDF or JPG/JPEG/PNG
+    const allowedProofTypes = new Set([
+      "application/pdf",
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      // Common aliases
+      "image/x-png",
+      "image/pjpeg",
+    ]);
     const f = req.file;
+    const fileName = f.originalname || "";
+    const ext = fileName.toLowerCase().split(".").pop();
+    const extOk = ["pdf", "png", "jpg", "jpeg"].includes(ext);
+    if (!(allowedProofTypes.has(f.mimetype) || extOk)) {
+      return res
+        .status(400)
+        .json({ message: "Invalid proof type. Upload PDF or JPG/PNG image." });
+    }
     const fileType = "proof";
     const ins = await pool.query(
       "INSERT INTO project_files (filename, original_name, mime_type, size, file_type, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id",
@@ -57,7 +74,7 @@ export async function createAchievement(req, res) {
         date_of_award || null,
         proofFileId,
         date || null,
-        Number(event_id),
+        event_id ? Number(event_id) : null,
         name.trim(),
       ]
     );

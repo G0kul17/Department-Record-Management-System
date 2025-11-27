@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import apiClient from "../api/axiosClient";
-import { useAuth } from "../hooks/useAuth";
+import apiClient from "../../api/axiosClient";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function Achievements() {
   const { user } = useAuth();
@@ -17,8 +17,10 @@ export default function Achievements() {
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
   const [list, setList] = useState([]);
+  const [loadingMine, setLoadingMine] = useState(false);
 
   const loadMine = async () => {
+    setLoadingMine(true);
     try {
       const data = await apiClient.get(`/achievements?limit=100`);
       const mine = (data.achievements || []).filter(
@@ -27,6 +29,8 @@ export default function Achievements() {
       setList(mine);
     } catch (e) {
       console.error(e);
+    } finally {
+      setLoadingMine(false);
     }
   };
 
@@ -42,15 +46,22 @@ export default function Achievements() {
     try {
       // Client-side file type guard for better UX
       if (proof) {
-        const allowed = [
+        const allowed = new Set([
           "application/pdf",
           "image/png",
           "image/jpeg",
           "image/jpg",
           "image/webp",
-        ];
-        if (!allowed.includes(proof.type)) {
-          setMessage("Please upload PDF or image");
+          // Common Windows/IE legacy aliases
+          "image/x-png",
+          "image/pjpeg",
+        ]);
+        const typeOk = allowed.has(proof.type);
+        const name = proof.name || proof.filename || "";
+        const ext = name.toLowerCase().split(".").pop();
+        const extOk = ["pdf", "png", "jpg", "jpeg"].includes(ext);
+        if (!(typeOk || extOk)) {
+          setMessage("Please upload a PDF or JPG/PNG image");
           setSuccess(false);
           setSubmitting(false);
           return;
@@ -149,13 +160,22 @@ export default function Achievements() {
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
               Title <span className="text-red-600">*</span>
             </label>
-            <input
-              type="text"
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-400"
+            <select
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               required
-            />
+            >
+              <option value="">Select a title</option>
+              <option>Hackathon</option>
+              <option>Paper presentation</option>
+              <option>Coding competition</option>
+              <option>Conference presentation</option>
+              <option>Journal publications</option>
+              <option>NPTEL certificate</option>
+              <option>Internship certificate</option>
+              <option>Other MOOC courses</option>
+            </select>
 
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -187,7 +207,8 @@ export default function Achievements() {
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                  Event ID <span className="text-red-600">*</span>
+                  Event ID{" "}
+                  <span className="text-slate-500 font-normal">(optional)</span>
                 </label>
                 <input
                   type="number"
@@ -196,7 +217,6 @@ export default function Achievements() {
                   onChange={(e) =>
                     setForm({ ...form, event_id: e.target.value })
                   }
-                  required
                 />
               </div>
             </div>
@@ -216,11 +236,12 @@ export default function Achievements() {
 
             <div className="mt-4">
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                Proof (PDF/Image) <span className="text-red-600">*</span>
+                Proof (PDF/Image-jpeg,jpg,png){" "}
+                <span className="text-red-600">*</span>
               </label>
               <input
                 type="file"
-                accept="application/pdf,image/*"
+                accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
                 onChange={(e) => setProof(e.target.files?.[0] || null)}
                 className="mt-1 block w-full text-sm text-slate-600 dark:text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:text-white hover:file:bg-blue-700"
                 required
@@ -250,9 +271,19 @@ export default function Achievements() {
           </form>
 
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-              My Submissions
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                My Submissions
+              </h3>
+              <button
+                type="button"
+                onClick={loadMine}
+                disabled={loadingMine}
+                className="text-xs rounded-md bg-blue-600 px-3 py-1 font-semibold text-white shadow hover:bg-blue-700 disabled:opacity-50"
+              >
+                {loadingMine ? "Refreshing..." : "Refresh"}
+              </button>
+            </div>
             <div className="mt-4 space-y-3">
               {list.length === 0 && (
                 <div className="text-slate-600 dark:text-slate-300">

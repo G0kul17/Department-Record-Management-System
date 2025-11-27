@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import events from "../data/events";
-import EventCard from "../components/EventCard";
+import events from "../../data/events";
+import EventCard from "../../components/EventCard";
 
 function GrantBox({ grant }) {
   if (!grant) return null;

@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
 import achievementRoutes from "./routes/achievementRoutes.js";
+import staffRoutes from './routes/staffRoutes.js';
+import eventPublicRoutes from './routes/eventPublicRoutes.js'; // optional separate public events routes
 import pool from "./config/db.js";
 import fs from "fs";
 import path from "path";
@@ -38,31 +40,31 @@ app.use(
   express.static(path.resolve(process.env.FILE_STORAGE_PATH || "./uploads"))
 );
 
+// after app.use('/api/auth', authRoutes);
+app.use('/api/staff', staffRoutes);
+// Optionally expose events publicly for students
+app.use('/api/events', (await import('./routes/eventPublicRoutes.js')).default);
+
 // optional: create tables if not exist on startup
 async function ensureTables() {
   try {
-    // Execute SQL statements one-by-one so we can identify failing statement
-    const sql = queriesSql || "";
-    const statements = sql
-      .split(/;\s*\r?\n/) // split on semicolon + newline (simple splitter)
-      .map((s) => s.trim())
-      .filter(Boolean);
-
-    for (let i = 0; i < statements.length; i++) {
-      const stmt = statements[i] + ";";
-      try {
-        await pool.query(stmt);
-      } catch (e) {
-        console.error(
-          `Error executing SQL statement #${i + 1}: ${statements[i].slice(
-            0,
-            200
-          )}`
-        );
-        throw e;
-      }
+    // Execute the whole SQL file in one call. Splitting by semicolons
+    // can break dollar-quoted blocks (DO $$ ... $$) or semicolons inside
+    // quoted strings. Let Postgres parse the full script instead.
+    const sql = (queriesSql || "").trim();
+    if (!sql) {
+      console.log("No SQL migration script found; skipping ensureTables");
+      return;
     }
-    console.log("Database tables ensured");
+
+    try {
+      await pool.query(sql);
+      console.log("Database tables ensured");
+    } catch (e) {
+      console.error("Error executing SQL migration script:", e.message || e);
+      // Re-throw so the caller can see the failure
+      throw e;
+    }
   } catch (err) {
     console.error("Error ensuring tables", err);
   }

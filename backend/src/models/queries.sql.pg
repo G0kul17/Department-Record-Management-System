@@ -100,3 +100,66 @@ ALTER TABLE projects DROP CONSTRAINT IF EXISTS projects_title_mentor_id_academic
 
 -- Drop legacy mentor_id column now that mentor_name is in use
 ALTER TABLE projects DROP COLUMN IF EXISTS mentor_id;
+
+-- ==========================================================
+--  STAFF: verification metadata for projects & achievements
+-- ==========================================================
+ALTER TABLE projects
+  ADD COLUMN IF NOT EXISTS verification_status VARCHAR(20) DEFAULT 'pending', -- pending|approved|rejected
+  ADD COLUMN IF NOT EXISTS verification_comment TEXT,
+  ADD COLUMN IF NOT EXISTS verified_by INTEGER,
+  ADD COLUMN IF NOT EXISTS verified_at TIMESTAMP;
+
+ALTER TABLE achievements
+  ADD COLUMN IF NOT EXISTS verification_status VARCHAR(20) DEFAULT 'pending', -- pending|approved|rejected
+  ADD COLUMN IF NOT EXISTS verification_comment TEXT,
+  ADD COLUMN IF NOT EXISTS verified_by INTEGER,
+  ADD COLUMN IF NOT EXISTS verified_at TIMESTAMP;
+
+-- ==========================================================
+--  EVENTS TABLE (created by staff, shown to students)
+-- ==========================================================
+CREATE TABLE IF NOT EXISTS events (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(500) NOT NULL,
+  description TEXT,
+  venue VARCHAR(255),
+  start_date TIMESTAMP,
+  end_date TIMESTAMP,
+  organizer_id INTEGER,
+  attachments JSONB, -- optional file metadata array [{file_id, filename, original_name, mime_type, size}]
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_events_start ON events(start_date);
+
+-- Try to add a foreign-key constraint from events.organizer_id -> users.id
+-- only if the `users.id` column exists and is part of a primary key or unique index.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.table_constraints tc
+    JOIN information_schema.key_column_usage kcu
+      ON tc.constraint_name = kcu.constraint_name
+      AND tc.table_name = kcu.table_name
+    WHERE tc.table_name = 'users'
+      AND kcu.column_name = 'id'
+      AND tc.constraint_type IN ('PRIMARY KEY', 'UNIQUE')
+  ) THEN
+    BEGIN
+      -- Add FK only if it does not already exist
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints tc2
+        WHERE tc2.table_name = 'events' AND tc2.constraint_type = 'FOREIGN KEY'
+      ) THEN
+        EXECUTE 'ALTER TABLE events ADD CONSTRAINT fk_events_organizer FOREIGN KEY (organizer_id) REFERENCES users(id)';
+      END IF;
+    EXCEPTION WHEN others THEN
+      -- If adding the FK fails for any reason, ignore to keep migrations idempotent
+      RAISE NOTICE 'Could not add foreign key fk_events_organizer: %', SQLERRM;
+    END;
+  END IF;
+END
+$$;

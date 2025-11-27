@@ -13,3 +13,12 @@
 ✔ Remove the old pages that already created becoz it's not removed and it get override by the new pages. @done (11/27/2025, 12:10:34 PM)
 ✔ add drop down for the titles in the achievements page Hackathon - Paper presentation,Coding competition,Conference presentation,Journal publications,NPTEL certificate,other MOOC courses,Internship certificate @done (11/27/2025, 1:17:09 PM)
 ✔ add refresh button in that same page. @done (11/27/2025, 1:21:27 PM)
+--------------------------------------------------------
+☐ Maintain the dashboard as like in the student after login with quickactions and some statistical reports of the project and acheivement uploaded
+☐ fix the cta's of Verify Projects, Verify acheivement, Upload Project, upload acheivement, Upload Event as like in the student page after quickactions page
+☐ In verify project -> student uploaded project will display and the staff can have the option to approve, reject, and give the suggestions.
+☐ In verify acheivement -> student uploaded acheivement will display and the staff can have the option to approve, reject, and give the suggestions.
+☐ In Upload Project -> staff can also upload the project but it will need not to be evaluated.
+☐ In Upload acheivement -> staff can also share the achievements it will also need not to be evaluated
+☐ Achievements also be fix as a dropdown with (patterns, NPTEL, Conference, ..)
+☐ In Upload Event -> staff can upload the event that is going to be conducted for the students.

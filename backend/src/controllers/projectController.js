@@ -115,6 +115,9 @@ export async function uploadFilesToProject(req, res) {
   // route: POST /projects/:id/files
   try {
     const projectId = Number(req.params.id);
+    if (!Number.isInteger(projectId) || Number.isNaN(projectId)) {
+      return res.status(400).json({ message: "Invalid project id" });
+    }
     const projectQ = await pool.query("SELECT id FROM projects WHERE id=$1", [
       projectId,
     ]);
@@ -221,6 +224,8 @@ export async function listProjects(req, res) {
 
 export async function getProjectDetails(req, res) {
   const id = Number(req.params.id);
+  if (!Number.isInteger(id) || Number.isNaN(id))
+    return res.status(400).json({ message: "Invalid project id" });
   try {
     const { rows } = await pool.query(
       `SELECT p.* FROM projects p WHERE p.id = $1`,
@@ -245,6 +250,8 @@ export async function verifyProject(req, res) {
   // Admin verifies a project
   try {
     const id = Number(req.params.id);
+    if (!Number.isInteger(id) || Number.isNaN(id))
+      return res.status(400).json({ message: "Invalid project id" });
     await pool.query("UPDATE projects SET verified = true WHERE id=$1", [id]);
     return res.json({ message: "Project verified" });
   } catch (err) {

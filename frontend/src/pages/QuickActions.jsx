@@ -25,9 +25,9 @@ export default function QuickActions() {
   const goTo = (key) => () => {
     if (key === "achievements") return nav("/achievements");
     if (key === "projects") return nav("/projects/upload");
-    if (key === "community") return nav("/student?tab=community");
-    if (key === "events") return nav("/student?tab=events");
-    if (key === "alumni") return nav("/student?tab=alumni");
+    if (key === "community") return nav("/"); // placeholder until community page exists
+    if (key === "events") return nav("/events");
+    if (key === "alumni") return nav("/"); // placeholder until alumni page exists
     return nav("/");
   };
 

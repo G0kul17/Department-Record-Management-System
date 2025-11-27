@@ -10,14 +10,14 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import StaffDashboard from "./pages/staff/StaffDashboard";
-import StudentDashboard from "./pages/student/StudentDashboard";
+// Old StudentDashboard removed; route will redirect to Home
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./hooks/useAuth";
 import Home from "./pages/Home";
 import QuickActions from "./pages/QuickActions";
-import Achievements from "./pages/Achievements";
-import ProjectUpload from "./pages/ProjectUpload";
-import Events from "./pages/Events";
+import Achievements from "./pages/student/StudentsAchievements";
+import ProjectUpload from "./pages/student/StudentsProjectUpload";
+import Events from "./pages/student/StudentsEventsReg";
 
 function RoleRedirect() {
   const { user } = useAuth();
@@ -116,7 +116,7 @@ export default function App() {
           path="/student/*"
           element={
             <ProtectedRoute allowedRoles={["student"]}>
-              <StudentDashboard />
+              <Navigate to="/" />
             </ProtectedRoute>
           }
         />

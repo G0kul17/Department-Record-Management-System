@@ -34,7 +34,7 @@ const Navbar = () => {
   function goToDashboard() {
     if (user.role === "admin") nav("/admin");
     else if (user.role === "staff") nav("/staff");
-    else if (user.role === "student") nav("/student");
+    else if (user.role === "student") nav("/"); // use new Home UI
   }
 
   return (

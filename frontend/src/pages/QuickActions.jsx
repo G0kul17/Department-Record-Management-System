@@ -23,8 +23,16 @@ export default function QuickActions() {
   const nav = useNavigate();
   const { user } = useAuth();
   const goTo = (key) => () => {
+    // Common routes
     if (key === "achievements") return nav("/achievements");
     if (key === "projects") return nav("/projects/upload");
+
+    // Staff-only standalone pages without dashboard UI
+    if (key === "verifyAchievements") return nav("/verify-achievements");
+    if (key === "verifyProjects") return nav("/verify-projects");
+    if (key === "staffEvents") return nav("/upload-events");
+
+    // Generic placeholders
     if (key === "community") return nav("/"); // placeholder until community page exists
     if (key === "events") return nav("/events");
     if (key === "alumni") return nav("/"); // placeholder until alumni page exists
@@ -44,6 +52,7 @@ export default function QuickActions() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {/* Always available actions */}
           <Card
             title="Add Achievement"
             desc="Showcase your accomplishments and milestones."
@@ -92,80 +101,165 @@ export default function QuickActions() {
             }
             onClick={goTo("projects")}
           />
-          <Card
-            title="Post Update"
-            desc="Share news or updates with the community."
-            color="#a855f7"
-            icon={
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                className="text-white"
-              >
-                <path
-                  d="M4 6h16M4 12h10M4 18h8"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            }
-            onClick={goTo("community")}
-          />
-          <Card
-            title="Join Discussion"
-            desc="Engage in conversations on the community forums."
-            color="#f97316"
-            icon={
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                className="text-white"
-              >
-                <path
-                  d="M21 15a4 4 0 01-4 4H8l-5 3V7a4 4 0 014-4h10a4 4 0 014 4v8z"
-                  strokeWidth="2"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            }
-            onClick={goTo("community")}
-          />
-          <Card
-            title="View Events"
-            desc="Stay updated on upcoming department events."
-            color="#6366f1"
-            icon={
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                className="text-white"
-              >
-                <rect
-                  x="3"
-                  y="4"
-                  width="18"
-                  height="18"
-                  rx="2"
-                  strokeWidth="2"
-                />
-                <path
-                  d="M16 2v4M8 2v4M3 10h18"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            }
-            onClick={goTo("events")}
-          />
+
+          {/* Role-specific actions for staff */}
+          {user?.role === "staff" ? (
+            <>
+              <Card
+                title="Verify Achievement"
+                desc="Review and verify student achievements."
+                color="#a855f7"
+                icon={
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-white"
+                  >
+                    <path
+                      d="M4 6h16M4 12h10M4 18h8"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                }
+                onClick={goTo("verifyAchievements")}
+              />
+              <Card
+                title="Verify Project"
+                desc="Approve or reject submitted projects."
+                color="#f97316"
+                icon={
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-white"
+                  >
+                    <path
+                      d="M21 15a4 4 0 01-4 4H8l-5 3V7a4 4 0 014-4h10a4 4 0 014 4v8z"
+                      strokeWidth="2"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                }
+                onClick={goTo("verifyProjects")}
+              />
+              <Card
+                title="Upload Events"
+                desc="Create and manage department events."
+                color="#6366f1"
+                icon={
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-white"
+                  >
+                    <rect
+                      x="3"
+                      y="4"
+                      width="18"
+                      height="18"
+                      rx="2"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M16 2v4M8 2v4M3 10h18"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                }
+                onClick={goTo("staffEvents")}
+              />
+            </>
+          ) : (
+            <>
+              <Card
+                title="Post Update"
+                desc="Share news or updates with the community."
+                color="#a855f7"
+                icon={
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-white"
+                  >
+                    <path
+                      d="M4 6h16M4 12h10M4 18h8"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                }
+                onClick={goTo("community")}
+              />
+              <Card
+                title="Join Discussion"
+                desc="Engage in conversations on the community forums."
+                color="#f97316"
+                icon={
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-white"
+                  >
+                    <path
+                      d="M21 15a4 4 0 01-4 4H8l-5 3V7a4 4 0 014-4h10a4 4 0 014 4v8z"
+                      strokeWidth="2"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                }
+                onClick={goTo("community")}
+              />
+              <Card
+                title="View Events"
+                desc="Stay updated on upcoming department events."
+                color="#6366f1"
+                icon={
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-white"
+                  >
+                    <rect
+                      x="3"
+                      y="4"
+                      width="18"
+                      height="18"
+                      rx="2"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M16 2v4M8 2v4M3 10h18"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                }
+                onClick={goTo("events")}
+              />
+            </>
+          )}
+
+          {/* Always available */}
           <Card
             title="Connect with Alumni"
             desc="Network with graduates and build connections."

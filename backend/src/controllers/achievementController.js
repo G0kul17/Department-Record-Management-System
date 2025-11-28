@@ -5,6 +5,7 @@ import pool from "../config/db.js";
 export async function createAchievement(req, res) {
   try {
     const userId = req.user?.id;
+    const userRole = req.user?.role;
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
     const {
@@ -65,9 +66,23 @@ export async function createAchievement(req, res) {
     if (dup.rows.length)
       return res.status(409).json({ message: "Duplicate achievement" });
 
-    const result = await pool.query(
-      "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, date, event_id, name) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *",
-      [
+    let insertSql =
+      "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, date, event_id, name) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *";
+    let params = [
+      userId,
+      title.trim(),
+      issuer.trim(),
+      date_of_award || null,
+      proofFileId,
+      date || null,
+      event_id ? Number(event_id) : null,
+      name.trim(),
+    ];
+    // If staff/admin, auto-approve (verified=true)
+    if (userRole === "staff" || userRole === "admin") {
+      insertSql =
+        "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, date, event_id, name, verified, verification_status, verified_by, verified_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8, true, 'approved', $9, NOW()) RETURNING *";
+      params = [
         userId,
         title.trim(),
         issuer.trim(),
@@ -76,8 +91,10 @@ export async function createAchievement(req, res) {
         date || null,
         event_id ? Number(event_id) : null,
         name.trim(),
-      ]
-    );
+        userId,
+      ];
+    }
+    const result = await pool.query(insertSql, params);
 
     // optional: auto-post to community if requested (left as TODO; integrate with posts endpoint)
     if (post_to_community === "true") {
@@ -96,7 +113,8 @@ export async function createAchievement(req, res) {
 export async function listAchievements(req, res) {
   const { user_id, verified, q, limit = 20, offset = 0 } = req.query;
   try {
-    let base = `SELECT a.*, u.email as user_email, pf.original_name as proof_name
+    let base = `SELECT a.*, u.email as user_email,
+                pf.original_name as proof_name, pf.filename as proof_filename, pf.mime_type as proof_mime
                 FROM achievements a LEFT JOIN users u ON a.user_id=u.id
                 LEFT JOIN project_files pf ON a.proof_file_id = pf.id`;
     const cond = [];
@@ -109,6 +127,10 @@ export async function listAchievements(req, res) {
     if (verified !== undefined) {
       params.push(verified === "true");
       cond.push(`a.verified=$${params.length}`);
+    }
+    if (req.query.status) {
+      params.push(req.query.status);
+      cond.push(`a.verification_status=$${params.length}`);
     }
     if (q) {
       params.push(`%${q}%`);
@@ -135,10 +157,25 @@ export async function listAchievements(req, res) {
 export async function verifyAchievement(req, res) {
   try {
     const id = Number(req.params.id);
-    await pool.query("UPDATE achievements SET verified = true WHERE id=$1", [
-      id,
-    ]);
-    return res.json({ message: "Achievement verified" });
+    await pool.query(
+      "UPDATE achievements SET verified = true, verification_status='approved', verified_by=$2, verified_at=NOW() WHERE id=$1",
+      [id, req.user?.id || null]
+    );
+    return res.json({ message: "Achievement approved" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
+export async function rejectAchievement(req, res) {
+  try {
+    const id = Number(req.params.id);
+    await pool.query(
+      "UPDATE achievements SET verified = false, verification_status='rejected', verified_by=$2, verified_at=NOW() WHERE id=$1",
+      [id, req.user?.id || null]
+    );
+    return res.json({ message: "Achievement rejected" });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server error" });

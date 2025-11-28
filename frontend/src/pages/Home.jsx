@@ -3,14 +3,15 @@ import { useNavigate } from "react-router-dom";
 import Particles from "react-tsparticles";
 import { loadSlim } from "tsparticles-slim";
 import { useAuth } from "../hooks/useAuth";
+// Fetch events from API instead of static data
 import apiClient from "../api/axiosClient";
-import events from "../data/events";
 
 export default function Home() {
   const nav = useNavigate();
   const { user } = useAuth();
   const [evIdx, setEvIdx] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [events, setEvents] = useState([]);
   const [projCount, setProjCount] = useState(null);
   const [achCount, setAchCount] = useState(null);
 
@@ -29,30 +30,40 @@ export default function Home() {
   };
 
   const prev = () => setEvIdx((i) => (i === 0 ? events.length - 1 : i - 1));
-  const next = () => setEvIdx((i) => (i + 1) % events.length);
+  const next = () =>
+    setEvIdx((i) => (events.length ? (i + 1) % events.length : 0));
 
   useEffect(() => {
-    if (paused) return;
+    if (paused || events.length === 0) return;
     const id = setInterval(() => next(), 5000);
     return () => clearInterval(id);
-  }, [paused]);
+  }, [paused, events.length]);
 
   useEffect(() => {
-    // fetch stats in parallel
+    // fetch stats and events (resilient: don't let one failure block others)
     let mounted = true;
     (async () => {
+      const [p, a] = await Promise.allSettled([
+        apiClient.get("/projects/count"),
+        apiClient.get("/achievements/count"),
+      ]);
+      if (!mounted) return;
+      setProjCount(p.status === "fulfilled" ? p.value?.count ?? 0 : 0);
+      setAchCount(a.status === "fulfilled" ? a.value?.count ?? 0 : 0);
+
+      // Always attempt events fetch separately
       try {
-        const [p, a] = await Promise.all([
-          apiClient.get("/projects/count"),
-          apiClient.get("/achievements/count"),
-        ]);
-        if (!mounted) return;
-        setProjCount(p?.count ?? 0);
-        setAchCount(a?.count ?? 0);
-      } catch (e) {
-        if (!mounted) return;
-        setProjCount(0);
-        setAchCount(0);
+        const ev = await apiClient.get("/events?upcomingOnly=true");
+        let evs = ev?.events || [];
+        if (!evs.length) {
+          try {
+            const all = await apiClient.get("/events");
+            evs = all?.events || [];
+          } catch (_) {}
+        }
+        if (mounted) setEvents(evs);
+      } catch (_) {
+        if (mounted) setEvents([]);
       }
     })();
     return () => {
@@ -157,7 +168,7 @@ export default function Home() {
         >
           {events.map((ev, i) => (
             <div
-              key={ev.title}
+              key={ev.id ?? `${ev.title}-${i}`}
               className={`transition-opacity duration-300 ${
                 i === evIdx
                   ? "opacity-100"
@@ -170,16 +181,33 @@ export default function Home() {
                     {ev.title}
                   </h3>
                   <p className="mt-1 text-slate-600 dark:text-slate-300">
-                    {ev.summary}
+                    {ev.description}
                   </p>
                 </div>
                 <div className="text-left sm:text-right">
                   <div className="text-sm text-slate-500">
-                    {new Date(ev.date).toLocaleDateString()}
+                    {new Date(ev.start_date).toLocaleString()}
+                    {ev.end_date && (
+                      <span className="ml-1">
+                        – {new Date(ev.end_date).toLocaleString()}
+                      </span>
+                    )}
                   </div>
                   <div className="text-sm text-slate-600 dark:text-slate-300">
-                    {ev.location}
+                    {ev.venue}
                   </div>
+                  {ev.event_url && (
+                    <div className="mt-2">
+                      <a
+                        href={ev.event_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center rounded-md bg-blue-600 px-3 py-1 text-xs font-semibold text-white shadow hover:bg-blue-700"
+                      >
+                        Register
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

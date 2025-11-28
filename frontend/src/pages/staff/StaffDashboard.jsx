@@ -17,39 +17,50 @@ const StaffDashboard = () => {
         <div className="flex items-start gap-6">
           <aside className="w-64 rounded-xl border bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="mb-4">
-              <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">{user?.fullName || user?.email || "Staff"}</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">Staff Portal</div>
+              <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                {user?.fullName || user?.email || "Staff"}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                Staff Portal
+              </div>
             </div>
             <nav className="space-y-2">
-              <Link className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800" to="/staff">
+              <Link
+                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                to="/staff"
+              >
                 Overview
               </Link>
-              <Link className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800" to="/staff/projects">
+              <Link
+                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                to="/staff/projects"
+              >
                 Projects
               </Link>
-              <Link className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800" to="/staff/achievements">
+              <Link
+                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                to="/staff/achievements"
+              >
                 Achievements
               </Link>
-              <Link className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800" to="/staff/events">
+              <Link
+                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                to="/staff/events"
+              >
                 Events
               </Link>
             </nav>
           </aside>
 
           <main className="flex-1">
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <h1 className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">{`Welcome, ${user?.fullName || user?.email || "Staff"}`}</h1>
-              <p className="text-slate-600 dark:text-slate-300 mt-1">Use the side menu to manage projects, achievements and events.</p>
-            </div>
-
-            <div className="mt-6">
+            <div className="mt-0">
               <Routes>
-                <Route
-                  index
-                  element={<OverviewPanel />}
-                />
+                <Route index element={<OverviewPanel user={user} />} />
                 <Route path="projects" element={<ProjectsManagement />} />
-                <Route path="achievements" element={<AchievementsManagement />} />
+                <Route
+                  path="achievements"
+                  element={<AchievementsManagement />}
+                />
                 <Route path="events" element={<EventsManagement />} />
               </Routes>
             </div>
@@ -60,7 +71,7 @@ const StaffDashboard = () => {
   );
 };
 
-function OverviewPanel() {
+function OverviewPanel({ user }) {
   const [projCount, setProjCount] = useState(null);
   const [achCount, setAchCount] = useState(null);
 
@@ -88,21 +99,40 @@ function OverviewPanel() {
 
   return (
     <div className="space-y-6">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <h1 className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">{`Welcome, ${
+          user?.fullName || user?.email || "Staff"
+        }`}</h1>
+        <p className="text-slate-600 dark:text-slate-300 mt-1">
+          Use the side menu to manage projects, achievements and events.
+        </p>
+      </div>
+
       <QuickActions />
 
       <div>
-        <h2 className="mb-4 text-xl font-bold text-slate-800 dark:text-slate-100">At a Glance</h2>
+        <h2 className="mb-4 text-xl font-bold text-slate-800 dark:text-slate-100">
+          At a Glance
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-cyan-200 to-blue-300 dark:from-cyan-900/50 dark:to-blue-900/60 dark:ring-white/10">
-            <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">Projects</div>
+            <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+              Projects
+            </div>
             <div className="mt-2 flex items-end gap-3">
-              <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">{projCount === null ? "—" : projCount}</div>
+              <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">
+                {projCount === null ? "—" : projCount}
+              </div>
             </div>
           </div>
           <div className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-fuchsia-200 to-rose-300 dark:from-fuchsia-900/50 dark:to-rose-900/60 dark:ring-white/10">
-            <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">Achievements</div>
+            <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+              Achievements
+            </div>
             <div className="mt-2 flex items-end gap-3">
-              <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">{achCount === null ? "—" : achCount}</div>
+              <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">
+                {achCount === null ? "—" : achCount}
+              </div>
             </div>
           </div>
         </div>

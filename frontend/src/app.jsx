@@ -10,7 +10,10 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import StaffDashboard from "./pages/staff/StaffDashboard";
-// Old StudentDashboard removed; route will redirect to Home
+import VerifyProjects from "./pages/staff/VerifyProjects";
+import VerifyAchievements from "./pages/staff/VerifyAchievements";
+import UploadEvents from "./pages/staff/UploadEvents";
+import StudentDashboard from "./pages/student/StudentDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./hooks/useAuth";
 import Home from "./pages/Home";
@@ -45,7 +48,7 @@ export default function App() {
         <Route
           path="/achievements"
           element={
-            <ProtectedRoute allowedRoles={["student", "alumni"]}>
+            <ProtectedRoute allowedRoles={["student", "alumni", "staff"]}>
               <Achievements />
             </ProtectedRoute>
           }
@@ -112,13 +115,53 @@ export default function App() {
           }
         />
 
+        {/** Standalone staff pages without dashboard layout (top-level to avoid /staff/* overlap) */}
+        <Route
+          path="/verify-projects"
+          element={
+            <ProtectedRoute allowedRoles={["staff", "admin"]}>
+              <VerifyProjects />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/verify-achievements"
+          element={
+            <ProtectedRoute allowedRoles={["staff", "admin"]}>
+              <VerifyAchievements />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/upload-events"
+          element={
+            <ProtectedRoute allowedRoles={["staff", "admin"]}>
+              <UploadEvents />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/student/*"
           element={
             <ProtectedRoute allowedRoles={["student"]}>
-              <Navigate to="/" />
+              <StudentDashboard />
             </ProtectedRoute>
           }
+        />
+
+        {/** Backward-compatible redirects from old staff paths */}
+        <Route
+          path="/staff/verify-projects"
+          element={<Navigate to="/verify-projects" replace />}
+        />
+        <Route
+          path="/staff/verify-achievements"
+          element={<Navigate to="/verify-achievements" replace />}
+        />
+        <Route
+          path="/staff/upload-events"
+          element={<Navigate to="/upload-events" replace />}
         />
 
         <Route

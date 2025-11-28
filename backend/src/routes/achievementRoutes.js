@@ -6,6 +6,7 @@ import {
   createAchievement,
   listAchievements,
   verifyAchievement,
+  rejectAchievement,
   getAchievementsCount,
 } from "../controllers/achievementController.js";
 import { upload } from "../config/upload.js";
@@ -16,7 +17,7 @@ const router = express.Router();
 router.post(
   "/",
   requireAuth,
-  requireRole(["student", "alumni"]),
+  requireRole(["student", "alumni", "staff"]),
   upload.single("proof"),
   createAchievement
 );
@@ -29,8 +30,16 @@ router.get("/count", getAchievementsCount);
 router.post(
   "/:id/verify",
   requireAuth,
-  requireRole(["admin"]),
+  requireRole(["admin", "staff"]),
   verifyAchievement
+);
+
+// Staff/Admin rejects achievement
+router.post(
+  "/:id/reject",
+  requireAuth,
+  requireRole(["admin", "staff"]),
+  rejectAchievement
 );
 
 export default router;

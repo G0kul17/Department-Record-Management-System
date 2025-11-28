@@ -8,6 +8,7 @@ import {
   listProjects,
   getProjectDetails,
   verifyProject,
+  rejectProject,
   getProjectsCount,
 } from "../controllers/projectController.js";
 import { upload } from "../config/upload.js";
@@ -33,12 +34,26 @@ router.post(
   uploadFilesToProject
 );
 
-router.get("/", requireAuth, listProjects);
-router.get("/:id", requireAuth, getProjectDetails);
-// Public count endpoint for homepage stats
+// Public count endpoint for homepage stats (must be BEFORE any ":id" route)
 router.get("/count", getProjectsCount);
 
+router.get("/", requireAuth, listProjects);
+router.get("/:id", requireAuth, getProjectDetails);
+
 // Admin verifies project
-router.post("/:id/verify", requireAuth, requireRole(["admin"]), verifyProject);
+router.post(
+  "/:id/verify",
+  requireAuth,
+  requireRole(["admin", "staff"]),
+  verifyProject
+);
+
+// Staff/Admin rejects project
+router.post(
+  "/:id/reject",
+  requireAuth,
+  requireRole(["admin", "staff"]),
+  rejectProject
+);
 
 export default router;

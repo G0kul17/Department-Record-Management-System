@@ -14,11 +14,24 @@
 ✔ add drop down for the titles in the achievements page Hackathon - Paper presentation,Coding competition,Conference presentation,Journal publications,NPTEL certificate,other MOOC courses,Internship certificate @done (11/27/2025, 1:17:09 PM)
 ✔ add refresh button in that same page. @done (11/27/2025, 1:21:27 PM)
 --------------------------------------------------------
-☐ Maintain the dashboard as like in the student after login with quickactions and some statistical reports of the project and acheivement uploaded
-☐ fix the cta's of Verify Projects, Verify acheivement, Upload Project, upload acheivement, Upload Event as like in the student page after quickactions page
-☐ In verify project -> student uploaded project will display and the staff can have the option to approve, reject, and give the suggestions.
-☐ In verify acheivement -> student uploaded acheivement will display and the staff can have the option to approve, reject, and give the suggestions.
+✔ Maintain the dashboard as like in the student after login with quickactions and some statistical reports of the project and acheivement uploaded @done (11/28/2025, 7:16:59 PM)
+✔ fix the cta's of Verify Projects, Verify acheivement, Upload Project, upload acheivement, Upload Event as like in the student page after quickactions page @done (11/28/2025, 8:09:25 PM)
+✔ In verify project -> student uploaded project will display and the staff can have the option to approve, reject, and give the suggestions. @done (11/28/2025, 8:09:00 PM)
+✔ In verify acheivement -> student uploaded acheivement will display and the staff can have the option to approve, reject, and give the suggestions. @done (11/28/2025, 8:09:03 PM)
 ☐ In Upload Project -> staff can also upload the project but it will need not to be evaluated.
 ☐ In Upload acheivement -> staff can also share the achievements it will also need not to be evaluated
-☐ Achievements also be fix as a dropdown with (patterns, NPTEL, Conference, ..)
-☐ In Upload Event -> staff can upload the event that is going to be conducted for the students.
+✔ Achievements also be fix as a dropdown with (patterns, NPTEL, Conference, ..) @done (11/28/2025, 7:16:21 PM)
+✔ In Upload Event -> staff can upload the event that is going to be conducted for the students. @done (11/28/2025, 7:16:13 PM)
+✔ add url in the event upload section for more details @done (11/28/2025, 6:58:25 PM)
+✔ after uploading the event it will be shown in the home page of the student and staff with the details @done (11/28/2025, 7:14:03 PM)
+☐ achievements should directly approved for staff
+☐ in student event page update the events that uploaded by the staff
+☐ add delete button in the event uploaded by the staff
+☐ the student should recieve the mail once the staff approved the project or achievements
+☐ Generate audit reports (e.g., export records/projects by year). Search/Filter: By year, type, user, keywords
+☐ verify the events page for the staff if the url is working or not.
+-------------------------------------------------------------------------
+☐ for admin full access to all the modules
+☐ Verify and approve user-submitted records (e.g., certificates, project files)
+☐ Manage users: Add/remove staff/students, assign roles.
+☐ Generate audit reports (e.g., export records/projects by year). Search/Filter: By year, type, user, keywords

@@ -98,6 +98,11 @@ export default function Achievements() {
     }
   };
 
+  const isStaff =
+    (user?.role || "").toLowerCase() === "staff" ||
+    (user?.role || "").toLowerCase() === "admin";
+  const nameLabel = isStaff ? "Name of the Staff" : "Name of the Student";
+
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950">
       <div className="mx-auto max-w-6xl px-6 py-10">
@@ -223,7 +228,7 @@ export default function Achievements() {
 
             <div className="mt-4">
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                Name of the Student <span className="text-red-600">*</span>
+                {nameLabel} <span className="text-red-600">*</span>
               </label>
               <input
                 type="text"
@@ -290,37 +295,49 @@ export default function Achievements() {
                   No achievements yet.
                 </div>
               )}
-              {list.map((a) => (
-                <div
-                  key={a.id}
-                  className="rounded-lg border border-slate-200 p-4 dark:border-slate-700"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-semibold text-slate-800 dark:text-slate-100">
-                        {a.title}
+              {list.map((a) => {
+                const isApproved =
+                  (a.verification_status || "").toLowerCase() === "approved" ||
+                  a.verified === true;
+                const isRejected =
+                  (a.verification_status || "").toLowerCase() === "rejected";
+                return (
+                  <div
+                    key={a.id}
+                    className="rounded-lg border border-slate-200 p-4 dark:border-slate-700"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-semibold text-slate-800 dark:text-slate-100">
+                          {a.title}
+                        </div>
+                        <div className="text-sm text-slate-600 dark:text-slate-300">
+                          {a.issuer || ""}
+                        </div>
                       </div>
-                      <div className="text-sm text-slate-600 dark:text-slate-300">
-                        {a.issuer || ""}
-                      </div>
+                      {isApproved ? (
+                        <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-300">
+                          Approved
+                        </span>
+                      ) : isRejected ? (
+                        <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                          Rejected
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
+                          Pending
+                        </span>
+                      )}
                     </div>
-                    {a.verified ? (
-                      <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-300">
-                        Verified
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
-                        Pending
-                      </span>
+                    {a.date_of_award && (
+                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        Awarded:{" "}
+                        {new Date(a.date_of_award).toLocaleDateString()}
+                      </div>
                     )}
                   </div>
-                  {a.date_of_award && (
-                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      Awarded: {new Date(a.date_of_award).toLocaleDateString()}
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>

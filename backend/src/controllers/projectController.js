@@ -53,10 +53,25 @@ export async function createProject(req, res) {
         message: "Project with same title, mentor and year already exists",
       });
 
-    const { rows } = await pool.query(
-      `INSERT INTO projects (title, description, mentor_name, academic_year, status, created_by, team_members_count, team_member_names, github_url)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
-      [
+    // If staff/admin creator, auto-approve the project
+    const isStaff = req.user?.role === "staff" || req.user?.role === "admin";
+    let insertSql = `INSERT INTO projects (title, description, mentor_name, academic_year, status, created_by, team_members_count, team_member_names, github_url)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`;
+    let insertParams = [
+      title.trim(),
+      description || null,
+      mentor_name.trim(),
+      academic_year || null,
+      status || "ongoing",
+      created_by || null,
+      team_members_count ? Number(team_members_count) : null,
+      team_member_names || null,
+      gh,
+    ];
+    if (isStaff) {
+      insertSql = `INSERT INTO projects (title, description, mentor_name, academic_year, status, created_by, team_members_count, team_member_names, github_url, verified, verification_status, verified_by, verified_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, true, 'approved', $10, NOW()) RETURNING *`;
+      insertParams = [
         title.trim(),
         description || null,
         mentor_name.trim(),
@@ -66,8 +81,10 @@ export async function createProject(req, res) {
         team_members_count ? Number(team_members_count) : null,
         team_member_names || null,
         gh,
-      ]
-    );
+        created_by || null,
+      ];
+    }
+    const { rows } = await pool.query(insertSql, insertParams);
     const project = rows[0];
 
     // handle uploaded files if any
@@ -196,6 +213,10 @@ export async function listProjects(req, res) {
       params.push(verified === "true");
       conditions.push(`p.verified = $${params.length}`);
     }
+    if (req.query.status) {
+      params.push(req.query.status);
+      conditions.push(`p.verification_status = $${params.length}`);
+    }
     if (q) {
       params.push(`%${q}%`);
       conditions.push(
@@ -247,13 +268,33 @@ export async function getProjectDetails(req, res) {
 }
 
 export async function verifyProject(req, res) {
-  // Admin verifies a project
+  // Staff/Admin approves a project
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || Number.isNaN(id))
       return res.status(400).json({ message: "Invalid project id" });
-    await pool.query("UPDATE projects SET verified = true WHERE id=$1", [id]);
-    return res.json({ message: "Project verified" });
+    await pool.query(
+      "UPDATE projects SET verified = true, verification_status='approved', verified_by=$2, verified_at=NOW() WHERE id=$1",
+      [id, req.user?.id || null]
+    );
+    return res.json({ message: "Project approved" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
+export async function rejectProject(req, res) {
+  // Staff/Admin rejects a project
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || Number.isNaN(id))
+      return res.status(400).json({ message: "Invalid project id" });
+    await pool.query(
+      "UPDATE projects SET verified = false, verification_status='rejected', verified_by=$2, verified_at=NOW() WHERE id=$1",
+      [id, req.user?.id || null]
+    );
+    return res.json({ message: "Project rejected" });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server error" });

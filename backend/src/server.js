@@ -4,8 +4,9 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
 import achievementRoutes from "./routes/achievementRoutes.js";
-import staffRoutes from './routes/staffRoutes.js';
-import eventPublicRoutes from './routes/eventPublicRoutes.js'; // optional separate public events routes
+import staffRoutes from "./routes/staffRoutes.js";
+import eventPublicRoutes from "./routes/eventPublicRoutes.js"; // public events list
+import eventRoutes from "./routes/eventRoutes.js"; // staff/admin event management
 import pool from "./config/db.js";
 import fs from "fs";
 import path from "path";
@@ -41,9 +42,10 @@ app.use(
 );
 
 // after app.use('/api/auth', authRoutes);
-app.use('/api/staff', staffRoutes);
+app.use("/api/staff", staffRoutes);
 // Optionally expose events publicly for students
-app.use('/api/events', (await import('./routes/eventPublicRoutes.js')).default);
+app.use("/api/events", eventPublicRoutes);
+app.use("/api/events-admin", eventRoutes);
 
 // optional: create tables if not exist on startup
 async function ensureTables() {

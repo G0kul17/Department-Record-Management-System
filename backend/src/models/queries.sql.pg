@@ -116,6 +116,15 @@ ALTER TABLE achievements
   ADD COLUMN IF NOT EXISTS verified_by INTEGER,
   ADD COLUMN IF NOT EXISTS verified_at TIMESTAMP;
 
+-- Backfill verification_status to 'pending' where items are not verified and status is NULL
+UPDATE projects
+SET verification_status = 'pending'
+WHERE verified = FALSE AND (verification_status IS NULL OR verification_status = '');
+
+UPDATE achievements
+SET verification_status = 'pending'
+WHERE verified = FALSE AND (verification_status IS NULL OR verification_status = '');
+
 -- ==========================================================
 --  EVENTS TABLE (created by staff, shown to students)
 -- ==========================================================
@@ -163,3 +172,6 @@ BEGIN
   END IF;
 END
 $$;
+
+-- Add event_url for registration links
+ALTER TABLE events ADD COLUMN IF NOT EXISTS event_url TEXT;

@@ -131,14 +131,24 @@ export async function deleteEvent(req, res) {
 // List events (public to students and staff)
 export async function listEvents(req, res) {
   try {
-    const { upcomingOnly } = req.query;
-    let q =
-      "SELECT id, title, description, venue, start_date, end_date, attachments, event_url FROM events";
+    const { upcomingOnly, order, limit } = req.query;
+    // select created_at so caller can order by creation time
+    const cols = "id, title, description, venue, start_date, end_date, attachments, event_url, created_at";
+    let q = `SELECT ${cols} FROM events`;
+    const parts = [];
     if (upcomingOnly === "true") {
-      // Show upcoming OR ongoing events: if end_date is set, use it; else use start_date
-      q += " WHERE COALESCE(end_date, start_date) >= NOW()";
+      parts.push("COALESCE(end_date, start_date) >= NOW()");
     }
-    q += " ORDER BY start_date ASC";
+    if (parts.length) q += " WHERE " + parts.join(" AND ");
+
+    if (order === "latest") q += " ORDER BY created_at DESC";
+    else q += " ORDER BY start_date ASC";
+
+    if (limit) {
+      const n = Math.max(1, Math.min(200, parseInt(limit, 10) || 0));
+      q += ` LIMIT ${n}`;
+    }
+
     const { rows } = await pool.query(q);
     return res.json({ events: rows });
   } catch (err) {

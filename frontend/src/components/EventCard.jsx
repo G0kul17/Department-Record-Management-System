@@ -13,8 +13,13 @@ export default function EventCard({
   color,
   to,
   onClick,
+  eventUrl,
 }) {
   const bg = color || COLORS[(id - 1) % COLORS.length];
+
+  // Determine view action: if `eventUrl` provided, open external link
+  const isExternal = typeof eventUrl === "string" && eventUrl.trim().length > 0;
+
   return (
     <div className="relative">
       <div
@@ -28,7 +33,7 @@ export default function EventCard({
             <h3 className="text-xl font-bold drop-shadow-sm">{title}</h3>
             <p className="mt-2 text-white/90 text-sm">{summary}</p>
             <div className="mt-3 text-sm text-white/90">
-              <span className="font-medium">{new Date(date).toLocaleDateString()}</span>
+              <span className="font-medium">{date ? new Date(date).toLocaleDateString() : ""}</span>
               <span className="mx-2">•</span>
               <span>{location}</span>
             </div>
@@ -42,7 +47,28 @@ export default function EventCard({
                 <div className="text-sm">{grant.amount}</div>
               </div>
             )}
-            {to ? (
+
+            {isExternal ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                    // debug log to help diagnose non-opening links
+                    try {
+                      // eslint-disable-next-line no-console
+                      console.debug("EventCard.open() url=", eventUrl);
+                      window.open(eventUrl, "_blank", "noopener,noreferrer");
+                    } catch (err) {
+                      // fallback to location assignment
+                      // eslint-disable-next-line no-console
+                      console.debug("EventCard.open() fallback to href; err=", err);
+                      window.location.href = eventUrl;
+                    }
+                }}
+                className="inline-block rounded-md bg-white/90 text-slate-900 px-3 py-1 text-sm font-medium"
+              >
+                Open
+              </button>
+            ) : to ? (
               <Link
                 to={to}
                 className="inline-block rounded-md bg-white/90 text-slate-900 px-3 py-1 text-sm font-medium"

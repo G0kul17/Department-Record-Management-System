@@ -318,6 +318,15 @@ function detectFileTypeByField(fieldname) {
 
 export async function getProjectsCount(req, res) {
   try {
+    const { verified } = req.query;
+    if (verified !== undefined) {
+      const val = verified === "true";
+      const { rows } = await pool.query(
+        "SELECT COUNT(*)::int AS count FROM projects WHERE verified = $1",
+        [val]
+      );
+      return res.json({ count: rows[0]?.count ?? 0 });
+    }
     const { rows } = await pool.query(
       "SELECT COUNT(*)::int AS count FROM projects"
     );

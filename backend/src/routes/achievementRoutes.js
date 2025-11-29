@@ -8,6 +8,7 @@ import {
   verifyAchievement,
   rejectAchievement,
   getAchievementsCount,
+  getAchievementDetails,
 } from "../controllers/achievementController.js";
 import { upload } from "../config/upload.js";
 
@@ -25,6 +26,9 @@ router.post(
 router.get("/", requireAuth, listAchievements);
 // Public count endpoint for homepage stats
 router.get("/count", getAchievementsCount);
+
+// Single achievement details
+router.get("/:id", requireAuth, getAchievementDetails);
 
 // Admin verifies achievement
 router.post(

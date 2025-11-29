@@ -10,9 +10,10 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import StaffDashboard from "./pages/staff/StaffDashboard";
-import VerifyProjects from "./pages/staff/VerifyProjects";
 import VerifyAchievements from "./pages/staff/VerifyAchievements";
+import VerifyProjects from "./pages/staff/VerifyProjects";
 import UploadEvents from "./pages/staff/UploadEvents";
+import ReportGenerator from "./pages/staff/ReportGenerator";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./hooks/useAuth";
@@ -21,6 +22,10 @@ import QuickActions from "./pages/QuickActions";
 import Achievements from "./pages/student/StudentsAchievements";
 import ProjectUpload from "./pages/student/StudentsProjectUpload";
 import Events from "./pages/student/StudentsEventsReg";
+import ProjectsApproved from "./pages/ProjectsApproved";
+import AchievementsApproved from "./pages/AchievementsApproved";
+import ProjectDetail from "./pages/ProjectDetail";
+import AchievementDetail from "./pages/AchievementDetail";
 
 function RoleRedirect() {
   const { user } = useAuth();
@@ -78,12 +83,45 @@ export default function App() {
           }
         />
         <Route
+          path="/projects/:id"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "staff", "student"]}>
+              <ProjectDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/achievements/:id"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "staff", "student"]}>
+              <AchievementDetail />
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route
           path="/quick-actions"
           element={
             <ProtectedRoute
               allowedRoles={["admin", "staff", "student", "alumni"]}
             >
               <QuickActions />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects/approved"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "staff", "student"]}>
+              <ProjectsApproved />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/achievements/approved"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "staff", "student"]}>
+              <AchievementsApproved />
             </ProtectedRoute>
           }
         />
@@ -137,6 +175,14 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={["staff", "admin"]}>
               <UploadEvents />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/staff/reports"
+          element={
+            <ProtectedRoute allowedRoles={["staff", "admin"]}>
+              <ReportGenerator />
             </ProtectedRoute>
           }
         />

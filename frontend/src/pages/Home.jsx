@@ -5,12 +5,11 @@ import { loadSlim } from "tsparticles-slim";
 import { useAuth } from "../hooks/useAuth";
 // Fetch events from API instead of static data
 import apiClient from "../api/axiosClient";
+import EventsCarousel from "../components/EventsCarousel";
 
 export default function Home() {
   const nav = useNavigate();
   const { user } = useAuth();
-  const [evIdx, setEvIdx] = useState(0);
-  const [paused, setPaused] = useState(false);
   const [events, setEvents] = useState([]);
   const [projCount, setProjCount] = useState(null);
   const [achCount, setAchCount] = useState(null);
@@ -29,38 +28,24 @@ export default function Home() {
     return nav("/quick-actions");
   };
 
-  const prev = () => setEvIdx((i) => (i === 0 ? events.length - 1 : i - 1));
-  const next = () =>
-    setEvIdx((i) => (events.length ? (i + 1) % events.length : 0));
-
-  useEffect(() => {
-    if (paused || events.length === 0) return;
-    const id = setInterval(() => next(), 5000);
-    return () => clearInterval(id);
-  }, [paused, events.length]);
+  // carousel handled by EventsCarousel component
 
   useEffect(() => {
     // fetch stats and events (resilient: don't let one failure block others)
     let mounted = true;
     (async () => {
       const [p, a] = await Promise.allSettled([
-        apiClient.get("/projects/count"),
-        apiClient.get("/achievements/count"),
+        apiClient.get("/projects/count?verified=true"),
+        apiClient.get("/achievements/count?verified=true"),
       ]);
       if (!mounted) return;
       setProjCount(p.status === "fulfilled" ? p.value?.count ?? 0 : 0);
       setAchCount(a.status === "fulfilled" ? a.value?.count ?? 0 : 0);
 
-      // Always attempt events fetch separately
+      // fetch latest 4 events (last added)
       try {
-        const ev = await apiClient.get("/events?upcomingOnly=true");
-        let evs = ev?.events || [];
-        if (!evs.length) {
-          try {
-            const all = await apiClient.get("/events");
-            evs = all?.events || [];
-          } catch (_) {}
-        }
+        const ev = await apiClient.get("/events?order=latest&limit=4");
+        const evs = ev?.events || [];
         if (mounted) setEvents(evs);
       } catch (_) {
         if (mounted) setEvents([]);
@@ -153,121 +138,15 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Events slider */}
+      {/* Events carousel (latest 4 events) */}
       <div className="mx-auto max-w-6xl px-6 pb-16">
         <div className="mb-4">
           <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
             Events
           </h2>
         </div>
-
-        <div
-          className="relative overflow-hidden rounded-xl shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-indigo-100 to-slate-200 dark:from-slate-800/70 dark:to-slate-900/70 dark:ring-white/10"
-          onMouseEnter={() => setPaused(true)}
-          onMouseLeave={() => setPaused(false)}
-        >
-          {events.map((ev, i) => (
-            <div
-              key={ev.id ?? `${ev.title}-${i}`}
-              className={`transition-opacity duration-300 ${
-                i === evIdx
-                  ? "opacity-100"
-                  : "opacity-0 absolute inset-0 pointer-events-none"
-              }`}
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 p-6 pb-16">
-                <div className="sm:col-span-2 text-left">
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    {ev.title}
-                  </h3>
-                  <p className="mt-1 text-slate-600 dark:text-slate-300">
-                    {ev.description}
-                  </p>
-                </div>
-                <div className="text-left sm:text-right">
-                  <div className="text-sm text-slate-500">
-                    {new Date(ev.start_date).toLocaleString()}
-                    {ev.end_date && (
-                      <span className="ml-1">
-                        – {new Date(ev.end_date).toLocaleString()}
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-sm text-slate-600 dark:text-slate-300">
-                    {ev.venue}
-                  </div>
-                  {ev.event_url && (
-                    <div className="mt-2">
-                      <a
-                        href={ev.event_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center rounded-md bg-blue-600 px-3 py-1 text-xs font-semibold text-white shadow hover:bg-blue-700"
-                      >
-                        Register
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {/* Bottom corner arrows */}
-          <button
-            onClick={prev}
-            aria-label="Previous event"
-            className="absolute bottom-3 left-3 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white/90 text-slate-700 hover:bg-white shadow-sm backdrop-blur-sm dark:bg-slate-800/80 dark:border-slate-600 dark:text-slate-200"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="h-5 w-5"
-            >
-              <path
-                d="M15 6l-6 6 6 6"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-          <button
-            onClick={next}
-            aria-label="Next event"
-            className="absolute bottom-3 right-3 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white/90 text-slate-700 hover:bg-white shadow-sm backdrop-blur-sm dark:bg-slate-800/80 dark:border-slate-600 dark:text-slate-200"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="h-5 w-5"
-            >
-              <path
-                d="M9 6l6 6-6 6"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        </div>
-
-        {/* Dots */}
-        <div className="mt-3 flex justify-center gap-2">
-          {events.map((_, i) => (
-            <button
-              key={i}
-              aria-label={`Go to event ${i + 1}`}
-              onClick={() => setEvIdx(i)}
-              className={`h-2.5 w-2.5 rounded-full ${
-                i === evIdx ? "bg-blue-600" : "bg-slate-300 dark:bg-slate-600"
-              }`}
-            />
-          ))}
+        <div className="mt-2">
+          <EventsCarousel events={events} intervalMs={5000} />
         </div>
       </div>
 
@@ -277,7 +156,7 @@ export default function Home() {
           At a Glance
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-cyan-200 to-blue-300 dark:from-cyan-900/50 dark:to-blue-900/60 dark:ring-white/10">
+          <button onClick={() => nav('/projects/approved')} className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-cyan-200 to-blue-300 dark:from-cyan-900/50 dark:to-blue-900/60 dark:ring-white/10 text-left">
             <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
               Projects
             </div>
@@ -286,8 +165,8 @@ export default function Home() {
                 {projCount === null ? "—" : projCount}
               </div>
             </div>
-          </div>
-          <div className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-fuchsia-200 to-rose-300 dark:from-fuchsia-900/50 dark:to-rose-900/60 dark:ring-white/10">
+          </button>
+          <button onClick={() => nav('/achievements/approved')} className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-fuchsia-200 to-rose-300 dark:from-fuchsia-900/50 dark:to-rose-900/60 dark:ring-white/10 text-left">
             <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
               Achievements
             </div>
@@ -296,7 +175,7 @@ export default function Home() {
                 {achCount === null ? "—" : achCount}
               </div>
             </div>
-          </div>
+          </button>
         </div>
       </div>
     </div>

@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import Particles from "react-tsparticles";
 import { loadSlim } from "tsparticles-slim";
 import { useAuth } from "../../hooks/useAuth";
 import apiClient from "../../api/axiosClient";
+import { useNavigate } from "react-router-dom";
 import events from "../../data/events";
 
 export default function StudentDashboard() {
@@ -249,7 +249,7 @@ export default function StudentDashboard() {
           At a Glance
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-cyan-200 to-blue-300 dark:from-cyan-900/50 dark:to-blue-900/60 dark:ring-white/10">
+          <button onClick={() => nav('/projects/approved')} className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-cyan-200 to-blue-300 dark:from-cyan-900/50 dark:to-blue-900/60 dark:ring-white/10 text-left">
             <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
               Projects
             </div>
@@ -258,8 +258,8 @@ export default function StudentDashboard() {
                 {projCount === null ? "—" : projCount}
               </div>
             </div>
-          </div>
-          <div className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-fuchsia-200 to-rose-300 dark:from-fuchsia-900/50 dark:to-rose-900/60 dark:ring-white/10">
+          </button>
+          <button onClick={() => nav('/achievements/approved')} className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-fuchsia-200 to-rose-300 dark:from-fuchsia-900/50 dark:to-rose-900/60 dark:ring-white/10 text-left">
             <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
               Achievements
             </div>
@@ -268,7 +268,7 @@ export default function StudentDashboard() {
                 {achCount === null ? "—" : achCount}
               </div>
             </div>
-          </div>
+          </button>
         </div>
       </div>
     </div>

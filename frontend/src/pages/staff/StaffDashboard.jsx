@@ -7,6 +7,7 @@ import EventsManagement from "./EventsManagement";
 import QuickActions from "../QuickActions";
 import apiClient from "../../api/axiosClient";
 import { useEffect, useState } from "react";
+import EventsCarousel from "../../components/EventsCarousel";
 
 const StaffDashboard = () => {
   const { user } = useAuth();
@@ -74,14 +75,16 @@ const StaffDashboard = () => {
 function OverviewPanel({ user }) {
   const [projCount, setProjCount] = useState(null);
   const [achCount, setAchCount] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
         const [p, a] = await Promise.all([
-          apiClient.get("/projects/count"),
-          apiClient.get("/achievements/count"),
+          apiClient.get("/projects/count?verified=true"),
+          apiClient.get("/achievements/count?verified=true"),
         ]);
         if (!mounted) return;
         setProjCount(p?.count ?? 0);
@@ -90,6 +93,20 @@ function OverviewPanel({ user }) {
         if (!mounted) return;
         setProjCount(0);
         setAchCount(0);
+      }
+    })();
+    // load last 4 added events for staff overview (carousel)
+    (async () => {
+      setLoadingEvents(true);
+      try {
+        const ev = await apiClient.get("/events?order=latest&limit=4");
+        if (!mounted) return;
+        setEvents(ev?.events || []);
+      } catch (e) {
+        console.error(e);
+        if (mounted) setEvents([]);
+      } finally {
+        if (mounted) setLoadingEvents(false);
       }
     })();
     return () => {
@@ -115,7 +132,7 @@ function OverviewPanel({ user }) {
           At a Glance
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-cyan-200 to-blue-300 dark:from-cyan-900/50 dark:to-blue-900/60 dark:ring-white/10">
+          <button onClick={() => window.location.href = '/projects/approved'} className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-cyan-200 to-blue-300 dark:from-cyan-900/50 dark:to-blue-900/60 dark:ring-white/10 text-left">
             <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
               Projects
             </div>
@@ -124,8 +141,8 @@ function OverviewPanel({ user }) {
                 {projCount === null ? "—" : projCount}
               </div>
             </div>
-          </div>
-          <div className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-fuchsia-200 to-rose-300 dark:from-fuchsia-900/50 dark:to-rose-900/60 dark:ring-white/10">
+          </button>
+          <button onClick={() => window.location.href = '/achievements/approved'} className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-fuchsia-200 to-rose-300 dark:from-fuchsia-900/50 dark:to-rose-900/60 dark:ring-white/10 text-left">
             <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
               Achievements
             </div>
@@ -134,8 +151,19 @@ function OverviewPanel({ user }) {
                 {achCount === null ? "—" : achCount}
               </div>
             </div>
-          </div>
+          </button>
         </div>
+      </div>
+
+      <div>
+        <h3 className="mt-6 mb-3 text-lg font-semibold text-slate-800 dark:text-slate-100">Latest Events</h3>
+        {loadingEvents ? (
+          <div className="text-sm text-slate-600">Loading events...</div>
+        ) : events.length === 0 ? (
+          <div className="text-sm text-slate-600">No events yet.</div>
+        ) : (
+          <EventsCarousel events={events} intervalMs={4500} />
+        )}
       </div>
     </div>
   );

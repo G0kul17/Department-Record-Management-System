@@ -23,6 +23,7 @@ export default function ReportGenerator() {
 
   // filters
   const [issuer, setIssuer] = useState("");
+  const [titleFilter, setTitleFilter] = useState("");
   const [student, setStudent] = useState("");
   const [verified, setVerified] = useState("");
   const [fromDate, setFromDate] = useState("");
@@ -34,7 +35,8 @@ export default function ReportGenerator() {
     (async () => {
       setLoading(true);
       try {
-        const endpoint = mode === "achievements" ? "/achievements?limit=2000" : "/projects?verified=true&limit=2000";
+        // For reports we want all user-entered records, not just verified ones
+        const endpoint = mode === "achievements" ? "/achievements?limit=2000" : "/projects?limit=2000";
         const data = await apiClient.get(endpoint);
         if (!mounted) return;
         setItems(mode === "achievements" ? (data.achievements || []) : (data.projects || []));
@@ -56,6 +58,14 @@ export default function ReportGenerator() {
     return Array.from(s).sort();
   }, [items]);
 
+  const titleOptions = useMemo(() => {
+    const s = new Set();
+    items.forEach((it) => {
+      if (it.title) s.add(it.title);
+    });
+    return Array.from(s).sort();
+  }, [items]);
+
   const studentOptions = useMemo(() => {
     const s = new Set();
     items.forEach((it) => {
@@ -67,6 +77,8 @@ export default function ReportGenerator() {
 
   const applyFilters = (list) => {
     return list.filter((it) => {
+      // title filter (for achievements)
+      if (titleFilter && (it.title || "") !== titleFilter) return false;
       if (issuer && (it.issuer || it.issuer_name) !== issuer) return false;
       if (student) {
         const name = it.studentName || it.user_fullname || it.user_name || it.student_name || it.uploader || "";
@@ -95,35 +107,108 @@ export default function ReportGenerator() {
   };
 
   const handleExport = async () => {
-    const filtered = applyFilters(items);
-    // Map to flat rows according to mode
-    const rows = filtered.map((it) => {
-      const team = it.team_members || it.teamMembers || it.team || [];
-      const attachments = (it.attachments && (typeof it.attachments === 'string' ? JSON.parse(it.attachments) : it.attachments)) || [];
-      return {
-        id: it.id,
-        title: it.title || it.name,
-        description: it.description || it.summary || "",
-        student: it.studentName || it.user_fullname || it.user_name || it.student_name || it.uploader || "",
-        team_members: Array.isArray(team) ? team.join(", ") : (team || ""),
-        approved_at: it.verified_at || it.approvedAt || it.created_at || "",
-        approved_by: it.verified_by_name || it.approved_by || it.approvedByName || "",
-        attachments: Array.isArray(attachments) ? attachments.map(a => a.original_name || a.name || a.filename || a).join(" | ") : "",
-      };
-    });
+    // If a preview is active use that set, otherwise compute from current items
+    let rows = [];
+    if (showPreview && previewRows && previewRows.length) {
+      rows = previewRows;
+    } else {
+      const filtered = applyFilters(items);
+      rows = filtered.map((it) => mapItemToRow(it, mode));
+    }
 
-    const columns = [
-      { key: "id", header: "ID" },
-      { key: "title", header: "Title" },
-      { key: "description", header: "Description" },
-      { key: "student", header: "Uploaded By" },
-      { key: "team_members", header: "Team Members" },
-      { key: "approved_at", header: "Approved At" },
-      { key: "approved_by", header: "Approved By" },
-      { key: "attachments", header: "Attachments" },
-    ];
+    const columns = getColumnsForMode(mode);
 
     await exportToXlsxOrCsv(`${mode}-report-${new Date().toISOString().slice(0,10)}`, rows, columns);
+  };
+
+  // Preview state populated by Apply
+  const [previewRows, setPreviewRows] = useState([]);
+  const [showPreview, setShowPreview] = useState(false);
+
+  function getColumnsForMode(mode) {
+    if (mode === "projects") {
+      return [
+        { key: "id", header: "ID" },
+        { key: "title", header: "Title" },
+        { key: "description", header: "Description" },
+        { key: "mentor_name", header: "Mentor" },
+        { key: "academic_year", header: "Academic Year" },
+        { key: "team_member_names", header: "Team Members" },
+        { key: "team_members_count", header: "Team Count" },
+        { key: "github_url", header: "GitHub URL" },
+        { key: "created_by", header: "Created By" },
+        { key: "created_at", header: "Created At" },
+        { key: "verified", header: "Verified" },
+        { key: "verification_status", header: "Verification Status" },
+        { key: "verified_by", header: "Verified By" },
+        { key: "verified_at", header: "Verified At" },
+        { key: "files", header: "Files" },
+      ];
+    }
+    // achievements
+    return [
+      { key: "id", header: "ID" },
+      { key: "title", header: "Title" },
+      { key: "issuer", header: "Issuer" },
+      { key: "date_of_award", header: "Date of Award" },
+      { key: "name", header: "Recipient Name" },
+      { key: "description", header: "Description" },
+      { key: "student", header: "Uploaded By" },
+      { key: "approved_at", header: "Approved At" },
+      { key: "approved_by", header: "Approved By" },
+      { key: "proof_file", header: "Proof File" },
+      { key: "created_at", header: "Created At" },
+      { key: "verified", header: "Verified" },
+      { key: "verification_status", header: "Verification Status" },
+    ];
+  }
+
+  function mapItemToRow(it, mode) {
+    if (mode === "projects") {
+      const files = it.files || it.files_json || [];
+      const filesStr = Array.isArray(files) ? files.map(f => f.original_name || f.name || f.filename || JSON.stringify(f)).join(" | ") : String(files || "");
+      return {
+        id: it.id,
+        title: it.title,
+        description: it.description || "",
+        mentor_name: it.mentor_name || "",
+        academic_year: it.academic_year || "",
+        team_member_names: it.team_member_names || it.teamMembers || it.team_members || "",
+        team_members_count: it.team_members_count || it.teamMembersCount || "",
+        github_url: it.github_url || it.github || "",
+        created_by: it.created_by || it.user_id || "",
+        created_at: it.created_at || "",
+        verified: it.verified || false,
+        verification_status: it.verification_status || "",
+        verified_by: it.verified_by || "",
+        verified_at: it.verified_at || "",
+        files: filesStr,
+      };
+    }
+    // achievements
+    const proof = (it.proof_name || it.proof_filename) ? (it.proof_name || it.proof_filename) : "";
+    return {
+      id: it.id,
+      title: it.title,
+      issuer: it.issuer || "",
+      date_of_award: it.date_of_award || it.date || "",
+      name: it.name || it.user_fullname || it.user_name || "",
+      description: it.description || "",
+      student: it.studentName || it.user_fullname || it.user_name || it.student_name || it.uploader || "",
+      approved_at: it.verified_at || it.approvedAt || it.created_at || "",
+      approved_by: it.verified_by_name || it.approved_by || it.approvedByName || "",
+      proof_file: proof,
+      created_at: it.created_at || "",
+      verified: it.verified || false,
+      verification_status: it.verification_status || "",
+    };
+  }
+
+  const handleApply = () => {
+    const filtered = applyFilters(items);
+    const rows = filtered.map((it) => mapItemToRow(it, mode));
+    setPreviewRows(rows);
+    setShowPreview(true);
   };
 
   return (
@@ -143,7 +228,10 @@ export default function ReportGenerator() {
             </select>
           </label>
 
-          <Dropdown label="Issuer" value={issuer} onChange={setIssuer} options={issuerOptions} />
+          {mode === "achievements" && (
+            <Dropdown label="Title" value={titleFilter} onChange={setTitleFilter} options={titleOptions} />
+          )}
+
           <Dropdown label="Student" value={student} onChange={setStudent} options={studentOptions} />
 
           <label className="flex flex-col text-sm">
@@ -164,7 +252,8 @@ export default function ReportGenerator() {
         </div>
 
         <div className="mt-4 flex items-center justify-end gap-3">
-          <button onClick={() => { setIssuer(""); setStudent(""); setVerified(""); setFromDate(""); setToDate(""); setQuery(""); }} className="px-3 py-1 text-sm border rounded">Reset</button>
+          <button onClick={() => { setIssuer(""); setStudent(""); setVerified(""); setFromDate(""); setToDate(""); setQuery(""); setShowPreview(false); setPreviewRows([]); }} className="px-3 py-1 text-sm border rounded">Reset</button>
+          <button onClick={handleApply} className="px-3 py-1 text-sm rounded border bg-white">Apply</button>
           <button onClick={handleExport} className="px-3 py-1 text-sm rounded bg-blue-600 text-white">Export</button>
         </div>
       </div>
@@ -172,6 +261,29 @@ export default function ReportGenerator() {
       <div className="mt-6">
         <div className="text-sm text-slate-600">Preview: {applyFilters(items).length} records match the current filters</div>
         <div className="mt-3 text-xs text-slate-500">Note: export will include columns: ID, Title, Description, Uploaded By, Team Members, Approved At, Approved By, Attachments</div>
+
+        {showPreview && (
+          <div className="mt-4 overflow-auto border rounded bg-white">
+            <table className="min-w-full table-fixed border-collapse">
+              <thead>
+                <tr className="bg-slate-50">
+                  {getColumnsForMode(mode).map((col) => (
+                    <th key={col.key} className="p-2 text-left text-sm font-semibold border-b">{col.header}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {previewRows.map((r, idx) => (
+                  <tr key={r.id || idx} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50"}>
+                    {getColumnsForMode(mode).map((col) => (
+                      <td key={col.key} className="p-2 text-sm border-b align-top">{r[col.key]}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

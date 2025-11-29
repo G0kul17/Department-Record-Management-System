@@ -31,8 +31,13 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
                 id={ev.id}
                 title={ev.title}
                 summary={ev.description}
-                date={ev.start_date}
+                start_date={ev.start_date}
+                end_date={ev.end_date}
+                time={ev.time}
                 location={ev.venue}
+                venue={ev.venue}
+                image={ev.image || ev.thumbnail}
+                attachments={ev.attachments}
                 to={`/events/${ev.id}`}
                 eventUrl={ev.event_url}
               />

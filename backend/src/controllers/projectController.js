@@ -213,8 +213,9 @@ export async function listProjects(req, res) {
       params.push(verified === "true");
       conditions.push(`p.verified = $${params.length}`);
     }
-    if (req.query.status) {
-      params.push(req.query.status);
+    // allow filtering by verification_status via query param `verification_status`
+    if (req.query.verification_status) {
+      params.push(req.query.verification_status);
       conditions.push(`p.verification_status = $${params.length}`);
     }
     if (q) {

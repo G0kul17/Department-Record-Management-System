@@ -4,18 +4,18 @@ import { loadSlim } from "tsparticles-slim";
 import { useAuth } from "../../hooks/useAuth";
 import apiClient from "../../api/axiosClient";
 import { useNavigate } from "react-router-dom";
-import events from "../../data/events";
+import EventsCarousel from "../../components/EventsCarousel";
 
 export default function StudentDashboard() {
   const nav = useNavigate();
   const { user } = useAuth();
   const [evIdx, setEvIdx] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [events, setEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
   const [projCount, setProjCount] = useState(null);
   const [achCount, setAchCount] = useState(null);
 
-  // use shared events data
-  // events is imported from ../data/events
 
   const particlesInit = useCallback(async (engine) => {
     await loadSlim(engine);
@@ -28,14 +28,7 @@ export default function StudentDashboard() {
     return nav("/quick-actions");
   };
 
-  const prev = () => setEvIdx((i) => (i === 0 ? events.length - 1 : i - 1));
-  const next = () => setEvIdx((i) => (i + 1) % events.length);
-
-  useEffect(() => {
-    if (paused) return;
-    const id = setInterval(() => next(), 5000);
-    return () => clearInterval(id);
-  }, [paused]);
+  // carousel controls will be handled by EventsCarousel
 
   useEffect(() => {
     // fetch stats in parallel
@@ -53,6 +46,37 @@ export default function StudentDashboard() {
         if (!mounted) return;
         setProjCount(0);
         setAchCount(0);
+      }
+    })();
+
+    // fetch latest events (staff-uploaded) for student dashboard
+    (async () => {
+      setLoadingEvents(true);
+      try {
+        const ev = await apiClient.get("/events?order=latest&limit=4");
+        if (!mounted) return;
+        const evs = (ev?.events || []).map((e) => {
+          let attachments = e.attachments;
+          try {
+            if (typeof attachments === "string" && attachments.trim()) {
+              attachments = JSON.parse(attachments);
+            }
+          } catch (_) {
+            attachments = [];
+          }
+          return {
+            ...e,
+            description: e.description || e.summary || "",
+            event_url: e.event_url || e.eventUrl || null,
+            attachments: Array.isArray(attachments) ? attachments : [],
+          };
+        });
+        setEvents(evs);
+      } catch (err) {
+        console.error(err);
+        if (mounted) setEvents([]);
+      } finally {
+        if (mounted) setLoadingEvents(false);
       }
     })();
     return () => {
@@ -150,97 +174,13 @@ export default function StudentDashboard() {
           </h2>
         </div>
 
-        <div
-          className="relative overflow-hidden rounded-xl shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-indigo-100 to-slate-200 dark:from-slate-800/70 dark:to-slate-900/70 dark:ring-white/10"
-          onMouseEnter={() => setPaused(true)}
-          onMouseLeave={() => setPaused(false)}
-        >
-          {events.map((ev, i) => (
-            <div
-              key={ev.title}
-              className={`transition-opacity duration-300 ${
-                i === evIdx
-                  ? "opacity-100"
-                  : "opacity-0 absolute inset-0 pointer-events-none"
-              }`}
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 p-6 pb-16">
-                <div className="sm:col-span-2 text-left">
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    {ev.title}
-                  </h3>
-                  <p className="mt-1 text-slate-600 dark:text-slate-300">
-                    {ev.summary}
-                  </p>
-                </div>
-                <div className="text-left sm:text-right">
-                  <div className="text-sm text-slate-500">
-                    {new Date(ev.date).toLocaleDateString()}
-                  </div>
-                  <div className="text-sm text-slate-600 dark:text-slate-300">
-                    {ev.location}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {/* Bottom corner arrows */}
-          <button
-            onClick={prev}
-            aria-label="Previous event"
-            className="absolute bottom-3 left-3 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white/90 text-slate-700 hover:bg-white shadow-sm backdrop-blur-sm dark:bg-slate-800/80 dark:border-slate-600 dark:text-slate-200"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="h-5 w-5"
-            >
-              <path
-                d="M15 6l-6 6 6 6"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-          <button
-            onClick={next}
-            aria-label="Next event"
-            className="absolute bottom-3 right-3 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white/90 text-slate-700 hover:bg-white shadow-sm backdrop-blur-sm dark:bg-slate-800/80 dark:border-slate-600 dark:text-slate-200"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="h-5 w-5"
-            >
-              <path
-                d="M9 6l6 6-6 6"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        </div>
-
-        {/* Dots */}
-        <div className="mt-3 flex justify-center gap-2">
-          {events.map((_, i) => (
-            <button
-              key={i}
-              aria-label={`Go to event ${i + 1}`}
-              onClick={() => setEvIdx(i)}
-              className={`h-2.5 w-2.5 rounded-full ${
-                i === evIdx ? "bg-blue-600" : "bg-slate-300 dark:bg-slate-600"
-              }`}
-            />
-          ))}
-        </div>
+        {loadingEvents ? (
+          <div className="text-sm text-slate-600 p-6">Loading events...</div>
+        ) : events.length === 0 ? (
+          <div className="text-sm text-slate-600 p-6">No events yet.</div>
+        ) : (
+          <EventsCarousel events={events} intervalMs={5000} />
+        )}
       </div>
 
       {/* Stats */}

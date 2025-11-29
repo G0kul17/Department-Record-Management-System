@@ -32,7 +32,7 @@
 ✔ in student event page update the events that uploaded by the staff @done (11/29/2025, 1:59:33 PM)
 ☐ add delete button in the event uploaded by the staff
 ☐ the student should recieve the mail once the staff approved the project or achievements
-☐ Generate audit reports (e.g., export records/projects by year). Search/Filter: By year, type, user, keywords
+✔ Generate audit reports (e.g., export records/projects by year). Search/Filter: By year, type, user, keywords @done (11/29/2025, 8:31:55 PM)
 ☐ verify the events page for the staff if the url is working or not.
 -------------------------------------------------------------------------
 ☐ for admin full access to all the modules

@@ -32,6 +32,21 @@ export async function exportToXlsxOrCsv(filenameBase, rows, columns) {
     });
 
     const ws = XLSX.utils.aoa_to_sheet(wsData);
+    // attempt to set header styles (bold) and reasonable column widths
+    try {
+      // set bold for header row
+      for (let c = 0; c < (columns.length || 0); c++) {
+        const cellRef = XLSX.utils.encode_cell({ r: 0, c });
+        if (!ws[cellRef]) continue;
+        ws[cellRef].s = ws[cellRef].s || {};
+        ws[cellRef].s.font = ws[cellRef].s.font || {};
+        ws[cellRef].s.font.bold = true;
+      }
+      // auto column widths (approximate by header length)
+      ws['!cols'] = columns.map((col) => ({ wch: Math.max(12, String(col.header || col.key).length + 4) }));
+    } catch (e) {
+      // ignore styling errors; fallback still works
+    }
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Report");
     const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });

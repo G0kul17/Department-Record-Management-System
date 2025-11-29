@@ -36,6 +36,9 @@ export default function Events() {
   const nav = useNavigate();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
+  
+  // compute selected event early so hooks can react to it
+  const selectedEvent = id ? events.find((e) => String(e.id) === String(id)) : null;
 
   useEffect(() => {
     let mounted = true;
@@ -74,8 +77,32 @@ export default function Events() {
     };
   }, []);
 
+  // If user opened the detail route for an event that has an external URL,
+  // automatically open that URL in a new tab and show a redirecting message.
+  React.useEffect(() => {
+    if (!id) return;
+    if (loading) return;
+    const ev = selectedEvent;
+    if (!ev) return;
+    if (ev.event_url) {
+      try {
+        window.open(ev.event_url, "_blank", "noopener,noreferrer");
+      } catch (err) {
+        window.location.href = ev.event_url;
+      }
+    }
+  }, [id, loading, selectedEvent]);
+
   if (id) {
-    const ev = events.find((e) => String(e.id) === String(id));
+    const ev = selectedEvent;
+    if (loading) {
+      return (
+        <div className="p-8">
+          <h3 className="text-xl">Loading event...</h3>
+        </div>
+      );
+    }
+
     if (!ev)
       return (
         <div className="p-8">
@@ -85,6 +112,18 @@ export default function Events() {
           </Link>
         </div>
       );
+
+    // If the event has an external URL, we've already attempted to open it in a new tab.
+    if (ev.event_url) {
+      return (
+        <div className="p-8">
+          <h3 className="text-xl">Redirecting to external event link…</h3>
+          <p className="mt-2 text-sm">
+            If you are not redirected, <a href={ev.event_url} target="_blank" rel="noreferrer" className="text-blue-600 underline">open the link manually</a>.
+          </p>
+        </div>
+      );
+    }
 
     return (
       <div className="mx-auto max-w-4xl p-8">
@@ -164,8 +203,13 @@ export default function Events() {
             id={ev.id}
             title={ev.title}
             summary={ev.description}
-            date={ev.start_date}
+            start_date={ev.start_date}
+            end_date={ev.end_date}
+            time={ev.time}
             location={ev.venue}
+            venue={ev.venue}
+            image={ev.image || ev.thumbnail}
+            attachments={ev.attachments}
             grant={null}
             to={`/events/${ev.id}`}
           />

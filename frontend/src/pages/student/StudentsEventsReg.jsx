@@ -36,9 +36,11 @@ export default function Events() {
   const nav = useNavigate();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
-  
+
   // compute selected event early so hooks can react to it
-  const selectedEvent = id ? events.find((e) => String(e.id) === String(id)) : null;
+  const selectedEvent = id
+    ? events.find((e) => String(e.id) === String(id))
+    : null;
 
   useEffect(() => {
     let mounted = true;
@@ -119,7 +121,16 @@ export default function Events() {
         <div className="p-8">
           <h3 className="text-xl">Redirecting to external event link…</h3>
           <p className="mt-2 text-sm">
-            If you are not redirected, <a href={ev.event_url} target="_blank" rel="noreferrer" className="text-blue-600 underline">open the link manually</a>.
+            If you are not redirected,{" "}
+            <a
+              href={ev.event_url}
+              target="_blank"
+              rel="noreferrer"
+              className="text-blue-600 underline"
+            >
+              open the link manually
+            </a>
+            .
           </p>
         </div>
       );
@@ -139,7 +150,13 @@ export default function Events() {
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
               {ev.title}
             </h1>
-            <p className="mt-3 text-sm opacity-90">{ev.venue} • {ev.start_date ? new Date(ev.start_date).toLocaleString() : ''}{ev.end_date ? ` – ${new Date(ev.end_date).toLocaleString()}` : ''}</p>
+            <p className="mt-3 text-sm opacity-90">
+              {ev.venue} •{" "}
+              {ev.start_date ? new Date(ev.start_date).toLocaleString() : ""}
+              {ev.end_date
+                ? ` – ${new Date(ev.end_date).toLocaleString()}`
+                : ""}
+            </p>
             <p className="mt-6 text-base leading-relaxed">{ev.description}</p>
 
             <div className="mt-6 flex items-center gap-3">
@@ -153,7 +170,9 @@ export default function Events() {
                   Open External Link
                 </a>
               ) : (
-                <span className="inline-block rounded-md bg-white/20 px-3 py-1 text-sm">No external link provided</span>
+                <span className="inline-block rounded-md bg-white/20 px-3 py-1 text-sm">
+                  No external link provided
+                </span>
               )}
             </div>
           </div>
@@ -162,10 +181,16 @@ export default function Events() {
             <h3 className="text-lg font-semibold">Details</h3>
             <div className="mt-3 text-sm text-slate-700">
               <div>
-                <strong>Date:</strong> {ev.start_date ? new Date(ev.start_date).toLocaleString() : 'TBD'}{ev.end_date ? ` — ${new Date(ev.end_date).toLocaleString()}` : ''}
+                <strong>Date:</strong>{" "}
+                {ev.start_date
+                  ? new Date(ev.start_date).toLocaleString()
+                  : "TBD"}
+                {ev.end_date
+                  ? ` — ${new Date(ev.end_date).toLocaleString()}`
+                  : ""}
               </div>
               <div className="mt-2">
-                <strong>Venue:</strong> {ev.venue || 'TBD'}
+                <strong>Venue:</strong> {ev.venue || "TBD"}
               </div>
               {ev.attachments && ev.attachments.length > 0 && (
                 <div className="mt-3">
@@ -173,7 +198,12 @@ export default function Events() {
                   <ul className="mt-2 list-disc list-inside text-sm">
                     {ev.attachments.map((a, idx) => (
                       <li key={idx}>
-                        <a href={a.url || a} target="_blank" rel="noreferrer" className="text-blue-600 underline">
+                        <a
+                          href={a.url || a}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-600 underline"
+                        >
                           {a.name || a}
                         </a>
                       </li>
@@ -192,9 +222,13 @@ export default function Events() {
     <div className="mx-auto max-w-6xl p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Events</h1>
-        <div className="text-sm text-slate-600">{loading ? "Loading..." : `${events.length} events`}</div>
+        <div className="text-sm text-slate-600">
+          {loading ? "Loading..." : `${events.length} events`}
+        </div>
       </div>
-      <p className="mt-2 text-sm text-slate-600">Upcoming and recent events with details.</p>
+      <p className="mt-2 text-sm text-slate-600">
+        Upcoming and recent events with details.
+      </p>
 
       <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         {events.map((ev) => (
@@ -211,7 +245,8 @@ export default function Events() {
             image={ev.image || ev.thumbnail}
             attachments={ev.attachments}
             grant={null}
-            to={`/events/${ev.id}`}
+            eventUrl={ev.event_url}
+            to={ev.event_url ? undefined : `/events/${ev.id}`}
           />
         ))}
       </div>

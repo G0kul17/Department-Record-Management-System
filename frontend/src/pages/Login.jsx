@@ -68,8 +68,13 @@ const Login = () => {
           { email: formData.email, role: data.role, fullName: data.fullName },
           data.token
         );
-        // After successful login, always land on the new Home
-        navigate("/");
+        const dest =
+          data.role === "admin"
+            ? "/admin"
+            : data.role === "staff"
+            ? "/staff"
+            : "/student";
+        navigate(dest);
       } else {
         navigate("/");
       }

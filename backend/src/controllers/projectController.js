@@ -193,7 +193,20 @@ export async function listProjects(req, res) {
     mine,
   } = req.query;
   try {
-    let base = "SELECT p.* FROM projects p";
+    // Include uploader info for list items (created_by or first file's uploaded_by)
+    let base =
+      "SELECT p.*, " +
+      "COALESCE(u.full_name, up.full_name) AS uploader_full_name, " +
+      "COALESCE(u.email, up.email) AS uploader_email, " +
+      "COALESCE(u.role, up.role) AS uploader_role " +
+      "FROM projects p " +
+      "LEFT JOIN users u ON u.id = p.created_by " +
+      "LEFT JOIN LATERAL (" +
+      "  SELECT u2.full_name, u2.email, u2.role FROM project_files pf " +
+      "  LEFT JOIN users u2 ON u2.id = pf.uploaded_by " +
+      "  WHERE pf.project_id = p.id AND pf.uploaded_by IS NOT NULL " +
+      "  ORDER BY pf.id ASC LIMIT 1" +
+      ") up ON true";
     const conditions = [];
     const params = [];
 
@@ -250,17 +263,39 @@ export async function getProjectDetails(req, res) {
     return res.status(400).json({ message: "Invalid project id" });
   try {
     const { rows } = await pool.query(
-      `SELECT p.* FROM projects p WHERE p.id = $1`,
+      `SELECT p.*, u.email AS uploader_email, u.full_name AS uploader_full_name
+         FROM projects p
+         LEFT JOIN users u ON u.id = p.created_by
+        WHERE p.id = $1`,
       [id]
     );
     if (!rows.length) return res.status(404).json({ message: "Not found" });
     const project = rows[0];
     const { rows: files } = await pool.query(
-      "SELECT * FROM project_files WHERE project_id=$1",
+      "SELECT * FROM project_files WHERE project_id=$1 ORDER BY id ASC",
       [id]
     );
 
     project.files = files;
+    // Fallback uploader from first file if project.created_by is null
+    if (!project.uploader_email || !project.uploader_full_name) {
+      const { rows: up } = await pool.query(
+        `SELECT u.email AS uploader_email, u.full_name AS uploader_full_name
+           FROM project_files pf
+           LEFT JOIN users u ON u.id = pf.uploaded_by
+          WHERE pf.project_id = $1 AND pf.uploaded_by IS NOT NULL
+          ORDER BY pf.id ASC LIMIT 1`,
+        [id]
+      );
+      if (up.length) {
+        project.uploader_email = project.uploader_email || up[0].uploader_email;
+        project.uploader_full_name =
+          project.uploader_full_name || up[0].uploader_full_name;
+      }
+    }
+    // Compatibility fields for frontend
+    project.user_email = project.uploader_email || null;
+    project.user_fullname = project.uploader_full_name || null;
     return res.json({ project });
   } catch (err) {
     console.error(err);
@@ -329,7 +364,7 @@ export async function getProjectsCount(req, res) {
       return res.json({ count: rows[0]?.count ?? 0 });
     }
     const { rows } = await pool.query(
-      "SELECT COUNT(*)::int AS count FROM projects"
+      "SELECT COUNT(*)::int AS count FROM projects WHERE verified = true OR verification_status = 'approved'"
     );
     return res.json({ count: rows[0]?.count ?? 0 });
   } catch (err) {

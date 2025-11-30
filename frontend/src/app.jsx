@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import BackButton from "./components/BackButton";
 import Login from "./pages/Login";
@@ -14,11 +14,22 @@ import VerifyAchievements from "./pages/staff/VerifyAchievements";
 import VerifyProjects from "./pages/staff/VerifyProjects";
 import UploadEvents from "./pages/staff/UploadEvents";
 import ReportGenerator from "./pages/staff/ReportGenerator";
+// Admin wrappers
+import AdminProjectsManagement from "./pages/admin/AdminProjectsManagement";
+import AdminAchievementsManagement from "./pages/admin/AdminAchievementsManagement";
+import AdminEventsManagement from "./pages/admin/AdminEventsManagement";
+import AdminVerifyProjects from "./pages/admin/AdminVerifyProjects";
+import AdminVerifyAchievements from "./pages/admin/AdminVerifyAchievements";
+import AdminUploadEvents from "./pages/admin/AdminUploadEvents";
+import AdminReportGenerator from "./pages/admin/AdminReportGenerator";
+import AdminUsersManagement from "./pages/admin/AdminUsersManagement.jsx";
+import AdminRoleUsersList from "./pages/admin/AdminRoleUsersList";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./hooks/useAuth";
 import Home from "./pages/Home";
 import QuickActions from "./pages/QuickActions";
+import AdminQuickActions from "./pages/admin/AdminQuickActions";
 import Achievements from "./pages/student/StudentsAchievements";
 import ProjectUpload from "./pages/student/StudentsProjectUpload";
 import Events from "./pages/student/StudentsEventsReg";
@@ -36,10 +47,14 @@ function RoleRedirect() {
 }
 
 export default function App() {
+  const location = useLocation();
+  const path = (location?.pathname || "/").replace(/\/+$/, "") || "/";
+  const hideBackOn = new Set(["/", "/admin"]);
+  const showBackButton = !hideBackOn.has(path);
   return (
     <>
       <Navbar />
-      <BackButton />
+      {showBackButton && <BackButton />}
       <Routes>
         {/* New Home landing page (requires auth) */}
         <Route
@@ -53,7 +68,9 @@ export default function App() {
         <Route
           path="/achievements"
           element={
-            <ProtectedRoute allowedRoles={["student", "alumni", "staff"]}>
+            <ProtectedRoute
+              allowedRoles={["student", "alumni", "staff", "admin"]}
+            >
               <Achievements />
             </ProtectedRoute>
           }
@@ -98,7 +115,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        
+
         <Route
           path="/quick-actions"
           element={
@@ -106,6 +123,14 @@ export default function App() {
               allowedRoles={["admin", "staff", "student", "alumni"]}
             >
               <QuickActions />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/quick-actions"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminQuickActions />
             </ProtectedRoute>
           }
         />
@@ -140,6 +165,87 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        {/* Admin management routes */}
+        <Route
+          path="/admin/projects"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminProjectsManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/achievements"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminAchievementsManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/events"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminEventsManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/verify-projects"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminVerifyProjects />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/verify-achievements"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminVerifyAchievements />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/upload-events"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminUploadEvents />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/reports"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminReportGenerator />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminUsersManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/students"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminRoleUsersList role="student" />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/staff"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminRoleUsersList role="staff" />
             </ProtectedRoute>
           }
         />

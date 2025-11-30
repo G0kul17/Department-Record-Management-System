@@ -18,7 +18,8 @@ const router = express.Router();
 router.post(
   "/",
   requireAuth,
-  requireRole(["student", "alumni", "staff"]),
+  // Allow admin to create achievements too (auto-approves in controller)
+  requireRole(["student", "alumni", "staff", "admin"]),
   upload.single("proof"),
   createAchievement
 );

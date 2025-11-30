@@ -7,11 +7,13 @@ export default function ProjectsManagement() {
   const [busyId, setBusyId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
   const [view, setView] = useState("pending");
+  const [modal, setModal] = useState({ open: false, item: null });
 
   const load = async () => {
     setLoading(true);
     try {
-      const data = await apiClient.get("/projects?verified=false&status=pending&limit=50");
+      // Show all unverified projects regardless of status/type
+      const data = await apiClient.get("/projects?verified=false&limit=50");
       setItems(data.projects || []);
     } catch (e) {
       setItems([]);
@@ -57,7 +59,10 @@ export default function ProjectsManagement() {
   const showRejected = async () => {
     setLoading(true);
     try {
-      const data = await apiClient.get("/projects?verified=false&status=rejected&limit=200");
+      // Filter by verification_status for rejected items
+      const data = await apiClient.get(
+        "/projects?verification_status=rejected&limit=200"
+      );
       setItems(data.projects || []);
     } catch (e) {
       setItems([]);
@@ -69,19 +74,27 @@ export default function ProjectsManagement() {
   const toggleView = (id) => {
     setExpandedId((prev) => (prev === id ? null : id));
   };
+  const openModal = (item) => setModal({ open: true, item });
+  const closeModal = () => setModal({ open: false, item: null });
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Projects</h2>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+            Projects
+          </h2>
           <div className="mt-1 flex items-center gap-2">
             <button
               onClick={async () => {
                 setView("pending");
                 await load();
               }}
-              className={`text-xs rounded-md px-2 py-0.5 font-semibold ${view === "pending" ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-800"}`}
+              className={`text-xs rounded-md px-2 py-0.5 font-semibold ${
+                view === "pending"
+                  ? "bg-blue-600 text-white"
+                  : "bg-slate-100 text-slate-800"
+              }`}
             >
               Pending
             </button>
@@ -90,7 +103,11 @@ export default function ProjectsManagement() {
                 setView("rejected");
                 await showRejected();
               }}
-              className={`text-xs rounded-md px-2 py-0.5 font-semibold ${view === "rejected" ? "bg-red-600 text-white" : "bg-slate-100 text-slate-800"}`}
+              className={`text-xs rounded-md px-2 py-0.5 font-semibold ${
+                view === "rejected"
+                  ? "bg-red-600 text-white"
+                  : "bg-slate-100 text-slate-800"
+              }`}
             >
               Rejected
             </button>
@@ -108,7 +125,9 @@ export default function ProjectsManagement() {
       <div className="mt-4 space-y-3">
         {items.length === 0 && !loading && (
           <div className="text-slate-600 dark:text-slate-300">
-            No projects pending verification.
+            {view === "pending"
+              ? "No projects pending verification."
+              : "No rejected projects found."}
           </div>
         )}
         {items.map((p) => (
@@ -127,16 +146,20 @@ export default function ProjectsManagement() {
                 </div>
               </div>
               {p.verification_status === "approved" ? (
-                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-300">Verified</span>
+                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-300">
+                  Verified
+                </span>
               ) : p.verification_status === "rejected" ? (
-                <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700 dark:bg-red-900/40 dark:text-red-300">Rejected</span>
+                <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                  Rejected
+                </span>
               ) : (
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => toggleView(p.id)}
+                    onClick={() => openModal(p)}
                     className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100"
                   >
-                    {expandedId === p.id ? "Hide" : "View"}
+                    View
                   </button>
                   <button
                     onClick={() => reject(p.id)}
@@ -209,6 +232,99 @@ export default function ProjectsManagement() {
           </div>
         ))}
       </div>
+      {modal.open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={closeModal}
+        >
+          <div
+            className="max-w-2xl w-full rounded-xl bg-white p-6 shadow-xl dark:bg-slate-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                Project Details
+              </h3>
+              <button
+                className="rounded-md bg-slate-200 px-3 py-1 text-sm dark:bg-slate-800"
+                onClick={closeModal}
+              >
+                Close
+              </button>
+            </div>
+            <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
+              <div>
+                <span className="font-semibold">Title:</span>{" "}
+                {modal.item?.title}
+              </div>
+              {modal.item?.description && (
+                <div>
+                  <span className="font-semibold">Description:</span>{" "}
+                  {modal.item?.description}
+                </div>
+              )}
+              <div>
+                <span className="font-semibold">Mentor:</span>{" "}
+                {modal.item?.mentor_name}
+              </div>
+              <div>
+                <span className="font-semibold">Year:</span>{" "}
+                {modal.item?.academic_year}
+              </div>
+              {modal.item?.github_url && (
+                <div>
+                  <span className="font-semibold">GitHub:</span>{" "}
+                  <a
+                    href={modal.item.github_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    {modal.item.github_url}
+                  </a>
+                </div>
+              )}
+              {Array.isArray(modal.item?.files) &&
+                modal.item.files.length > 0 && (
+                  <div className="mt-3">
+                    <span className="font-semibold">Files:</span>
+                    <ul className="mt-1 list-disc pl-5">
+                      {modal.item.files.map((f) => (
+                        <li key={f.id}>
+                          {f.mime_type?.startsWith("image/") ? (
+                            <div className="mt-2">
+                              <img
+                                src={`${apiClient.baseURL.replace(
+                                  /\/api$/,
+                                  ""
+                                )}/uploads/${f.filename}`}
+                                alt={f.original_name || f.filename}
+                                className="max-h-80 rounded border"
+                              />
+                            </div>
+                          ) : (
+                            <a
+                              href={`${apiClient.baseURL.replace(
+                                /\/api$/,
+                                ""
+                              )}/uploads/${f.filename}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
+                              {f.original_name || f.filename}
+                            </a>
+                          )}
+                          {f.mime_type && ` (${f.mime_type})`}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -13,6 +13,9 @@ export default function Home() {
   const [events, setEvents] = useState([]);
   const [projCount, setProjCount] = useState(null);
   const [achCount, setAchCount] = useState(null);
+  const [studentCount, setStudentCount] = useState(null);
+  const [staffCount, setStaffCount] = useState(null);
+  const [eventCount, setEventCount] = useState(null);
 
   // use shared events data
   // events is imported from ../data/events
@@ -25,6 +28,7 @@ export default function Home() {
 
   const goToQuickActions = () => {
     if (!user) return nav("/login");
+    if (user.role === "admin") return nav("/admin/quick-actions");
     return nav("/quick-actions");
   };
 
@@ -55,6 +59,29 @@ export default function Home() {
       mounted = false;
     };
   }, []);
+
+  // Admin-only totals: students, staff, events
+  useEffect(() => {
+    let mounted = true;
+    if (user?.role !== "admin") return;
+    (async () => {
+      try {
+        const stats = await apiClient.get("/admin/stats");
+        if (!mounted) return;
+        setStudentCount(stats?.students ?? 0);
+        setStaffCount(stats?.staff ?? 0);
+        setEventCount(stats?.events ?? 0);
+      } catch (e) {
+        if (!mounted) return;
+        setStudentCount(0);
+        setStaffCount(0);
+        setEventCount(0);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [user?.role]);
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-white to-slate-50 hero-gradient">
@@ -155,8 +182,17 @@ export default function Home() {
         <h2 className="mb-4 text-xl font-bold text-slate-800 dark:text-slate-100">
           At a Glance
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <button onClick={() => nav('/projects/approved')} className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-cyan-200 to-blue-300 dark:from-cyan-900/50 dark:to-blue-900/60 dark:ring-white/10 text-left">
+        <div
+          className={`grid gap-4 ${
+            user?.role === "admin"
+              ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+              : "grid-cols-1 sm:grid-cols-2"
+          }`}
+        >
+          <button
+            onClick={() => nav("/projects/approved")}
+            className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-cyan-200 to-blue-300 dark:from-cyan-900/50 dark:to-blue-900/60 dark:ring-white/10 text-left"
+          >
             <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
               Projects
             </div>
@@ -166,7 +202,10 @@ export default function Home() {
               </div>
             </div>
           </button>
-          <button onClick={() => nav('/achievements/approved')} className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-fuchsia-200 to-rose-300 dark:from-fuchsia-900/50 dark:to-rose-900/60 dark:ring-white/10 text-left">
+          <button
+            onClick={() => nav("/achievements/approved")}
+            className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-fuchsia-200 to-rose-300 dark:from-fuchsia-900/50 dark:to-rose-900/60 dark:ring-white/10 text-left"
+          >
             <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
               Achievements
             </div>
@@ -176,6 +215,40 @@ export default function Home() {
               </div>
             </div>
           </button>
+          {user?.role === "admin" && (
+            <>
+              <button
+                onClick={() => nav("/admin/students")}
+                className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-emerald-200 to-teal-300 dark:from-emerald-900/50 dark:to-teal-900/60 dark:ring-white/10 text-left"
+              >
+                <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  Students
+                </div>
+                <div className="mt-2 text-3xl font-extrabold text-slate-900 dark:text-slate-100">
+                  {studentCount === null ? "—" : studentCount}
+                </div>
+              </button>
+              <button
+                onClick={() => nav("/admin/staff")}
+                className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-indigo-200 to-violet-300 dark:from-indigo-900/50 dark:to-violet-900/60 dark:ring-white/10 text-left"
+              >
+                <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  Staff
+                </div>
+                <div className="mt-2 text-3xl font-extrabold text-slate-900 dark:text-slate-100">
+                  {staffCount === null ? "—" : staffCount}
+                </div>
+              </button>
+              <div className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-amber-200 to-orange-300 dark:from-amber-900/50 dark:to-orange-900/60 dark:ring-white/10">
+                <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  Events
+                </div>
+                <div className="mt-2 text-3xl font-extrabold text-slate-900 dark:text-slate-100">
+                  {eventCount === null ? "—" : eventCount}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -1,11 +1,15 @@
 // Utility: exportData
-// Tries to dynamically import `xlsx` to create a proper .xlsx file.
-// Falls back to CSV generation if the library is not installed.
+// Uses static imports for `xlsx` and `file-saver` to avoid Vite dynamic import issues.
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+
 export async function exportToXlsxOrCsv(filenameBase, rows, columns) {
   // rows: array of objects
   // columns: array of { key, header }
   const makeCsv = () => {
-    const header = columns.map((c) => `"${(c.header || c.key).replace(/"/g, '""')}"`).join(",");
+    const header = columns
+      .map((c) => `"${(c.header || c.key).replace(/"/g, '""')}"`)
+      .join(",");
     const body = rows
       .map((r) =>
         columns
@@ -21,11 +25,8 @@ export async function exportToXlsxOrCsv(filenameBase, rows, columns) {
     return csv;
   };
 
-  // Try dynamic import of xlsx + file-saver
+  // Try XLSX export first using static imports
   try {
-    const XLSX = await import("xlsx");
-    const { saveAs } = await import("file-saver");
-
     const wsData = [columns.map((c) => c.header || c.key)];
     rows.forEach((r) => {
       wsData.push(columns.map((c) => r[c.key] ?? ""));
@@ -43,7 +44,9 @@ export async function exportToXlsxOrCsv(filenameBase, rows, columns) {
         ws[cellRef].s.font.bold = true;
       }
       // auto column widths (approximate by header length)
-      ws['!cols'] = columns.map((col) => ({ wch: Math.max(12, String(col.header || col.key).length + 4) }));
+      ws["!cols"] = columns.map((col) => ({
+        wch: Math.max(12, String(col.header || col.key).length + 4),
+      }));
     } catch (e) {
       // ignore styling errors; fallback still works
     }

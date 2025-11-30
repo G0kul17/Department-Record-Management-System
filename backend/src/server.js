@@ -7,6 +7,7 @@ import achievementRoutes from "./routes/achievementRoutes.js";
 import staffRoutes from "./routes/staffRoutes.js";
 import eventPublicRoutes from "./routes/eventPublicRoutes.js"; // public events list
 import eventRoutes from "./routes/eventRoutes.js"; // staff/admin event management
+import adminRoutes from "./routes/adminRoutes.js";
 import pool from "./config/db.js";
 import fs from "fs";
 import path from "path";
@@ -48,6 +49,7 @@ app.use("/api/staff", staffRoutes);
 // Optionally expose events publicly for students
 app.use("/api/events", eventPublicRoutes);
 app.use("/api/events-admin", eventRoutes);
+app.use("/api/admin", adminRoutes);
 
 // optional: create tables if not exist on startup
 async function ensureTables() {

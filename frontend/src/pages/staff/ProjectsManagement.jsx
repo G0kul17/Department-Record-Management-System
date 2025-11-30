@@ -6,11 +6,12 @@ export default function ProjectsManagement() {
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
+  const [view, setView] = useState("pending");
 
   const load = async () => {
     setLoading(true);
     try {
-      const data = await apiClient.get("/projects?verified=false&limit=50");
+      const data = await apiClient.get("/projects?verified=false&status=pending&limit=50");
       setItems(data.projects || []);
     } catch (e) {
       setItems([]);
@@ -26,8 +27,11 @@ export default function ProjectsManagement() {
   const approve = async (id) => {
     try {
       setBusyId(id);
-      await apiClient.post(`/projects/${id}/verify`);
-      setItems((prev) => prev.filter((p) => p.id !== id));
+      const resp = await apiClient.post(`/projects/${id}/verify`);
+      if (resp) {
+        // refresh pending list from server to reflect actual DB state
+        await load();
+      }
     } catch (e) {
       // ignore for now; could show toast
     } finally {
@@ -38,12 +42,27 @@ export default function ProjectsManagement() {
   const reject = async (id) => {
     try {
       setBusyId(id);
-      await apiClient.post(`/projects/${id}/reject`);
-      setItems((prev) => prev.filter((p) => p.id !== id));
+      const resp = await apiClient.post(`/projects/${id}/reject`);
+      if (resp) {
+        // refresh pending list from server to reflect actual DB state
+        await load();
+      }
     } catch (e) {
       // ignore for now; could show toast
     } finally {
       setBusyId(null);
+    }
+  };
+
+  const showRejected = async () => {
+    setLoading(true);
+    try {
+      const data = await apiClient.get("/projects?verified=false&status=rejected&limit=200");
+      setItems(data.projects || []);
+    } catch (e) {
+      setItems([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -54,11 +73,32 @@ export default function ProjectsManagement() {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-          Projects
-        </h2>
+        <div>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Projects</h2>
+          <div className="mt-1 flex items-center gap-2">
+            <button
+              onClick={async () => {
+                setView("pending");
+                await load();
+              }}
+              className={`text-xs rounded-md px-2 py-0.5 font-semibold ${view === "pending" ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-800"}`}
+            >
+              Pending
+            </button>
+            <button
+              onClick={async () => {
+                setView("rejected");
+                await showRejected();
+              }}
+              className={`text-xs rounded-md px-2 py-0.5 font-semibold ${view === "rejected" ? "bg-red-600 text-white" : "bg-slate-100 text-slate-800"}`}
+            >
+              Rejected
+            </button>
+          </div>
+        </div>
+
         <button
-          onClick={load}
+          onClick={() => (view === "pending" ? load() : showRejected())}
           disabled={loading}
           className="text-xs rounded-md bg-blue-600 px-3 py-1 font-semibold text-white shadow hover:bg-blue-700 disabled:opacity-50"
         >
@@ -86,10 +126,10 @@ export default function ProjectsManagement() {
                   {p.academic_year && `• ${p.academic_year}`}
                 </div>
               </div>
-              {p.verified ? (
-                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-300">
-                  Verified
-                </span>
+              {p.verification_status === "approved" ? (
+                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-300">Verified</span>
+              ) : p.verification_status === "rejected" ? (
+                <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700 dark:bg-red-900/40 dark:text-red-300">Rejected</span>
               ) : (
                 <div className="flex items-center gap-2">
                   <button

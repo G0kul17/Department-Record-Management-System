@@ -18,17 +18,21 @@
 ✔ fix the cta's of Verify Projects, Verify acheivement, Upload Project, upload acheivement, Upload Event as like in the student page after quickactions page @done (11/28/2025, 8:09:25 PM)
 ✔ In verify project -> student uploaded project will display and the staff can have the option to approve, reject, and give the suggestions. @done (11/28/2025, 8:09:00 PM)
 ✔ In verify acheivement -> student uploaded acheivement will display and the staff can have the option to approve, reject, and give the suggestions. @done (11/28/2025, 8:09:03 PM)
-☐ In Upload Project -> staff can also upload the project but it will need not to be evaluated.
-☐ In Upload acheivement -> staff can also share the achievements it will also need not to be evaluated
+✔ In Upload Project -> staff can also upload the project but it will need not to be evaluated. @done (11/29/2025, 11:52:25 AM)
+✔ In Upload acheivement -> staff can also share the achievements it will also need not to be evaluated @done (11/29/2025, 11:52:35 AM)
 ✔ Achievements also be fix as a dropdown with (patterns, NPTEL, Conference, ..) @done (11/28/2025, 7:16:21 PM)
 ✔ In Upload Event -> staff can upload the event that is going to be conducted for the students. @done (11/28/2025, 7:16:13 PM)
 ✔ add url in the event upload section for more details @done (11/28/2025, 6:58:25 PM)
 ✔ after uploading the event it will be shown in the home page of the student and staff with the details @done (11/28/2025, 7:14:03 PM)
-☐ achievements should directly approved for staff
-☐ in student event page update the events that uploaded by the staff
+✔ In staff verify acheivement and verify project page if we enter the reject option it will not get marked as reject on the db, and if in the db has the reject of that project and achievements it will not to show on the verify acheivement and verify project page for teachers @done (11/28/2025, 9:32:06 PM)
+✔ In the dashboard project and acheivements count will be showing the present project and acheivement need to be verified count but it need to show the project and acheivement after approved count @done (11/28/2025, 9:40:21 PM)
+✔ In verify project and verify acheivement page the preview need to be change neat and looking better and the pptx, png, image type preview not be available @done (11/29/2025, 1:59:26 PM)
+✔ In the every dashboard in the project and acheivement has a cta it need to redirect to the list of projects and acheivements approved by the staff @done (11/29/2025, 1:59:22 PM)
+✔ achievements should directly approved for staff @done (11/28/2025, 9:46:06 PM)
+✔ in student event page update the events that uploaded by the staff @done (11/29/2025, 1:59:33 PM)
 ☐ add delete button in the event uploaded by the staff
 ☐ the student should recieve the mail once the staff approved the project or achievements
-☐ Generate audit reports (e.g., export records/projects by year). Search/Filter: By year, type, user, keywords
+✔ Generate audit reports (e.g., export records/projects by year). Search/Filter: By year, type, user, keywords @done (11/29/2025, 8:31:55 PM)
 ☐ verify the events page for the staff if the url is working or not.
 -------------------------------------------------------------------------
 ☐ for admin full access to all the modules

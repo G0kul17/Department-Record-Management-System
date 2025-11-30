@@ -154,6 +154,28 @@ export async function listAchievements(req, res) {
   }
 }
 
+export async function getAchievementDetails(req, res) {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || Number.isNaN(id))
+      return res.status(400).json({ message: "Invalid achievement id" });
+
+    const { rows } = await pool.query(
+      `SELECT a.*, u.email as user_email, u.fullname as user_fullname, pf.filename as proof_filename, pf.original_name as proof_name, pf.mime_type as proof_mime
+       FROM achievements a
+       LEFT JOIN users u ON a.user_id = u.id
+       LEFT JOIN project_files pf ON a.proof_file_id = pf.id
+       WHERE a.id = $1`,
+      [id]
+    );
+    if (!rows.length) return res.status(404).json({ message: "Not found" });
+    return res.json({ achievement: rows[0] });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
 export async function verifyAchievement(req, res) {
   try {
     const id = Number(req.params.id);
@@ -184,6 +206,15 @@ export async function rejectAchievement(req, res) {
 
 export async function getAchievementsCount(req, res) {
   try {
+    const { verified } = req.query;
+    if (verified !== undefined) {
+      const val = verified === "true";
+      const { rows } = await pool.query(
+        "SELECT COUNT(*)::int AS count FROM achievements WHERE verified = $1",
+        [val]
+      );
+      return res.json({ count: rows[0]?.count ?? 0 });
+    }
     const { rows } = await pool.query(
       "SELECT COUNT(*)::int AS count FROM achievements"
     );

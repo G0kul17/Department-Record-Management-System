@@ -213,8 +213,9 @@ export async function listProjects(req, res) {
       params.push(verified === "true");
       conditions.push(`p.verified = $${params.length}`);
     }
-    if (req.query.status) {
-      params.push(req.query.status);
+    // allow filtering by verification_status via query param `verification_status`
+    if (req.query.verification_status) {
+      params.push(req.query.verification_status);
       conditions.push(`p.verification_status = $${params.length}`);
     }
     if (q) {
@@ -318,6 +319,15 @@ function detectFileTypeByField(fieldname) {
 
 export async function getProjectsCount(req, res) {
   try {
+    const { verified } = req.query;
+    if (verified !== undefined) {
+      const val = verified === "true";
+      const { rows } = await pool.query(
+        "SELECT COUNT(*)::int AS count FROM projects WHERE verified = $1",
+        [val]
+      );
+      return res.json({ count: rows[0]?.count ?? 0 });
+    }
     const { rows } = await pool.query(
       "SELECT COUNT(*)::int AS count FROM projects"
     );

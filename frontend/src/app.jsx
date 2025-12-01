@@ -258,6 +258,8 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        {/* Redirect legacy staff root to new Home dashboard */}
+        <Route path="/staff" element={<Navigate to="/" replace />} />
 
         {/** Standalone staff pages without dashboard layout (top-level to avoid /staff/* overlap) */}
         <Route

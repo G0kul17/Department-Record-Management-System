@@ -72,7 +72,7 @@ const Login = () => {
           data.role === "admin"
             ? "/admin"
             : data.role === "staff"
-            ? "/staff"
+            ? "/"
             : "/student";
         navigate(dest);
       } else {

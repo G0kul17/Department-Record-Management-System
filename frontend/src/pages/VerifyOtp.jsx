@@ -65,7 +65,7 @@ const VerifyOtp = () => {
             data.role === "admin"
               ? "/admin"
               : data.role === "staff"
-              ? "/staff"
+              ? "/"
               : "/student";
           navigate(dest);
           return;
@@ -87,7 +87,7 @@ const VerifyOtp = () => {
             data.role === "admin"
               ? "/admin"
               : data.role === "staff"
-              ? "/staff"
+              ? "/"
               : "/student";
           navigate(dest);
           return;

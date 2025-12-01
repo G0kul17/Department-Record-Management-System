@@ -16,6 +16,14 @@ export default function AchievementDetail() {
       try {
         const passed = location?.state?.achievement;
         if (passed && String(passed.id) === String(id)) {
+          // If email isn't present on the passed item, fetch full details to enrich
+          if (!passed.user_email && !passed.uploader_email) {
+            const res = await apiClient.get(`/achievements/${id}`);
+            if (!mounted) return;
+            setItem(res.achievement || res || passed);
+            if (mounted) setLoading(false);
+            return;
+          }
           setItem(passed);
           if (mounted) setLoading(false);
           return;
@@ -23,7 +31,7 @@ export default function AchievementDetail() {
 
         const res = await apiClient.get(`/achievements/${id}`);
         if (!mounted) return;
-        setItem(res.data?.achievement || res.data || null);
+        setItem(res.achievement || res || null);
       } catch (e) {
         console.error(e);
         if (mounted) setItem(null);

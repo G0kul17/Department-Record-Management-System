@@ -161,10 +161,16 @@ export async function getAchievementDetails(req, res) {
       return res.status(400).json({ message: "Invalid achievement id" });
 
     const { rows } = await pool.query(
-      `SELECT a.*, u.email as user_email, u.fullname as user_fullname, pf.filename as proof_filename, pf.original_name as proof_name, pf.mime_type as proof_mime
+      `SELECT a.*,
+              COALESCE(u.email, u2.email)        AS user_email,
+              COALESCE(u.full_name, u2.full_name) AS user_fullname,
+              pf.filename                         AS proof_filename,
+              pf.original_name                    AS proof_name,
+              pf.mime_type                        AS proof_mime
        FROM achievements a
        LEFT JOIN users u ON a.user_id = u.id
        LEFT JOIN project_files pf ON a.proof_file_id = pf.id
+       LEFT JOIN users u2 ON u2.id = pf.uploaded_by
        WHERE a.id = $1`,
       [id]
     );

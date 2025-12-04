@@ -175,3 +175,63 @@ $$;
 
 -- Add event_url for registration links
 ALTER TABLE events ADD COLUMN IF NOT EXISTS event_url TEXT;
+
+-- ==========================================================
+-- FACULTY PARTICIPATIONS (Added for Staff Dashboard)
+-- ==========================================================
+CREATE TABLE IF NOT EXISTS faculty_participations (
+  id SERIAL PRIMARY KEY,
+  faculty_name VARCHAR(255) NOT NULL,
+  department VARCHAR(100) NOT NULL,
+
+  type_of_event VARCHAR(100) NOT NULL,   -- FDP, Webinar, Seminar …
+  mode_of_training VARCHAR(20) NOT NULL, -- Online, Offline, Hybrid
+
+  title VARCHAR(500) NOT NULL,
+  start_date DATE NOT NULL,
+  end_date DATE,
+  conducted_by VARCHAR(255),
+  details TEXT,
+
+  proof_file_id INTEGER REFERENCES project_files(id),  -- reuse existing file metadata system
+  created_by INTEGER,  -- staff id (add FK constraint conditionally below)
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP
+);
+
+-- Indexes for fast filtering
+CREATE INDEX IF NOT EXISTS idx_faculty_participations_dept
+  ON faculty_participations(department);
+
+CREATE INDEX IF NOT EXISTS idx_faculty_participations_type
+  ON faculty_participations(type_of_event);
+
+CREATE INDEX IF NOT EXISTS idx_faculty_participations_created_by
+  ON faculty_participations(created_by);
+
+-- Add foreign key constraint from faculty_participations.created_by -> users.id
+-- only if the `users.id` column exists and is part of a primary key or unique index.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.table_constraints tc
+    JOIN information_schema.key_column_usage kcu
+      ON tc.constraint_name = kcu.constraint_name
+      AND tc.table_name = kcu.table_name
+    WHERE tc.table_name = 'users'
+      AND kcu.column_name = 'id'
+      AND tc.constraint_type IN ('PRIMARY KEY', 'UNIQUE')
+  ) THEN
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints tc2
+        WHERE tc2.table_name = 'faculty_participations' AND tc2.constraint_type = 'FOREIGN KEY'
+      ) THEN
+        EXECUTE 'ALTER TABLE faculty_participations ADD CONSTRAINT fk_faculty_participations_created_by FOREIGN KEY (created_by) REFERENCES users(id)';
+      END IF;
+    EXCEPTION WHEN others THEN
+      RAISE NOTICE 'Could not add foreign key fk_faculty_participations_created_by: %', SQLERRM;
+    END;
+  END IF;
+END
+$$;

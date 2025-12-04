@@ -42,9 +42,10 @@ export async function register(req, res) {
       const userRow = existing[0];
       if (!userRow.is_verified) {
         const hashed = await bcrypt.hash(password, 10);
+        // Also update role in case ADMIN_EMAILS was changed or this email should be admin
         await pool.query(
-          "UPDATE users SET password_hash=$1, full_name=COALESCE($2, full_name) WHERE email=$3",
-          [hashed, fullName, emailLower]
+          "UPDATE users SET password_hash=$1, full_name=COALESCE($2, full_name), role=$4 WHERE email=$3",
+          [hashed, fullName, emailLower, role]
         );
         // continue flow to send fresh OTP
       } else {
@@ -144,6 +145,13 @@ export async function verifyOTP(req, res) {
       [emailLower]
     );
     const user = users[0];
+    // If this email is listed in ADMIN_EMAILS, ensure role is admin both in DB and token
+    if (ADMIN_EMAILS.includes(emailLower) && user.role !== "admin") {
+      await pool.query("UPDATE users SET role='admin' WHERE email=$1", [
+        emailLower,
+      ]);
+      user.role = "admin";
+    }
     const token = signToken(
       { id: user.id, email: user.email, role: user.role },
       "6h"
@@ -263,6 +271,13 @@ export async function loginVerifyOTP(req, res) {
       [emailLower]
     );
     const user = users[0];
+    // If this email is listed in ADMIN_EMAILS, ensure role is admin both in DB and token
+    if (ADMIN_EMAILS.includes(emailLower) && user.role !== "admin") {
+      await pool.query("UPDATE users SET role='admin' WHERE email=$1", [
+        emailLower,
+      ]);
+      user.role = "admin";
+    }
     const token = signToken(
       { id: user.id, email: user.email, role: user.role },
       "6h"

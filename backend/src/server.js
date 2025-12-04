@@ -8,6 +8,7 @@ import staffRoutes from "./routes/staffRoutes.js";
 import eventPublicRoutes from "./routes/eventPublicRoutes.js"; // public events list
 import eventRoutes from "./routes/eventRoutes.js"; // staff/admin event management
 import adminRoutes from "./routes/adminRoutes.js";
+import facultyParticipationRoutes from "./routes/facultyParticipationRoutes.js";
 import pool from "./config/db.js";
 import fs from "fs";
 import path from "path";
@@ -46,6 +47,7 @@ app.use(
 
 // after app.use('/api/auth', authRoutes);
 app.use("/api/staff", staffRoutes);
+app.use("/api/faculty-participations", facultyParticipationRoutes);
 // Optionally expose events publicly for students
 app.use("/api/events", eventPublicRoutes);
 app.use("/api/events-admin", eventRoutes);
@@ -84,6 +86,17 @@ async function ensureColumns() {
     await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS id BIGSERIAL");
     // Backfill any NULL ids (from rows that existed before the column was added)
     await pool.query("UPDATE users SET id = DEFAULT WHERE id IS NULL");
+
+    // Ensure users.id is part of a primary key or unique constraint
+    try {
+      // Add primary key constraint if one does not exist. If a PK already
+      // exists this will fail; swallow that error.
+      await pool.query(
+        "ALTER TABLE users ADD CONSTRAINT users_pkey PRIMARY KEY (id)"
+      );
+    } catch (e) {
+      // ignore errors (constraint exists or other benign issues)
+    }
 
     // Ensure critical user columns exist
     await pool.query(
@@ -140,9 +153,19 @@ async function ensureColumns() {
 }
 
 const PORT = process.env.PORT || 5000;
-ensureTables().then(() => {
-  app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
-});
+// Ensure critical columns (and primary key on users.id) before running full migrations
+ensureColumns()
+  .then(() => ensureTables())
+  .then(() => {
+    app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+  })
+  .catch((err) => {
+    console.error("Startup migration error:", err);
+    // still attempt to start server so humans can inspect logs, but warn
+    app.listen(PORT, () =>
+      console.log(`Server listening on port ${PORT} (with migration warnings)`)
+    );
+  });
 
 // Global error handler to always return JSON (handles multer/file-filter errors too)
 // Keep this AFTER routes and server start to catch async route errors via next(err)

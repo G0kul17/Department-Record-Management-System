@@ -31,6 +31,8 @@ export default function AdminQuickActions() {
     if (key === "staffEvents") return nav("/admin/upload-events");
     if (key === "facultyParticipation")
       return nav("/admin/faculty-participation");
+    if (key === "facultyResearch") return nav("/admin/faculty-research");
+    if (key === "facultyConsultancy") return nav("/admin/faculty-consultancy");
     if (key === "exportRecords") return nav("/admin/reports");
     if (key === "manageUsers") return nav("/admin/users");
     return nav("/");
@@ -50,7 +52,6 @@ export default function AdminQuickActions() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           <Card
             title="Add Achievement"
-            desc="Showcase accomplishments and milestones."
             color="#3b82f6"
             icon={<IconCheck />}
             onClick={goTo("achievements")}
@@ -91,6 +92,20 @@ export default function AdminQuickActions() {
             onClick={goTo("facultyParticipation")}
           />
           <Card
+            title="Faculty Research"
+            desc="Add research funding and project details."
+            color="#14b8a6"
+            icon={<IconList />}
+            onClick={goTo("facultyResearch")}
+          />
+          <Card
+            title="Faculty Consultancy"
+            desc="Add consultancy engagements and proof."
+            color="#10b981"
+            icon={<IconList />}
+            onClick={goTo("facultyConsultancy")}
+          />
+          <Card
             title="Export Records"
             desc="Generate Excel/CSV reports."
             color="#06b6d4"
@@ -109,7 +124,6 @@ export default function AdminQuickActions() {
     </div>
   );
 }
-
 // Minimal inline SVG icon components reused from QuickActions
 function IconCheck() {
   return (

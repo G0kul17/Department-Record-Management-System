@@ -25,7 +25,7 @@ function Dropdown({ label, value, onChange, options }) {
 }
 
 export default function ReportGenerator() {
-  const [mode, setMode] = useState("achievements"); // achievements | projects
+  const [mode, setMode] = useState("achievements"); // achievements | projects | participation | research | consultancy
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -34,6 +34,7 @@ export default function ReportGenerator() {
   const [titleFilter, setTitleFilter] = useState("");
   const [student, setStudent] = useState("");
   const [verified, setVerified] = useState("");
+  const [userType, setUserType] = useState(""); // "student" | "staff" | ""
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [query, setQuery] = useState("");
@@ -44,17 +45,28 @@ export default function ReportGenerator() {
       setLoading(true);
       try {
         // For reports we want all user-entered records, not just verified ones
-        const endpoint =
-          mode === "achievements"
-            ? "/achievements?limit=2000"
-            : "/projects?limit=2000";
+        let endpoint = "/achievements?limit=2000";
+        if (mode === "projects") endpoint = "/projects?limit=2000";
+        if (mode === "participation")
+          endpoint = "/faculty-participation?limit=2000";
+        if (mode === "research") endpoint = "/faculty-research?limit=2000";
+        if (mode === "consultancy")
+          endpoint = "/faculty-consultancy?limit=2000";
+
         const data = await apiClient.get(endpoint);
         if (!mounted) return;
-        setItems(
-          mode === "achievements"
-            ? data.achievements || []
-            : data.projects || []
-        );
+        if (mode === "achievements") setItems(data.achievements || []);
+        else if (mode === "projects") setItems(data.projects || []);
+        else if (mode === "participation")
+          setItems(
+            data.participations || data.facultyParticipation || data.items || []
+          );
+        else if (mode === "research")
+          setItems(data.research || data.facultyResearch || data.items || []);
+        else if (mode === "consultancy")
+          setItems(
+            data.consultancies || data.facultyConsultancy || data.items || []
+          );
       } catch (err) {
         console.error(err);
         if (mounted) setItems([]);
@@ -100,15 +112,11 @@ export default function ReportGenerator() {
       // title filter (for achievements)
       if (titleFilter && (it.title || "") !== titleFilter) return false;
       if (issuer && (it.issuer || it.issuer_name) !== issuer) return false;
-      if (student) {
-        const name =
-          it.studentName ||
-          it.user_fullname ||
-          it.user_name ||
-          it.student_name ||
-          it.uploader ||
-          "";
-        if (!name.includes(student)) return false;
+      // Filter by user type (student/staff)
+      if (userType) {
+        const isStaff = Boolean(it.faculty_name);
+        if (userType === "staff" && !isStaff) return false;
+        if (userType === "student" && isStaff) return false;
       }
       if (verified !== "") {
         const status = (it.verification_status || "").toLowerCase();
@@ -215,6 +223,58 @@ export default function ReportGenerator() {
         { key: "files", header: "Files" },
       ];
     }
+    if (mode === "participation") {
+      return [
+        { key: "id", header: "ID" },
+        { key: "faculty_name", header: "Faculty Name" },
+        { key: "department", header: "Department" },
+        { key: "type_of_event", header: "Type of Event" },
+        { key: "mode_of_training", header: "Mode of Training" },
+        { key: "title", header: "Title" },
+        { key: "start_date", header: "Start Date" },
+        { key: "end_date", header: "End Date" },
+        { key: "place", header: "Place" },
+        { key: "proof_file", header: "Proof File" },
+        { key: "created_at", header: "Created At" },
+        { key: "verified", header: "Verified" },
+        { key: "verification_status", header: "Verification Status" },
+      ];
+    }
+    if (mode === "research") {
+      return [
+        { key: "id", header: "ID" },
+        { key: "funded_type", header: "Funded Type" },
+        { key: "principal_investigator", header: "Principal Investigator" },
+        { key: "team_member_names", header: "Team Members" },
+        { key: "title", header: "Title" },
+        { key: "agency", header: "Agency" },
+        { key: "current_status", header: "Current Status" },
+        { key: "duration", header: "Duration" },
+        { key: "start_date", header: "Start Date" },
+        { key: "end_date", header: "End Date" },
+        { key: "amount", header: "Amount" },
+        { key: "created_at", header: "Created At" },
+        { key: "verified", header: "Verified" },
+        { key: "verification_status", header: "Verification Status" },
+      ];
+    }
+    if (mode === "consultancy") {
+      return [
+        { key: "id", header: "ID" },
+        { key: "faculty_name", header: "Faculty Name" },
+        { key: "title", header: "Title" },
+        { key: "client", header: "Client" },
+        { key: "agency", header: "Agency" },
+        { key: "team_member_names", header: "Team Members" },
+        { key: "start_date", header: "Start Date" },
+        { key: "end_date", header: "End Date" },
+        { key: "amount", header: "Amount" },
+        { key: "proof_file", header: "Proof File" },
+        { key: "created_at", header: "Created At" },
+        { key: "verified", header: "Verified" },
+        { key: "verification_status", header: "Verification Status" },
+      ];
+    }
     // achievements
     return [
       { key: "id", header: "ID" },
@@ -262,6 +322,66 @@ export default function ReportGenerator() {
         verified_by: it.verified_by || "",
         verified_at: it.verified_at || "",
         files: filesStr,
+      };
+    }
+    if (mode === "participation") {
+      const proof = it.proof_name || it.proof_filename || it.proof || "";
+      return {
+        id: it.id,
+        faculty_name: it.faculty_name || it.name || it.user_fullname || "",
+        department: it.department || "",
+        type_of_event: it.type_of_event || it.event_type || "",
+        mode_of_training: it.mode_of_training || it.training_mode || "",
+        title: it.title || "",
+        start_date: it.start_date || "",
+        end_date: it.end_date || "",
+        place: it.place || "",
+        proof_file: proof,
+        created_at: it.created_at || "",
+        verified: it.verified || false,
+        verification_status:
+          it.verification_status || (it.verified ? "approved" : "pending"),
+      };
+    }
+    if (mode === "research") {
+      const proof = it.proof_name || it.proof_filename || it.proof || "";
+      return {
+        id: it.id,
+        funded_type: it.funded_type || "",
+        principal_investigator: it.principal_investigator || "",
+        team_member_names:
+          it.team_member_names || it.teamMembers || it.team_members || "",
+        title: it.title || "",
+        agency: it.agency || "",
+        current_status: it.current_status || "",
+        duration: it.duration || "",
+        start_date: it.start_date || "",
+        end_date: it.end_date || "",
+        amount: it.amount || "",
+        created_at: it.created_at || "",
+        verified: it.verified || false,
+        verification_status:
+          it.verification_status || (it.verified ? "approved" : "pending"),
+      };
+    }
+    if (mode === "consultancy") {
+      const proof = it.proof_name || it.proof_filename || it.proof || "";
+      return {
+        id: it.id,
+        faculty_name: it.faculty_name || it.name || it.user_fullname || "",
+        title: it.title || "",
+        client: it.client || it.company || "",
+        agency: it.agency || "",
+        team_member_names:
+          it.team_member_names || it.teamMembers || it.team_members || "",
+        start_date: it.start_date || "",
+        end_date: it.end_date || "",
+        amount: it.amount || "",
+        proof_file: proof,
+        created_at: it.created_at || "",
+        verified: it.verified || false,
+        verification_status:
+          it.verification_status || (it.verified ? "approved" : "pending"),
       };
     }
     // achievements
@@ -325,6 +445,9 @@ export default function ReportGenerator() {
             >
               <option value="achievements">Achievements</option>
               <option value="projects">Projects</option>
+              <option value="participation">Faculty Participation</option>
+              <option value="research">Faculty Research</option>
+              <option value="consultancy">Faculty Consultancy</option>
             </select>
           </label>
 
@@ -337,12 +460,20 @@ export default function ReportGenerator() {
             />
           )}
 
-          <Dropdown
-            label="Student"
-            value={student}
-            onChange={setStudent}
-            options={studentOptions}
-          />
+          <label className="flex flex-col text-sm">
+            <span className="text-slate-600 dark:text-slate-200 text-xs mb-1">
+              Student/Staff
+            </span>
+            <select
+              value={userType}
+              onChange={(e) => setUserType(e.target.value)}
+              className="border rounded p-2 text-sm bg-white dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+            >
+              <option value="">All</option>
+              <option value="student">Student</option>
+              <option value="staff">Staff</option>
+            </select>
+          </label>
 
           <label className="flex flex-col text-sm">
             <span className="text-slate-600 dark:text-slate-200 text-xs mb-1">

@@ -32,6 +32,10 @@ import QuickActions from "./pages/QuickActions";
 import AdminQuickActions from "./pages/admin/AdminQuickActions";
 import FacultyParticipation from "./pages/staff/FacultyParticipation";
 import AdminFacultyParticipation from "./pages/admin/AdminFacultyParticipation";
+import FacultyResearch from "./pages/staff/FacultyResearch";
+import AdminFacultyResearch from "./pages/admin/AdminFacultyResearch";
+import FacultyConsultancy from "./pages/staff/FacultyConsultancy";
+import AdminFacultyConsultancy from "./pages/admin/AdminFacultyConsultancy";
 import Achievements from "./pages/student/StudentsAchievements";
 import ProjectUpload from "./pages/student/StudentsProjectUpload";
 import Events from "./pages/student/StudentsEventsReg";
@@ -311,6 +315,39 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <AdminFacultyParticipation />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/faculty-research"
+          element={
+            <ProtectedRoute allowedRoles={["staff", "admin"]}>
+              <FacultyResearch />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/faculty-research"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminFacultyResearch />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/faculty-consultancy"
+          element={
+            <ProtectedRoute allowedRoles={["staff", "admin"]}>
+              <FacultyConsultancy />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/faculty-consultancy"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminFacultyConsultancy />
             </ProtectedRoute>
           }
         />

@@ -32,6 +32,8 @@ export default function QuickActions() {
     if (key === "verifyProjects") return nav("/verify-projects");
     if (key === "staffEvents") return nav("/upload-events");
     if (key === "facultyParticipation") return nav("/faculty-participation");
+    if (key === "facultyResearch") return nav("/faculty-research");
+    if (key === "facultyConsultancy") return nav("/faculty-consultancy");
 
     if (key === "exportRecords") return nav("/staff/reports");
 
@@ -136,6 +138,43 @@ export default function QuickActions() {
                   </svg>
                 }
                 onClick={goTo("facultyParticipation")}
+              />
+              <Card
+                title="Faculty Research"
+                desc="Add research funding and project details."
+                color="#14b8a6"
+                icon={
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-white"
+                  >
+                    <path d="M12 3l7 7-7 7-7-7 7-7z" strokeWidth="2" />
+                  </svg>
+                }
+                onClick={goTo("facultyResearch")}
+              />
+              <Card
+                title="Faculty Consultancy"
+                desc="Add consultancy engagements and proof."
+                color="#10b981"
+                icon={
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-white"
+                  >
+                    <circle cx="12" cy="12" r="9" strokeWidth="2" />
+                    <path d="M12 7v10M7 12h10" strokeWidth="2" />
+                  </svg>
+                }
+                onClick={goTo("facultyConsultancy")}
               />
               <Card
                 title="Verify Achievement"

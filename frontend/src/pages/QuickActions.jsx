@@ -31,6 +31,7 @@ export default function QuickActions() {
     if (key === "verifyAchievements") return nav("/verify-achievements");
     if (key === "verifyProjects") return nav("/verify-projects");
     if (key === "staffEvents") return nav("/upload-events");
+    if (key === "facultyParticipation") return nav("/faculty-participation");
 
     if (key === "exportRecords") return nav("/staff/reports");
 
@@ -107,6 +108,35 @@ export default function QuickActions() {
           {/* Role-specific actions for staff */}
           {user?.role === "staff" ? (
             <>
+              <Card
+                title="Faculty Participation"
+                desc="Add faculty training/participation details."
+                color="#0ea5e9"
+                icon={
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-white"
+                  >
+                    <path
+                      d="M12 19l-7-7 7-7"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M5 12h14"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                }
+                onClick={goTo("facultyParticipation")}
+              />
               <Card
                 title="Verify Achievement"
                 desc="Review and verify student achievements."
@@ -186,10 +216,35 @@ export default function QuickActions() {
                 desc="Generate Excel/CSV reports for projects and achievements."
                 color="#06b6d4"
                 icon={
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-white">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <polyline points="7 10 12 15 17 10" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <line x1="12" y1="15" x2="12" y2="3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-white"
+                  >
+                    <path
+                      d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <polyline
+                      points="7 10 12 15 17 10"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <line
+                      x1="12"
+                      y1="15"
+                      x2="12"
+                      y2="3"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 }
                 onClick={goTo("exportRecords")}

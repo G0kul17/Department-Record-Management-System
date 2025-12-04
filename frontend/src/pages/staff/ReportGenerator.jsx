@@ -167,7 +167,9 @@ export default function ReportGenerator() {
       rows = filtered.map((it) => mapItemToRow(it, mode));
     }
 
-    const columns = getColumnsForMode(mode);
+    const columns = getColumnsForMode(mode).filter((c) =>
+      selectedColumns.includes(c.key)
+    );
 
     await exportToXlsxOrCsv(
       `${mode}-report-${new Date().toISOString().slice(0, 10)}`,
@@ -179,6 +181,19 @@ export default function ReportGenerator() {
   // Preview state populated by Apply
   const [previewRows, setPreviewRows] = useState([]);
   const [showPreview, setShowPreview] = useState(false);
+
+  // Column selection
+  const allColumns = useMemo(() => getColumnsForMode(mode), [mode]);
+  const [selectedColumns, setSelectedColumns] = useState([]);
+  useEffect(() => {
+    setSelectedColumns(allColumns.map((c) => c.key));
+  }, [mode, allColumns]);
+
+  const toggleColumn = (key) => {
+    setSelectedColumns((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
+  };
 
   function getColumnsForMode(mode) {
     if (mode === "projects") {
@@ -377,6 +392,7 @@ export default function ReportGenerator() {
               setQuery("");
               setShowPreview(false);
               setPreviewRows([]);
+              setSelectedColumns(allColumns.map((c) => c.key));
             }}
             className="px-3 py-1 text-sm border rounded bg-white dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
           >
@@ -402,9 +418,25 @@ export default function ReportGenerator() {
           Preview: {applyFilters(items).length} records match the current
           filters
         </div>
-        <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-          Note: export will include columns: ID, Title, Description, Uploaded
-          By, Team Members, Approved At, Approved By, Attachments
+        <div className="mt-3">
+          <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            Select Columns to Export
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {allColumns.map((col) => (
+              <label
+                key={col.key}
+                className="inline-flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedColumns.includes(col.key)}
+                  onChange={() => toggleColumn(col.key)}
+                />
+                <span>{col.header}</span>
+              </label>
+            ))}
+          </div>
         </div>
 
         {showPreview && (
@@ -412,14 +444,16 @@ export default function ReportGenerator() {
             <table className="min-w-full table-fixed border-collapse">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800">
-                  {getColumnsForMode(mode).map((col) => (
-                    <th
-                      key={col.key}
-                      className="p-2 text-left text-sm font-semibold border-b dark:border-slate-700 dark:text-slate-200"
-                    >
-                      {col.header}
-                    </th>
-                  ))}
+                  {getColumnsForMode(mode)
+                    .filter((c) => selectedColumns.includes(c.key))
+                    .map((col) => (
+                      <th
+                        key={col.key}
+                        className="p-2 text-left text-sm font-semibold border-b dark:border-slate-700 dark:text-slate-200"
+                      >
+                        {col.header}
+                      </th>
+                    ))}
                 </tr>
               </thead>
               <tbody>
@@ -432,14 +466,16 @@ export default function ReportGenerator() {
                         : "bg-slate-50 dark:bg-slate-800"
                     }
                   >
-                    {getColumnsForMode(mode).map((col) => (
-                      <td
-                        key={col.key}
-                        className="p-2 text-sm border-b align-top dark:border-slate-700 dark:text-slate-200"
-                      >
-                        {r[col.key]}
-                      </td>
-                    ))}
+                    {getColumnsForMode(mode)
+                      .filter((c) => selectedColumns.includes(c.key))
+                      .map((col) => (
+                        <td
+                          key={col.key}
+                          className="p-2 text-sm border-b align-top dark:border-slate-700 dark:text-slate-200"
+                        >
+                          {r[col.key]}
+                        </td>
+                      ))}
                   </tr>
                 ))}
               </tbody>

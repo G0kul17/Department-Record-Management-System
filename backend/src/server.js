@@ -9,6 +9,8 @@ import eventPublicRoutes from "./routes/eventPublicRoutes.js"; // public events 
 import eventRoutes from "./routes/eventRoutes.js"; // staff/admin event management
 import adminRoutes from "./routes/adminRoutes.js";
 import facultyParticipationRoutes from "./routes/facultyParticipationRoutes.js";
+import facultyResearchRoutes from "./routes/facultyResearchRoutes.js";
+import facultyConsultancyRoutes from "./routes/facultyConsultancyRoutes.js";
 import pool from "./config/db.js";
 import fs from "fs";
 import path from "path";
@@ -48,6 +50,9 @@ app.use(
 // after app.use('/api/auth', authRoutes);
 app.use("/api/staff", staffRoutes);
 app.use("/api/faculty-participations", facultyParticipationRoutes);
+app.use("/api/faculty-research", facultyResearchRoutes);
+app.use("/api/faculty-consultancy", facultyConsultancyRoutes);
+
 // Optionally expose events publicly for students
 app.use("/api/events", eventPublicRoutes);
 app.use("/api/events-admin", eventRoutes);

@@ -113,10 +113,17 @@ export async function createAchievement(req, res) {
 export async function listAchievements(req, res) {
   const { user_id, verified, q, limit = 20, offset = 0 } = req.query;
   try {
-    let base = `SELECT a.*, u.email as user_email,
-                pf.original_name as proof_name, pf.filename as proof_filename, pf.mime_type as proof_mime
-                FROM achievements a LEFT JOIN users u ON a.user_id=u.id
-                LEFT JOIN project_files pf ON a.proof_file_id = pf.id`;
+    // Include uploader identity (prefer achievement owner, fallback to proof file uploader)
+    let base = `SELECT a.*, COALESCE(u.email, u2.email, ux.email)        AS user_email,
+          COALESCE(u.full_name, u2.full_name, ux.full_name) AS user_fullname,
+                pf.original_name                    AS proof_name,
+                pf.filename                         AS proof_filename,
+                pf.mime_type                        AS proof_mime
+                FROM achievements a
+                LEFT JOIN users u ON a.user_id=u.id
+                LEFT JOIN project_files pf ON a.proof_file_id = pf.id
+          LEFT JOIN users u2 ON u2.id = pf.uploaded_by
+          LEFT JOIN users ux ON LOWER(ux.full_name) = LOWER(a.name)`;
     const cond = [];
     const params = [];
 
@@ -162,8 +169,8 @@ export async function getAchievementDetails(req, res) {
 
     const { rows } = await pool.query(
       `SELECT a.*,
-              COALESCE(u.email, u2.email)        AS user_email,
-              COALESCE(u.full_name, u2.full_name) AS user_fullname,
+              COALESCE(u.email, u2.email, ux.email)        AS user_email,
+              COALESCE(u.full_name, u2.full_name, ux.full_name) AS user_fullname,
               pf.filename                         AS proof_filename,
               pf.original_name                    AS proof_name,
               pf.mime_type                        AS proof_mime
@@ -171,6 +178,7 @@ export async function getAchievementDetails(req, res) {
        LEFT JOIN users u ON a.user_id = u.id
        LEFT JOIN project_files pf ON a.proof_file_id = pf.id
        LEFT JOIN users u2 ON u2.id = pf.uploaded_by
+       LEFT JOIN users ux ON LOWER(ux.full_name) = LOWER(a.name)
        WHERE a.id = $1`,
       [id]
     );

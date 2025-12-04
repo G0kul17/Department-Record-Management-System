@@ -28,6 +28,42 @@ export default function AchievementsApproved() {
     return () => (mounted = false);
   }, []);
 
+  // Enrich any items missing user_email by fetching details
+  useEffect(() => {
+    if (!items || !items.length) return;
+    const missing = items.filter((a) => !a?.user_email);
+    if (!missing.length) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const updates = [];
+        for (const a of missing) {
+          try {
+            const res = await apiClient.get(`/achievements/${a.id}`);
+            const detail = res.achievement || res;
+            if (!detail) continue;
+            updates.push({
+              id: a.id,
+              user_email: detail.user_email || a.user_email,
+              user_fullname: detail.user_fullname || a.user_fullname,
+            });
+          } catch (_) {}
+        }
+        if (!cancelled && updates.length) {
+          setItems((prev) =>
+            prev.map((it) => {
+              const u = updates.find((x) => x.id === it.id);
+              return u ? { ...it, ...u } : it;
+            })
+          );
+        }
+      } catch (_) {}
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [items]);
+
   return (
     <div className="mx-auto max-w-6xl p-6">
       <div className="flex items-center justify-between">
@@ -97,10 +133,10 @@ export default function AchievementsApproved() {
 
                   <div className="mt-2 text-sm text-slate-700 dark:text-slate-300">
                     Uploaded by:{" "}
-                    <span className="font-medium text-slate-900 dark:text-slate-100">
-                      {a.studentName ||
+                    <span className="font-medium text-slate-900 dark:text-slate-100 break-all">
+                      {(a.user_email || a.student_email || "").trim() ||
                         a.user_fullname ||
-                        a.user_name ||
+                        a.studentName ||
                         a.name ||
                         "Student"}
                     </span>

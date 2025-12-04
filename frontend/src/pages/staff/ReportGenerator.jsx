@@ -111,8 +111,15 @@ export default function ReportGenerator() {
         if (!name.includes(student)) return false;
       }
       if (verified !== "") {
-        const v = Boolean(it.verified);
-        if ((verified === "true") !== v) return false;
+        const status = (it.verification_status || "").toLowerCase();
+        const isApproved = status === "approved" || Boolean(it.verified);
+        if (verified === "true") {
+          // Show only approved
+          if (!isApproved || status === "pending") return false;
+        } else if (verified === "false") {
+          // Show only not approved (pending or unverified)
+          if (isApproved && status === "approved") return false;
+        }
       }
       if (query) {
         const q = query.toLowerCase();
@@ -235,7 +242,8 @@ export default function ReportGenerator() {
         created_by: it.created_by || it.user_id || "",
         created_at: it.created_at || "",
         verified: it.verified || false,
-        verification_status: it.verification_status || "",
+        verification_status:
+          it.verification_status || (it.verified ? "approved" : "pending"),
         verified_by: it.verified_by || "",
         verified_at: it.verified_at || "",
         files: filesStr,
@@ -266,7 +274,8 @@ export default function ReportGenerator() {
       proof_file: proof,
       created_at: it.created_at || "",
       verified: it.verified || false,
-      verification_status: it.verification_status || "",
+      verification_status:
+        it.verification_status || (it.verified ? "approved" : "pending"),
     };
   }
 

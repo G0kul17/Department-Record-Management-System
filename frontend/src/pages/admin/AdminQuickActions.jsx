@@ -29,6 +29,8 @@ export default function AdminQuickActions() {
     if (key === "verifyAchievements") return nav("/admin/verify-achievements");
     if (key === "verifyProjects") return nav("/admin/verify-projects");
     if (key === "staffEvents") return nav("/admin/upload-events");
+    if (key === "facultyParticipation")
+      return nav("/admin/faculty-participation");
     if (key === "exportRecords") return nav("/admin/reports");
     if (key === "manageUsers") return nav("/admin/users");
     return nav("/");
@@ -80,6 +82,13 @@ export default function AdminQuickActions() {
             color="#6366f1"
             icon={<IconCalendar />}
             onClick={goTo("staffEvents")}
+          />
+          <Card
+            title="Faculty Participation"
+            desc="Add faculty training/participation details."
+            color="#0ea5e9"
+            icon={<IconList />}
+            onClick={goTo("facultyParticipation")}
           />
           <Card
             title="Export Records"

@@ -30,6 +30,8 @@ import { useAuth } from "./hooks/useAuth";
 import Home from "./pages/Home";
 import QuickActions from "./pages/QuickActions";
 import AdminQuickActions from "./pages/admin/AdminQuickActions";
+import FacultyParticipation from "./pages/staff/FacultyParticipation";
+import AdminFacultyParticipation from "./pages/admin/AdminFacultyParticipation";
 import Achievements from "./pages/student/StudentsAchievements";
 import ProjectUpload from "./pages/student/StudentsProjectUpload";
 import Events from "./pages/student/StudentsEventsReg";
@@ -291,6 +293,24 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={["staff", "admin"]}>
               <ReportGenerator />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/faculty-participation"
+          element={
+            <ProtectedRoute allowedRoles={["staff", "admin"]}>
+              <FacultyParticipation />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/faculty-participation"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminFacultyParticipation />
             </ProtectedRoute>
           }
         />

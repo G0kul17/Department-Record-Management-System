@@ -15,6 +15,7 @@ export default function ProjectUpload() {
     github_url: "",
   });
   const [files, setFiles] = useState([]);
+  const [srsFile, setSrsFile] = useState(null);
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -54,6 +55,12 @@ export default function ProjectUpload() {
     setSubmitting(true);
     setMessage("");
     try {
+      // Basic validation: SRS document is mandatory
+      if (!srsFile) {
+        throw new Error(
+          "Please attach the SRS document (PDF) before uploading."
+        );
+      }
       const fd = new FormData();
       fd.append("title", form.title.trim());
       if (form.description) fd.append("description", form.description);
@@ -71,6 +78,8 @@ export default function ProjectUpload() {
             .filter(Boolean)
             .join(", ")
         );
+      // Attach mandatory SRS document
+      fd.append("srs_document", srsFile);
       for (const f of files) fd.append("files", f);
       const resp = await apiClient.uploadFile("/projects", fd);
       setSuccess(true);
@@ -86,6 +95,7 @@ export default function ProjectUpload() {
         github_url: "",
       });
       setFiles([]);
+      setSrsFile(null);
       // If response contains project, optimistically prepend before refresh
       if (resp && resp.project) {
         setProjects((prev) => [resp.project, ...prev]);
@@ -309,6 +319,25 @@ export default function ProjectUpload() {
                   We’ll save the names in order you enter.
                 </p>
               </div>
+            </div>
+
+            <div>
+              {/* Mandatory SRS document */}
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                SRS Document <span className="text-red-600">*</span>
+              </label>
+              <input
+                type="file"
+                accept="application/pdf"
+                onChange={(e) =>
+                  setSrsFile((e.target.files && e.target.files[0]) || null)
+                }
+                className="mt-1 block w-full text-sm text-slate-600 dark:text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:text-white hover:file:bg-blue-700"
+                required
+              />
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Upload your Software Requirement Specification (SRS) as a PDF.
+              </p>
             </div>
 
             <div>

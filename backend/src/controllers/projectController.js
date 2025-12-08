@@ -28,8 +28,20 @@ export async function createProject(req, res) {
         .status(400)
         .json({ message: "title and mentor_name required" });
 
-    // Files are optional now
-    const files = req.files || [];
+    // Collect uploaded files from multiple fields
+    const fieldFiles = req.files || {};
+    const srsFiles = Array.isArray(fieldFiles.srs_document)
+      ? fieldFiles.srs_document
+      : [];
+    const otherFiles = Array.isArray(fieldFiles.files) ? fieldFiles.files : [];
+    const files = [...srsFiles, ...otherFiles];
+
+    // Enforce mandatory SRS on creation
+    if (srsFiles.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "SRS document (PDF) is required." });
+    }
 
     // Require GitHub URL and perform a basic validation (must be a GitHub link)
     if (!github_url || typeof github_url !== "string" || !github_url.trim()) {
@@ -141,7 +153,12 @@ export async function uploadFilesToProject(req, res) {
     if (!projectQ.rows.length)
       return res.status(404).json({ message: "Project not found" });
 
-    const files = req.files || [];
+    const fieldFiles = req.files || {};
+    const srsFiles = Array.isArray(fieldFiles.srs_document)
+      ? fieldFiles.srs_document
+      : [];
+    const otherFiles = Array.isArray(fieldFiles.files) ? fieldFiles.files : [];
+    const files = [...srsFiles, ...otherFiles];
     for (const f of files) {
       const fileType = detectFileTypeByField(f.fieldname);
       await pool.query(

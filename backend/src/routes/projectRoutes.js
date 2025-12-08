@@ -16,12 +16,16 @@ import { upload } from "../config/upload.js";
 const router = express.Router();
 
 // Create project (students or staff) — accepts multiple files under fields: srs, ppt, paper, code, portal
+// Require SRS document on creation: accept 'srs_document' plus optional 'files'
 router.post(
   "/",
   requireAuth,
   // either student or staff can create a project
   requireRole(["student", "staff", "admin"]),
-  upload.array("files", 10), // accept up to 10 files; client should name fields appropriately
+  upload.fields([
+    { name: "srs_document", maxCount: 1 },
+    { name: "files", maxCount: 10 },
+  ]),
   createProject
 );
 
@@ -30,7 +34,10 @@ router.post(
   "/:id/files",
   requireAuth,
   requireRole(["student", "staff", "admin"]),
-  upload.array("files", 10),
+  upload.fields([
+    { name: "srs_document", maxCount: 1 },
+    { name: "files", maxCount: 10 },
+  ]),
   uploadFilesToProject
 );
 

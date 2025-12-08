@@ -7,6 +7,7 @@ export const createResearch = async (req, res) => {
     const staffId = req.user.id;
 
     const {
+      faculty_name,
       funded_type,
       principal_investigator,
       team_members,
@@ -16,7 +17,7 @@ export const createResearch = async (req, res) => {
       duration,
       start_date,
       end_date,
-      amount
+      amount,
     } = req.body;
 
     if (!funded_type || !principal_investigator || !title || !current_status) {
@@ -39,7 +40,7 @@ export const createResearch = async (req, res) => {
         file.originalname,
         file.mimetype,
         file.size,
-        staffId
+        staffId,
       ]);
 
       proofFileId = fileR.rows[0].id;
@@ -47,13 +48,14 @@ export const createResearch = async (req, res) => {
 
     const q = `
       INSERT INTO faculty_research
-      (funded_type, principal_investigator, team_members, title,
+      (faculty_name, funded_type, principal_investigator, team_members, title,
        agency, current_status, duration, start_date, end_date, amount,
        proof_file_id, created_by)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
       RETURNING *`;
 
     const values = [
+      faculty_name || null,
       funded_type,
       principal_investigator,
       team_members || null,
@@ -65,13 +67,14 @@ export const createResearch = async (req, res) => {
       end_date || null,
       amount || null,
       proofFileId,
-      staffId
+      staffId,
     ];
 
     const { rows } = await pool.query(q, values);
 
-    return res.status(201).json({ message: "Faculty research added", data: rows[0] });
-
+    return res
+      .status(201)
+      .json({ message: "Faculty research added", data: rows[0] });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server error" });
@@ -84,6 +87,7 @@ export const updateResearch = async (req, res) => {
     const id = Number(req.params.id);
 
     const {
+      faculty_name,
       funded_type,
       principal_investigator,
       team_members,
@@ -93,7 +97,7 @@ export const updateResearch = async (req, res) => {
       duration,
       start_date,
       end_date,
-      amount
+      amount,
     } = req.body;
 
     let proofFileId = null;
@@ -111,7 +115,7 @@ export const updateResearch = async (req, res) => {
         file.originalname,
         file.mimetype,
         file.size,
-        req.user.id
+        req.user.id,
       ]);
 
       proofFileId = fileR.rows[0].id;
@@ -119,22 +123,24 @@ export const updateResearch = async (req, res) => {
 
     const q = `
       UPDATE faculty_research
-      SET funded_type = COALESCE($1, funded_type),
-          principal_investigator = COALESCE($2, principal_investigator),
-          team_members = COALESCE($3, team_members),
-          title = COALESCE($4, title),
-          agency = COALESCE($5, agency),
-          current_status = COALESCE($6, current_status),
-          duration = COALESCE($7, duration),
-          start_date = COALESCE($8, start_date),
-          end_date = COALESCE($9, end_date),
-          amount = COALESCE($10, amount),
-          proof_file_id = COALESCE($11, proof_file_id),
+      SET faculty_name = COALESCE($1, faculty_name),
+          funded_type = COALESCE($2, funded_type),
+          principal_investigator = COALESCE($3, principal_investigator),
+          team_members = COALESCE($4, team_members),
+          title = COALESCE($5, title),
+          agency = COALESCE($6, agency),
+          current_status = COALESCE($7, current_status),
+          duration = COALESCE($8, duration),
+          start_date = COALESCE($9, start_date),
+          end_date = COALESCE($10, end_date),
+          amount = COALESCE($11, amount),
+          proof_file_id = COALESCE($12, proof_file_id),
           updated_at = NOW()
-      WHERE id=$12
+      WHERE id=$13
       RETURNING *`;
 
     const { rows } = await pool.query(q, [
+      faculty_name,
       funded_type,
       principal_investigator,
       team_members,
@@ -146,13 +152,13 @@ export const updateResearch = async (req, res) => {
       end_date,
       amount,
       proofFileId,
-      id
+      id,
     ]);
 
-    if (!rows.length) return res.status(404).json({ message: "Research record not found" });
+    if (!rows.length)
+      return res.status(404).json({ message: "Research record not found" });
 
     return res.json({ message: "Updated successfully", data: rows[0] });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -183,7 +189,6 @@ export const listResearch = async (req, res) => {
     const { rows } = await pool.query(q);
 
     return res.json({ data: rows });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });

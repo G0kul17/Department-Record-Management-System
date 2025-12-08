@@ -243,6 +243,7 @@ $$;
 
 CREATE TABLE IF NOT EXISTS faculty_research (
   id SERIAL PRIMARY KEY,
+  faculty_name VARCHAR(255),
 
   funded_type VARCHAR(50) NOT NULL,   -- sponsored / inhouse
   principal_investigator VARCHAR(255) NOT NULL,
@@ -264,6 +265,9 @@ CREATE TABLE IF NOT EXISTS faculty_research (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP
 );
+
+-- Ensure faculty_name column exists for faculty_research
+ALTER TABLE faculty_research ADD COLUMN IF NOT EXISTS faculty_name VARCHAR(255);
 
 -- Helpful indexes
 CREATE INDEX IF NOT EXISTS idx_faculty_research_agency
@@ -364,6 +368,7 @@ $$;
 
 CREATE TABLE IF NOT EXISTS faculty_consultancy (
   id SERIAL PRIMARY KEY,
+  faculty_name VARCHAR(255),
 
   team_members TEXT,               -- comma-separated or JSON
   agency VARCHAR(255) NOT NULL,
@@ -380,6 +385,9 @@ CREATE TABLE IF NOT EXISTS faculty_consultancy (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP
 );
+
+-- Ensure faculty_name column exists for faculty_consultancy
+ALTER TABLE faculty_consultancy ADD COLUMN IF NOT EXISTS faculty_name VARCHAR(255);
 
 -- Helpful indexes
 CREATE INDEX IF NOT EXISTS idx_faculty_consultancy_agency

@@ -105,6 +105,15 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        {/* Staff-friendly alias for the same upload page */}
+        <Route
+          path="/staff/projects/upload"
+          element={
+            <ProtectedRoute allowedRoles={["staff", "admin"]}>
+              <ProjectUpload />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/projects/:id"
           element={

@@ -7,12 +7,13 @@ export const createConsultancy = async (req, res) => {
     const staffId = req.user.id;
 
     const {
+      faculty_name,
       team_members,
       agency,
       amount,
       duration,
       start_date,
-      end_date
+      end_date,
     } = req.body;
 
     if (!agency) {
@@ -35,7 +36,7 @@ export const createConsultancy = async (req, res) => {
         file.originalname,
         file.mimetype,
         file.size,
-        staffId
+        staffId,
       ]);
 
       proofFileId = fileR.rows[0].id;
@@ -43,11 +44,12 @@ export const createConsultancy = async (req, res) => {
 
     const q = `
       INSERT INTO faculty_consultancy
-      (team_members, agency, amount, duration, start_date, end_date, proof_file_id, created_by)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+      (faculty_name, team_members, agency, amount, duration, start_date, end_date, proof_file_id, created_by)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
       RETURNING *`;
 
     const values = [
+      faculty_name || null,
       team_members || null,
       agency,
       amount || null,
@@ -55,13 +57,14 @@ export const createConsultancy = async (req, res) => {
       start_date || null,
       end_date || null,
       proofFileId,
-      staffId
+      staffId,
     ];
 
     const { rows } = await pool.query(q, values);
 
-    return res.status(201).json({ message: "Faculty consultancy added", data: rows[0] });
-
+    return res
+      .status(201)
+      .json({ message: "Faculty consultancy added", data: rows[0] });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server error" });
@@ -74,12 +77,13 @@ export const updateConsultancy = async (req, res) => {
     const id = Number(req.params.id);
 
     const {
+      faculty_name,
       team_members,
       agency,
       amount,
       duration,
       start_date,
-      end_date
+      end_date,
     } = req.body;
 
     let proofFileId = null;
@@ -97,7 +101,7 @@ export const updateConsultancy = async (req, res) => {
         file.originalname,
         file.mimetype,
         file.size,
-        req.user.id
+        req.user.id,
       ]);
 
       proofFileId = fileR.rows[0].id;
@@ -105,18 +109,20 @@ export const updateConsultancy = async (req, res) => {
 
     const q = `
       UPDATE faculty_consultancy
-      SET team_members = COALESCE($1, team_members),
-          agency = COALESCE($2, agency),
-          amount = COALESCE($3, amount),
-          duration = COALESCE($4, duration),
-          start_date = COALESCE($5, start_date),
-          end_date = COALESCE($6, end_date),
-          proof_file_id = COALESCE($7, proof_file_id),
+      SET faculty_name = COALESCE($1, faculty_name),
+          team_members = COALESCE($2, team_members),
+          agency = COALESCE($3, agency),
+          amount = COALESCE($4, amount),
+          duration = COALESCE($5, duration),
+          start_date = COALESCE($6, start_date),
+          end_date = COALESCE($7, end_date),
+          proof_file_id = COALESCE($8, proof_file_id),
           updated_at = NOW()
-      WHERE id=$8
+      WHERE id=$9
       RETURNING *`;
 
     const { rows } = await pool.query(q, [
+      faculty_name,
       team_members,
       agency,
       amount,
@@ -124,13 +130,13 @@ export const updateConsultancy = async (req, res) => {
       start_date,
       end_date,
       proofFileId,
-      id
+      id,
     ]);
 
-    if (!rows.length) return res.status(404).json({ message: "Consultancy record not found" });
+    if (!rows.length)
+      return res.status(404).json({ message: "Consultancy record not found" });
 
     return res.json({ message: "Updated successfully", data: rows[0] });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -145,7 +151,6 @@ export const deleteConsultancy = async (req, res) => {
     await pool.query("DELETE FROM faculty_consultancy WHERE id=$1", [id]);
 
     return res.json({ message: "Deleted successfully" });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -164,7 +169,6 @@ export const listConsultancy = async (req, res) => {
     const { rows } = await pool.query(q);
 
     return res.json({ data: rows });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });

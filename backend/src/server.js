@@ -11,6 +11,7 @@ import adminRoutes from "./routes/adminRoutes.js";
 import facultyParticipationRoutes from "./routes/facultyParticipationRoutes.js";
 import facultyResearchRoutes from "./routes/facultyResearchRoutes.js";
 import facultyConsultancyRoutes from "./routes/facultyConsultancyRoutes.js";
+import dataUploadRoutes from "./routes/dataUploadRoutes.js";
 import pool from "./config/db.js";
 import fs from "fs";
 import path from "path";
@@ -42,6 +43,8 @@ app.get("/", (req, res) => res.json({ message: "Auth RBAC OTP API" }));
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/achievements", achievementRoutes);
+app.use("/api/data-uploads", dataUploadRoutes);
+
 app.use(
   "/uploads",
   express.static(path.resolve(process.env.FILE_STORAGE_PATH || "./uploads"))

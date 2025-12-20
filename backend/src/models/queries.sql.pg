@@ -504,3 +504,55 @@ BEGIN
   END IF;
 END
 $$;
+
+-- ==========================================================
+-- STAFF / ADMIN DATA UPLOADS (Excel / CSV)
+-- ==========================================================
+
+CREATE TABLE IF NOT EXISTS staff_uploads_with_document (
+  id SERIAL PRIMARY KEY,
+
+  uploader_name VARCHAR(255) NOT NULL,         -- Display name
+  uploaded_by INTEGER,                         -- FK to users(id) added conditionally below
+  uploader_role VARCHAR(20),                   -- staff / admin
+
+  original_filename VARCHAR(500),
+  stored_filename VARCHAR(500),
+  file_type VARCHAR(20),                       -- csv / xlsx
+  total_rows INTEGER,
+
+  documents JSONB NOT NULL,                    -- Parsed table data
+
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_staff_uploads_uploaded_by
+  ON staff_uploads_with_document(uploaded_by);
+
+-- Add foreign key constraint from staff_uploads_with_document.uploaded_by -> users(id)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.table_constraints tc
+    JOIN information_schema.key_column_usage kcu
+      ON tc.constraint_name = kcu.constraint_name
+      AND tc.table_name = kcu.table_name
+    WHERE tc.table_name = 'users'
+      AND kcu.column_name = 'id'
+      AND tc.constraint_type IN ('PRIMARY KEY', 'UNIQUE')
+  ) THEN
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints tc2
+        WHERE tc2.table_name = 'staff_uploads_with_document'
+          AND tc2.constraint_name = 'fk_staff_uploads_uploaded_by'
+      ) THEN
+        EXECUTE 'ALTER TABLE staff_uploads_with_document ADD CONSTRAINT fk_staff_uploads_uploaded_by FOREIGN KEY (uploaded_by) REFERENCES users(id)';
+      END IF;
+    EXCEPTION WHEN others THEN
+      RAISE NOTICE 'Could not add foreign key fk_staff_uploads_uploaded_by: %', SQLERRM;
+    END;
+  END IF;
+END
+$$;

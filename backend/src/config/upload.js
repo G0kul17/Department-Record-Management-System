@@ -49,6 +49,24 @@ function fileFilter(req, file, cb) {
     return cb(new Error("Invalid proof file type"), false);
   }
 
+  // Allow CSV/Excel specifically for 'document' field (data uploads)
+  if (file.fieldname === "document") {
+    const name = file.originalname || "";
+    const ext = path.extname(name).toLowerCase();
+    const allowedMimes = new Set([
+      "text/csv",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ]);
+    const allowedExts = new Set([".csv", ".xlsx", ".xls"]);
+    if (allowedMimes.has(file.mimetype) || allowedExts.has(ext))
+      return cb(null, true);
+    return cb(
+      new Error("Invalid data file type. Please upload CSV or Excel."),
+      false
+    );
+  }
+
   // Otherwise respect global allowedTypes if provided; allow all if empty
   if (!allowedTypes.length) return cb(null, true);
   if (allowedTypes.includes(file.mimetype)) return cb(null, true);

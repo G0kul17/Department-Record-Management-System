@@ -193,11 +193,63 @@ CREATE TABLE IF NOT EXISTS faculty_participations (
   conducted_by VARCHAR(255),
   details TEXT,
 
+  -- Publications subtype (required only when type_of_event = 'Others')
+  publications_type VARCHAR(50), -- Journal Publications / Conference Publications
+
+  -- Journal / Conference Publications fields
+  claiming_faculty_name VARCHAR(255),
+  publication_indexing VARCHAR(100), -- Scopus Journal / Scopus Book chapter / Web of Science (SCI/ESCI)
+  authors_list TEXT,
+  paper_title VARCHAR(500),
+  journal_name VARCHAR(255),
+  volume_no VARCHAR(50),
+  issue_no VARCHAR(50),
+  page_or_doi VARCHAR(100),
+  issn_or_isbn VARCHAR(100),
+  pub_month_year VARCHAR(10),
+  citations_count INTEGER,
+  paper_url TEXT,
+  journal_home_url TEXT,
+  publisher VARCHAR(255),
+  impact_factor NUMERIC(6,2),
+  indexed_in_db VARCHAR(10), -- Yes/No
+  full_paper_drive_link TEXT,
+  first_page_drive_link TEXT,
+  sdg_mapping VARCHAR(255),
+  joint_publication_with VARCHAR(100), -- Industry, Top 100 NIRF, Central Govt, International University
+  publication_domain VARCHAR(255),
+  coauthors_students VARCHAR(50),
+
   proof_file_id INTEGER,  -- FK to project_files(id) added conditionally below
   created_by INTEGER,  -- FK to users(id) added conditionally below
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP
 );
+
+-- Ensure publications-related columns exist when table already exists
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS publications_type VARCHAR(50);
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS claiming_faculty_name VARCHAR(255);
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS publication_indexing VARCHAR(100);
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS authors_list TEXT;
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS paper_title VARCHAR(500);
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS journal_name VARCHAR(255);
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS volume_no VARCHAR(50);
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS issue_no VARCHAR(50);
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS page_or_doi VARCHAR(100);
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS issn_or_isbn VARCHAR(100);
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS pub_month_year VARCHAR(10);
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS citations_count INTEGER;
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS paper_url TEXT;
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS journal_home_url TEXT;
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS publisher VARCHAR(255);
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS impact_factor NUMERIC(6,2);
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS indexed_in_db VARCHAR(10);
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS full_paper_drive_link TEXT;
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS first_page_drive_link TEXT;
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS sdg_mapping VARCHAR(255);
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS joint_publication_with VARCHAR(100);
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS publication_domain VARCHAR(255);
+ALTER TABLE faculty_participations ADD COLUMN IF NOT EXISTS coauthors_students VARCHAR(50);
 
 -- Indexes for fast filtering
 CREATE INDEX IF NOT EXISTS idx_faculty_participations_dept

@@ -30,6 +30,8 @@ import { useAuth } from "./hooks/useAuth";
 import Home from "./pages/Home";
 import QuickActions from "./pages/QuickActions";
 import AdminQuickActions from "./pages/admin/AdminQuickActions";
+import UploadExtracurricular from "./pages/staff/UploadExtracurricular";
+import AdminUploadExtracurricular from "./pages/admin/AdminUploadExtracurricular";
 import FacultyParticipation from "./pages/staff/FacultyParticipation";
 import AdminFacultyParticipation from "./pages/admin/AdminFacultyParticipation";
 import FacultyResearch from "./pages/staff/FacultyResearch";
@@ -233,6 +235,14 @@ export default function App() {
           }
         />
         <Route
+          path="/admin/upload-extra-curricular"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminUploadExtracurricular />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin/reports"
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
@@ -298,6 +308,14 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={["staff", "admin"]}>
               <UploadEvents />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/upload-extra-curricular"
+          element={
+            <ProtectedRoute allowedRoles={["staff", "admin"]}>
+              <UploadExtracurricular />
             </ProtectedRoute>
           }
         />
@@ -382,6 +400,10 @@ export default function App() {
         <Route
           path="/staff/upload-events"
           element={<Navigate to="/upload-events" replace />}
+        />
+        <Route
+          path="/staff/upload-extra-curricular"
+          element={<Navigate to="/upload-extra-curricular" replace />}
         />
 
         <Route

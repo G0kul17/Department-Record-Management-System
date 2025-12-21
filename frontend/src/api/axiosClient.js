@@ -108,8 +108,19 @@ class ApiClient {
     if (!response.ok) {
       const msg = (data && data.message) || "Upload failed";
       // Friendly mapping for common upload errors
-      if (/file type not allowed/i.test(msg)) {
-        throw new Error("Please upload PDF or image");
+      const isDataUpload = endpoint.includes("/data-uploads");
+      if (
+        /file type not allowed/i.test(msg) ||
+        /invalid data file type/i.test(msg)
+      ) {
+        throw new Error(
+          isDataUpload
+            ? "Please upload CSV or Excel"
+            : "Please upload PDF or image"
+        );
+      }
+      if (/only csv and excel allowed/i.test(msg)) {
+        throw new Error("Please upload CSV or Excel");
       }
       throw new Error(msg);
     }

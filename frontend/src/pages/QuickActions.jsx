@@ -34,6 +34,7 @@ export default function QuickActions() {
     if (key === "facultyParticipation") return nav("/faculty-participation");
     if (key === "facultyResearch") return nav("/faculty-research");
     if (key === "facultyConsultancy") return nav("/faculty-consultancy");
+    if (key === "uploadExtra") return nav("/upload-extra-curricular");
 
     if (key === "exportRecords") return nav("/staff/reports");
 
@@ -110,6 +111,28 @@ export default function QuickActions() {
           {/* Role-specific actions for staff */}
           {user?.role === "staff" ? (
             <>
+              <Card
+                title="Upload Extra Curricular Activity"
+                desc="Upload CSV/Excel of activities and save."
+                color="#0ea5e9"
+                icon={
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-white"
+                  >
+                    <path
+                      d="M12 5v14M5 12h14"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                }
+                onClick={goTo("uploadExtra")}
+              />
               <Card
                 title="Faculty Participation"
                 desc="Add faculty training/participation details."

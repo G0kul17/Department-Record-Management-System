@@ -33,6 +33,7 @@ export default function AdminQuickActions() {
       return nav("/admin/faculty-participation");
     if (key === "facultyResearch") return nav("/admin/faculty-research");
     if (key === "facultyConsultancy") return nav("/admin/faculty-consultancy");
+    if (key === "uploadExtra") return nav("/admin/upload-extra-curricular");
     if (key === "exportRecords") return nav("/admin/reports");
     if (key === "manageUsers") return nav("/admin/users");
     return nav("/");
@@ -51,7 +52,15 @@ export default function AdminQuickActions() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           <Card
+            title="Upload Extra Curricular Activity"
+            desc="Upload CSV/Excel of activities and save."
+            color="#0ea5e9"
+            icon={<IconUpload />}
+            onClick={goTo("uploadExtra")}
+          />
+          <Card
             title="Add Achievement"
+            desc="Create an achievement on behalf of faculty/student."
             color="#3b82f6"
             icon={<IconCheck />}
             onClick={goTo("achievements")}

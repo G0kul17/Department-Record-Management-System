@@ -13,6 +13,29 @@ export default function FacultyParticipation() {
     end_date: "",
     conducted_by: "",
     details: "",
+    // Journal Publications specific fields
+    claiming_faculty_name: "",
+    publication_indexing: "",
+    authors_list: "",
+    paper_title: "",
+    journal_name: "",
+    volume_no: "",
+    issue_no: "",
+    page_or_doi: "",
+    issn_or_isbn: "",
+    pub_month_year: "",
+    citations_count: "",
+    paper_url: "",
+    journal_home_url: "",
+    publisher: "",
+    impact_factor: "",
+    indexed_in_db: "",
+    full_paper_drive_link: "",
+    first_page_drive_link: "",
+    sdg_mapping: "",
+    joint_publication_with: "",
+    publication_domain: "",
+    coauthors_students: "",
   });
   const [proof, setProof] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -40,6 +63,29 @@ export default function FacultyParticipation() {
         end_date: "",
         conducted_by: "",
         details: "",
+        publications_type: "",
+        claiming_faculty_name: "",
+        publication_indexing: "",
+        authors_list: "",
+        paper_title: "",
+        journal_name: "",
+        volume_no: "",
+        issue_no: "",
+        page_or_doi: "",
+        issn_or_isbn: "",
+        pub_month_year: "",
+        citations_count: "",
+        paper_url: "",
+        journal_home_url: "",
+        publisher: "",
+        impact_factor: "",
+        indexed_in_db: "",
+        full_paper_drive_link: "",
+        first_page_drive_link: "",
+        sdg_mapping: "",
+        joint_publication_with: "",
+        publication_domain: "",
+        coauthors_students: "",
       });
       setProof(null);
     } catch (err) {
@@ -166,6 +212,553 @@ export default function FacultyParticipation() {
                 </select>
               </div>
             )}
+            {form.type_of_event === "Others" &&
+              form.publications_type === "Journal Publications" && (
+                <div className="md:col-span-2 mt-2 border-t border-slate-200 dark:border-slate-700 pt-4">
+                  <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">
+                    Journal Publications Details
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Faculty Name - Claiming Publication
+                      </label>
+                      <input
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.claiming_faculty_name}
+                        onChange={update("claiming_faculty_name")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Scopus Journal / Scopus Book chapter / Web of Science
+                        (SCI / ESCI)
+                      </label>
+                      <select
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.publication_indexing}
+                        onChange={update("publication_indexing")}
+                      >
+                        <option value="">Select</option>
+                        <option value="Scopus Journal">Scopus Journal</option>
+                        <option value="Scopus Book chapter">
+                          Scopus Book chapter
+                        </option>
+                        <option value="Web of Science (SCI)">
+                          Web of Science (SCI)
+                        </option>
+                        <option value="Web of Science (ESCI)">
+                          Web of Science (ESCI)
+                        </option>
+                      </select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-semibold mb-1">
+                        All Authors Name (order as in paper; bold dept faculty)
+                        [Specify (First),(Second)]
+                      </label>
+                      <textarea
+                        rows={2}
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.authors_list}
+                        onChange={update("authors_list")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Title of the Paper
+                      </label>
+                      <input
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.paper_title}
+                        onChange={update("paper_title")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Name of the Journal
+                      </label>
+                      <input
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.journal_name}
+                        onChange={update("journal_name")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Volume No
+                      </label>
+                      <input
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.volume_no}
+                        onChange={update("volume_no")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Issue No
+                      </label>
+                      <input
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.issue_no}
+                        onChange={update("issue_no")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Page No. / DOI
+                      </label>
+                      <input
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.page_or_doi}
+                        onChange={update("page_or_doi")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        ISSN / eISSN No. / ISBN No
+                      </label>
+                      <input
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.issn_or_isbn}
+                        onChange={update("issn_or_isbn")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Month and Year of Publication
+                      </label>
+                      <input
+                        type="month"
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.pub_month_year}
+                        onChange={update("pub_month_year")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Citations - References Number
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.citations_count}
+                        onChange={update("citations_count")}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-semibold mb-1">
+                        Published Paper URL
+                      </label>
+                      <input
+                        type="url"
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.paper_url}
+                        onChange={update("paper_url")}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-semibold mb-1">
+                        Published Journal / Book chapter Homepage URL
+                      </label>
+                      <input
+                        type="url"
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.journal_home_url}
+                        onChange={update("journal_home_url")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Publisher
+                      </label>
+                      <input
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.publisher}
+                        onChange={update("publisher")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Impact Factor
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.impact_factor}
+                        onChange={update("impact_factor")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Indexed in Scopus / WoS Database
+                      </label>
+                      <select
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.indexed_in_db}
+                        onChange={update("indexed_in_db")}
+                      >
+                        <option value="">Select</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                      </select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-semibold mb-1">
+                        Full Paper Proof Uploaded Drive Link (ensure download
+                        access)
+                      </label>
+                      <input
+                        type="url"
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.full_paper_drive_link}
+                        onChange={update("full_paper_drive_link")}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-semibold mb-1">
+                        First Page only Paper Proof Uploaded Drive Link (ensure
+                        download access)
+                      </label>
+                      <input
+                        type="url"
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.first_page_drive_link}
+                        onChange={update("first_page_drive_link")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        SDG Mapping
+                      </label>
+                      <input
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.sdg_mapping}
+                        onChange={update("sdg_mapping")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        JOINT PUBLICATION
+                      </label>
+                      <select
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.joint_publication_with}
+                        onChange={update("joint_publication_with")}
+                      >
+                        <option value="">Select</option>
+                        <option value="Industry">Industry</option>
+                        <option value="Top 100 NIRF">Top 100 NIRF</option>
+                        <option value="Central Govt">Central Govt</option>
+                        <option value="International University">
+                          International University
+                        </option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Domain of the Publication
+                      </label>
+                      <input
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.publication_domain}
+                        onChange={update("publication_domain")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Whether Co-authors are Students? If YES specify
+                      </label>
+                      <select
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.coauthors_students}
+                        onChange={update("coauthors_students")}
+                      >
+                        <option value="">No</option>
+                        <option value="IT">IT</option>
+                        <option value="ADS">ADS</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            {form.type_of_event === "Others" &&
+              form.publications_type === "Conference Publications" && (
+                <div className="md:col-span-2 mt-2 border-t border-slate-200 dark:border-slate-700 pt-4">
+                  <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">
+                    Conference Publications Details
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Faculty Name - Claiming Publication
+                      </label>
+                      <input
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.claiming_faculty_name}
+                        onChange={update("claiming_faculty_name")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Scopus Journal / Scopus Book chapter / Web of Science
+                        (SCI / ESCI)
+                      </label>
+                      <select
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.publication_indexing}
+                        onChange={update("publication_indexing")}
+                      >
+                        <option value="">Select</option>
+                        <option value="Scopus Journal">Scopus Journal</option>
+                        <option value="Scopus Book chapter">
+                          Scopus Book chapter
+                        </option>
+                        <option value="Web of Science (SCI)">
+                          Web of Science (SCI)
+                        </option>
+                        <option value="Web of Science (ESCI)">
+                          Web of Science (ESCI)
+                        </option>
+                      </select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-semibold mb-1">
+                        All Authors Name (order as in paper; bold dept faculty)
+                        [Specify (First),(Second)]
+                      </label>
+                      <textarea
+                        rows={2}
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.authors_list}
+                        onChange={update("authors_list")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Title of the Paper
+                      </label>
+                      <input
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.paper_title}
+                        onChange={update("paper_title")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Name of the Journal
+                      </label>
+                      <input
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.journal_name}
+                        onChange={update("journal_name")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Volume No
+                      </label>
+                      <input
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.volume_no}
+                        onChange={update("volume_no")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Issue No
+                      </label>
+                      <input
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.issue_no}
+                        onChange={update("issue_no")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Page No. / DOI
+                      </label>
+                      <input
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.page_or_doi}
+                        onChange={update("page_or_doi")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        ISSN / eISSN No. / ISBN No
+                      </label>
+                      <input
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.issn_or_isbn}
+                        onChange={update("issn_or_isbn")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Month and Year of Publication
+                      </label>
+                      <input
+                        type="month"
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.pub_month_year}
+                        onChange={update("pub_month_year")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Citations - References Number
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.citations_count}
+                        onChange={update("citations_count")}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-semibold mb-1">
+                        Published Paper URL
+                      </label>
+                      <input
+                        type="url"
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.paper_url}
+                        onChange={update("paper_url")}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-semibold mb-1">
+                        Published Journal / Book chapter Homepage URL
+                      </label>
+                      <input
+                        type="url"
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.journal_home_url}
+                        onChange={update("journal_home_url")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Publisher
+                      </label>
+                      <input
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.publisher}
+                        onChange={update("publisher")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Impact Factor
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.impact_factor}
+                        onChange={update("impact_factor")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Indexed in Scopus / WoS Database
+                      </label>
+                      <select
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.indexed_in_db}
+                        onChange={update("indexed_in_db")}
+                      >
+                        <option value="">Select</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                      </select>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-semibold mb-1">
+                        Full Paper Proof Uploaded Drive Link (ensure download
+                        access)
+                      </label>
+                      <input
+                        type="url"
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.full_paper_drive_link}
+                        onChange={update("full_paper_drive_link")}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-semibold mb-1">
+                        First Page only Paper Proof Uploaded Drive Link (ensure
+                        download access)
+                      </label>
+                      <input
+                        type="url"
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.first_page_drive_link}
+                        onChange={update("first_page_drive_link")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        SDG Mapping
+                      </label>
+                      <input
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.sdg_mapping}
+                        onChange={update("sdg_mapping")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        JOINT PUBLICATION
+                      </label>
+                      <select
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.joint_publication_with}
+                        onChange={update("joint_publication_with")}
+                      >
+                        <option value="">Select</option>
+                        <option value="Industry">Industry</option>
+                        <option value="Top 100 NIRF">Top 100 NIRF</option>
+                        <option value="Central Govt">Central Govt</option>
+                        <option value="International University">
+                          International University
+                        </option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Domain of the Publication
+                      </label>
+                      <input
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.publication_domain}
+                        onChange={update("publication_domain")}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">
+                        Whether Co-authors are Students? If YES specify
+                      </label>
+                      <select
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={form.coauthors_students}
+                        onChange={update("coauthors_students")}
+                      >
+                        <option value="">No</option>
+                        <option value="IT">IT</option>
+                        <option value="ADS">ADS</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
             <div>
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
                 Mode of Training <span className="text-red-600">*</span>

@@ -1,7 +1,7 @@
 import pool from "../config/db.js";
 import fs from "fs";
 import path from "path";
-import xlsx from "xlsx";
+import * as XLSX from "xlsx";
 import csvParser from "csv-parser";
 
 // Utility: Parse CSV
@@ -17,9 +17,9 @@ const parseCSV = (filePath) =>
 
 // Utility: Parse Excel
 const parseExcel = (filePath) => {
-  const workbook = xlsx.readFile(filePath);
+  const workbook = XLSX.readFile(filePath);
   const sheetName = workbook.SheetNames[0];
-  return xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+  return XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
 };
 
 // ================= UPLOAD & PREVIEW =================
@@ -29,7 +29,9 @@ export const uploadDataFile = async (req, res) => {
     const uploaderName = req.body.uploader_name;
 
     if (!req.file || !uploaderName) {
-      return res.status(400).json({ message: "File and uploader name required" });
+      return res
+        .status(400)
+        .json({ message: "File and uploader name required" });
     }
 
     const filePath = req.file.path;
@@ -54,15 +56,16 @@ export const uploadDataFile = async (req, res) => {
     return res.json({
       preview: {
         columns,
-        rows: parsedRows.slice(0, 10), // preview first 10 rows
-        totalRows: parsedRows.length
+        rows: parsedRows, // include all rows in preview
+        totalRows: parsedRows.length,
       },
       meta: {
         uploader_name: uploaderName,
-        file: req.file.originalname
-      }
+        original_filename: req.file.originalname,
+        stored_filename: req.file.filename,
+        mime_type: req.file.mimetype,
+      },
     });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Preview failed" });
@@ -73,12 +76,8 @@ export const uploadDataFile = async (req, res) => {
 export const saveUploadedData = async (req, res) => {
   try {
     const user = req.user;
-    const {
-      uploader_name,
-      original_filename,
-      stored_filename,
-      documents
-    } = req.body;
+    const { uploader_name, original_filename, stored_filename, documents } =
+      req.body;
 
     if (!documents) {
       return res.status(400).json({ message: "Parsed data missing" });
@@ -102,16 +101,15 @@ export const saveUploadedData = async (req, res) => {
       stored_filename,
       path.extname(original_filename).replace(".", ""),
       totalRows,
-      documents
+      documents,
     ];
 
     const { rows } = await pool.query(q, values);
 
     res.status(201).json({
       message: "Data saved successfully",
-      data: rows[0]
+      data: rows[0],
     });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Save failed" });
@@ -129,7 +127,6 @@ export const listUploadedData = async (req, res) => {
 
     const { rows } = await pool.query(q);
     res.json({ data: rows });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Fetch failed" });
@@ -146,10 +143,10 @@ export const viewUploadedData = async (req, res) => {
       [id]
     );
 
-    if (!rows.length) return res.status(404).json({ message: "Record not found" });
+    if (!rows.length)
+      return res.status(404).json({ message: "Record not found" });
 
     res.json({ data: rows[0] });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Fetch failed" });

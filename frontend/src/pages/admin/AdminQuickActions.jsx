@@ -52,7 +52,7 @@ export default function AdminQuickActions() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           <Card
-            title="Upload Extra Curricular Activity"
+            title="Staff Data Entry"
             desc="Upload CSV/Excel of activities and save."
             color="#0ea5e9"
             icon={<IconUpload />}

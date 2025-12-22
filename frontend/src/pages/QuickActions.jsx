@@ -112,7 +112,7 @@ export default function QuickActions() {
           {user?.role === "staff" ? (
             <>
               <Card
-                title="Upload Extra Curricular Activity"
+                title="Staff Data Entry"
                 desc="Upload CSV/Excel of activities and save."
                 color="#0ea5e9"
                 icon={

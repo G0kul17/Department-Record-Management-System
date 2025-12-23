@@ -1,50 +1,64 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import BackButton from "./components/BackButton";
-import Login from "./pages/Login";
-import VerifyOtp from "./pages/VerifyOtp";
-import RegisterStudent from "./pages/RegisterStudent";
-import RegisterStaff from "./pages/RegisterStaff";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import StaffDashboard from "./pages/staff/StaffDashboard";
-import VerifyAchievements from "./pages/staff/VerifyAchievements";
-import VerifyProjects from "./pages/staff/VerifyProjects";
-import UploadEvents from "./pages/staff/UploadEvents";
-import ReportGenerator from "./pages/staff/ReportGenerator";
+
+// Lazy load all page components - only load when needed
+const Login = React.lazy(() => import("./pages/Login"));
+const VerifyOtp = React.lazy(() => import("./pages/VerifyOtp"));
+const RegisterStudent = React.lazy(() => import("./pages/RegisterStudent"));
+const RegisterStaff = React.lazy(() => import("./pages/RegisterStaff"));
+const ForgotPassword = React.lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = React.lazy(() => import("./pages/ResetPassword"));
+const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
+const StaffDashboard = React.lazy(() => import("./pages/staff/StaffDashboard"));
+const VerifyAchievements = React.lazy(() => import("./pages/staff/VerifyAchievements"));
+const VerifyProjects = React.lazy(() => import("./pages/staff/VerifyProjects"));
+const UploadEvents = React.lazy(() => import("./pages/staff/UploadEvents"));
+const ReportGenerator = React.lazy(() => import("./pages/staff/ReportGenerator"));
 // Admin wrappers
-import AdminProjectsManagement from "./pages/admin/AdminProjectsManagement";
-import AdminAchievementsManagement from "./pages/admin/AdminAchievementsManagement";
-import AdminEventsManagement from "./pages/admin/AdminEventsManagement";
-import AdminVerifyProjects from "./pages/admin/AdminVerifyProjects";
-import AdminVerifyAchievements from "./pages/admin/AdminVerifyAchievements";
-import AdminUploadEvents from "./pages/admin/AdminUploadEvents";
-import AdminReportGenerator from "./pages/admin/AdminReportGenerator";
-import AdminUsersManagement from "./pages/admin/AdminUsersManagement.jsx";
-import AdminRoleUsersList from "./pages/admin/AdminRoleUsersList";
-import StudentDashboard from "./pages/student/StudentDashboard";
+const AdminProjectsManagement = React.lazy(() => import("./pages/admin/AdminProjectsManagement"));
+const AdminAchievementsManagement = React.lazy(() => import("./pages/admin/AdminAchievementsManagement"));
+const AdminEventsManagement = React.lazy(() => import("./pages/admin/AdminEventsManagement"));
+const AdminVerifyProjects = React.lazy(() => import("./pages/admin/AdminVerifyProjects"));
+const AdminVerifyAchievements = React.lazy(() => import("./pages/admin/AdminVerifyAchievements"));
+const AdminUploadEvents = React.lazy(() => import("./pages/admin/AdminUploadEvents"));
+const AdminReportGenerator = React.lazy(() => import("./pages/admin/AdminReportGenerator"));
+const AdminUsersManagement = React.lazy(() => import("./pages/admin/AdminUsersManagement.jsx"));
+const AdminRoleUsersList = React.lazy(() => import("./pages/admin/AdminRoleUsersList"));
+const StudentDashboard = React.lazy(() => import("./pages/student/StudentDashboard"));
+const Home = React.lazy(() => import("./pages/Home"));
+const QuickActions = React.lazy(() => import("./pages/QuickActions"));
+const AdminQuickActions = React.lazy(() => import("./pages/admin/AdminQuickActions"));
+const UploadExtracurricular = React.lazy(() => import("./pages/staff/StaffDataEntry"));
+const AdminUploadExtracurricular = React.lazy(() => import("./pages/admin/AdminDataEntry"));
+const FacultyParticipation = React.lazy(() => import("./pages/staff/FacultyParticipation"));
+const AdminFacultyParticipation = React.lazy(() => import("./pages/admin/AdminFacultyParticipation"));
+const FacultyResearch = React.lazy(() => import("./pages/staff/FacultyResearch"));
+const AdminFacultyResearch = React.lazy(() => import("./pages/admin/AdminFacultyResearch"));
+const FacultyConsultancy = React.lazy(() => import("./pages/staff/FacultyConsultancy"));
+const AdminFacultyConsultancy = React.lazy(() => import("./pages/admin/AdminFacultyConsultancy"));
+const Achievements = React.lazy(() => import("./pages/student/StudentsAchievements"));
+const ProjectUpload = React.lazy(() => import("./pages/student/StudentsProjectUpload"));
+const Events = React.lazy(() => import("./pages/student/StudentsEventsReg"));
+const ProjectsApproved = React.lazy(() => import("./pages/ProjectsApproved"));
+const AchievementsApproved = React.lazy(() => import("./pages/AchievementsApproved"));
+const ProjectDetail = React.lazy(() => import("./pages/ProjectDetail"));
+const AchievementDetail = React.lazy(() => import("./pages/AchievementDetail"));
+
+// Keep these as regular imports (always needed)
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./hooks/useAuth";
-import Home from "./pages/Home";
-import QuickActions from "./pages/QuickActions";
-import AdminQuickActions from "./pages/admin/AdminQuickActions";
-import UploadExtracurricular from "./pages/staff/StaffDataEntry";
-import AdminUploadExtracurricular from "./pages/admin/AdminDataEntry";
-import FacultyParticipation from "./pages/staff/FacultyParticipation";
-import AdminFacultyParticipation from "./pages/admin/AdminFacultyParticipation";
-import FacultyResearch from "./pages/staff/FacultyResearch";
-import AdminFacultyResearch from "./pages/admin/AdminFacultyResearch";
-import FacultyConsultancy from "./pages/staff/FacultyConsultancy";
-import AdminFacultyConsultancy from "./pages/admin/AdminFacultyConsultancy";
-import Achievements from "./pages/student/StudentsAchievements";
-import ProjectUpload from "./pages/student/StudentsProjectUpload";
-import Events from "./pages/student/StudentsEventsReg";
-import ProjectsApproved from "./pages/ProjectsApproved";
-import AchievementsApproved from "./pages/AchievementsApproved";
-import ProjectDetail from "./pages/ProjectDetail";
-import AchievementDetail from "./pages/AchievementDetail";
+
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+      <p className="text-gray-600">Loading...</p>
+    </div>
+  </div>
+);
 
 function RoleRedirect() {
   const { user } = useAuth();
@@ -63,7 +77,8 @@ export default function App() {
     <>
       <Navbar />
       {showBackButton && <BackButton />}
-      <Routes>
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
         {/* New Home landing page (requires auth) */}
         <Route
           path="/"
@@ -428,6 +443,7 @@ export default function App() {
           }
         />
       </Routes>
+      </Suspense>
     </>
   );
 }

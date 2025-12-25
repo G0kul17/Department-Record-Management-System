@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import apiClient from "../../api/axiosClient";
 import { useAuth } from "../../hooks/useAuth";
+import SuccessModal from "../../components/ui/SuccessModal";
 
 export default function Achievements() {
   const { user } = useAuth();
@@ -16,6 +17,7 @@ export default function Achievements() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [list, setList] = useState([]);
   const [loadingMine, setLoadingMine] = useState(false);
 
@@ -79,6 +81,7 @@ export default function Achievements() {
       await apiClient.uploadFile("/achievements", fd);
       setSuccess(true);
       setMessage("Achievement submitted successfully.");
+      setShowSuccess(true);
       setForm({
         title: "",
         issuer: "",
@@ -106,6 +109,12 @@ export default function Achievements() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950">
       <div className="mx-auto max-w-6xl px-6 py-10">
+        <SuccessModal
+          open={showSuccess}
+          title="Saved successfully"
+          subtitle="Your achievement has been submitted."
+          onClose={() => setShowSuccess(false)}
+        />
         <h2 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100">
           Add Achievement
         </h2>

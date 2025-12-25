@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import apiClient from "../../api/axiosClient";
 import { useAuth } from "../../hooks/useAuth";
+import SuccessModal from "../../components/ui/SuccessModal";
 
 export default function ProjectUpload() {
   const { user } = useAuth();
@@ -18,6 +19,7 @@ export default function ProjectUpload() {
   const [srsFile, setSrsFile] = useState(null);
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
@@ -84,6 +86,7 @@ export default function ProjectUpload() {
       const resp = await apiClient.uploadFile("/projects", fd);
       setSuccess(true);
       setMessage("Project uploaded successfully.");
+      setShowSuccess(true);
       setForm({
         title: "",
         description: "",
@@ -112,6 +115,12 @@ export default function ProjectUpload() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950">
       <div className="mx-auto max-w-6xl px-6 py-10">
+        <SuccessModal
+          open={showSuccess}
+          title="Saved successfully"
+          subtitle="Your project has been uploaded."
+          onClose={() => setShowSuccess(false)}
+        />
         <h2 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100">
           Upload Project
         </h2>

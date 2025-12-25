@@ -379,3 +379,89 @@ export async function resetPassword(req, res) {
     return res.status(500).json({ message: "Server error" });
   }
 }
+
+// Get current user's profile
+export async function getProfile(req, res) {
+  try {
+    const emailLower = (req.user?.email || "").toLowerCase();
+    if (!emailLower) return res.status(401).json({ message: "Unauthorized" });
+
+    const { rows } = await pool.query(
+      "SELECT id, email, role, full_name, phone, roll_number FROM users WHERE email=$1",
+      [emailLower]
+    );
+    if (!rows.length)
+      return res.status(404).json({ message: "User not found" });
+    const u = rows[0];
+    return res.json({
+      id: u.id,
+      email: u.email,
+      role: u.role,
+      fullName: u.full_name,
+      phone: u.phone || null,
+      rollNumber: u.roll_number || null,
+    });
+  } catch (err) {
+    console.error("/auth/profile GET error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
+// Update current user's profile (currently supports fullName)
+export async function updateProfile(req, res) {
+  try {
+    const emailLower = (req.user?.email || "").toLowerCase();
+    if (!emailLower) return res.status(401).json({ message: "Unauthorized" });
+    const { fullName, phone, rollNumber, email } = req.body;
+    const name = (fullName || "").trim();
+    if (!name) return res.status(400).json({ message: "fullName required" });
+
+    const updates = { full_name: name };
+    if (typeof phone === "string") updates.phone = phone.trim();
+    if (typeof rollNumber === "string") updates.roll_number = rollNumber.trim();
+
+    let newEmailLower = emailLower;
+    if (
+      typeof email === "string" &&
+      email.trim().toLowerCase() !== emailLower
+    ) {
+      newEmailLower = email.trim().toLowerCase();
+      const { rows: dup } = await pool.query(
+        "SELECT 1 FROM users WHERE email=$1",
+        [newEmailLower]
+      );
+      if (dup.length)
+        return res.status(400).json({ message: "Email already in use" });
+      updates.email = newEmailLower;
+    }
+
+    const setClauses = Object.keys(updates)
+      .map((k, i) => `${k}=$${i + 1}`)
+      .join(", ");
+    const values = Object.values(updates);
+    values.push(emailLower);
+    await pool.query(
+      `UPDATE users SET ${setClauses} WHERE email=$${values.length}`,
+      values
+    );
+
+    const { rows } = await pool.query(
+      "SELECT id, email, role, full_name, phone, roll_number FROM users WHERE email=$1",
+      [newEmailLower]
+    );
+    const u = rows[0];
+    const token = signToken({ id: u.id, email: u.email, role: u.role }, "6h");
+    return res.json({
+      id: u.id,
+      email: u.email,
+      role: u.role,
+      fullName: u.full_name,
+      phone: u.phone || null,
+      rollNumber: u.roll_number || null,
+      token,
+    });
+  } catch (err) {
+    console.error("/auth/profile PUT error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+}

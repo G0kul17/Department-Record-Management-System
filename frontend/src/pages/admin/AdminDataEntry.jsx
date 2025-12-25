@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import apiClient from "../../api/axiosClient";
+import SuccessModal from "../../components/ui/SuccessModal";
 
 export default function AdminUploadExtracurricular() {
   const [uploaderName, setUploaderName] = useState("");
@@ -52,7 +53,6 @@ export default function AdminUploadExtracurricular() {
       const resp = await apiClient.post("/data-uploads/save", payload);
       setMessage("Saved successfully.");
       setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2000);
       setSaving(false);
     } catch (err) {
       setSaving(false);
@@ -66,8 +66,7 @@ export default function AdminUploadExtracurricular() {
         Staff Data Entry
       </h1>
       <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">
-        Upload CSV or Excel. Preview first, then
-        save.
+        Upload CSV or Excel. Preview first, then save.
       </p>
 
       {message && (
@@ -160,37 +159,12 @@ export default function AdminUploadExtracurricular() {
         </div>
       )}
 
-      {showSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" />
-          <div className="relative mx-4 w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 shadow-xl ring-1 ring-green-500/30 p-6 text-center">
-            <div className="relative mx-auto h-16 w-16">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-30 animate-ping" />
-              <span className="relative inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600">
-                <svg
-                  width="28"
-                  height="28"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                >
-                  <path
-                    d="M20 6l-11 11-5-5"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-            </div>
-            <h3 className="mt-3 text-xl font-bold text-green-700 dark:text-green-400">
-              Saved successfully
-            </h3>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-              Your data has been saved.
-            </p>
-          </div>
-        </div>
-      )}
+      <SuccessModal
+        open={showSuccess}
+        title="Saved successfully"
+        subtitle="Your data has been saved."
+        onClose={() => setShowSuccess(false)}
+      />
     </div>
   );
 }

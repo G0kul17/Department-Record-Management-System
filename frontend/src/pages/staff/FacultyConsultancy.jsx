@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import apiClient from "../../api/axiosClient";
+import SuccessModal from "../../components/ui/SuccessModal";
 
 export default function FacultyConsultancy() {
   const [form, setForm] = useState({
@@ -14,6 +15,7 @@ export default function FacultyConsultancy() {
   const [proof, setProof] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const update = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
@@ -27,6 +29,7 @@ export default function FacultyConsultancy() {
       if (proof) fd.append("proof", proof);
       await apiClient.uploadFile("/faculty-consultancy", fd);
       setMessage("Faculty consultancy added");
+      setShowSuccess(true);
       setForm({
         team_members: "",
         agency: "",
@@ -45,6 +48,12 @@ export default function FacultyConsultancy() {
 
   return (
     <div className="mx-auto max-w-4xl p-6">
+      <SuccessModal
+        open={showSuccess}
+        title="Saved successfully"
+        subtitle="Faculty consultancy has been added."
+        onClose={() => setShowSuccess(false)}
+      />
       <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">
         Faculty Consultancy
       </h1>

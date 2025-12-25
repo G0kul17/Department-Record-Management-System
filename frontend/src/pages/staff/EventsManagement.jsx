@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/axiosClient";
+import SuccessModal from "../../components/ui/SuccessModal";
 
 export default function EventsManagement() {
   const navigate = useNavigate();
@@ -76,6 +77,12 @@ export default function EventsManagement() {
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <SuccessModal
+        open={successOpen}
+        title="Saved successfully"
+        subtitle="Event successfully uploaded."
+        onClose={() => setSuccessOpen(false)}
+      />
       {successOpen && (
         <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-200">
           <div className="flex items-center justify-between">

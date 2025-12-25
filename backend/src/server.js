@@ -130,6 +130,14 @@ async function ensureColumns() {
       "ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(255)"
     );
 
+    // Optional profile fields
+    await pool.query(
+      "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(30)"
+    );
+    await pool.query(
+      "ALTER TABLE users ADD COLUMN IF NOT EXISTS roll_number VARCHAR(50)"
+    );
+
     // If legacy schemas enforced NOT NULL on full_name, relax it so minimal inserts work
     const { rows: hasFullName } = await pool.query(
       "SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='full_name'"

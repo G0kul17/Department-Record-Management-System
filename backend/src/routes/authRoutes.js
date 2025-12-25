@@ -6,7 +6,10 @@ import {
   loginVerifyOTP,
   initiateForgotPassword,
   resetPassword,
+  getProfile,
+  updateProfile,
 } from "../controllers/authController.js";
+import { requireAuth } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -26,5 +29,9 @@ router.post("/login", login);
 router.post("/login-verify", loginVerifyOTP);
 router.post("/forgot", initiateForgotPassword);
 router.post("/reset", resetPassword);
+
+// Profile endpoints for logged-in users
+router.get("/profile", requireAuth, getProfile);
+router.put("/profile", requireAuth, updateProfile);
 
 export default router;

@@ -12,7 +12,9 @@ const RegisterStudent = () => {
     confirmPassword: "",
     rollNumber: "",
     department: "",
+    course: "",
     year: "",
+    section: "",
     phone: "",
   });
   const [error, setError] = useState("");
@@ -46,6 +48,14 @@ const RegisterStudent = () => {
         email: formData.email,
         password: formData.password,
         name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        department: formData.department,
+        course: formData.course,
+        year: formData.year,
+        section: formData.section,
+        rollNumber: formData.rollNumber,
+        phone: formData.phone,
       });
       setSuccess("Registration initiated. Check your email for OTP.");
       setTimeout(
@@ -151,6 +161,23 @@ const RegisterStudent = () => {
             </div>
             <div className="flex flex-col">
               <label className="mb-1 font-medium">
+                Course <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="course"
+                value={formData.course}
+                onChange={handleChange}
+                required
+                className="border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select Course</option>
+                <option value="B.Tech">B.Tech</option>
+                <option value="M.Tech">M.Tech</option>
+                <option value="MCA">MCA</option>
+              </select>
+            </div>
+            <div className="flex flex-col">
+              <label className="mb-1 font-medium">
                 Year <span className="text-red-500">*</span>
               </label>
               <select
@@ -165,6 +192,23 @@ const RegisterStudent = () => {
                 <option value="2">2</option>
                 <option value="3">3</option>
                 <option value="4">4</option>
+              </select>
+            </div>
+            <div className="flex flex-col">
+              <label className="mb-1 font-medium">
+                Section <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="section"
+                value={formData.section}
+                onChange={handleChange}
+                required
+                className="border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select Section</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
               </select>
             </div>
             <InputField

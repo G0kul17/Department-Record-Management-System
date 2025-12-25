@@ -14,7 +14,7 @@ const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "")
   .filter(Boolean);
 
 export async function register(req, res) {
-  const { email, password, name } = req.body;
+  const { email, password, name, firstName, lastName, department, course, year, section, rollNumber, phone } = req.body;
   if (!email || !password)
     return res.status(400).json({ message: "Email and password required" });
 
@@ -30,6 +30,16 @@ export async function register(req, res) {
 
   const emailLower = email.toLowerCase();
   const fullName = (name || "").trim() || null;
+  
+  // Build profile_details JSONB object for students
+  const profileDetails = {
+    first_name: firstName || "",
+    last_name: lastName || "",
+    department: department || "",
+    course: course || "",
+    year: year || "",
+    section: section || "",
+  };
 
   try {
     // check duplicate
@@ -44,8 +54,8 @@ export async function register(req, res) {
         const hashed = await bcrypt.hash(password, 10);
         // Also update role in case ADMIN_EMAILS was changed or this email should be admin
         await pool.query(
-          "UPDATE users SET password_hash=$1, full_name=COALESCE($2, full_name), role=$4 WHERE email=$3",
-          [hashed, fullName, emailLower, role]
+          "UPDATE users SET password_hash=$1, full_name=COALESCE($2, full_name), role=$4, profile_details=$5, phone=$6, roll_number=$7 WHERE email=$3",
+          [hashed, fullName, emailLower, role, JSON.stringify(profileDetails), phone, rollNumber]
         );
         // continue flow to send fresh OTP
       } else {
@@ -66,8 +76,8 @@ export async function register(req, res) {
       const hashed = await bcrypt.hash(password, 10);
       try {
         await pool.query(
-          "INSERT INTO users (email, password_hash, role, full_name) VALUES ($1, $2, $3, $4)",
-          [emailLower, hashed, role, fullName]
+          "INSERT INTO users (email, password_hash, role, full_name, profile_details, phone, roll_number) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+          [emailLower, hashed, role, fullName, JSON.stringify(profileDetails), phone, rollNumber]
         );
       } catch (e) {
         // unique violation
@@ -278,6 +288,19 @@ export async function loginVerifyOTP(req, res) {
       ]);
       user.role = "admin";
     }
+    
+    // Fetch student profile data if role is student
+    let studentProfile = {};
+    if (user.role === "student") {
+      const { rows: profileRows } = await pool.query(
+        "SELECT register_number, contact_number, leetcode_url, hackerrank_url, codechef_url, github_url FROM student_profiles WHERE user_id=$1",
+        [user.id]
+      );
+      if (profileRows.length) {
+        studentProfile = profileRows[0];
+      }
+    }
+    
     const token = signToken(
       { id: user.id, email: user.email, role: user.role },
       "6h"
@@ -288,6 +311,7 @@ export async function loginVerifyOTP(req, res) {
       role: user.role,
       id: user.id,
       fullName: user.full_name || null,
+      ...studentProfile,
     });
   } catch (err) {
     console.error(err);

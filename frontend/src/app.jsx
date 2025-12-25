@@ -120,8 +120,12 @@ function RoleRedirect() {
 export default function App() {
   const location = useLocation();
   const path = (location?.pathname || "/").replace(/\/+$/, "") || "/";
-  const hideBackOn = new Set(["/", "/admin"]);
-  const showBackButton = !hideBackOn.has(path);
+  const hideBackButton =
+    path === "/" ||
+    path.startsWith("/admin") ||
+    path.startsWith("/staff") ||
+    path.startsWith("/student");
+  const showBackButton = !hideBackButton;
   return (
     <>
       <Navbar />

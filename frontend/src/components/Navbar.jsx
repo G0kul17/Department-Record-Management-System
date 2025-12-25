@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 
 const Navbar = () => {
   const { user, token, logout } = useAuth();
   const nav = useNavigate();
+  const location = useLocation();
   const [dark, setDark] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const displayName =
@@ -15,6 +16,25 @@ const Navbar = () => {
     (user &&
       (user.photoUrl || user.avatarUrl || user.imageUrl || user.profilePic)) ||
     null;
+  const completion = (() => {
+    if (user?.role === "student") {
+      // For students, check register_number, contact_number, leetcode_url, hackerrank_url, codechef_url, github_url
+      const fields = [
+        user?.register_number,
+        user?.contact_number,
+        user?.leetcode_url,
+        user?.hackerrank_url,
+        user?.github_url,
+      ];
+      const filled = fields.filter((v) => typeof v === "string" && v.trim()).length;
+      return Math.round((filled / fields.length) * 100);
+    }
+    // For staff/admin, use existing logic
+    const fields = [user?.fullName, user?.email, user?.phone, user?.rollNumber];
+    const filled = fields.filter((v) => typeof v === "string" && v.trim())
+      .length;
+    return Math.round((filled / fields.length) * 100);
+  })();
 
   function getInitials(name) {
     if (!name || typeof name !== "string") return "";
@@ -128,40 +148,60 @@ const Navbar = () => {
                     </svg>
                   )}
                 </button>
-                <Avatar
-                  className="h-9 w-9 bg-white dark:bg-slate-800 cursor-pointer"
-                  title={displayName || "Profile"}
-                  onClick={() => setSidebarOpen(true)}
-                >
-                  {photoUrl ? (
-                    <AvatarImage
-                      src={photoUrl}
-                      alt={displayName || "Profile"}
-                    />
-                  ) : null}
-                  <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
-                </Avatar>
+                <div className="relative flex items-center">
+                  <div
+                    className="relative flex items-center justify-center"
+                    style={{
+                      width: "42px",
+                      height: "42px",
+                      background: `conic-gradient(#2563eb ${completion}%, #e2e8f0 ${completion}%)`,
+                      borderRadius: "50%",
+                      padding: "2px",
+                    }}
+                  >
+                    <div className="absolute inset-[2px] rounded-full bg-white dark:bg-slate-900" />
+                    <Avatar
+                      className="relative h-9 w-9 bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100 border-none shadow-inner cursor-pointer"
+                      title={displayName || "Profile"}
+                      onClick={() => setSidebarOpen(true)}
+                    >
+                      {photoUrl ? (
+                        <AvatarImage
+                          src={photoUrl}
+                          alt={displayName || "Profile"}
+                        />
+                      ) : null}
+                      <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
+                    </Avatar>
+                  </div>
+                </div>
               </>
             ) : (
               <div className="flex gap-2">
-                <Link
-                  to="/login"
-                  className="px-4 py-2 rounded-lg transition font-medium bg-blue-600 text-white hover:bg-blue-700"
-                >
-                  Login
-                </Link>
-                <Link
-                  to="/register-student"
-                  className="px-3 py-2 bg-green-500 hover:bg-green-600 rounded-lg transition font-medium text-sm text-white"
-                >
-                  Register Student
-                </Link>
-                <Link
-                  to="/register-staff"
-                  className="px-3 py-2 bg-green-500 hover:bg-green-600 rounded-lg transition font-medium text-sm text-white"
-                >
-                  Register Staff
-                </Link>
+                {location.pathname !== "/login" && 
+                 location.pathname !== "/register-student" && 
+                 location.pathname !== "/register-staff" && (
+                  <>
+                    <Link
+                      to="/login"
+                      className="px-4 py-2 rounded-lg transition font-medium bg-blue-600 text-white hover:bg-blue-700"
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      to="/register-student"
+                      className="px-3 py-2 bg-green-500 hover:bg-green-600 rounded-lg transition font-medium text-sm text-white"
+                    >
+                      Register Student
+                    </Link>
+                    <Link
+                      to="/register-staff"
+                      className="px-3 py-2 bg-green-500 hover:bg-green-600 rounded-lg transition font-medium text-sm text-white"
+                    >
+                      Register Staff
+                    </Link>
+                  </>
+                )}
               </div>
             )}
           </div>

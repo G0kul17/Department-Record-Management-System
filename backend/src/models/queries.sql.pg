@@ -608,3 +608,26 @@ BEGIN
   END IF;
 END
 $$;
+
+-- ==========================================================
+-- STUDENT PROFILE (EDITABLE PERSONAL INFORMATION)
+-- ==========================================================
+
+CREATE TABLE IF NOT EXISTS student_profiles (
+  id SERIAL PRIMARY KEY,
+
+  user_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+
+  register_number VARCHAR(50),
+  contact_number VARCHAR(20),
+
+  leetcode_url TEXT,
+  hackerrank_url TEXT,
+  codechef_url TEXT,
+  github_url TEXT,
+
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_student_profiles_user
+  ON student_profiles(user_id);

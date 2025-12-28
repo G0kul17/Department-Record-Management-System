@@ -5,6 +5,8 @@ import { useAuth } from "../../hooks/useAuth";
 import apiClient from "../../api/axiosClient";
 import { useNavigate } from "react-router-dom";
 import EventsCarousel from "../../components/EventsCarousel";
+import AchievementsFeed from "../../components/AchievementsFeed";
+import Card from "../../components/ui/Card";
 
 export default function StudentDashboard() {
   const nav = useNavigate();
@@ -15,7 +17,6 @@ export default function StudentDashboard() {
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [projCount, setProjCount] = useState(null);
   const [achCount, setAchCount] = useState(null);
-
 
   const particlesInit = useCallback(async (engine) => {
     await loadSlim(engine);
@@ -183,32 +184,39 @@ export default function StudentDashboard() {
         )}
       </div>
 
+      {/* Achievements feed below events */}
+      {user && <AchievementsFeed title="Recent Achievements" limit={12} />}
+
       {/* Stats */}
       <div className="mx-auto max-w-6xl px-6 pb-24">
         <h2 className="mb-4 text-xl font-bold text-slate-800 dark:text-slate-100">
           At a Glance
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <button onClick={() => nav('/projects/approved')} className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-cyan-200 to-blue-300 dark:from-cyan-900/50 dark:to-blue-900/60 dark:ring-white/10 text-left">
-            <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-              Projects
-            </div>
+          <Card
+            onClick={() => nav("/projects/approved")}
+            className="p-6 glitter-card bulge-card"
+          >
+            <div className="text-sm font-semibold text-slate-800">Projects</div>
             <div className="mt-2 flex items-end gap-3">
-              <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">
+              <div className="text-3xl font-extrabold text-slate-900">
                 {projCount === null ? "—" : projCount}
               </div>
             </div>
-          </button>
-          <button onClick={() => nav('/achievements/approved')} className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-fuchsia-200 to-rose-300 dark:from-fuchsia-900/50 dark:to-rose-900/60 dark:ring-white/10 text-left">
-            <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+          </Card>
+          <Card
+            onClick={() => nav("/achievements/approved")}
+            className="p-6 glitter-card bulge-card"
+          >
+            <div className="text-sm font-semibold text-slate-800">
               Achievements
             </div>
             <div className="mt-2 flex items-end gap-3">
-              <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">
+              <div className="text-3xl font-extrabold text-slate-900">
                 {achCount === null ? "—" : achCount}
               </div>
             </div>
-          </button>
+          </Card>
         </div>
       </div>
     </div>

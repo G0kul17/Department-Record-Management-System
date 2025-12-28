@@ -169,7 +169,7 @@ export default function Achievements() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <form
             onSubmit={submit}
-            className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+            className="glitter-card rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
           >
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
               Title <span className="text-red-600">*</span>
@@ -221,7 +221,7 @@ export default function Achievements() {
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                  Event ID{" "}
+                  Event Name{" "}
                   <span className="text-slate-500 font-normal">(optional)</span>
                 </label>
                 <input
@@ -257,7 +257,7 @@ export default function Achievements() {
                 type="file"
                 accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
                 onChange={(e) => setProof(e.target.files?.[0] || null)}
-                className="mt-1 block w-full text-sm text-slate-600 dark:text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:text-white hover:file:bg-blue-700"
+                className="mt-1 block w-full text-sm text-slate-600 dark:text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-[#87CEEB] file:px-4 file:py-2 file:text-white hover:file:opacity-90"
                 required
               />
             </div>
@@ -277,14 +277,14 @@ export default function Achievements() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="rounded-lg bg-blue-600 px-5 py-2 font-semibold text-white shadow hover:bg-blue-700 disabled:opacity-50"
+                className="rounded-lg bg-[#87CEEB] px-5 py-2 font-semibold text-white shadow hover:opacity-90 disabled:opacity-50"
               >
                 {submitting ? "Submitting..." : "Submit Achievement"}
               </button>
             </div>
           </form>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="glitter-card rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
                 My Submissions

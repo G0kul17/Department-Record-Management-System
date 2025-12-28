@@ -80,7 +80,7 @@ export default function FacultyResearch() {
       </p>
 
       <form onSubmit={onSubmit} className="space-y-6">
-        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <section className="glitter-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">
             Research Details
           </h2>
@@ -296,7 +296,7 @@ export default function FacultyResearch() {
           </div>
         </section>
 
-        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <section className="glitter-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">
             Attachments
           </h2>
@@ -319,7 +319,7 @@ export default function FacultyResearch() {
         <div className="flex justify-end">
           <button
             disabled={submitting}
-            className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-60"
+            className="inline-flex items-center rounded-md bg-[#87CEEB] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
           >
             {submitting ? "Submitting..." : "Submit"}
           </button>

@@ -125,6 +125,7 @@ export default function App() {
     path.startsWith("/admin") ||
     path.startsWith("/staff") ||
     path.startsWith("/student");
+  // Show Back button on all non-dashboard routes (admin routes will render local Back inside pages)
   const showBackButton = !hideBackButton;
   return (
     <>

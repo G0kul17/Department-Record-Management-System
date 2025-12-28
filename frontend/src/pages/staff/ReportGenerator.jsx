@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import apiClient from "../../api/axiosClient";
 import exportToXlsxOrCsv from "../../utils/exportData";
+import BackButton from "../../components/BackButton";
 
 function Dropdown({ label, value, onChange, options }) {
   return (
@@ -423,6 +424,7 @@ export default function ReportGenerator() {
 
   return (
     <div className="mx-auto max-w-6xl p-6">
+      <BackButton />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
           Staff Reports
@@ -432,87 +434,284 @@ export default function ReportGenerator() {
         </div>
       </div>
 
-      <div className="mt-6 bg-white dark:bg-slate-900 border dark:border-slate-700 rounded p-4 shadow-sm">
-        <div className="flex gap-4 items-center">
-          <label className="flex items-center gap-2 text-sm">
-            <span className="text-xs text-slate-600 dark:text-slate-200">
+      <div className="mt-6 glitter-card bg-white dark:bg-slate-900 border dark:border-slate-700 rounded-xl p-5 shadow-sm">
+        {/* Row 1: Core filters */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-start">
+          {/* Dataset */}
+          <div>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
               Dataset
-            </span>
-            <select
-              value={mode}
-              onChange={(e) => setMode(e.target.value)}
-              className="border rounded p-2 text-sm bg-white dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-            >
-              <option value="achievements">Achievements</option>
-              <option value="projects">Projects</option>
-              <option value="participation">Faculty Participation</option>
-              <option value="research">Faculty Research</option>
-              <option value="consultancy">Faculty Consultancy</option>
-            </select>
-          </label>
+            </label>
+            <div className="relative">
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden
+                >
+                  <path
+                    d="M4 6h16M6 12h12M10 18h4"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
+              <select
+                value={mode}
+                onChange={(e) => setMode(e.target.value)}
+                className="w-full rounded-md border border-slate-300 pl-9 pr-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              >
+                <option value="achievements">Achievements</option>
+                <option value="projects">Projects</option>
+                <option value="participation">Faculty Participation</option>
+                <option value="research">Faculty Research</option>
+                <option value="consultancy">Faculty Consultancy</option>
+              </select>
+            </div>
+          </div>
 
-          {mode === "achievements" && (
-            <Dropdown
-              label="Title"
-              value={titleFilter}
-              onChange={setTitleFilter}
-              options={titleOptions}
-            />
-          )}
+          {/* Title (only for achievements) */}
+          <div>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+              Title
+            </label>
+            {mode === "achievements" ? (
+              <Dropdown
+                label=""
+                value={titleFilter}
+                onChange={setTitleFilter}
+                options={titleOptions}
+              />
+            ) : (
+              <div className="relative">
+                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden
+                  >
+                    <path
+                      d="M3 6h18M6 12h12M10 18h4"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </span>
+                <input
+                  disabled
+                  placeholder="N/A"
+                  className="w-full rounded-md border border-slate-300 pl-9 pr-3 py-2 text-sm bg-slate-50 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                />
+              </div>
+            )}
+          </div>
 
-          <label className="flex flex-col text-sm">
-            <span className="text-slate-600 dark:text-slate-200 text-xs mb-1">
+          {/* Student/Staff */}
+          <div>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
               Student/Staff
-            </span>
-            <select
-              value={userType}
-              onChange={(e) => setUserType(e.target.value)}
-              className="border rounded p-2 text-sm bg-white dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-            >
-              <option value="">All</option>
-              <option value="student">Student</option>
-              <option value="staff">Staff</option>
-            </select>
-          </label>
+            </label>
+            <div className="relative">
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden
+                >
+                  <path
+                    d="M12 12a4 4 0 100-8 4 4 0 000 8z"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  />
+                  <path
+                    d="M4 20a8 8 0 0116 0"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
+              <select
+                value={userType}
+                onChange={(e) => setUserType(e.target.value)}
+                className="w-full rounded-md border border-slate-300 pl-9 pr-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              >
+                <option value="">All</option>
+                <option value="student">Student</option>
+                <option value="staff">Staff</option>
+              </select>
+            </div>
+          </div>
 
-          <label className="flex flex-col text-sm">
-            <span className="text-slate-600 dark:text-slate-200 text-xs mb-1">
+          {/* Verified */}
+          <div>
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
               Verified
+            </label>
+            <div className="relative">
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden
+                >
+                  <path
+                    d="M20 6L9 17l-5-5"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <select
+                value={verified}
+                onChange={(e) => setVerified(e.target.value)}
+                className="w-full rounded-md border border-slate-300 pl-9 pr-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              >
+                <option value="">All</option>
+                <option value="true">Verified</option>
+                <option value="false">Not Verified</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Row 2: Dates + search */}
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3 items-start">
+          <div className="relative">
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+              From Date
+            </label>
+            <span className="pointer-events-none absolute left-3 bottom-3 md:bottom-2.5 text-slate-500">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden
+              >
+                <path
+                  d="M7 10h10M7 14h6"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <rect
+                  x="3"
+                  y="5"
+                  width="18"
+                  height="16"
+                  rx="2"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M7 5V3M17 5V3"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
             </span>
-            <select
-              value={verified}
-              onChange={(e) => setVerified(e.target.value)}
-              className="border rounded p-2 text-sm bg-white dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-            >
-              <option value="">All</option>
-              <option value="true">Verified</option>
-              <option value="false">Not Verified</option>
-            </select>
-          </label>
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              className="w-full rounded-md border border-slate-300 pl-9 pr-3 py-2 text-sm bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            />
+          </div>
+          <div className="relative">
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+              To Date
+            </label>
+            <span className="pointer-events-none absolute left-3 bottom-3 md:bottom-2.5 text-slate-500">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden
+              >
+                <path
+                  d="M7 10h10M7 14h6"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <rect
+                  x="3"
+                  y="5"
+                  width="18"
+                  height="16"
+                  rx="2"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M7 5V3M17 5V3"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </span>
+            <input
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              className="w-full rounded-md border border-slate-300 pl-9 pr-3 py-2 text-sm bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+              Search
+            </label>
+            <div className="relative">
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden
+                >
+                  <circle
+                    cx="11"
+                    cy="11"
+                    r="7"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  />
+                  <path
+                    d="M20 20l-3.5-3.5"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
+              <input
+                placeholder="Search title or desc"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="w-full rounded-md border border-slate-300 pl-9 pr-3 py-2 text-sm bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            className="border rounded p-2 text-sm bg-white dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-          />
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            className="border rounded p-2 text-sm bg-white dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-          />
-          <input
-            placeholder="Search title or desc"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="col-span-1 md:col-span-2 border rounded p-2 text-sm bg-white dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-          />
-        </div>
-
-        <div className="mt-4 flex items-center justify-end gap-3">
+        <div className="mt-5 flex items-center justify-end gap-3">
           <button
             onClick={() => {
               setIssuer("");
@@ -531,13 +730,14 @@ export default function ReportGenerator() {
           </button>
           <button
             onClick={handleApply}
-            className="px-3 py-1 text-sm rounded border bg-white dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+            className="px-3 py-1 text-sm rounded-md border bg-white hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
           >
             Apply
           </button>
           <button
             onClick={handleExport}
-            className="px-3 py-1 text-sm rounded bg-blue-600 text-white"
+            className="px-3 py-1 text-sm rounded-md text-white shadow"
+            style={{ backgroundColor: "#87CEEB" }}
           >
             Export
           </button>
@@ -550,28 +750,50 @@ export default function ReportGenerator() {
           filters
         </div>
         <div className="mt-3">
-          <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-            Select Columns to Export
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {allColumns.map((col) => (
-              <label
-                key={col.key}
-                className="inline-flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300"
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Select Columns to Export
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSelectedColumns(allColumns.map((c) => c.key))}
+                className="px-2 py-1 text-xs rounded-md border bg-white hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
               >
-                <input
-                  type="checkbox"
-                  checked={selectedColumns.includes(col.key)}
-                  onChange={() => toggleColumn(col.key)}
-                />
-                <span>{col.header}</span>
-              </label>
-            ))}
+                Select All
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedColumns([])}
+                className="px-2 py-1 text-xs rounded-md border bg-white hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+          <div className="glitter-card rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {allColumns.map((col) => (
+                <label
+                  key={col.key}
+                  className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300"
+                >
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4"
+                    style={{ accentColor: "#87CEEB" }}
+                    checked={selectedColumns.includes(col.key)}
+                    onChange={() => toggleColumn(col.key)}
+                  />
+                  <span>{col.header}</span>
+                </label>
+              ))}
+            </div>
           </div>
         </div>
 
         {showPreview && (
-          <div className="mt-4 overflow-auto border rounded bg-white dark:bg-slate-900 dark:border-slate-700">
+          <div className="mt-4 glitter-card overflow-auto border rounded bg-white dark:bg-slate-900 dark:border-slate-700">
             <table className="min-w-full table-fixed border-collapse">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800">

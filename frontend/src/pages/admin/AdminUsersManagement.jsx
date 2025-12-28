@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import apiClient from "../../api/axiosClient";
+import BackButton from "../../components/BackButton";
 
 export default function AdminUsersManagement() {
   const [users, setUsers] = useState([]);
@@ -71,6 +72,7 @@ export default function AdminUsersManagement() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950 py-10">
       <div className="mx-auto max-w-6xl px-6">
+        <BackButton />
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">

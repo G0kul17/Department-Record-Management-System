@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import apiClient from "../../api/axiosClient";
 import SuccessModal from "../../components/ui/SuccessModal";
+import BackButton from "../../components/BackButton";
 
 export default function AdminUploadExtracurricular() {
   const [uploaderName, setUploaderName] = useState("");
@@ -62,6 +63,7 @@ export default function AdminUploadExtracurricular() {
 
   return (
     <div className="mx-auto max-w-4xl p-6">
+      <BackButton />
       <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">
         Staff Data Entry
       </h1>
@@ -109,7 +111,7 @@ export default function AdminUploadExtracurricular() {
           </p>
         </div>
         <div className="flex gap-2">
-          <button className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700">
+          <button className="rounded-md bg-[#87CEEB] px-4 py-2 text-sm font-semibold text-white shadow hover:opacity-90">
             Generate Preview
           </button>
           <button

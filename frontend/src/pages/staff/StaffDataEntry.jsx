@@ -77,7 +77,7 @@ export default function UploadExtracurricular() {
 
       <form
         onSubmit={handlePreview}
-        className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+        className="space-y-4 glitter-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
       >
         <div>
           <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
@@ -109,7 +109,7 @@ export default function UploadExtracurricular() {
           </p>
         </div>
         <div className="flex gap-2">
-          <button className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700">
+          <button className="rounded-md bg-[#87CEEB] px-4 py-2 text-sm font-semibold text-white shadow hover:opacity-90">
             Generate Preview
           </button>
           <button
@@ -124,7 +124,7 @@ export default function UploadExtracurricular() {
       </form>
 
       {preview && (
-        <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 overflow-auto">
+        <div className="mt-6 glitter-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 overflow-auto">
           <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">
             Preview — Total rows: {preview.totalRows}
           </h2>

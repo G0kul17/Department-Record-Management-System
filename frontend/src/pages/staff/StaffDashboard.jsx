@@ -8,6 +8,7 @@ import QuickActions from "../QuickActions";
 import apiClient from "../../api/axiosClient";
 import { useEffect, useState } from "react";
 import EventsCarousel from "../../components/EventsCarousel";
+import AchievementsFeed from "../../components/AchievementsFeed";
 
 const StaffDashboard = () => {
   const { user } = useAuth();
@@ -132,7 +133,10 @@ function OverviewPanel({ user }) {
           At a Glance
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <button onClick={() => window.location.href = '/projects/approved'} className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-cyan-200 to-blue-300 dark:from-cyan-900/50 dark:to-blue-900/60 dark:ring-white/10 text-left">
+          <button
+            onClick={() => (window.location.href = "/projects/approved")}
+            className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-cyan-200 to-blue-300 dark:from-cyan-900/50 dark:to-blue-900/60 dark:ring-white/10 text-left"
+          >
             <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
               Projects
             </div>
@@ -142,7 +146,10 @@ function OverviewPanel({ user }) {
               </div>
             </div>
           </button>
-          <button onClick={() => window.location.href = '/achievements/approved'} className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-fuchsia-200 to-rose-300 dark:from-fuchsia-900/50 dark:to-rose-900/60 dark:ring-white/10 text-left">
+          <button
+            onClick={() => (window.location.href = "/achievements/approved")}
+            className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-fuchsia-200 to-rose-300 dark:from-fuchsia-900/50 dark:to-rose-900/60 dark:ring-white/10 text-left"
+          >
             <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
               Achievements
             </div>
@@ -156,7 +163,9 @@ function OverviewPanel({ user }) {
       </div>
 
       <div>
-        <h3 className="mt-6 mb-3 text-lg font-semibold text-slate-800 dark:text-slate-100">Latest Events</h3>
+        <h3 className="mt-6 mb-3 text-lg font-semibold text-slate-800 dark:text-slate-100">
+          Latest Events
+        </h3>
         {loadingEvents ? (
           <div className="text-sm text-slate-600">Loading events...</div>
         ) : events.length === 0 ? (
@@ -165,6 +174,9 @@ function OverviewPanel({ user }) {
           <EventsCarousel events={events} intervalMs={4500} />
         )}
       </div>
+
+      {/* Achievements feed below events for staff dashboard */}
+      <AchievementsFeed title="Recent Achievements" limit={12} />
     </div>
   );
 }

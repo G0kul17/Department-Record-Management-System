@@ -78,7 +78,7 @@ export default function ProjectsManagement() {
   const closeModal = () => setModal({ open: false, item: null });
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <div className="glitter-card rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">

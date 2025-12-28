@@ -15,7 +15,7 @@ export default function ProjectUpload() {
     team_members: [], // dynamic list of names
     github_url: "",
   });
-  const [files, setFiles] = useState([]);
+  const [zipFile, setZipFile] = useState(null);
   const [srsFile, setSrsFile] = useState(null);
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
@@ -82,7 +82,20 @@ export default function ProjectUpload() {
         );
       // Attach mandatory SRS document
       fd.append("srs_document", srsFile);
-      for (const f of files) fd.append("files", f);
+      // Optional: single ZIP attachment (max 15MB)
+      if (zipFile) {
+        const sizeLimit = 15 * 1024 * 1024; // 15MB
+        const name = zipFile.name || "";
+        const ext = name.toLowerCase().split(".").pop();
+        const isZip =
+          zipFile.type === "application/zip" ||
+          zipFile.type === "application/x-zip-compressed" ||
+          ext === "zip";
+        if (!isZip) throw new Error("Attach files must be a .zip archive.");
+        if (zipFile.size > sizeLimit)
+          throw new Error("Zip file must be 15MB or smaller.");
+        fd.append("files", zipFile);
+      }
       const resp = await apiClient.uploadFile("/projects", fd);
       setSuccess(true);
       setMessage("Project uploaded successfully.");
@@ -97,7 +110,7 @@ export default function ProjectUpload() {
         team_members: [],
         github_url: "",
       });
-      setFiles([]);
+      setZipFile(null);
       setSrsFile(null);
       // If response contains project, optimistically prepend before refresh
       if (resp && resp.project) {
@@ -125,8 +138,9 @@ export default function ProjectUpload() {
           Upload Project
         </h2>
         <p className="text-slate-600 dark:text-slate-300 mb-6">
-          Provide basic details and optionally attach related files (SRS, PPT,
-          papers, code ZIP, etc.). Below you can track verification status.
+          Provide basic details and SRS (PDF). Optionally attach a single ZIP
+          (max 15MB) containing supporting files. Below you can track
+          verification status.
         </p>
 
         {message && (
@@ -176,7 +190,7 @@ export default function ProjectUpload() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <form
             onSubmit={submit}
-            className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4 dark:border-slate-800 dark:bg-slate-900"
+            className="glitter-card rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4 dark:border-slate-800 dark:bg-slate-900"
           >
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -341,7 +355,7 @@ export default function ProjectUpload() {
                 onChange={(e) =>
                   setSrsFile((e.target.files && e.target.files[0]) || null)
                 }
-                className="mt-1 block w-full text-sm text-slate-600 dark:text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:text-white hover:file:bg-blue-700"
+                className="mt-1 block w-full text-sm text-slate-600 dark:text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-[#87CEEB] file:px-4 file:py-2 file:text-white hover:file:opacity-90"
                 required
               />
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -351,19 +365,19 @@ export default function ProjectUpload() {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                Attach Files{" "}
+                Attach Zip (max 15MB){" "}
                 <span className="text-slate-500 font-normal">(optional)</span>
               </label>
               <input
                 type="file"
-                multiple
-                accept="application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/zip,image/*,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                onChange={(e) => setFiles(Array.from(e.target.files || []))}
-                className="mt-1 block w-full text-sm text-slate-600 dark:text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:text-white hover:file:bg-blue-700"
+                accept=".zip,application/zip,application/x-zip-compressed"
+                onChange={(e) =>
+                  setZipFile((e.target.files && e.target.files[0]) || null)
+                }
+                className="mt-1 block w-full text-sm text-slate-600 dark:text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-[#87CEEB] file:px-4 file:py-2 file:text-white hover:file:opacity-90"
               />
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                You can attach SRS, PPT, research papers, code ZIP, and other
-                supporting files.
+                Upload a single .zip archive containing your supporting files.
               </p>
             </div>
 
@@ -371,13 +385,13 @@ export default function ProjectUpload() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="rounded-lg bg-green-600 px-5 py-2 font-semibold text-white shadow hover:bg-green-700 disabled:opacity-50"
+                className="rounded-lg bg-[#87CEEB] px-5 py-2 font-semibold text-white shadow hover:opacity-90 disabled:opacity-50"
               >
                 {submitting ? "Uploading..." : "Upload Project"}
               </button>
             </div>
           </form>
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="glitter-card rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
                 My Projects

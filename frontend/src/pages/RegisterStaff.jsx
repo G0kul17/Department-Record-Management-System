@@ -68,7 +68,7 @@ const RegisterStaff = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-lg shadow-lg max-w-2xl w-full">
+      <div className="bg-white p-8 rounded-lg shadow-lg max-w-2xl w-full border border-sky-200">
         <h2 className="text-3xl font-bold text-center mb-6">
           Staff Registration
         </h2>

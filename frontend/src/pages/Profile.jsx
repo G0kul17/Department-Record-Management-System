@@ -113,7 +113,7 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-slate-900">
       <div className="container mx-auto px-4 py-8">
-        <div className="mx-auto max-w-xl rounded-lg bg-white p-6 shadow dark:bg-slate-800">
+        <div className="glitter-card mx-auto max-w-xl rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
           <h2 className="mb-4 text-2xl font-bold text-slate-900 dark:text-slate-100">
             Edit Profile
           </h2>
@@ -151,7 +151,7 @@ const Profile = () => {
                 className="bg-gray-100 dark:bg-slate-700 cursor-not-allowed"
               />
             </div>
-            
+
             <InputField
               label="Department"
               type="text"
@@ -162,7 +162,7 @@ const Profile = () => {
               disabled
               className="bg-gray-100 dark:bg-slate-700 cursor-not-allowed"
             />
-            
+
             <div className="mb-4 grid grid-cols-3 gap-4">
               <InputField
                 label="Course"
@@ -195,7 +195,7 @@ const Profile = () => {
                 className="bg-gray-100 dark:bg-slate-700 cursor-not-allowed"
               />
             </div>
-            
+
             <InputField
               label="Email"
               type="email"
@@ -262,11 +262,11 @@ const Profile = () => {
               onChange={onChange}
               placeholder="https://github.com/your-username"
             />
-            
+
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="mt-2 w-full rounded-lg bg-[#87CEEB] px-4 py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
             >
               {loading ? "Saving..." : "Save Changes"}
             </button>

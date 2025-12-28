@@ -24,7 +24,7 @@ router.post(
   requireRole(["student", "staff", "admin"]),
   upload.fields([
     { name: "srs_document", maxCount: 1 },
-    { name: "files", maxCount: 10 },
+    { name: "files", maxCount: 1 },
   ]),
   createProject
 );
@@ -36,7 +36,7 @@ router.post(
   requireRole(["student", "staff", "admin"]),
   upload.fields([
     { name: "srs_document", maxCount: 1 },
-    { name: "files", maxCount: 10 },
+    { name: "files", maxCount: 1 },
   ]),
   uploadFilesToProject
 );

@@ -49,6 +49,17 @@ function fileFilter(req, file, cb) {
     return cb(new Error("Invalid proof file type"), false);
   }
 
+  // Restrict project attachments to ZIP only for field 'files'
+  if (file.fieldname === "files") {
+    const name = file.originalname || "";
+    const ext = path.extname(name).toLowerCase();
+    const isZipMime =
+      file.mimetype === "application/zip" ||
+      file.mimetype === "application/x-zip-compressed";
+    if (isZipMime || ext === ".zip") return cb(null, true);
+    return cb(new Error("Only .zip files are allowed for attachments"), false);
+  }
+
   // Allow CSV/Excel specifically for 'document' field (data uploads)
   if (file.fieldname === "document") {
     const name = file.originalname || "";

@@ -62,7 +62,7 @@ export default function ProjectDetail() {
 
   return (
     <div className="mx-auto max-w-4xl p-6">
-      <div className="rounded-xl p-6 bg-white dark:bg-slate-900 dark:border dark:border-slate-700 shadow">
+      <div className="glitter-card rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
           {project.title}
         </h1>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import apiClient from "../../api/axiosClient";
 import { useAuth } from "../../hooks/useAuth";
 import SuccessModal from "../../components/ui/SuccessModal";
+import UploadDropzone from "../../components/ui/UploadDropzone";
 
 export default function Achievements() {
   const { user } = useAuth();
@@ -249,16 +250,13 @@ export default function Achievements() {
             </div>
 
             <div className="mt-4">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                Proof (PDF/Image-jpeg,jpg,png){" "}
-                <span className="text-red-600">*</span>
-              </label>
-              <input
-                type="file"
-                accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
-                onChange={(e) => setProof(e.target.files?.[0] || null)}
-                className="mt-1 block w-full text-sm text-slate-600 dark:text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-[#87CEEB] file:px-4 file:py-2 file:text-white hover:file:opacity-90"
-                required
+              <UploadDropzone
+                label="Upload and attach proof"
+                subtitle="PDF or image (jpeg, jpg, png)"
+                accept=".pdf,.png,.jpg,.jpeg"
+                maxSizeMB={25}
+                selectedFile={proof}
+                onFileSelected={(f) => setProof(f)}
               />
             </div>
 

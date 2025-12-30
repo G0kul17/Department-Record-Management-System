@@ -121,12 +121,12 @@ const RegisterStaff = () => {
               required
             />
             <InputField
-              label="Phone"
+              label="Contact Number"
               type="tel"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              placeholder="Enter phone number"
+              placeholder="Enter contact number"
               required
             />
             <div className="flex flex-col">

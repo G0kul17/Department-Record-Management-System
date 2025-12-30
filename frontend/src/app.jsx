@@ -80,6 +80,12 @@ const FacultyConsultancy = React.lazy(() =>
 const AdminFacultyConsultancy = React.lazy(() =>
   import("./pages/admin/AdminFacultyConsultancy")
 );
+const StudentsBatchUpload = React.lazy(() =>
+  import("./pages/staff/StudentsBatchUpload.jsx")
+);
+const AdminStudentsBatchUpload = React.lazy(() =>
+  import("./pages/admin/AdminStudentsBatchUpload.jsx")
+);
 const Achievements = React.lazy(() =>
   import("./pages/student/StudentsAchievements")
 );
@@ -312,6 +318,14 @@ export default function App() {
             }
           />
           <Route
+            path="/admin/upload-students-batch"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminStudentsBatchUpload />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/upload-extra-curricular"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
@@ -393,6 +407,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={["staff", "admin"]}>
                 <UploadExtracurricular />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/upload-students-batch"
+            element={
+              <ProtectedRoute allowedRoles={["staff", "admin"]}>
+                <StudentsBatchUpload />
               </ProtectedRoute>
             }
           />

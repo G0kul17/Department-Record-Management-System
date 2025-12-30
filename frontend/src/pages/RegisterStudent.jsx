@@ -123,20 +123,20 @@ const RegisterStudent = () => {
               required
             />
             <InputField
-              label="Roll Number"
+              label="Register Number"
               name="rollNumber"
               value={formData.rollNumber}
               onChange={handleChange}
-              placeholder="Enter roll number"
+              placeholder="Enter register number"
               required
             />
             <InputField
-              label="Phone"
+              label="Contact Number"
               type="tel"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              placeholder="Enter phone number"
+              placeholder="Enter contact number"
               required
             />
             <div className="flex flex-col">

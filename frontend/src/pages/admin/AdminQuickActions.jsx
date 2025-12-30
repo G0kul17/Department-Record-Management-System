@@ -20,6 +20,7 @@ export default function AdminQuickActions() {
     if (key === "facultyResearch") return nav("/admin/faculty-research");
     if (key === "facultyConsultancy") return nav("/admin/faculty-consultancy");
     if (key === "uploadExtra") return nav("/admin/upload-extra-curricular");
+    if (key === "studentsBatch") return nav("/admin/upload-students-batch");
     if (key === "exportRecords") return nav("/admin/reports");
     if (key === "manageUsers") return nav("/admin/users");
     return nav("/");
@@ -34,6 +35,17 @@ export default function AdminQuickActions() {
           subtitle="Manage and verify department submissions."
         />
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <Card
+            onClick={goTo("studentsBatch")}
+            className="p-6 glitter-card bulge-card"
+          >
+            <Tile
+              icon={<IconUpload />}
+              title="Add Students Batch"
+              desc="Upload CSV/Excel to add students in bulk."
+              color="fuchsia"
+            />
+          </Card>
           <Card
             onClick={goTo("uploadExtra")}
             className="p-6 glitter-card bulge-card"

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/axiosClient";
 import SuccessModal from "../../components/ui/SuccessModal";
+import UploadDropzone from "../../components/ui/UploadDropzone";
 
 export default function EventsManagement() {
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ export default function EventsManagement() {
     setForm((f) => ({ ...f, [name]: value }));
   };
 
-  const onFiles = (e) => setFiles(Array.from(e.target.files || []));
+  const onFiles = (list) => setFiles(Array.from(list || []));
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -189,8 +190,14 @@ export default function EventsManagement() {
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium">Attachments</label>
-              <input type="file" multiple onChange={onFiles} className="mt-1" />
+              <UploadDropzone
+                label="Upload and attach files"
+                subtitle="Add images or PDFs for the event."
+                accept=".pdf,image/*"
+                multiple
+                selectedFiles={files}
+                onFilesSelected={(fs) => onFiles(fs)}
+              />
             </div>
             <div className="md:col-span-2">
               <button

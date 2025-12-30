@@ -24,7 +24,10 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
   return (
     <div className="w-full">
       <div className="relative overflow-hidden rounded-lg shadow-sm">
-        <div className="flex transition-transform duration-500" style={{ transform: `translateX(${ -index * 100 }%)` }}>
+        <div
+          className="flex transition-transform duration-500"
+          style={{ transform: `translateX(${-index * 100}%)` }}
+        >
           {events.map((ev) => (
             <div key={ev.id} className="flex-shrink-0 w-full p-4">
               <EventCard
@@ -49,7 +52,9 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
             <button
               key={i}
               onClick={() => setIndex(i)}
-              className={`w-2 h-2 rounded-full ${i === index ? "bg-white" : "bg-gray-400/60"}`}
+              className={`w-2 h-2 rounded-full ${
+                i === index ? "bg-sky-500" : "bg-gray-300"
+              }`}
               aria-label={`Show event ${i + 1}`}
             />
           ))}

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import apiClient from "../../api/axiosClient";
 import SuccessModal from "../../components/ui/SuccessModal";
 import BackButton from "../../components/BackButton";
+import UploadDropzone from "../../components/ui/UploadDropzone";
 
 export default function AdminUploadExtracurricular() {
   const [uploaderName, setUploaderName] = useState("");
@@ -94,21 +95,14 @@ export default function AdminUploadExtracurricular() {
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-            Data File (CSV/Excel) <span className="text-red-600">*</span>
-          </label>
-          <input
-            type="file"
-            accept=".csv, .xlsx"
-            onChange={(e) =>
-              setFile((e.target.files && e.target.files[0]) || null)
-            }
-            className="block w-full text-sm"
-            required
+          <UploadDropzone
+            label="Upload and attach files"
+            subtitle="Attachments will be a part of this project."
+            accept=".csv,.xlsx"
+            maxSizeMB={25}
+            selectedFile={file}
+            onFileSelected={(f) => setFile(f)}
           />
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Accepted: .csv, .xlsx. We preview the first 10 rows.
-          </p>
         </div>
         <div className="flex gap-2">
           <button className="rounded-md bg-[#87CEEB] px-4 py-2 text-sm font-semibold text-white shadow hover:opacity-90">

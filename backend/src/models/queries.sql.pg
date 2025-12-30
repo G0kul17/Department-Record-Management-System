@@ -668,3 +668,9 @@ CREATE TABLE IF NOT EXISTS student_profiles (
 
 CREATE INDEX IF NOT EXISTS idx_student_profiles_user
   ON student_profiles(user_id);
+
+CREATE INDEX IF NOT EXISTS idx_users_student_regno
+ON users ((profile_details->>'register_number'));
+
+CREATE INDEX IF NOT EXISTS idx_users_student_contact
+ON users ((profile_details->>'contact_number'));

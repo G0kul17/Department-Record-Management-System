@@ -20,6 +20,7 @@ export default function QuickActions() {
     if (key === "facultyResearch") return nav("/faculty-research");
     if (key === "facultyConsultancy") return nav("/faculty-consultancy");
     if (key === "uploadExtra") return nav("/upload-extra-curricular");
+    if (key === "studentsBatch") return nav("/upload-students-batch");
 
     if (key === "exportRecords") return nav("/staff/reports");
 
@@ -104,6 +105,34 @@ export default function QuickActions() {
           {/* Role-specific actions for staff */}
           {user?.role === "staff" ? (
             <>
+              <Card
+                onClick={goTo("studentsBatch")}
+                className="p-6 glitter-card bulge-card"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-fuchsia-100 text-fuchsia-600">
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <path
+                        d="M12 5v14M5 12h14"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>
+                  <h3 className="text-lg font-semibold text-slate-800">
+                    Add Students Batch
+                  </h3>
+                </div>
+                <p className="mt-2 text-slate-600">
+                  Upload a CSV/Excel to add students in bulk.
+                </p>
+              </Card>
               <Card
                 onClick={goTo("uploadExtra")}
                 className="p-6 glitter-card bulge-card"

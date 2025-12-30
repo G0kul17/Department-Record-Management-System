@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import apiClient from "../../api/axiosClient";
 import SuccessModal from "../../components/ui/SuccessModal";
 import BackButton from "../../components/BackButton";
+import UploadDropzone from "../../components/ui/UploadDropzone";
 
 export default function AdminFacultyConsultancy() {
   const [form, setForm] = useState({
@@ -221,19 +222,12 @@ export default function AdminFacultyConsultancy() {
           <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">
             Attachments
           </h2>
-          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-            Proof (PDF/Image) <span className="text-red-600">*</span>
-          </label>
-          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-            Accepted proof examples: Sanction order, Minutes of meeting, SRS,
-            Payment details, Project completion details
-          </label>
-          <input
-            type="file"
+          <UploadDropzone
+            label="Upload and attach proof"
+            subtitle="Sanction order, minutes, SRS, payment or completion proof (PDF/Image)"
             accept=".pdf,image/*"
-            onChange={(e) => setProof(e.target.files?.[0] || null)}
-            className="block w-full text-sm"
-            required
+            selectedFile={proof}
+            onFileSelected={(f) => setProof(f)}
           />
         </section>
 

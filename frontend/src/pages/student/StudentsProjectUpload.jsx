@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import apiClient from "../../api/axiosClient";
 import { useAuth } from "../../hooks/useAuth";
 import SuccessModal from "../../components/ui/SuccessModal";
+import UploadDropzone from "../../components/ui/UploadDropzone";
 
 export default function ProjectUpload() {
   const { user } = useAuth();
@@ -12,7 +13,7 @@ export default function ProjectUpload() {
     academic_year: "",
     status: "ongoing",
     team_members_count: "",
-    team_members: [], // dynamic list of names
+
     github_url: "",
   });
   const [zipFile, setZipFile] = useState(null);
@@ -346,39 +347,25 @@ export default function ProjectUpload() {
 
             <div>
               {/* Mandatory SRS document */}
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                SRS Document <span className="text-red-600">*</span>
-              </label>
-              <input
-                type="file"
-                accept="application/pdf"
-                onChange={(e) =>
-                  setSrsFile((e.target.files && e.target.files[0]) || null)
-                }
-                className="mt-1 block w-full text-sm text-slate-600 dark:text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-[#87CEEB] file:px-4 file:py-2 file:text-white hover:file:opacity-90"
-                required
+              <UploadDropzone
+                label="SRS Document"
+                subtitle="Upload your Software Requirement Specification (PDF)"
+                accept=".pdf"
+                maxSizeMB={25}
+                selectedFile={srsFile}
+                onFileSelected={(f) => setSrsFile(f)}
+                required={true}
               />
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Upload your Software Requirement Specification (SRS) as a PDF.
-              </p>
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-                Attach Zip (max 15MB){" "}
-                <span className="text-slate-500 font-normal">(optional)</span>
-              </label>
-              <input
-                type="file"
-                accept=".zip,application/zip,application/x-zip-compressed"
-                onChange={(e) =>
-                  setZipFile((e.target.files && e.target.files[0]) || null)
-                }
-                className="mt-1 block w-full text-sm text-slate-600 dark:text-slate-300 file:mr-4 file:rounded-lg file:border-0 file:bg-[#87CEEB] file:px-4 file:py-2 file:text-white hover:file:opacity-90"
+              <UploadDropzone
+                label="Attach Zip (optional)"
+                subtitle="Upload a single .zip archive (max 15MB) with supporting files."
+                accept=".zip"
+                maxSizeMB={15}
+                selectedFile={zipFile}
+                onFileSelected={(f) => setZipFile(f)}
               />
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Upload a single .zip archive containing your supporting files.
-              </p>
             </div>
 
             <div className="pt-2">

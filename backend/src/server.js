@@ -13,6 +13,7 @@ import facultyResearchRoutes from "./routes/facultyResearchRoutes.js";
 import facultyConsultancyRoutes from "./routes/facultyConsultancyRoutes.js";
 import dataUploadRoutes from "./routes/dataUploadRoutes.js";
 import studentProfileRoutes from "./routes/studentProfileRoutes.js";
+import addStudentsRoutes from "./routes/addStudentsRoutes.js";
 import pool from "./config/db.js";
 import fs from "fs";
 import path from "path";
@@ -42,6 +43,7 @@ app.use(
 app.get("/", (req, res) => res.json({ message: "Auth RBAC OTP API" }));
 
 app.use("/api/student/profile", studentProfileRoutes);
+app.use("/api/students", addStudentsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/achievements", achievementRoutes);

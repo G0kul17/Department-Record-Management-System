@@ -188,7 +188,10 @@ export default function Home() {
                   {staffCount === null ? "—" : staffCount}
                 </div>
               </Card>
-              <Card className="p-6 glitter-card bulge-card">
+              <Card
+                onClick={() => nav("/events")}
+                className="p-6 glitter-card bulge-card"
+              >
                 <div className="text-sm font-semibold text-slate-800">
                   Events
                 </div>

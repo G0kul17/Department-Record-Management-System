@@ -1,7 +1,10 @@
 // Utility to parse CSV/XLSX student batch files and generate a preview with basic validation
 // Supports: .csv and .xlsx
 
+import * as XLSX from "xlsx";
+
 export const REQUIRED_HEADERS = [
+  "Full name",
   "First name",
   "Last name",
   "College mail",
@@ -52,7 +55,6 @@ function parseCsvToRows(text) {
 }
 
 async function parseXlsx(file) {
-  const { default: XLSX } = await import("xlsx");
   const ab = await file.arrayBuffer();
   const wb = XLSX.read(ab, { type: "array" });
   const wsName = wb.SheetNames[0];

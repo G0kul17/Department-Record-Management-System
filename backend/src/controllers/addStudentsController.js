@@ -21,11 +21,69 @@ const parseCSV = (filePath) =>
 const parseExcel = (filePath) => {
   const workbook = xlsx.readFile(filePath);
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  return xlsx.utils.sheet_to_json(sheet);
+  return xlsx.utils.sheet_to_json(sheet, { raw: false, defval: "" });
 };
 
 const studentEmailRegex = /^[a-z]+[0-9]{2}[a-z]+@sonatech\.ac\.in$/i;
 const contactRegex = /^[0-9]{10}$/;
+
+// Helper to normalize header keys
+const normalizeKey = (key) => {
+  return String(key || "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/[_\-]/g, " ");
+};
+
+// Map normalized headers to actual row keys
+const extractFieldsFromRow = (row) => {
+  const keyMap = {};
+  Object.keys(row).forEach((key) => {
+    const normalized = normalizeKey(key);
+    keyMap[normalized] = key;
+  });
+
+  const getValue = (possibleNames) => {
+    for (const name of possibleNames) {
+      const normalized = normalizeKey(name);
+      if (keyMap[normalized]) {
+        const val = row[keyMap[normalized]];
+        if (val !== null && val !== undefined) {
+          return String(val).trim();
+        }
+      }
+    }
+    return "";
+  };
+
+  return {
+    full_name: getValue(["Full name", "full name", "fullname", "name"]),
+    first_name: getValue(["First name", "first name", "firstname", "first"]),
+    last_name: getValue(["Last name", "last name", "lastname", "last"]),
+    email: getValue(["College mail", "college mail", "email", "mail"]),
+    register_number: getValue([
+      "Register number",
+      "register number",
+      "regno",
+      "register no",
+      "registration number",
+      "reg no",
+    ]),
+    contact_number: getValue([
+      "Contact number",
+      "contact number",
+      "phone",
+      "contact",
+      "mobile",
+      "phone number",
+    ]),
+    year: getValue(["Year", "year"]),
+    department: getValue(["Dept", "dept", "department"]),
+    course: getValue(["Course", "course"]),
+    section: getValue(["Section", "section"]),
+  };
+};
 
 /* ================= CONTROLLER ================= */
 
@@ -39,7 +97,7 @@ export const uploadStudents = async (req, res) => {
     let rows = [];
 
     if (ext === ".csv") rows = await parseCSV(req.file.path);
-    else if (ext === ".xlsx") rows = parseExcel(req.file.path);
+    else if (ext === ".xlsx" || ext === ".xls") rows = parseExcel(req.file.path);
     else {
       return res.status(400).json({ message: "Only CSV or Excel allowed" });
     }
@@ -48,24 +106,32 @@ export const uploadStudents = async (req, res) => {
       return res.status(400).json({ message: "Uploaded file is empty" });
     }
 
+    // Debug: log first row to check headers
+    console.log("First row headers:", Object.keys(rows[0] || {}));
+
     const errors = [];
     const validStudents = [];
 
     rows.forEach((row, index) => {
       const rowNumber = index + 2;
 
-      const first_name = row["First name"]?.toString().trim();
-      const last_name = row["Last name"]?.toString().trim();
-      const email = row["College mail"]?.toString().trim();
-      const register_number = row["Register number"]?.toString().trim();
-      const contact_number = row["Contact number"]?.toString().trim();
-      const year = row["Year"]?.toString().trim();
-      const department = row["Dept"]?.toString().trim();
-      const course = row["Course"]?.toString().trim();
-      const section = row["Section"]?.toString().trim();
+      const fields = extractFieldsFromRow(row);
+      const {
+        full_name,
+        first_name,
+        last_name,
+        email,
+        register_number,
+        contact_number,
+        year,
+        department,
+        course,
+        section,
+      } = fields;
 
       const missingFields = [];
 
+      if (!full_name) missingFields.push("Full name");
       if (!first_name) missingFields.push("First name");
       if (!last_name) missingFields.push("Last name");
       if (!email) missingFields.push("College mail");
@@ -77,6 +143,8 @@ export const uploadStudents = async (req, res) => {
       if (!section) missingFields.push("Section");
 
       if (missingFields.length) {
+        console.log(`Row ${rowNumber} missing fields:`, missingFields);
+        console.log("Extracted fields:", fields);
         errors.push({
           row: rowNumber,
           message: "Fill all sections",
@@ -85,38 +153,36 @@ export const uploadStudents = async (req, res) => {
         return;
       }
 
-      if (!studentEmailRegex.test(email)) {
+      // Relaxed email validation - just check basic format
+      const basicEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!basicEmailRegex.test(email)) {
         errors.push({
           row: rowNumber,
-          message: "Invalid student email format",
+          message: "Invalid email format",
         });
         return;
       }
 
-      if (!contactRegex.test(contact_number)) {
+      // Clean and validate contact number
+      const cleanedContact = contact_number.replace(/\D/g, "");
+      if (cleanedContact.length !== 10) {
         errors.push({
           row: rowNumber,
-          message: "Invalid contact number (10 digits required)",
+          message: "Contact number must be 10 digits",
         });
         return;
       }
 
       validStudents.push({
-        first_name,
-        last_name,
-        email,
-        register_number,
-        contact_number,
-        year,
-        department,
-        course,
-        section,
+        ...fields,
+        contact_number: cleanedContact, // Use cleaned version
       });
     });
 
     if (errors.length) {
+      console.log("Validation errors:", errors);
       return res.status(400).json({
-        message: "Validation failed. Fill all sections.",
+        message: `Validation failed for ${errors.length} row(s). Check the details.`,
         errors,
       });
     }
@@ -147,6 +213,7 @@ export const uploadStudents = async (req, res) => {
           s.email,
           hash,
           JSON.stringify({
+            full_name: s.full_name,
             first_name: s.first_name,
             last_name: s.last_name,
             register_number: s.register_number,
@@ -163,9 +230,9 @@ export const uploadStudents = async (req, res) => {
         to: s.email,
         subject: "Student Account Created",
         text: `
-Hello ${s.first_name},
+Hello ${s.full_name || s.first_name},
 
-Your student account has been created.
+Your student account has been created. And you are added in the Community of DRMS.
 
 Email: ${s.email}
 Temporary Password: ${defaultPassword}

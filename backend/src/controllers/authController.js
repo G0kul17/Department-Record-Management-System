@@ -33,12 +33,15 @@ export async function register(req, res) {
   
   // Build profile_details JSONB object for students
   const profileDetails = {
+    full_name: fullName,
     first_name: firstName || "",
     last_name: lastName || "",
     department: department || "",
     course: course || "",
     year: year || "",
     section: section || "",
+    phone: phone || "",
+    roll_number: rollNumber || "",
   };
 
   try {
@@ -54,8 +57,8 @@ export async function register(req, res) {
         const hashed = await bcrypt.hash(password, 10);
         // Also update role in case ADMIN_EMAILS was changed or this email should be admin
         await pool.query(
-          "UPDATE users SET password_hash=$1, full_name=COALESCE($2, full_name), role=$4, profile_details=$5, phone=$6, roll_number=$7 WHERE email=$3",
-          [hashed, fullName, emailLower, role, JSON.stringify(profileDetails), phone, rollNumber]
+          "UPDATE users SET password_hash=$1, role=$2, profile_details=$3 WHERE email=$4",
+          [hashed, role, JSON.stringify(profileDetails), emailLower]
         );
         // continue flow to send fresh OTP
       } else {
@@ -76,8 +79,8 @@ export async function register(req, res) {
       const hashed = await bcrypt.hash(password, 10);
       try {
         await pool.query(
-          "INSERT INTO users (email, password_hash, role, full_name, profile_details, phone, roll_number) VALUES ($1, $2, $3, $4, $5, $6, $7)",
-          [emailLower, hashed, role, fullName, JSON.stringify(profileDetails), phone, rollNumber]
+          "INSERT INTO users (email, password_hash, role, profile_details) VALUES ($1, $2, $3, $4)",
+          [emailLower, hashed, role, JSON.stringify(profileDetails)]
         );
       } catch (e) {
         // unique violation
@@ -151,7 +154,7 @@ export async function verifyOTP(req, res) {
 
     // return jwt
     const { rows: users } = await pool.query(
-      "SELECT id, email, role, full_name FROM users WHERE email=$1",
+      "SELECT id, email, role, profile_details->>'full_name' as full_name FROM users WHERE email=$1",
       [emailLower]
     );
     const user = users[0];
@@ -277,7 +280,7 @@ export async function loginVerifyOTP(req, res) {
 
     // issue token
     const { rows: users } = await pool.query(
-      "SELECT id, email, role, full_name FROM users WHERE email=$1",
+      "SELECT id, email, role, profile_details->>'full_name' as full_name FROM users WHERE email=$1",
       [emailLower]
     );
     const user = users[0];
@@ -411,19 +414,21 @@ export async function getProfile(req, res) {
     if (!emailLower) return res.status(401).json({ message: "Unauthorized" });
 
     const { rows } = await pool.query(
-      "SELECT id, email, role, full_name, phone, roll_number FROM users WHERE email=$1",
+      "SELECT id, email, role, profile_details FROM users WHERE email=$1",
       [emailLower]
     );
     if (!rows.length)
       return res.status(404).json({ message: "User not found" });
     const u = rows[0];
+    const profile = u.profile_details || {};
     return res.json({
       id: u.id,
       email: u.email,
       role: u.role,
-      fullName: u.full_name,
-      phone: u.phone || null,
-      rollNumber: u.roll_number || null,
+      fullName: profile.full_name || null,
+      phone: profile.phone || null,
+      rollNumber: profile.roll_number || null,
+      profileDetails: profile,
     });
   } catch (err) {
     console.error("/auth/profile GET error:", err);
@@ -436,53 +441,41 @@ export async function updateProfile(req, res) {
   try {
     const emailLower = (req.user?.email || "").toLowerCase();
     if (!emailLower) return res.status(401).json({ message: "Unauthorized" });
-    const { fullName, phone, rollNumber, email } = req.body;
-    const name = (fullName || "").trim();
-    if (!name) return res.status(400).json({ message: "fullName required" });
 
-    const updates = { full_name: name };
-    if (typeof phone === "string") updates.phone = phone.trim();
-    if (typeof rollNumber === "string") updates.roll_number = rollNumber.trim();
+    const { name, fullName, phone, rollNumber } = req.body || {};
+    const nameValue = name || fullName;
 
-    let newEmailLower = emailLower;
-    if (
-      typeof email === "string" &&
-      email.trim().toLowerCase() !== emailLower
-    ) {
-      newEmailLower = email.trim().toLowerCase();
-      const { rows: dup } = await pool.query(
-        "SELECT 1 FROM users WHERE email=$1",
-        [newEmailLower]
-      );
-      if (dup.length)
-        return res.status(400).json({ message: "Email already in use" });
-      updates.email = newEmailLower;
+    // Get current profile_details
+    const { rows: current } = await pool.query(
+      "SELECT profile_details FROM users WHERE email=$1",
+      [emailLower]
+    );
+    
+    if (!current.length) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    const setClauses = Object.keys(updates)
-      .map((k, i) => `${k}=$${i + 1}`)
-      .join(", ");
-    const values = Object.values(updates);
-    values.push(emailLower);
+    // Merge with existing profile_details
+    const existingProfile = current[0].profile_details || {};
+    const updates = {};
+    if (nameValue !== undefined) updates.full_name = nameValue;
+    if (phone !== undefined) updates.phone = phone;
+    if (rollNumber !== undefined) updates.roll_number = rollNumber;
+    
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ message: "No fields to update" });
+    }
+
+    const updatedProfile = { ...existingProfile, ...updates };
+
     await pool.query(
-      `UPDATE users SET ${setClauses} WHERE email=$${values.length}`,
-      values
+      "UPDATE users SET profile_details=$1 WHERE email=$2",
+      [JSON.stringify(updatedProfile), emailLower]
     );
 
-    const { rows } = await pool.query(
-      "SELECT id, email, role, full_name, phone, roll_number FROM users WHERE email=$1",
-      [newEmailLower]
-    );
-    const u = rows[0];
-    const token = signToken({ id: u.id, email: u.email, role: u.role }, "6h");
     return res.json({
-      id: u.id,
-      email: u.email,
-      role: u.role,
-      fullName: u.full_name,
-      phone: u.phone || null,
-      rollNumber: u.roll_number || null,
-      token,
+      message: "Profile updated",
+      profile: updatedProfile,
     });
   } catch (err) {
     console.error("/auth/profile PUT error:", err);

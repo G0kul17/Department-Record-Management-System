@@ -53,6 +53,13 @@ const StaffDashboard = () => {
               >
                 Events
               </Link>
+              <div className="my-2 border-t border-slate-200 dark:border-slate-700"></div>
+              <Link
+                className="block rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                to="/staff/bulk-export"
+              >
+                Bulk Export
+              </Link>
             </nav>
           </aside>
 

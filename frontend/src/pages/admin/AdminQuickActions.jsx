@@ -22,6 +22,7 @@ export default function AdminQuickActions() {
     if (key === "uploadExtra") return nav("/admin/upload-extra-curricular");
     if (key === "studentsBatch") return nav("/admin/upload-students-batch");
     if (key === "exportRecords") return nav("/admin/reports");
+    if (key === "bulkExport") return nav("/admin/bulk-export");
     if (key === "manageUsers") return nav("/admin/users");
     return nav("/");
   };
@@ -157,6 +158,17 @@ export default function AdminQuickActions() {
             />
           </Card>
           <Card
+            onClick={goTo("bulkExport")}
+            className="p-6 glitter-card bulge-card"
+          >
+            <Tile
+              icon={<IconDownload />}
+              title="Bulk Export Data"
+              desc="Download complete database backup."
+              color="blue"
+            />
+          </Card>
+          <Card
             onClick={goTo("manageUsers")}
             className="p-6 glitter-card bulge-card"
           >
@@ -250,6 +262,41 @@ function IconCalendar() {
   );
 }
 function IconUpload() {
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      className="text-white"
+    >
+      <path
+        d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <polyline
+        points="7 10 12 15 17 10"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <line
+        x1="12"
+        y1="15"
+        x2="12"
+        y2="3"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function IconDownload() {
   return (
     <svg
       width="22"

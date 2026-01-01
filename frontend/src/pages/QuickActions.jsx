@@ -23,6 +23,7 @@ export default function QuickActions() {
     if (key === "studentsBatch") return nav("/upload-students-batch");
 
     if (key === "exportRecords") return nav("/staff/reports");
+    if (key === "bulkExport") return nav("/staff/bulk-export");
 
     // Generic placeholders
     if (key === "community") return nav("/"); // placeholder until community page exists
@@ -379,6 +380,35 @@ export default function QuickActions() {
                 </div>
                 <p className="mt-2 text-slate-600">
                   Generate Excel/CSV reports for projects and achievements.
+                </p>
+              </Card>
+              <Card
+                onClick={goTo("bulkExport")}
+                className="p-6 glitter-card bulge-card"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-blue-100 text-blue-600">
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <path
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                  <h3 className="text-lg font-semibold text-slate-800">
+                    Bulk Export Data
+                  </h3>
+                </div>
+                <p className="mt-2 text-slate-600">
+                  Download complete database backup in Excel format.
                 </p>
               </Card>
             </>

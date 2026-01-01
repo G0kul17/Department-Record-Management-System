@@ -42,6 +42,12 @@ const AdminUploadEvents = React.lazy(() =>
 const AdminReportGenerator = React.lazy(() =>
   import("./pages/admin/AdminReportGenerator")
 );
+const AdminBulkExportPage = React.lazy(() =>
+  import("./pages/admin/AdminBulkExportPage")
+);
+const BulkExportPage = React.lazy(() =>
+  import("./pages/staff/BulkExportPage")
+);
 const AdminUsersManagement = React.lazy(() =>
   import("./pages/admin/AdminUsersManagement.jsx")
 );
@@ -342,6 +348,14 @@ export default function App() {
             }
           />
           <Route
+            path="/admin/bulk-export"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminBulkExportPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/users"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
@@ -423,6 +437,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={["staff", "admin"]}>
                 <ReportGenerator />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/staff/bulk-export"
+            element={
+              <ProtectedRoute allowedRoles={["staff", "admin"]}>
+                <BulkExportPage />
               </ProtectedRoute>
             }
           />

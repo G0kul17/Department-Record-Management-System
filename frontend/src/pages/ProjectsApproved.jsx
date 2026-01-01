@@ -7,13 +7,25 @@ export default function ProjectsApproved() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [previewFile, setPreviewFile] = useState(null);
+  const [q, setQ] = useState("");
+  // Status fixed to approved; UI control removed
+  const [year, setYear] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [refreshId, setRefreshId] = useState(0);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       setLoading(true);
       try {
-        const data = await apiClient.get("/projects?verified=true&limit=200");
+        const params = new URLSearchParams();
+        params.set("verification_status", "approved");
+        params.set("limit", String(limit));
+        params.set("offset", String((page - 1) * limit));
+        if (q.trim()) params.set("q", q.trim());
+        if (year.trim()) params.set("year", year.trim());
+        const data = await apiClient.get(`/projects?${params.toString()}`);
         if (!mounted) return;
         setProjects(data.projects || []);
       } catch (e) {
@@ -24,11 +36,119 @@ export default function ProjectsApproved() {
       }
     })();
     return () => (mounted = false);
-  }, []);
+  }, [q, year, page, limit, refreshId]);
 
   return (
     <div className="mx-auto max-w-6xl p-6">
-      <div className="flex items-center justify-between">
+      {/* Centered search + filters below navbar */}
+      <div className="mx-auto max-w-3xl">
+        <div className="glitter-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+            {/* Search input with icon */}
+            <div>
+              <div className="relative">
+                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden
+                  >
+                    <circle
+                      cx="11"
+                      cy="11"
+                      r="7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M20 20l-3.5-3.5"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </span>
+                <input
+                  value={q}
+                  onChange={(e) => {
+                    setQ(e.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="Search projects..."
+                  className="w-full rounded-md border border-slate-300 pl-9 pr-12 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                />
+                <button
+                  type="button"
+                  aria-label="Search"
+                  onClick={() => {
+                    setPage(1);
+                    setRefreshId(Date.now());
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-white shadow"
+                  style={{ backgroundColor: "#87CEEB" }}
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden
+                  >
+                    <circle
+                      cx="11"
+                      cy="11"
+                      r="7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M20 20l-3.5-3.5"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            {/* Status filter removed as requested */}
+            <div className="relative">
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden
+                >
+                  <path
+                    d="M3 5h18M6 10h12M10 15h4"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
+              <input
+                value={year}
+                onChange={(e) => {
+                  setYear(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Academic Year (e.g. 2024-2025)"
+                className="w-full rounded-md border border-slate-300 pl-9 pr-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
           Approved Projects
         </h1>
@@ -57,7 +177,7 @@ export default function ProjectsApproved() {
           return (
             <div
               key={p.id}
-              className="rounded-xl border p-4 bg-white dark:bg-slate-900 dark:border-slate-700 shadow-sm"
+              className="glitter-card rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
@@ -203,6 +323,57 @@ export default function ProjectsApproved() {
             </div>
           );
         })}
+      </div>
+      {/* Pagination controls */}
+      <div className="mt-8 flex items-center justify-center gap-4">
+        <button
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-3 py-1 text-sm text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden
+          >
+            <path
+              d="M15 6l-6 6 6 6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          Prev
+        </button>
+        <span className="text-sm text-slate-700 dark:text-slate-300">
+          Page {page}
+        </span>
+        <button
+          onClick={() => setPage((p) => p + 1)}
+          disabled={!loading && projects.length < limit}
+          className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-3 py-1 text-sm text-slate-700 hover:bg-slate-100 disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+        >
+          Next
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden
+          >
+            <path
+              d="M9 6l6 6-6 6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
       </div>
       {previewFile && (
         <AttachmentPreview

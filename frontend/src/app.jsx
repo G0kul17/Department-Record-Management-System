@@ -42,6 +42,12 @@ const AdminUploadEvents = React.lazy(() =>
 const AdminReportGenerator = React.lazy(() =>
   import("./pages/admin/AdminReportGenerator")
 );
+const AdminBulkExportPage = React.lazy(() =>
+  import("./pages/admin/AdminBulkExportPage")
+);
+const BulkExportPage = React.lazy(() =>
+  import("./pages/staff/BulkExportPage")
+);
 const AdminUsersManagement = React.lazy(() =>
   import("./pages/admin/AdminUsersManagement.jsx")
 );
@@ -79,6 +85,12 @@ const FacultyConsultancy = React.lazy(() =>
 );
 const AdminFacultyConsultancy = React.lazy(() =>
   import("./pages/admin/AdminFacultyConsultancy")
+);
+const StudentsBatchUpload = React.lazy(() =>
+  import("./pages/staff/StudentsBatchUpload.jsx")
+);
+const AdminStudentsBatchUpload = React.lazy(() =>
+  import("./pages/admin/AdminStudentsBatchUpload.jsx")
 );
 const Achievements = React.lazy(() =>
   import("./pages/student/StudentsAchievements")
@@ -120,8 +132,13 @@ function RoleRedirect() {
 export default function App() {
   const location = useLocation();
   const path = (location?.pathname || "/").replace(/\/+$/, "") || "/";
-  const hideBackOn = new Set(["/", "/admin"]);
-  const showBackButton = !hideBackOn.has(path);
+  const hideBackButton =
+    path === "/" ||
+    path.startsWith("/admin") ||
+    path.startsWith("/staff") ||
+    path.startsWith("/student");
+  // Show Back button on all non-dashboard routes (admin routes will render local Back inside pages)
+  const showBackButton = !hideBackButton;
   return (
     <>
       <Navbar />
@@ -307,6 +324,14 @@ export default function App() {
             }
           />
           <Route
+            path="/admin/upload-students-batch"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminStudentsBatchUpload />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/upload-extra-curricular"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
@@ -319,6 +344,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminReportGenerator />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/bulk-export"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminBulkExportPage />
               </ProtectedRoute>
             }
           />
@@ -392,10 +425,26 @@ export default function App() {
             }
           />
           <Route
+            path="/upload-students-batch"
+            element={
+              <ProtectedRoute allowedRoles={["staff", "admin"]}>
+                <StudentsBatchUpload />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/staff/reports"
             element={
               <ProtectedRoute allowedRoles={["staff", "admin"]}>
                 <ReportGenerator />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/staff/bulk-export"
+            element={
+              <ProtectedRoute allowedRoles={["staff", "admin"]}>
+                <BulkExportPage />
               </ProtectedRoute>
             }
           />

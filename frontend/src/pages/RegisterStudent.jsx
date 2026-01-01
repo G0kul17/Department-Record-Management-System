@@ -12,7 +12,9 @@ const RegisterStudent = () => {
     confirmPassword: "",
     rollNumber: "",
     department: "",
+    course: "",
     year: "",
+    section: "",
     phone: "",
   });
   const [error, setError] = useState("");
@@ -46,6 +48,14 @@ const RegisterStudent = () => {
         email: formData.email,
         password: formData.password,
         name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        department: formData.department,
+        course: formData.course,
+        year: formData.year,
+        section: formData.section,
+        rollNumber: formData.rollNumber,
+        phone: formData.phone,
       });
       setSuccess("Registration initiated. Check your email for OTP.");
       setTimeout(
@@ -68,7 +78,7 @@ const RegisterStudent = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-lg shadow-lg max-w-2xl w-full">
+      <div className="bg-white p-8 rounded-lg shadow-lg max-w-2xl w-full border border-sky-200">
         <h2 className="text-3xl font-bold text-center mb-6">
           Student Registration
         </h2>
@@ -113,20 +123,20 @@ const RegisterStudent = () => {
               required
             />
             <InputField
-              label="Roll Number"
+              label="Register Number"
               name="rollNumber"
               value={formData.rollNumber}
               onChange={handleChange}
-              placeholder="Enter roll number"
+              placeholder="Enter register number"
               required
             />
             <InputField
-              label="Phone"
+              label="Contact Number"
               type="tel"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              placeholder="Enter phone number"
+              placeholder="Enter contact number"
               required
             />
             <div className="flex flex-col">
@@ -151,6 +161,23 @@ const RegisterStudent = () => {
             </div>
             <div className="flex flex-col">
               <label className="mb-1 font-medium">
+                Course <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="course"
+                value={formData.course}
+                onChange={handleChange}
+                required
+                className="border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select Course</option>
+                <option value="B.Tech">B.Tech</option>
+                <option value="M.Tech">M.Tech</option>
+                <option value="MCA">MCA</option>
+              </select>
+            </div>
+            <div className="flex flex-col">
+              <label className="mb-1 font-medium">
                 Year <span className="text-red-500">*</span>
               </label>
               <select
@@ -165,6 +192,23 @@ const RegisterStudent = () => {
                 <option value="2">2</option>
                 <option value="3">3</option>
                 <option value="4">4</option>
+              </select>
+            </div>
+            <div className="flex flex-col">
+              <label className="mb-1 font-medium">
+                Section <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="section"
+                value={formData.section}
+                onChange={handleChange}
+                required
+                className="border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select Section</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
               </select>
             </div>
             <InputField

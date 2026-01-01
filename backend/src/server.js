@@ -12,6 +12,9 @@ import facultyParticipationRoutes from "./routes/facultyParticipationRoutes.js";
 import facultyResearchRoutes from "./routes/facultyResearchRoutes.js";
 import facultyConsultancyRoutes from "./routes/facultyConsultancyRoutes.js";
 import dataUploadRoutes from "./routes/dataUploadRoutes.js";
+import studentProfileRoutes from "./routes/studentProfileRoutes.js";
+import addStudentsRoutes from "./routes/addStudentsRoutes.js";
+import bulkExportRoutes from "./routes/bulkExportRoutes.js";
 import pool from "./config/db.js";
 import fs from "fs";
 import path from "path";
@@ -40,6 +43,8 @@ app.use(
 // simple route
 app.get("/", (req, res) => res.json({ message: "Auth RBAC OTP API" }));
 
+app.use("/api/student/profile", studentProfileRoutes);
+app.use("/api/students", addStudentsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/achievements", achievementRoutes);
@@ -60,6 +65,9 @@ app.use("/api/faculty-consultancy", facultyConsultancyRoutes);
 app.use("/api/events", eventPublicRoutes);
 app.use("/api/events-admin", eventRoutes);
 app.use("/api/admin", adminRoutes);
+
+// Bulk export route
+app.use("/api", bulkExportRoutes);
 
 // optional: create tables if not exist on startup
 async function ensureTables() {
@@ -106,6 +114,30 @@ async function ensureColumns() {
       // ignore errors (constraint exists or other benign issues)
     }
 
+    // If users.id still lacks a PK/unique constraint (common on legacy DBs
+    // where email was the PK), add a UNIQUE constraint so foreign keys can
+    // reference users(id).
+    const { rows: hasIdKey } = await pool.query(
+      `SELECT 1
+         FROM information_schema.table_constraints tc
+         JOIN information_schema.key_column_usage kcu
+           ON tc.constraint_name = kcu.constraint_name
+          AND tc.table_name = kcu.table_name
+        WHERE tc.table_name = 'users'
+          AND kcu.column_name = 'id'
+          AND tc.constraint_type IN ('PRIMARY KEY','UNIQUE')
+        LIMIT 1`
+    );
+    if (!hasIdKey.length) {
+      try {
+        await pool.query(
+          "ALTER TABLE users ADD CONSTRAINT users_id_unique UNIQUE (id)"
+        );
+      } catch (e) {
+        // ignore if another process added it concurrently
+      }
+    }
+
     // Ensure critical user columns exist
     await pool.query(
       "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE"
@@ -136,6 +168,16 @@ async function ensureColumns() {
     );
     await pool.query(
       "ALTER TABLE users ADD COLUMN IF NOT EXISTS roll_number VARCHAR(50)"
+    );
+    
+    // Add profile_details JSONB column for storing student registration info
+    await pool.query(
+      "ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_details JSONB"
+    );
+
+    // For existing users without profile_details, initialize with empty object
+    await pool.query(
+      "UPDATE users SET profile_details = '{}' WHERE profile_details IS NULL AND role = 'student'"
     );
 
     // If legacy schemas enforced NOT NULL on full_name, relax it so minimal inserts work

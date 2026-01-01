@@ -1,3 +1,19 @@
+.bulge-card {
+  transition: transform 180ms ease, box-shadow 180ms ease;
+  will-change: transform;
+}
+.bulge-card:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+@media (prefers-reduced-motion: reduce) {
+  .bulge-card {
+    transition: none;
+  }
+  .bulge-card:hover {
+    transform: none;
+  }
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -52,6 +68,104 @@ body {
   100% {
     transform: rotate(360deg);
   }
+}
+
+/* Animated gradient text helper for headings */
+@keyframes gradient-x {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 6s ease infinite;
+}
+
+/* Blur-in character animation inspired by react-bits */
+@keyframes blur-in {
+  0% {
+    filter: blur(6px);
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    filter: blur(0px);
+    opacity: 1;
+    transform: translateY(0px);
+  }
+}
+.blur-char {
+  display: inline-block;
+  animation: blur-in 600ms ease forwards;
+}
+
+/* Chroma grid animated card overlay */
+@keyframes chroma-grid-shift {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+  100% {
+    background-position: 120px 120px, -120px -120px;
+  }
+}
+@keyframes chroma-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.chroma-card {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate; /* ensure overlays don't leak */
+}
+.chroma-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.18) 0 1px,
+      transparent 1px 36px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.18) 0 1px,
+      transparent 1px 36px
+    );
+  background-size: 36px 36px, 36px 36px;
+  animation: chroma-grid-shift 14s linear infinite;
+  opacity: 0.25;
+  pointer-events: none;
+}
+.chroma-card::after {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(255, 255, 255, 0.25),
+    rgba(255, 255, 255, 0.06),
+    rgba(255, 255, 255, 0.25)
+  );
+  filter: blur(40px);
+  opacity: 0.18;
+  animation: chroma-rotate 18s linear infinite;
+  pointer-events: none;
+}
+.chroma-card:hover::before {
+  opacity: 0.35;
+}
+.chroma-card:hover::after {
+  opacity: 0.24;
 }
 
 /* Gradient backdrop used on the Home hero */
@@ -147,4 +261,53 @@ textarea::placeholder {
 .dark input::placeholder,
 .dark textarea::placeholder {
   color: #94a3b8; /* slate-400 */
+}
+
+/* Glitter outline + sheen effect for neutral cards */
+@keyframes card-sheen {
+  0% {
+    transform: translateX(-120%);
+  }
+  60% {
+    transform: translateX(120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+@keyframes glitter-pop {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.glitter-card {
+  /* Neutral card style: sheen and sparkles removed */
+  position: relative;
+  border-width: 2px;
+  border-color: #bde3f7; /* light sky outline */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.glitter-card::before,
+.glitter-card::after {
+  /* Disable pseudo elements that created shine/glitter */
+  content: none !important;
+  display: none !important;
+}
+.glitter-card:hover {
+  /* Keep hover subtle; no extra glow */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+/* Portrait media frame for achievement feed */
+.portrait-media {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: 0.5rem; /* rounded */
+  background-color: #f1f5f9; /* slate-100 backdrop while image loads */
 }

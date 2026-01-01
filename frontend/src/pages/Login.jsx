@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import InputField from "../components/InputField";
+import BlurText from "../components/ui/BlurText";
 import apiClient from "../api/axiosClient";
 
 const Login = () => {
@@ -110,9 +111,19 @@ const Login = () => {
     return `${m}:${s}`;
   };
 
+  const COLLEGE_NAME = "Sona College Of Technology";
+
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-slate-900 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-800 p-8 rounded-lg shadow-lg max-w-md w-full">
+      <div className="glitter-card bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 ring-1 ring-slate-300/60 max-w-md w-full">
+        <div className="text-center mb-3">
+          <BlurText
+            text={COLLEGE_NAME}
+            className="text-2xl font-extrabold text-sky-600 dark:text-sky-400 tracking-wide"
+            delay={60}
+            step={24}
+          />
+        </div>
         <h2 className="text-3xl font-bold text-center mb-6 text-slate-900 dark:text-slate-100">
           Login
         </h2>
@@ -146,7 +157,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+              className="w-full bg-[#87CEEB] text-white py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-sky-200"
             >
               {loading ? "Sending..." : "Send OTP"}
             </button>
@@ -168,7 +179,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading || timeLeft === 0}
-              className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+              className="w-full bg-[#87CEEB] text-white py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-sky-200"
             >
               {loading ? "Logging in..." : "Login"}
             </button>

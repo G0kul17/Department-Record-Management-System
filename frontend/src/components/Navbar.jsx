@@ -1,48 +1,47 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { createPortal } from "react-dom";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
+import { formatDisplayName, getInitials } from "../utils/displayName";
+import AvatarPicker from "./ui/AvatarPicker";
+import NotificationsBell from "./NotificationsBell";
 
 const Navbar = () => {
   const { user, token, logout } = useAuth();
   const nav = useNavigate();
-  const [dark, setDark] = useState(false);
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const displayName =
-    (user && (user.fullName || user.name || user.username || user.email)) || "";
+  const [avatarModalOpen, setAvatarModalOpen] = useState(false);
+  const displayName = formatDisplayName(user);
   const photoUrl =
     (user &&
       (user.photoUrl || user.avatarUrl || user.imageUrl || user.profilePic)) ||
     null;
+  const completion = (() => {
+    if (user?.role === "student") {
+      // For students, check register_number, contact_number, leetcode_url, hackerrank_url, codechef_url, github_url
+      const fields = [
+        user?.register_number,
+        user?.contact_number,
+        user?.leetcode_url,
+        user?.hackerrank_url,
+        user?.github_url,
+      ];
+      const filled = fields.filter(
+        (v) => typeof v === "string" && v.trim()
+      ).length;
+      return Math.round((filled / fields.length) * 100);
+    }
+    // For staff/admin, use existing logic
+    const fields = [user?.fullName, user?.email, user?.phone, user?.rollNumber];
+    const filled = fields.filter(
+      (v) => typeof v === "string" && v.trim()
+    ).length;
+    return Math.round((filled / fields.length) * 100);
+  })();
 
-  function getInitials(name) {
-    if (!name || typeof name !== "string") return "";
-    const parts = name.trim().split(/\s+/);
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    const first = parts[0].charAt(0);
-    const last = parts[parts.length - 1].charAt(0);
-    return (first + last).toUpperCase();
-  }
-
-  useEffect(() => {
-    // Initialize theme from localStorage or OS preference
-    const stored = localStorage.getItem("theme");
-    const prefersDark =
-      typeof window !== "undefined" &&
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const initialDark = stored ? stored === "dark" : prefersDark;
-    setDark(initialDark);
-    document.documentElement.classList.toggle("dark", initialDark);
-  }, []);
-
-  function toggleTheme() {
-    const next = !dark;
-    setDark(next);
-    document.documentElement.classList.toggle("dark", next);
-    localStorage.setItem("theme", next ? "dark" : "light");
-  }
+  // Professional dashboard style: light theme only
 
   function handleLogout() {
     logout();
@@ -56,13 +55,13 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="backdrop-blur bg-white/70 text-slate-800 shadow-sm dark:bg-slate-900/70 dark:text-slate-100">
+    <nav className="bg-[#87CEEB] text-white shadow-sm">
       {/* Full-width wrapper so right controls align flush right */}
       <div className="w-full px-4">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2 group">
+          <Link to="/" className="flex items-center gap-2">
             {/* Inline SVG Logo */}
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white shadow group-hover:shadow-md transition">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-white">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -80,88 +79,65 @@ const Navbar = () => {
                 />
               </svg>
             </span>
-            <span className="text-[15px] font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+            <span className="text-[15px] font-semibold tracking-tight">
               DEPARTMENT RECORDS MANAGEMENT SYSTEM
             </span>
           </Link>
 
+          {/* Center nav links removed per spec (hide dashboard/achievements/projects/events) */}
+          <div className="hidden md:flex items-center gap-4" />
+
           <div className="flex items-center gap-4">
             {token ? (
               <>
+                <NotificationsBell />
                 {user && (
-                  <span className="text-sm rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200">
+                  <span className="text-sm rounded-full bg-white/20 px-3 py-1">
                     {displayName}
                   </span>
                 )}
-                <button
-                  onClick={toggleTheme}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700"
-                  title="Toggle theme"
-                >
-                  {/* Inline SVG moon icon */}
-                  {dark ? (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      className="h-5 w-5"
-                    >
-                      <path
-                        d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
+                <div className="relative flex items-center">
+                  <Avatar
+                    className="relative h-9 w-9 bg-white/20 text-white border border-white/30 cursor-pointer"
+                    title={displayName || "Profile"}
+                    onClick={() => setSidebarOpen(true)}
+                  >
+                    {photoUrl ? (
+                      <AvatarImage
+                        src={photoUrl}
+                        alt={displayName || "Profile"}
                       />
-                    </svg>
-                  ) : (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      className="h-5 w-5"
-                    >
-                      <path
-                        d="M12 3v2m0 14v2m7-9h2M3 12H1m15.95 6.95l1.41 1.41M5.64 5.64L4.22 4.22m12.73 0l1.41 1.41M5.64 18.36l-1.41 1.41"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  )}
-                </button>
-                <Avatar
-                  className="h-9 w-9 bg-white dark:bg-slate-800 cursor-pointer"
-                  title={displayName || "Profile"}
-                  onClick={() => setSidebarOpen(true)}
-                >
-                  {photoUrl ? (
-                    <AvatarImage
-                      src={photoUrl}
-                      alt={displayName || "Profile"}
-                    />
-                  ) : null}
-                  <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
-                </Avatar>
+                    ) : null}
+                    <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
+                  </Avatar>
+                </div>
               </>
             ) : (
               <div className="flex gap-2">
-                <Link
-                  to="/login"
-                  className="px-4 py-2 rounded-lg transition font-medium bg-blue-600 text-white hover:bg-blue-700"
-                >
-                  Login
-                </Link>
-                <Link
-                  to="/register-student"
-                  className="px-3 py-2 bg-green-500 hover:bg-green-600 rounded-lg transition font-medium text-sm text-white"
-                >
-                  Register Student
-                </Link>
-                <Link
-                  to="/register-staff"
-                  className="px-3 py-2 bg-green-500 hover:bg-green-600 rounded-lg transition font-medium text-sm text-white"
-                >
-                  Register Staff
-                </Link>
+                {location.pathname !== "/login" &&
+                  location.pathname !== "/register-student" &&
+                  location.pathname !== "/register-staff" && (
+                    <>
+                      <Link
+                        to="/login"
+                        className="px-4 py-2 rounded-lg transition font-medium bg-white/20 hover:bg-white/25"
+                      >
+                        Login
+                      </Link>
+                      <Link
+                        to="/register-student"
+                        className="px-3 py-2 bg-white/20 hover:bg-white/25 rounded-lg transition font-medium text-sm"
+                      >
+                        Register Student
+                      </Link>
+                      <Link
+                        to="/register-staff"
+                        className="px-3 py-2 bg-white/20 hover:bg-white/25 rounded-lg transition font-medium text-sm"
+                      >
+                        Register Staff
+                      </Link>
+                    </>
+                  )}
               </div>
             )}
           </div>
@@ -176,9 +152,9 @@ const Navbar = () => {
               className="fixed inset-0 z-[9998] bg-black/30 backdrop-blur-sm"
               onClick={() => setSidebarOpen(false)}
             />
-            <div className="fixed right-0 top-0 z-[9999] h-full w-72 transform bg-white shadow-xl transition-transform duration-200 ease-out dark:bg-slate-800 translate-x-0">
-              <div className="flex items-center gap-3 border-b border-slate-200 p-4 dark:border-slate-700">
-                <Avatar className="h-10 w-10 bg-white dark:bg-slate-700">
+            <div className="fixed right-4 top-16 z-[9999] w-72 max-h-[80vh] overflow-auto rounded-xl border border-slate-200 bg-white shadow-xl">
+              <div className="flex items-center gap-3 border-b border-slate-200 p-4">
+                <Avatar className="h-10 w-10 bg-slate-100">
                   {photoUrl ? (
                     <AvatarImage
                       src={photoUrl}
@@ -188,21 +164,27 @@ const Navbar = () => {
                   <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  <span className="text-sm font-medium text-slate-900">
                     {displayName}
                   </span>
                   {user?.role && (
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      {user.role}
-                    </span>
+                    <span className="text-xs text-slate-500">{user.role}</span>
                   )}
+                </div>
+                <div className="ml-auto">
+                  <button
+                    className="px-3 py-1 rounded-md text-xs bg-slate-100 hover:bg-slate-200"
+                    onClick={() => setAvatarModalOpen(true)}
+                  >
+                    Change Photo
+                  </button>
                 </div>
               </div>
               <div className="p-2">
                 <Link
                   to="/profile"
                   onClick={() => setSidebarOpen(false)}
-                  className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
+                  className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-slate-700 hover:bg-slate-100"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -225,7 +207,7 @@ const Navbar = () => {
                 </Link>
                 <button
                   type="button"
-                  className="mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
+                  className="mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-red-600 hover:bg-red-50"
                   onClick={() => {
                     setSidebarOpen(false);
                     handleLogout();
@@ -264,6 +246,10 @@ const Navbar = () => {
           </>,
           document.body
         )}
+      <AvatarPicker
+        open={avatarModalOpen}
+        onClose={() => setAvatarModalOpen(false)}
+      />
     </nav>
   );
 };

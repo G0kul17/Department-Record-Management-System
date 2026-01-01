@@ -129,7 +129,7 @@ const VerifyOtp = () => {
           <button
             type="submit"
             disabled={loading || timeLeft === 0}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+            className="w-full bg-[#87CEEB] text-white py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50"
           >
             {loading ? "Verifying..." : "Verify OTP"}
           </button>

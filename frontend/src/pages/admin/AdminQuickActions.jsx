@@ -1,23 +1,9 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
-
-const Card = ({ title, desc, color, icon, onClick }) => (
-  <button
-    onClick={onClick}
-    className={`group relative overflow-hidden rounded-2xl p-6 text-left text-white shadow-lg transition transform hover:-translate-y-0.5 hover:shadow-xl`}
-    style={{ backgroundColor: color }}
-  >
-    <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-20 blur-2xl bg-white" />
-    <div className="flex items-center gap-3">
-      <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 ring-1 ring-white/30">
-        {icon}
-      </span>
-      <h3 className="text-2xl font-bold drop-shadow-sm">{title}</h3>
-    </div>
-    <p className="mt-3 text-white/90 font-medium">{desc}</p>
-  </button>
-);
+import BackButton from "../../components/BackButton";
+import Card from "../../components/ui/Card";
+import PageHeader from "../../components/ui/PageHeader";
 
 export default function AdminQuickActions() {
   const nav = useNavigate();
@@ -34,100 +20,165 @@ export default function AdminQuickActions() {
     if (key === "facultyResearch") return nav("/admin/faculty-research");
     if (key === "facultyConsultancy") return nav("/admin/faculty-consultancy");
     if (key === "uploadExtra") return nav("/admin/upload-extra-curricular");
+    if (key === "studentsBatch") return nav("/admin/upload-students-batch");
     if (key === "exportRecords") return nav("/admin/reports");
+    if (key === "bulkExport") return nav("/admin/bulk-export");
     if (key === "manageUsers") return nav("/admin/users");
     return nav("/");
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-white to-slate-50 dark:from-slate-950 dark:to-slate-900 hero-gradient">
+    <div className="min-h-[calc(100vh-4rem)] bg-white">
       <div className="mx-auto max-w-6xl px-6 py-12">
-        <div className="text-center mb-10">
-          <h2 className="text-4xl font-extrabold text-slate-800 dark:text-slate-100">
-            Quick Actions
-          </h2>
-          <p className="mt-2 text-slate-600 dark:text-slate-300">
-            Manage and verify department submissions.
-          </p>
-        </div>
+        <BackButton />
+        <PageHeader
+          title="Quick Actions"
+          subtitle="Manage and verify department submissions."
+        />
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           <Card
-            title="Staff Data Entry"
-            desc="Upload CSV/Excel of activities and save."
-            color="#0ea5e9"
-            icon={<IconUpload />}
+            onClick={goTo("studentsBatch")}
+            className="p-6 glitter-card bulge-card"
+          >
+            <Tile
+              icon={<IconUpload />}
+              title="Add Students Batch"
+              desc="Upload CSV/Excel to add students in bulk."
+              color="fuchsia"
+            />
+          </Card>
+          <Card
             onClick={goTo("uploadExtra")}
-          />
+            className="p-6 glitter-card bulge-card"
+          >
+            <Tile
+              icon={<IconUpload />}
+              title="Other Data Upload"
+              desc="Upload CSV/Excel of activities and save."
+              color="sky"
+            />
+          </Card>
           <Card
-            title="Add Achievement"
-            desc="Create an achievement on behalf of faculty/student."
-            color="#3b82f6"
-            icon={<IconCheck />}
             onClick={goTo("achievements")}
-          />
+            className="p-6 glitter-card bulge-card"
+          >
+            <Tile
+              icon={<IconCheck />}
+              title="Add Achievement"
+              desc="Create an achievement on behalf of faculty/student."
+              color="blue"
+            />
+          </Card>
           <Card
-            title="Upload Project"
-            desc="Share recent projects with the department."
-            color="#22c55e"
-            icon={<IconWindow />}
             onClick={goTo("projects")}
-          />
+            className="p-6 glitter-card bulge-card"
+          >
+            <Tile
+              icon={<IconWindow />}
+              title="Upload Project"
+              desc="Share recent projects with the department."
+              color="green"
+            />
+          </Card>
           <Card
-            title="Verify Achievement"
-            desc="Review and approve submitted achievements."
-            color="#a855f7"
-            icon={<IconList />}
             onClick={goTo("verifyAchievements")}
-          />
+            className="p-6 glitter-card bulge-card"
+          >
+            <Tile
+              icon={<IconList />}
+              title="Verify Achievement"
+              desc="Review and approve submitted achievements."
+              color="violet"
+            />
+          </Card>
           <Card
-            title="Verify Project"
-            desc="Approve or reject project submissions."
-            color="#f97316"
-            icon={<IconChat />}
             onClick={goTo("verifyProjects")}
-          />
+            className="p-6 glitter-card bulge-card"
+          >
+            <Tile
+              icon={<IconChat />}
+              title="Verify Project"
+              desc="Approve or reject project submissions."
+              color="orange"
+            />
+          </Card>
           <Card
-            title="Upload Events"
-            desc="Create and manage department events."
-            color="#6366f1"
-            icon={<IconCalendar />}
             onClick={goTo("staffEvents")}
-          />
+            className="p-6 glitter-card bulge-card"
+          >
+            <Tile
+              icon={<IconCalendar />}
+              title="Upload Events"
+              desc="Create and manage department events."
+              color="indigo"
+            />
+          </Card>
           <Card
-            title="Faculty Participation"
-            desc="Add faculty training/participation details."
-            color="#0ea5e9"
-            icon={<IconList />}
             onClick={goTo("facultyParticipation")}
-          />
+            className="p-6 glitter-card bulge-card"
+          >
+            <Tile
+              icon={<IconList />}
+              title="Faculty Participation"
+              desc="Add faculty training/participation details."
+              color="sky"
+            />
+          </Card>
           <Card
-            title="Faculty Research"
-            desc="Add research funding and project details."
-            color="#14b8a6"
-            icon={<IconList />}
             onClick={goTo("facultyResearch")}
-          />
+            className="p-6 glitter-card bulge-card"
+          >
+            <Tile
+              icon={<IconList />}
+              title="Faculty Research"
+              desc="Add research funding and project details."
+              color="teal"
+            />
+          </Card>
           <Card
-            title="Faculty Consultancy"
-            desc="Add consultancy engagements and proof."
-            color="#10b981"
-            icon={<IconList />}
             onClick={goTo("facultyConsultancy")}
-          />
+            className="p-6 glitter-card bulge-card"
+          >
+            <Tile
+              icon={<IconList />}
+              title="Faculty Consultancy"
+              desc="Add consultancy engagements and proof."
+              color="emerald"
+            />
+          </Card>
           <Card
-            title="Export Records"
-            desc="Generate Excel/CSV reports."
-            color="#06b6d4"
-            icon={<IconUpload />}
             onClick={goTo("exportRecords")}
-          />
+            className="p-6 glitter-card bulge-card"
+          >
+            <Tile
+              icon={<IconUpload />}
+              title="Export Records"
+              desc="Generate Excel/CSV reports."
+              color="cyan"
+            />
+          </Card>
           <Card
-            title="Manage Users"
-            desc="View, change roles, or remove users."
-            color="#ef4444"
-            icon={<IconUsers />}
+            onClick={goTo("bulkExport")}
+            className="p-6 glitter-card bulge-card"
+          >
+            <Tile
+              icon={<IconDownload />}
+              title="Bulk Export Data"
+              desc="Download complete database backup."
+              color="blue"
+            />
+          </Card>
+          <Card
             onClick={goTo("manageUsers")}
-          />
+            className="p-6 glitter-card bulge-card"
+          >
+            <Tile
+              icon={<IconUsers />}
+              title="Manage Users"
+              desc="View, change roles, or remove users."
+              color="red"
+            />
+          </Card>
         </div>
       </div>
     </div>
@@ -245,6 +296,41 @@ function IconUpload() {
   );
 }
 
+function IconDownload() {
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      className="text-white"
+    >
+      <path
+        d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <polyline
+        points="7 10 12 15 17 10"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <line
+        x1="12"
+        y1="15"
+        x2="12"
+        y2="3"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function IconUsers() {
   return (
     <svg
@@ -275,5 +361,35 @@ function IconUsers() {
         strokeLinejoin="round"
       />
     </svg>
+  );
+}
+
+// Small helper to render tile content consistently inside Card
+function Tile({ icon, title, desc, color }) {
+  const colorMap = {
+    blue: "bg-blue-100 text-blue-600",
+    sky: "bg-sky-100 text-sky-600",
+    green: "bg-green-100 text-green-600",
+    teal: "bg-teal-100 text-teal-600",
+    emerald: "bg-emerald-100 text-emerald-600",
+    violet: "bg-violet-100 text-violet-600",
+    orange: "bg-orange-100 text-orange-600",
+    indigo: "bg-indigo-100 text-indigo-600",
+    cyan: "bg-cyan-100 text-cyan-600",
+    red: "bg-red-100 text-red-600",
+  };
+  const badge = colorMap[color] || colorMap.blue;
+  return (
+    <div>
+      <div className="flex items-center gap-3">
+        <span
+          className={`inline-flex h-10 w-10 items-center justify-center rounded-md ${badge}`}
+        >
+          {icon}
+        </span>
+        <h3 className="text-lg font-semibold text-slate-800">{title}</h3>
+      </div>
+      <p className="mt-2 text-slate-600">{desc}</p>
+    </div>
   );
 }

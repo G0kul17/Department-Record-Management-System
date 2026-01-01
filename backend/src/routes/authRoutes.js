@@ -10,6 +10,8 @@ import {
   updateProfile,
 } from "../controllers/authController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
+import { upload } from "../config/upload.js";
+import { updateProfilePhoto } from "../controllers/authController.js";
 
 const router = express.Router();
 
@@ -33,5 +35,13 @@ router.post("/reset", resetPassword);
 // Profile endpoints for logged-in users
 router.get("/profile", requireAuth, getProfile);
 router.put("/profile", requireAuth, updateProfile);
+
+// Upload profile photo (avatar)
+router.post(
+  "/profile/photo",
+  requireAuth,
+  upload.single("avatar"),
+  updateProfilePhoto
+);
 
 export default router;

@@ -34,6 +34,58 @@ export async function createProject(req, res) {
       ? fieldFiles.srs_document
       : [];
     const otherFiles = Array.isArray(fieldFiles.files) ? fieldFiles.files : [];
+    // Enforce: optional single ZIP in 'files' with size <= 15MB
+    if (otherFiles.length > 1) {
+      // Clean up uploaded extras just in case
+      for (let i = 1; i < otherFiles.length; i++) {
+        try {
+          fs.unlinkSync(
+            path.resolve(
+              process.env.FILE_STORAGE_PATH || "./uploads",
+              otherFiles[i].filename
+            )
+          );
+        } catch {}
+      }
+      return res
+        .status(400)
+        .json({ message: "Only one ZIP attachment is allowed." });
+    }
+    if (otherFiles.length === 1) {
+      const zip = otherFiles[0];
+      const ext = path.extname(zip.originalname || "").toLowerCase();
+      const isZipMime =
+        zip.mimetype === "application/zip" ||
+        zip.mimetype === "application/x-zip-compressed";
+      const sizeLimit = 15 * 1024 * 1024;
+      if (!(isZipMime || ext === ".zip")) {
+        // delete invalid file
+        try {
+          fs.unlinkSync(
+            path.resolve(
+              process.env.FILE_STORAGE_PATH || "./uploads",
+              zip.filename
+            )
+          );
+        } catch {}
+        return res
+          .status(400)
+          .json({ message: "Attach files must be a .zip archive." });
+      }
+      if (zip.size > sizeLimit) {
+        try {
+          fs.unlinkSync(
+            path.resolve(
+              process.env.FILE_STORAGE_PATH || "./uploads",
+              zip.filename
+            )
+          );
+        } catch {}
+        return res
+          .status(400)
+          .json({ message: "Zip file must be 15MB or smaller." });
+      }
+    }
     const files = [...srsFiles, ...otherFiles];
 
     // Enforce mandatory SRS on creation
@@ -158,6 +210,56 @@ export async function uploadFilesToProject(req, res) {
       ? fieldFiles.srs_document
       : [];
     const otherFiles = Array.isArray(fieldFiles.files) ? fieldFiles.files : [];
+    // Enforce ZIP-only and 15MB limit for attachments
+    if (otherFiles.length > 1) {
+      for (let i = 1; i < otherFiles.length; i++) {
+        try {
+          fs.unlinkSync(
+            path.resolve(
+              process.env.FILE_STORAGE_PATH || "./uploads",
+              otherFiles[i].filename
+            )
+          );
+        } catch {}
+      }
+      return res
+        .status(400)
+        .json({ message: "Only one ZIP attachment is allowed." });
+    }
+    if (otherFiles.length === 1) {
+      const zip = otherFiles[0];
+      const ext = path.extname(zip.originalname || "").toLowerCase();
+      const isZipMime =
+        zip.mimetype === "application/zip" ||
+        zip.mimetype === "application/x-zip-compressed";
+      const sizeLimit = 15 * 1024 * 1024;
+      if (!(isZipMime || ext === ".zip")) {
+        try {
+          fs.unlinkSync(
+            path.resolve(
+              process.env.FILE_STORAGE_PATH || "./uploads",
+              zip.filename
+            )
+          );
+        } catch {}
+        return res
+          .status(400)
+          .json({ message: "Attach files must be a .zip archive." });
+      }
+      if (zip.size > sizeLimit) {
+        try {
+          fs.unlinkSync(
+            path.resolve(
+              process.env.FILE_STORAGE_PATH || "./uploads",
+              zip.filename
+            )
+          );
+        } catch {}
+        return res
+          .status(400)
+          .json({ message: "Zip file must be 15MB or smaller." });
+      }
+    }
     const files = [...srsFiles, ...otherFiles];
     for (const f of files) {
       const fileType = detectFileTypeByField(f.fieldname);

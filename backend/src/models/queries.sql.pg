@@ -45,6 +45,43 @@ CREATE TABLE IF NOT EXISTS project_files (
   uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Enforce DB-level rules for ZIP attachments:
+-- 1) When file_type = 'code_zip', ensure MIME is ZIP
+-- 2) When file_type = 'code_zip', ensure size <= 15MB
+DO $$
+BEGIN
+  BEGIN
+    ALTER TABLE project_files
+    ADD CONSTRAINT ck_project_files_zip_mime
+    CHECK (
+      file_type <> 'code_zip' OR mime_type IN ('application/zip', 'application/x-zip-compressed')
+    );
+  EXCEPTION WHEN others THEN
+    -- Constraint may already exist; ignore errors to keep migrations idempotent
+    RAISE NOTICE 'Skipping add of ck_project_files_zip_mime: %', SQLERRM;
+  END;
+
+  BEGIN
+    ALTER TABLE project_files
+    ADD CONSTRAINT ck_project_files_zip_size
+    CHECK (
+      file_type <> 'code_zip' OR size <= 15728640  -- 15 * 1024 * 1024
+    );
+  EXCEPTION WHEN others THEN
+    RAISE NOTICE 'Skipping add of ck_project_files_zip_size: %', SQLERRM;
+  END;
+
+  -- Optional: ensure at most one ZIP attachment per project
+  BEGIN
+    CREATE UNIQUE INDEX IF NOT EXISTS ux_project_files_one_zip_per_project
+      ON project_files(project_id)
+      WHERE file_type = 'code_zip';
+  EXCEPTION WHEN others THEN
+    RAISE NOTICE 'Could not create unique index ux_project_files_one_zip_per_project: %', SQLERRM;
+  END;
+END
+$$;
+
 -- Achievements table
 CREATE TABLE IF NOT EXISTS achievements (
   id SERIAL PRIMARY KEY,
@@ -608,3 +645,32 @@ BEGIN
   END IF;
 END
 $$;
+
+-- ==========================================================
+-- STUDENT PROFILE (EDITABLE PERSONAL INFORMATION)
+-- ==========================================================
+
+CREATE TABLE IF NOT EXISTS student_profiles (
+  id SERIAL PRIMARY KEY,
+
+  user_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+
+  register_number VARCHAR(50),
+  contact_number VARCHAR(20),
+
+  leetcode_url TEXT,
+  hackerrank_url TEXT,
+  codechef_url TEXT,
+  github_url TEXT,
+
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_student_profiles_user
+  ON student_profiles(user_id);
+
+CREATE INDEX IF NOT EXISTS idx_users_student_regno
+ON users ((profile_details->>'register_number'));
+
+CREATE INDEX IF NOT EXISTS idx_users_student_contact
+ON users ((profile_details->>'contact_number'));

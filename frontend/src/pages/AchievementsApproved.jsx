@@ -36,7 +36,7 @@ export default function AchievementsApproved() {
       }
     })();
     return () => (mounted = false);
-  }, [q, page, limit, refreshId]);
+  }, [q, category, page, limit, refreshId]);
 
   // Enrich any items missing user_email by fetching details
   useEffect(() => {

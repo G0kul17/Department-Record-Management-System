@@ -317,7 +317,8 @@ export async function listProjects(req, res) {
       "SELECT p.*, " +
       "COALESCE(u.full_name, up.full_name) AS uploader_full_name, " +
       "COALESCE(u.email, up.email) AS uploader_email, " +
-      "COALESCE(u.role, up.role) AS uploader_role " +
+      "COALESCE(u.role, up.role) AS uploader_role, " +
+      "v.full_name AS verified_by_fullname, v.email AS verified_by_email " +
       "FROM projects p " +
       "LEFT JOIN users u ON u.id = p.created_by " +
       "LEFT JOIN LATERAL (" +
@@ -325,7 +326,8 @@ export async function listProjects(req, res) {
       "  LEFT JOIN users u2 ON u2.id = pf.uploaded_by " +
       "  WHERE pf.project_id = p.id AND pf.uploaded_by IS NOT NULL " +
       "  ORDER BY pf.id ASC LIMIT 1" +
-      ") up ON true";
+      ") up ON true " +
+      "LEFT JOIN users v ON v.id = p.verified_by";
     const conditions = [];
     const params = [];
 

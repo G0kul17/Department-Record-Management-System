@@ -97,7 +97,8 @@ export const uploadStudents = async (req, res) => {
     let rows = [];
 
     if (ext === ".csv") rows = await parseCSV(req.file.path);
-    else if (ext === ".xlsx" || ext === ".xls") rows = parseExcel(req.file.path);
+    else if (ext === ".xlsx" || ext === ".xls")
+      rows = parseExcel(req.file.path);
     else {
       return res.status(400).json({ message: "Only CSV or Excel allowed" });
     }
@@ -206,8 +207,8 @@ export const uploadStudents = async (req, res) => {
       await pool.query(
         `
         INSERT INTO users
-        (email, password_hash, role, is_verified, profile_details)
-        VALUES ($1, $2, 'student', true, $3)
+        (email, password_hash, role, is_verified, profile_details, full_name)
+        VALUES ($1, $2, 'student', true, $3, $4)
         `,
         [
           s.email,
@@ -223,6 +224,7 @@ export const uploadStudents = async (req, res) => {
             year: s.year,
             section: s.section,
           }),
+          s.full_name || `${s.first_name} ${s.last_name}`.trim(),
         ]
       );
 

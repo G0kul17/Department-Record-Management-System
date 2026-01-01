@@ -19,6 +19,14 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
+  // Ensure latest profile (including persistent photoUrl) is loaded
+  useEffect(() => {
+    if (!loading && token) {
+      // Fetch and sync profile details so avatar persists across reloads
+      refreshUserProfile()?.catch(() => {});
+    }
+  }, [loading, token]);
+
   const login = (userData, authToken) => {
     setUser(userData);
     setToken(authToken);

@@ -116,14 +116,17 @@ export async function listAchievements(req, res) {
     // Include uploader identity (prefer achievement owner, fallback to proof file uploader)
     let base = `SELECT a.*, COALESCE(u.email, u2.email, ux.email)        AS user_email,
           COALESCE(u.full_name, u2.full_name, ux.full_name) AS user_fullname,
-                pf.original_name                    AS proof_name,
-                pf.filename                         AS proof_filename,
-                pf.mime_type                        AS proof_mime
-                FROM achievements a
-                LEFT JOIN users u ON a.user_id=u.id
-                LEFT JOIN project_files pf ON a.proof_file_id = pf.id
+            pf.original_name                    AS proof_name,
+            pf.filename                         AS proof_filename,
+            pf.mime_type                        AS proof_mime,
+            v.full_name                         AS verified_by_fullname,
+            v.email                             AS verified_by_email
+            FROM achievements a
+            LEFT JOIN users u ON a.user_id=u.id
+            LEFT JOIN project_files pf ON a.proof_file_id = pf.id
           LEFT JOIN users u2 ON u2.id = pf.uploaded_by
-          LEFT JOIN users ux ON LOWER(ux.full_name) = LOWER(a.name)`;
+          LEFT JOIN users ux ON LOWER(ux.full_name) = LOWER(a.name)
+          LEFT JOIN users v ON v.id = a.verified_by`;
     const cond = [];
     const params = [];
 

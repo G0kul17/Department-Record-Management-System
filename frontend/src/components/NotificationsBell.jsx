@@ -53,21 +53,50 @@ export default function NotificationsBell() {
     async function checkNew() {
       try {
         const lastSeen = Number(localStorage.getItem(lastSeenKey) || 0);
-        const [proj, ach, ev] = await Promise.all([
-          apiClient.get(`/projects?limit=1`),
-          apiClient.get(`/achievements?limit=1`),
-          apiClient.get(`/events?order=latest&limit=1`),
-        ]);
-        const toTs = (item) => {
-          const t = new Date(item?.created_at);
-          return isNaN(t.getTime()) ? 0 : t.getTime();
-        };
-        const maxTs = Math.max(
-          toTs((proj.projects || [])[0] || {}),
-          toTs((ach.achievements || [])[0] || {}),
-          toTs((ev.events || [])[0] || {})
-        );
+        const role = (user?.role || "").toLowerCase();
         const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+
+        let maxTs = 0;
+        if (role === "staff" || role === "admin") {
+          // For staff/admin, new submissions awaiting approval
+          const [pendingProj, pendingAch] = await Promise.all([
+            apiClient.get(`/projects?verified=false&limit=20`),
+            apiClient.get(
+              `/achievements?verified=false&status=pending&limit=50`
+            ),
+          ]);
+          const toCreatedTs = (item) => {
+            const t = new Date(item?.created_at);
+            return isNaN(t.getTime()) ? 0 : t.getTime();
+          };
+          const allPend = [
+            ...(pendingProj.projects || []),
+            ...(pendingAch.achievements || []),
+          ];
+          maxTs = Math.max(0, ...allPend.map(toCreatedTs));
+        } else {
+          // For students, approvals of their own items (use verified_at)
+          const [myProj, myAch] = await Promise.all([
+            apiClient.get(`/projects?limit=20&mine=true`),
+            apiClient.get(
+              `/achievements?limit=50${user?.id ? `&user_id=${user.id}` : ""}`
+            ),
+          ]);
+          const toVerifiedTs = (item) => {
+            const t = new Date(item?.verified_at);
+            return isNaN(t.getTime()) ? 0 : t.getTime();
+          };
+          const approvedMine = [
+            ...(myProj.projects || []).filter(
+              (p) => (p.verification_status || "").toLowerCase() === "approved"
+            ),
+            ...(myAch.achievements || []).filter(
+              (a) => (a.verification_status || "").toLowerCase() === "approved"
+            ),
+          ];
+          maxTs = Math.max(0, ...approvedMine.map(toVerifiedTs));
+        }
+
         setUnread(maxTs > lastSeen && maxTs >= weekAgo ? 1 : 0);
       } catch (e) {
         // ignore polling errors
@@ -106,39 +135,118 @@ export default function NotificationsBell() {
     setLoading(true);
     try {
       const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-      const [proj, ach, ev] = await Promise.all([
-        apiClient.get(`/projects?limit=10`),
-        apiClient.get(`/achievements?limit=10`),
-        apiClient.get(`/events?order=latest&limit=10`),
-      ]);
+      const role = (user?.role || "").toLowerCase();
       const me = (user?.email || "").toLowerCase();
       const normalizeDate = (d) => {
         const t = new Date(d);
         return isNaN(t.getTime()) ? Date.now() : t.getTime();
       };
       const items = [];
-      for (const p of proj.projects || []) {
-        const uploader = p.uploader_email || p.user_email || "";
-        if (uploader && uploader.toLowerCase() === me) continue;
-        items.push({
-          type: "project",
-          title: p.title,
-          by: formatDisplayName({ fullName: p.uploader_full_name }),
-          created_at_ts: normalizeDate(p.created_at),
-          href: `/projects/${p.id}`,
-        });
+
+      if (role === "staff" || role === "admin") {
+        // Pending approvals summary for staff/admin
+        const [pendingProj, pendingAch] = await Promise.all([
+          apiClient.get(`/projects?verified=false&limit=50`),
+          apiClient.get(
+            `/achievements?verified=false&status=pending&limit=200`
+          ),
+        ]);
+        const projList = pendingProj.projects || [];
+        const achList = pendingAch.achievements || [];
+        const projCount = projList.length;
+        const achCount = achList.length;
+        const latestPendTs = (list) =>
+          Math.max(0, ...list.map((x) => normalizeDate(x.created_at)));
+        if (projCount > 0) {
+          items.push({
+            type: "pending",
+            title: `${projCount} project${
+              projCount > 1 ? "s" : ""
+            } awaiting approval`,
+            by:
+              projCount === 1
+                ? formatDisplayName({
+                    fullName: projList[0].uploader_full_name,
+                    email: projList[0].uploader_email,
+                  })
+                : "",
+            created_at_ts: latestPendTs(projList),
+            href:
+              role === "admin" ? `/admin/verify-projects` : `/verify-projects`,
+          });
+        }
+        if (achCount > 0) {
+          items.push({
+            type: "pending",
+            title: `${achCount} achievement${
+              achCount > 1 ? "s" : ""
+            } awaiting approval`,
+            by:
+              achCount === 1
+                ? formatDisplayName({
+                    fullName: achList[0].user_fullname,
+                    email: achList[0].user_email,
+                  })
+                : "",
+            created_at_ts: latestPendTs(achList),
+            href:
+              role === "admin"
+                ? `/admin/verify-achievements`
+                : `/verify-achievements`,
+          });
+        }
+      } else {
+        // Student: show approvals of their own items in last week
+        const [myProj, myAch] = await Promise.all([
+          apiClient.get(`/projects?limit=20&mine=true`),
+          apiClient.get(
+            `/achievements?limit=50${user?.id ? `&user_id=${user.id}` : ""}`
+          ),
+        ]);
+        for (const p of myProj.projects || []) {
+          if ((p.verification_status || "").toLowerCase() === "approved") {
+            const ts = normalizeDate(
+              p.verified_at || p.updated_at || p.created_at
+            );
+            if (ts >= weekAgo) {
+              items.push({
+                type: "approval",
+                title: `Your project "${p.title}" was approved`,
+                by:
+                  formatDisplayName({
+                    fullName: p.verified_by_fullname,
+                    email: p.verified_by_email,
+                  }) || "Approved",
+                created_at_ts: ts,
+                href: `/projects/${p.id}`,
+              });
+            }
+          }
+        }
+        for (const a of myAch.achievements || []) {
+          if ((a.verification_status || "").toLowerCase() === "approved") {
+            const ts = normalizeDate(
+              a.verified_at || a.updated_at || a.created_at
+            );
+            if (ts >= weekAgo) {
+              items.push({
+                type: "approval",
+                title: `Your achievement "${a.title}" was approved`,
+                by:
+                  formatDisplayName({
+                    fullName: a.verified_by_fullname,
+                    email: a.verified_by_email,
+                  }) || "Approved",
+                created_at_ts: ts,
+                href: `/achievements/${a.id}`,
+              });
+            }
+          }
+        }
       }
-      for (const a of ach.achievements || []) {
-        const uploader = a.user_email || "";
-        if (uploader && uploader.toLowerCase() === me) continue;
-        items.push({
-          type: "achievement",
-          title: a.title,
-          by: formatDisplayName({ fullName: a.user_fullname }),
-          created_at_ts: normalizeDate(a.created_at),
-          href: `/achievements/${a.id}`,
-        });
-      }
+
+      // Always include recent public events
+      const ev = await apiClient.get(`/events?order=latest&limit=10`);
       for (const e of ev.events || []) {
         items.push({
           type: "event",
@@ -184,8 +292,8 @@ export default function NotificationsBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-10 mt-2 w-80 rounded-md border bg-white shadow">
-          <div className="border-b p-3 text-sm font-semibold">
+        <div className="absolute right-0 z-10 mt-2 w-80 rounded-xl border-2 border-[#87CEEB] bg-white shadow">
+          <div className="border-b border-[#87CEEB]/40 p-3 text-sm font-semibold">
             Notifications
           </div>
           <div className="p-2 space-y-1">
@@ -211,11 +319,21 @@ export default function NotificationsBell() {
                           Project:{" "}
                           <span className="font-medium">{n.title}</span>
                         </span>
-                      ) : (
+                      ) : n.type === "achievement" ? (
                         <span>
                           Achievement:{" "}
                           <span className="font-medium">{n.title}</span>
                         </span>
+                      ) : n.type === "pending" ? (
+                        <span>
+                          <span className="font-medium">{n.title}</span>
+                        </span>
+                      ) : n.type === "approval" ? (
+                        <span>
+                          <span className="font-medium">{n.title}</span>
+                        </span>
+                      ) : (
+                        <span className="font-medium">{n.title}</span>
                       )}
                       <div className="text-xs text-slate-500">{n.by || ""}</div>
                     </div>

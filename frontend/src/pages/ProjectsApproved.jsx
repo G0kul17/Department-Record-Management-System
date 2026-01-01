@@ -9,7 +9,6 @@ export default function ProjectsApproved() {
   const [previewFile, setPreviewFile] = useState(null);
   const [q, setQ] = useState("");
   // Status fixed to approved; UI control removed
-  const [year, setYear] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [refreshId, setRefreshId] = useState(0);
@@ -24,7 +23,6 @@ export default function ProjectsApproved() {
         params.set("limit", String(limit));
         params.set("offset", String((page - 1) * limit));
         if (q.trim()) params.set("q", q.trim());
-        if (year.trim()) params.set("year", year.trim());
         const data = await apiClient.get(`/projects?${params.toString()}`);
         if (!mounted) return;
         setProjects(data.projects || []);
@@ -36,14 +34,14 @@ export default function ProjectsApproved() {
       }
     })();
     return () => (mounted = false);
-  }, [q, year, page, limit, refreshId]);
+  }, [q, page, limit, refreshId]);
 
   return (
     <div className="mx-auto max-w-6xl p-6">
       {/* Centered search + filters below navbar */}
       <div className="mx-auto max-w-3xl">
-        <div className="glitter-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+        <div className="glitter-card rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="grid grid-cols-1 gap-3 items-start">
             {/* Search input with icon */}
             <div>
               <div className="relative">
@@ -78,7 +76,7 @@ export default function ProjectsApproved() {
                     setPage(1);
                   }}
                   placeholder="Search projects..."
-                  className="w-full rounded-md border border-slate-300 pl-9 pr-12 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                  className="w-full rounded-md border border-slate-300 pl-9 pr-12 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 />
                 <button
                   type="button"
@@ -87,7 +85,7 @@ export default function ProjectsApproved() {
                     setPage(1);
                     setRefreshId(Date.now());
                   }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-7 w-7 rounded-md text-white shadow"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-6 w-6 rounded-md text-white shadow"
                   style={{ backgroundColor: "#87CEEB" }}
                 >
                   <svg
@@ -115,35 +113,7 @@ export default function ProjectsApproved() {
                 </button>
               </div>
             </div>
-            {/* Status filter removed as requested */}
-            <div className="relative">
-              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  aria-hidden
-                >
-                  <path
-                    d="M3 5h18M6 10h12M10 15h4"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-              <input
-                value={year}
-                onChange={(e) => {
-                  setYear(e.target.value);
-                  setPage(1);
-                }}
-                placeholder="Academic Year (e.g. 2024-2025)"
-                className="w-full rounded-md border border-slate-300 pl-9 pr-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-              />
-            </div>
+            {/* Academic Year filter removed as requested; keep only search */}
           </div>
         </div>
       </div>

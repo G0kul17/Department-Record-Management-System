@@ -14,7 +14,11 @@ export default function ProjectsManagement() {
     try {
       // Show all unverified projects regardless of status/type
       const data = await apiClient.get("/projects?verified=false&limit=50");
-      setItems(data.projects || []);
+      // Exclude rejected items from the pending view
+      const list = (data.projects || []).filter(
+        (p) => (p.verification_status || "").toLowerCase() !== "rejected"
+      );
+      setItems(list);
     } catch (e) {
       setItems([]);
     } finally {

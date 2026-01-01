@@ -92,13 +92,13 @@ export default function AdminUsersManagement() {
             </button>
             <a
               href="/register-student"
-              className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
+              className="rounded-md bg-[#87CEEB] px-4 py-2 text-sm font-semibold text-white hover:bg-[#7dc0df]"
             >
               Register Student
             </a>
             <a
               href="/register-staff"
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+              className="rounded-md bg-[#87CEEB] px-4 py-2 text-sm font-semibold text-white hover:bg-[#7dc0df]"
             >
               Register Staff
             </a>

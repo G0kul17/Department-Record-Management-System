@@ -26,7 +26,7 @@ export async function getAdminStats(req, res) {
 export async function listUsers(req, res) {
   try {
     const { rows } = await pool.query(
-      "SELECT id, email, role, profile_details->>'full_name' as full_name, is_verified, created_at FROM users ORDER BY created_at DESC LIMIT 500"
+      "SELECT id, email, role, COALESCE(NULLIF(full_name, ''), NULLIF(profile_details->>'full_name', ''), NULLIF(TRIM((profile_details->>'first_name') || ' ' || (profile_details->>'last_name')), '')) AS full_name, is_verified, created_at FROM users ORDER BY created_at DESC LIMIT 500"
     );
     return res.json({ users: rows });
   } catch (err) {
@@ -55,7 +55,7 @@ export async function updateUserRole(req, res) {
         .json({ message: "Cannot change your own admin role" });
     }
     const { rows } = await pool.query(
-      "UPDATE users SET role=$1 WHERE id=$2 RETURNING id, email, role, profile_details->>'full_name' as full_name, is_verified, created_at",
+      "UPDATE users SET role=$1 WHERE id=$2 RETURNING id, email, role, COALESCE(NULLIF(full_name, ''), NULLIF(profile_details->>'full_name', ''), NULLIF(TRIM((profile_details->>'first_name') || ' ' || (profile_details->>'last_name')), '')) AS full_name, is_verified, created_at",
       [role, id]
     );
     if (!rows.length)

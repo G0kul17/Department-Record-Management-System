@@ -162,6 +162,11 @@ async function ensureColumns() {
       "ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(255)"
     );
 
+    // Backfill full_name from profile_details where missing
+    await pool.query(
+      "UPDATE users SET full_name = COALESCE(NULLIF(full_name, ''), NULLIF(profile_details->>'full_name', ''), NULLIF(TRIM((profile_details->>'first_name') || ' ' || (profile_details->>'last_name')), '')) WHERE (full_name IS NULL OR full_name = '')"
+    );
+
     // Optional profile fields
     await pool.query(
       "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(30)"
@@ -169,7 +174,7 @@ async function ensureColumns() {
     await pool.query(
       "ALTER TABLE users ADD COLUMN IF NOT EXISTS roll_number VARCHAR(50)"
     );
-    
+
     // Add profile_details JSONB column for storing student registration info
     await pool.query(
       "ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_details JSONB"

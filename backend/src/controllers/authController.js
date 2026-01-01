@@ -57,6 +57,14 @@ export async function register(req, res) {
   };
 
   try {
+    // determine role before any DB writes
+    let role = detectRole(emailLower);
+    if (ADMIN_EMAILS.includes(emailLower)) role = "admin";
+    if (!role)
+      return res
+        .status(400)
+        .json({ message: "Invalid email format or unauthorized domain" });
+
     // check duplicate
     const { rows: existing } = await pool.query(
       "SELECT id, is_verified FROM users WHERE email=$1",
@@ -69,8 +77,8 @@ export async function register(req, res) {
         const hashed = await bcrypt.hash(password, 10);
         // Also update role in case ADMIN_EMAILS was changed or this email should be admin
         await pool.query(
-          "UPDATE users SET password_hash=$1, role=$2, profile_details=$3 WHERE email=$4",
-          [hashed, role, JSON.stringify(profileDetails), emailLower]
+          "UPDATE users SET password_hash=$1, role=$2, profile_details=$3, full_name=$4 WHERE email=$5",
+          [hashed, role, JSON.stringify(profileDetails), fullName, emailLower]
         );
         // continue flow to send fresh OTP
       } else {
@@ -78,21 +86,13 @@ export async function register(req, res) {
       }
     }
 
-    // determine role
-    let role = detectRole(emailLower);
-    if (ADMIN_EMAILS.includes(emailLower)) role = "admin";
-    if (!role)
-      return res
-        .status(400)
-        .json({ message: "Invalid email format or unauthorized domain" });
-
     // If user didn't exist, create; if existed and unverified, we already updated password_hash above
     if (!existing.length) {
       const hashed = await bcrypt.hash(password, 10);
       try {
         await pool.query(
-          "INSERT INTO users (email, password_hash, role, profile_details) VALUES ($1, $2, $3, $4)",
-          [emailLower, hashed, role, JSON.stringify(profileDetails)]
+          "INSERT INTO users (email, password_hash, role, profile_details, full_name) VALUES ($1, $2, $3, $4, $5)",
+          [emailLower, hashed, role, JSON.stringify(profileDetails), fullName]
         );
       } catch (e) {
         // unique violation
@@ -503,10 +503,17 @@ export async function updateProfile(req, res) {
 
     const updatedProfile = { ...existingProfile, ...updates };
 
-    await pool.query("UPDATE users SET profile_details=$1 WHERE email=$2", [
-      JSON.stringify(updatedProfile),
-      emailLower,
-    ]);
+    if (nameValue !== undefined) {
+      await pool.query(
+        "UPDATE users SET profile_details=$1, full_name=$2 WHERE email=$3",
+        [JSON.stringify(updatedProfile), nameValue || null, emailLower]
+      );
+    } else {
+      await pool.query("UPDATE users SET profile_details=$1 WHERE email=$2", [
+        JSON.stringify(updatedProfile),
+        emailLower,
+      ]);
+    }
 
     return res.json({
       message: "Profile updated",

@@ -3,6 +3,7 @@ import BackButton from "../../components/BackButton";
 import UploadDropzone from "../../components/ui/UploadDropzone";
 import apiClient from "../../api/axiosClient";
 import { generateStudentsPreview } from "../../utils/studentsBatchPreview";
+import SuccessModal from "../../components/ui/SuccessModal";
 
 export default function AdminStudentsBatchUpload() {
   const [file, setFile] = useState(null);
@@ -11,9 +12,24 @@ export default function AdminStudentsBatchUpload() {
   const [result, setResult] = useState(null);
   const [preview, setPreview] = useState(null);
   const [previewing, setPreviewing] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   return (
     <div className="mx-auto max-w-3xl p-6">
+      <SuccessModal
+        open={showSuccess}
+        title="Saved successfully"
+        subtitle={
+          result
+            ? `Students uploaded. Created: ${result.created ?? 0}${
+                Array.isArray(result.skipped)
+                  ? ` | Skipped: ${result.skipped.length}`
+                  : ""
+              }`
+            : "Students uploaded successfully."
+        }
+        onClose={() => setShowSuccess(false)}
+      />
       <BackButton />
       <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">
         Admin: Add Students Batch
@@ -103,6 +119,7 @@ export default function AdminStudentsBatchUpload() {
                 const resp = await apiClient.uploadFile("/students/upload", fd);
                 setResult(resp);
                 setMessage(resp.message || "Upload complete");
+                setShowSuccess(true);
               } catch (e) {
                 setMessage(e.message || "Upload failed");
               } finally {

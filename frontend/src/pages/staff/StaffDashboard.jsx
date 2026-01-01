@@ -7,11 +7,13 @@ import EventsManagement from "./EventsManagement";
 import QuickActions from "../QuickActions";
 import apiClient from "../../api/axiosClient";
 import { useEffect, useState } from "react";
+import { formatDisplayName } from "../../utils/displayName";
 import EventsCarousel from "../../components/EventsCarousel";
 import AchievementsFeed from "../../components/AchievementsFeed";
 
 const StaffDashboard = () => {
   const { user } = useAuth();
+  const displayName = formatDisplayName(user);
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950">
@@ -20,7 +22,7 @@ const StaffDashboard = () => {
           <aside className="w-64 rounded-xl border bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="mb-4">
               <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                {user?.fullName || user?.email || "Staff"}
+                {displayName || "Staff"}
               </div>
               <div className="text-xs text-slate-500 dark:text-slate-400">
                 Staff Portal
@@ -78,6 +80,7 @@ function OverviewPanel({ user }) {
   const [achCount, setAchCount] = useState(null);
   const [events, setEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
+  const displayName = formatDisplayName(user);
 
   useEffect(() => {
     let mounted = true;
@@ -119,7 +122,7 @@ function OverviewPanel({ user }) {
     <div className="space-y-6">
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <h1 className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">{`Welcome, ${
-          user?.fullName || user?.email || "Staff"
+          displayName || "Staff"
         }`}</h1>
         <p className="text-slate-600 dark:text-slate-300 mt-1">
           Use the side menu to manage projects, achievements and events.

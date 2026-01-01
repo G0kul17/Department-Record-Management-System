@@ -138,7 +138,7 @@ export default function StudentDashboard() {
         <div className="mt-10">
           <button
             onClick={goToQuickActions}
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#87CEEB] px-6 py-3 text-white shadow hover:bg-[#78C5E6] focus:outline-none focus:ring-4 focus:ring-[#87CEEB]/40"
           >
             {/* Inline SVG rocket icon */}
             <svg

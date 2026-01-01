@@ -14,7 +14,19 @@ const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "")
   .filter(Boolean);
 
 export async function register(req, res) {
-  const { email, password, name, firstName, lastName, department, course, year, section, rollNumber, phone } = req.body;
+  const {
+    email,
+    password,
+    name,
+    firstName,
+    lastName,
+    department,
+    course,
+    year,
+    section,
+    rollNumber,
+    phone,
+  } = req.body;
   if (!email || !password)
     return res.status(400).json({ message: "Email and password required" });
 
@@ -30,7 +42,7 @@ export async function register(req, res) {
 
   const emailLower = email.toLowerCase();
   const fullName = (name || "").trim() || null;
-  
+
   // Build profile_details JSONB object for students
   const profileDetails = {
     full_name: fullName,
@@ -154,7 +166,7 @@ export async function verifyOTP(req, res) {
 
     // return jwt
     const { rows: users } = await pool.query(
-      "SELECT id, email, role, profile_details->>'full_name' as full_name FROM users WHERE email=$1",
+      "SELECT id, email, role, profile_details FROM users WHERE email=$1",
       [emailLower]
     );
     const user = users[0];
@@ -169,12 +181,20 @@ export async function verifyOTP(req, res) {
       { id: user.id, email: user.email, role: user.role },
       "6h"
     );
+    const profile = user.profile_details || {};
+    const photoUrl =
+      profile.photo_url ||
+      profile.avatar_url ||
+      profile.image_url ||
+      profile.profile_pic ||
+      null;
     return res.json({
       message: "Verified",
       token,
       role: user.role,
       id: user.id,
-      fullName: user.full_name || null,
+      fullName: profile.full_name || null,
+      photoUrl,
     });
   } catch (err) {
     console.error(err);
@@ -280,7 +300,7 @@ export async function loginVerifyOTP(req, res) {
 
     // issue token
     const { rows: users } = await pool.query(
-      "SELECT id, email, role, profile_details->>'full_name' as full_name FROM users WHERE email=$1",
+      "SELECT id, email, role, profile_details FROM users WHERE email=$1",
       [emailLower]
     );
     const user = users[0];
@@ -291,7 +311,7 @@ export async function loginVerifyOTP(req, res) {
       ]);
       user.role = "admin";
     }
-    
+
     // Fetch student profile data if role is student
     let studentProfile = {};
     if (user.role === "student") {
@@ -303,17 +323,25 @@ export async function loginVerifyOTP(req, res) {
         studentProfile = profileRows[0];
       }
     }
-    
+
     const token = signToken(
       { id: user.id, email: user.email, role: user.role },
       "6h"
     );
+    const profile = user.profile_details || {};
+    const photoUrl =
+      profile.photo_url ||
+      profile.avatar_url ||
+      profile.image_url ||
+      profile.profile_pic ||
+      null;
     return res.json({
       message: "Login successful",
       token,
       role: user.role,
       id: user.id,
-      fullName: user.full_name || null,
+      fullName: profile.full_name || null,
+      photoUrl,
       ...studentProfile,
     });
   } catch (err) {
@@ -421,6 +449,12 @@ export async function getProfile(req, res) {
       return res.status(404).json({ message: "User not found" });
     const u = rows[0];
     const profile = u.profile_details || {};
+    const photoUrl =
+      profile.photo_url ||
+      profile.avatar_url ||
+      profile.image_url ||
+      profile.profile_pic ||
+      null;
     return res.json({
       id: u.id,
       email: u.email,
@@ -429,6 +463,7 @@ export async function getProfile(req, res) {
       phone: profile.phone || null,
       rollNumber: profile.roll_number || null,
       profileDetails: profile,
+      photoUrl,
     });
   } catch (err) {
     console.error("/auth/profile GET error:", err);
@@ -450,7 +485,7 @@ export async function updateProfile(req, res) {
       "SELECT profile_details FROM users WHERE email=$1",
       [emailLower]
     );
-    
+
     if (!current.length) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -461,17 +496,17 @@ export async function updateProfile(req, res) {
     if (nameValue !== undefined) updates.full_name = nameValue;
     if (phone !== undefined) updates.phone = phone;
     if (rollNumber !== undefined) updates.roll_number = rollNumber;
-    
+
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ message: "No fields to update" });
     }
 
     const updatedProfile = { ...existingProfile, ...updates };
 
-    await pool.query(
-      "UPDATE users SET profile_details=$1 WHERE email=$2",
-      [JSON.stringify(updatedProfile), emailLower]
-    );
+    await pool.query("UPDATE users SET profile_details=$1 WHERE email=$2", [
+      JSON.stringify(updatedProfile),
+      emailLower,
+    ]);
 
     return res.json({
       message: "Profile updated",
@@ -479,6 +514,50 @@ export async function updateProfile(req, res) {
     });
   } catch (err) {
     console.error("/auth/profile PUT error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
+// Upload and set current user's profile photo
+export async function updateProfilePhoto(req, res) {
+  try {
+    const emailLower = (req.user?.email || "").toLowerCase();
+    if (!emailLower) return res.status(401).json({ message: "Unauthorized" });
+
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const filename = req.file.filename;
+    const absBase = `${req.protocol}://${req.get("host")}`;
+    const photoUrl = `${absBase}/uploads/${filename}`;
+
+    // Get current profile_details
+    const { rows: current } = await pool.query(
+      "SELECT profile_details FROM users WHERE email=$1",
+      [emailLower]
+    );
+    if (!current.length) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const existingProfile = current[0].profile_details || {};
+    const updatedProfile = {
+      ...existingProfile,
+      photo_url: photoUrl,
+      avatar_url: photoUrl,
+      image_url: photoUrl,
+      profile_pic: photoUrl,
+    };
+
+    await pool.query("UPDATE users SET profile_details=$1 WHERE email=$2", [
+      JSON.stringify(updatedProfile),
+      emailLower,
+    ]);
+
+    return res.json({ message: "Photo updated", photoUrl });
+  } catch (err) {
+    console.error("/auth/profile/photo POST error:", err);
     return res.status(500).json({ message: "Server error" });
   }
 }

@@ -3,14 +3,17 @@ import { createPortal } from "react-dom";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
+import { formatDisplayName, getInitials } from "../utils/displayName";
+import AvatarPicker from "./ui/AvatarPicker";
+import NotificationsBell from "./NotificationsBell";
 
 const Navbar = () => {
   const { user, token, logout } = useAuth();
   const nav = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const displayName =
-    (user && (user.fullName || user.name || user.username || user.email)) || "";
+  const [avatarModalOpen, setAvatarModalOpen] = useState(false);
+  const displayName = formatDisplayName(user);
   const photoUrl =
     (user &&
       (user.photoUrl || user.avatarUrl || user.imageUrl || user.profilePic)) ||
@@ -37,15 +40,6 @@ const Navbar = () => {
     ).length;
     return Math.round((filled / fields.length) * 100);
   })();
-
-  function getInitials(name) {
-    if (!name || typeof name !== "string") return "";
-    const parts = name.trim().split(/\s+/);
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    const first = parts[0].charAt(0);
-    const last = parts[parts.length - 1].charAt(0);
-    return (first + last).toUpperCase();
-  }
 
   // Professional dashboard style: light theme only
 
@@ -96,6 +90,7 @@ const Navbar = () => {
           <div className="flex items-center gap-4">
             {token ? (
               <>
+                <NotificationsBell />
                 {user && (
                   <span className="text-sm rounded-full bg-white/20 px-3 py-1">
                     {displayName}
@@ -176,6 +171,14 @@ const Navbar = () => {
                     <span className="text-xs text-slate-500">{user.role}</span>
                   )}
                 </div>
+                <div className="ml-auto">
+                  <button
+                    className="px-3 py-1 rounded-md text-xs bg-slate-100 hover:bg-slate-200"
+                    onClick={() => setAvatarModalOpen(true)}
+                  >
+                    Change Photo
+                  </button>
+                </div>
               </div>
               <div className="p-2">
                 <Link
@@ -243,6 +246,10 @@ const Navbar = () => {
           </>,
           document.body
         )}
+      <AvatarPicker
+        open={avatarModalOpen}
+        onClose={() => setAvatarModalOpen(false)}
+      />
     </nav>
   );
 };

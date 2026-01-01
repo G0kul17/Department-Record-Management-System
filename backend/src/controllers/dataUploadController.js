@@ -19,7 +19,10 @@ const parseCSV = (filePath) =>
 const parseExcel = (filePath) => {
   const workbook = XLSX.readFile(filePath);
   const sheetName = workbook.SheetNames[0];
-  return XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { raw: false, defval: "" });
+  return XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
+    raw: false,
+    defval: "",
+  });
 };
 
 // Normalize column names for matching
@@ -37,17 +40,32 @@ const detectDataType = (columns) => {
   const colSet = new Set(normalized);
 
   // Check for achievements (user_email/email + title)
-  if ((colSet.has("user_email") || colSet.has("email")) && colSet.has("title") && !colSet.has("mentor_name")) {
+  if (
+    (colSet.has("user_email") || colSet.has("email")) &&
+    colSet.has("title") &&
+    !colSet.has("mentor_name")
+  ) {
     return "achievements";
   }
 
   // Check for projects (title + mentor/academic_year/description)
-  if (colSet.has("title") && (colSet.has("mentor_name") || colSet.has("mentor") || colSet.has("academic_year") || colSet.has("description"))) {
+  if (
+    colSet.has("title") &&
+    (colSet.has("mentor_name") ||
+      colSet.has("mentor") ||
+      colSet.has("academic_year") ||
+      colSet.has("description"))
+  ) {
     return "projects";
   }
 
   // Check for faculty consultancy (agency + amount/team_members)
-  if (colSet.has("agency") && (colSet.has("amount") || colSet.has("team_members")) && !colSet.has("funded_type") && !colSet.has("principal_investigator")) {
+  if (
+    colSet.has("agency") &&
+    (colSet.has("amount") || colSet.has("team_members")) &&
+    !colSet.has("funded_type") &&
+    !colSet.has("principal_investigator")
+  ) {
     return "faculty_consultancy";
   }
 
@@ -57,7 +75,12 @@ const detectDataType = (columns) => {
   }
 
   // Check for faculty participation (faculty_name + department + type_of_event + mode_of_training)
-  if (colSet.has("faculty_name") && colSet.has("department") && colSet.has("type_of_event") && colSet.has("mode_of_training")) {
+  if (
+    colSet.has("faculty_name") &&
+    colSet.has("department") &&
+    colSet.has("type_of_event") &&
+    colSet.has("mode_of_training")
+  ) {
     return "faculty_participations";
   }
 
@@ -118,8 +141,13 @@ export const uploadDataFile = async (req, res) => {
 export const saveUploadedData = async (req, res) => {
   try {
     const user = req.user;
-    const { uploader_name, original_filename, stored_filename, documents } =
-      req.body;
+    const {
+      uploader_name,
+      original_filename,
+      stored_filename,
+      documents,
+      data_type,
+    } = req.body;
 
     if (!documents || !documents.rows || !documents.rows.length) {
       return res.status(400).json({ message: "No data to save" });
@@ -127,9 +155,25 @@ export const saveUploadedData = async (req, res) => {
 
     const columns = documents.columns || [];
     const rows = documents.rows || [];
-    
-    // Detect data type
-    const dataType = detectDataType(columns);
+
+    // Prefer explicit data_type if provided, else detect
+    let dataType = null;
+    if (typeof data_type === "string" && data_type.trim()) {
+      const dt = data_type.trim().toLowerCase();
+      const allowed = new Set([
+        "achievements",
+        "projects",
+        "faculty_consultancy",
+        "faculty_research",
+        "faculty_participations",
+      ]);
+      if (allowed.has(dt)) {
+        dataType = dt;
+      }
+    }
+    if (!dataType) {
+      dataType = detectDataType(columns);
+    }
 
     if (!dataType) {
       // If no specific type detected, save to generic table
@@ -168,7 +212,7 @@ export const saveUploadedData = async (req, res) => {
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       const normalized = {};
-      
+
       Object.keys(row).forEach((key) => {
         normalized[normalizeKey(key)] = row[key];
       });
@@ -224,7 +268,9 @@ async function saveAchievement(normalized, user, rowNum) {
     throw new Error("Required fields missing: user_email, title");
   }
 
-  const userResult = await pool.query("SELECT id FROM users WHERE email = $1", [user_email]);
+  const userResult = await pool.query("SELECT id FROM users WHERE email = $1", [
+    user_email,
+  ]);
   if (!userResult.rows.length) {
     throw new Error("User not found");
   }
@@ -240,11 +286,27 @@ async function saveAchievement(normalized, user, rowNum) {
 async function saveProject(normalized, user, rowNum) {
   const title = (normalized.title || normalized.project_title || "").trim();
   const description = (normalized.description || "").trim();
-  const mentor_name = (normalized.mentor_name || normalized.mentor || "").trim();
-  const academic_year = (normalized.academic_year || normalized.year || "").trim();
+  const mentor_name = (
+    normalized.mentor_name ||
+    normalized.mentor ||
+    ""
+  ).trim();
+  const academic_year = (
+    normalized.academic_year ||
+    normalized.year ||
+    ""
+  ).trim();
   const status = (normalized.status || "ongoing").trim();
-  const github_url = (normalized.github_url || normalized.repo_url || "").trim();
-  const team_member_names = (normalized.team_member_names || normalized.team_members || "").trim();
+  const github_url = (
+    normalized.github_url ||
+    normalized.repo_url ||
+    ""
+  ).trim();
+  const team_member_names = (
+    normalized.team_member_names ||
+    normalized.team_members ||
+    ""
+  ).trim();
 
   if (!title) {
     throw new Error("Required fields missing: title");
@@ -253,7 +315,16 @@ async function saveProject(normalized, user, rowNum) {
   await pool.query(
     `INSERT INTO projects (title, description, mentor_name, academic_year, status, github_url, team_member_names, created_by, verification_status)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending')`,
-    [title, description, mentor_name, academic_year, status, github_url, team_member_names, user.id]
+    [
+      title,
+      description,
+      mentor_name,
+      academic_year,
+      status,
+      github_url,
+      team_member_names,
+      user.id,
+    ]
   );
 }
 
@@ -273,53 +344,117 @@ async function saveFacultyConsultancy(normalized, user, rowNum) {
   await pool.query(
     `INSERT INTO faculty_consultancy (faculty_name, team_members, agency, amount, duration, start_date, end_date, created_by)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-    [faculty_name, team_members, agency, amount ? parseFloat(amount) : null, duration, start_date || null, end_date || null, user.id]
+    [
+      faculty_name,
+      team_members,
+      agency,
+      amount ? parseFloat(amount) : null,
+      duration,
+      start_date || null,
+      end_date || null,
+      user.id,
+    ]
   );
 }
 
 async function saveFacultyResearch(normalized, user, rowNum) {
   const faculty_name = (normalized.faculty_name || "").trim();
   const funded_type = (normalized.funded_type || "").trim();
-  const principal_investigator = (normalized.principal_investigator || normalized.pi || "").trim();
+  const principal_investigator = (
+    normalized.principal_investigator ||
+    normalized.pi ||
+    ""
+  ).trim();
   const team_members = (normalized.team_members || "").trim();
   const title = (normalized.title || normalized.project_title || "").trim();
   const agency = (normalized.agency || "").trim();
-  const current_status = (normalized.current_status || normalized.status || "").trim();
+  const current_status = (
+    normalized.current_status ||
+    normalized.status ||
+    ""
+  ).trim();
   const duration = (normalized.duration || "").trim();
   const start_date = (normalized.start_date || "").trim();
   const end_date = (normalized.end_date || "").trim();
   const amount = (normalized.amount || "").trim();
 
   if (!funded_type || !principal_investigator || !title || !current_status) {
-    throw new Error("Required fields missing: funded_type, principal_investigator, title, current_status");
+    throw new Error(
+      "Required fields missing: funded_type, principal_investigator, title, current_status"
+    );
   }
 
   await pool.query(
     `INSERT INTO faculty_research (faculty_name, funded_type, principal_investigator, team_members, title, agency, current_status, duration, start_date, end_date, amount, created_by)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-    [faculty_name, funded_type, principal_investigator, team_members, title, agency, current_status, duration, start_date || null, end_date || null, amount ? parseFloat(amount) : null, user.id]
+    [
+      faculty_name,
+      funded_type,
+      principal_investigator,
+      team_members,
+      title,
+      agency,
+      current_status,
+      duration,
+      start_date || null,
+      end_date || null,
+      amount ? parseFloat(amount) : null,
+      user.id,
+    ]
   );
 }
 
 async function saveFacultyParticipation(normalized, user, rowNum) {
   const faculty_name = (normalized.faculty_name || "").trim();
   const department = (normalized.department || normalized.dept || "").trim();
-  const type_of_event = (normalized.type_of_event || normalized.event_type || "").trim();
-  const mode_of_training = (normalized.mode_of_training || normalized.mode || "").trim();
+  const type_of_event = (
+    normalized.type_of_event ||
+    normalized.event_type ||
+    ""
+  ).trim();
+  const mode_of_training = (
+    normalized.mode_of_training ||
+    normalized.mode ||
+    ""
+  ).trim();
   const title = (normalized.title || normalized.event_title || "").trim();
   const start_date = (normalized.start_date || "").trim();
   const end_date = (normalized.end_date || "").trim();
-  const conducted_by = (normalized.conducted_by || normalized.organizer || "").trim();
+  const conducted_by = (
+    normalized.conducted_by ||
+    normalized.organizer ||
+    ""
+  ).trim();
   const details = (normalized.details || normalized.description || "").trim();
 
-  if (!faculty_name || !department || !type_of_event || !mode_of_training || !title || !start_date) {
-    throw new Error("Required fields missing: faculty_name, department, type_of_event, mode_of_training, title, start_date");
+  if (
+    !faculty_name ||
+    !department ||
+    !type_of_event ||
+    !mode_of_training ||
+    !title ||
+    !start_date
+  ) {
+    throw new Error(
+      "Required fields missing: faculty_name, department, type_of_event, mode_of_training, title, start_date"
+    );
   }
 
   await pool.query(
     `INSERT INTO faculty_participations (faculty_name, department, type_of_event, mode_of_training, title, start_date, end_date, conducted_by, details, created_by)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-    [faculty_name, department, type_of_event, mode_of_training, title, start_date, end_date || null, conducted_by, details, user.id]
+    [
+      faculty_name,
+      department,
+      type_of_event,
+      mode_of_training,
+      title,
+      start_date,
+      end_date || null,
+      conducted_by,
+      details,
+      user.id,
+    ]
   );
 }
 

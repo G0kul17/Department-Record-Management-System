@@ -43,10 +43,12 @@ export const AuthProvider = ({ children }) => {
     // Refresh user profile data from server
     if (!token) return;
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:5000/api'}/student/profile`, {
+      const apiBase =
+        import.meta.env.VITE_API_BASE || "http://localhost:5000/api";
+      const response = await fetch(`${apiBase}/student/profile`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
       if (response.ok) {
@@ -62,8 +64,28 @@ export const AuthProvider = ({ children }) => {
           });
         }
       }
+
+      // Also refresh generic auth profile for photoUrl/fullName updates
+      const authResp = await fetch(`${apiBase}/auth/profile`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (authResp.ok) {
+        const authData = await authResp.json();
+        if (authData?.photoUrl || authData?.fullName) {
+          updateUser({
+            photoUrl: authData.photoUrl,
+            avatarUrl: authData.photoUrl,
+            imageUrl: authData.photoUrl,
+            profilePic: authData.photoUrl,
+            fullName: authData.fullName ?? undefined,
+          });
+        }
+      }
     } catch (error) {
-      console.error('Failed to refresh profile:', error);
+      console.error("Failed to refresh profile:", error);
     }
   };
 

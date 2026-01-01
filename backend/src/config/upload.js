@@ -96,6 +96,24 @@ function fileFilter(req, file, cb) {
     );
   }
 
+  // Allow standard image types for 'avatar' field (profile photos)
+  if (file.fieldname === "avatar" || file.fieldname === "profile_photo") {
+    const name = file.originalname || "";
+    const ext = name.toLowerCase().split(".").pop();
+    const allowedExts = new Set(["png", "jpg", "jpeg"]);
+    const allowedMimes = new Set([
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/x-png",
+      "image/pjpeg",
+    ]);
+    if (allowedMimes.has(file.mimetype) || allowedExts.has(ext)) {
+      return cb(null, true);
+    }
+    return cb(new Error("Invalid image type for avatar"), false);
+  }
+
   // Otherwise respect global allowedTypes if provided; allow all if empty
   if (!allowedTypes.length) return cb(null, true);
   if (allowedTypes.includes(file.mimetype)) return cb(null, true);

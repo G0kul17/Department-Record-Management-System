@@ -5,17 +5,24 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
+  const [sessionToken, setSessionToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Check for saved authentication on mount
     const storedToken = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
+    const storedSessionToken = localStorage.getItem("sessionToken");
 
     if (storedToken && storedUser) {
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
     }
+
+    if (storedSessionToken) {
+      setSessionToken(storedSessionToken);
+    }
+
     setLoading(false);
   }, []);
 
@@ -27,18 +34,25 @@ export const AuthProvider = ({ children }) => {
     }
   }, [loading, token]);
 
-  const login = (userData, authToken) => {
+  const login = (userData, authToken, sessionTokenValue = null) => {
     setUser(userData);
     setToken(authToken);
     localStorage.setItem("token", authToken);
     localStorage.setItem("user", JSON.stringify(userData));
+
+    if (sessionTokenValue) {
+      setSessionToken(sessionTokenValue);
+      localStorage.setItem("sessionToken", sessionTokenValue);
+    }
   };
 
   const logout = () => {
     setUser(null);
     setToken(null);
+    setSessionToken(null);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("sessionToken");
   };
 
   const updateUser = (updatedData) => {
@@ -53,11 +67,18 @@ export const AuthProvider = ({ children }) => {
     try {
       const apiBase =
         import.meta.env.VITE_API_BASE || "http://localhost:5000/api";
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
+
+      // Add session token to headers if available
+      if (sessionToken) {
+        headers["x-session-token"] = sessionToken;
+      }
+
       const response = await fetch(`${apiBase}/student/profile`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers,
       });
       if (response.ok) {
         const data = await response.json();
@@ -75,10 +96,7 @@ export const AuthProvider = ({ children }) => {
 
       // Also refresh generic auth profile for photoUrl/fullName updates
       const authResp = await fetch(`${apiBase}/auth/profile`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers,
       });
       if (authResp.ok) {
         const authData = await authResp.json();
@@ -102,6 +120,7 @@ export const AuthProvider = ({ children }) => {
       value={{
         user,
         token,
+        sessionToken,
         login,
         logout,
         updateUser,
@@ -114,3 +133,4 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+

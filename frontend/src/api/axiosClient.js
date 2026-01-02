@@ -12,10 +12,18 @@ class ApiClient {
 
   getAuthHeaders() {
     const token = localStorage.getItem("token");
-    return {
+    const sessionToken = localStorage.getItem("sessionToken");
+    const headers = {
       "Content-Type": "application/json",
       ...(token && { Authorization: `Bearer ${token}` }),
     };
+
+    // Add session token if available
+    if (sessionToken) {
+      headers["x-session-token"] = sessionToken;
+    }
+
+    return headers;
   }
 
   async request(endpoint, options = {}) {
@@ -82,11 +90,19 @@ class ApiClient {
 
   async uploadFile(endpoint, formData) {
     const token = localStorage.getItem("token");
+    const sessionToken = localStorage.getItem("sessionToken");
+    const headers = {
+      ...(token && { Authorization: `Bearer ${token}` }),
+    };
+
+    // Add session token if available
+    if (sessionToken) {
+      headers["x-session-token"] = sessionToken;
+    }
+
     const response = await fetch(`${this.baseURL}${endpoint}`, {
       method: "POST",
-      headers: {
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
+      headers,
       body: formData,
     });
 

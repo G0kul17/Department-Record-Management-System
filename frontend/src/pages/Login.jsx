@@ -32,6 +32,7 @@ const Login = () => {
         email: formData.email,
         password: formData.password,
       });
+
       if (resp?.needsVerification) {
         // Account not verified yet: go to verification screen
         navigate("/verify-otp", {
@@ -43,6 +44,30 @@ const Login = () => {
         });
         return;
       }
+
+      // Check if user has an active session (90-day login)
+      if (resp?.sessionActive === true && resp?.token) {
+        // Session is active, login directly without OTP
+        login(
+          {
+            email: formData.email,
+            role: resp.role,
+            fullName: resp.fullName,
+            photoUrl: resp.photoUrl,
+          },
+          resp.token
+        );
+        const dest =
+          resp.role === "admin"
+            ? "/admin"
+            : resp.role === "staff"
+            ? "/"
+            : "/student";
+        navigate(dest);
+        return;
+      }
+
+      // No active session, proceed with OTP verification
       // Do NOT auto-fill OTP; just move to OTP step and start a 5-minute timer
       setOtp("");
       setOtpSent(true);
@@ -65,8 +90,16 @@ const Login = () => {
         otp,
       });
       if (data?.token && data?.role) {
+        // Store session token in localStorage for future requests
+        localStorage.setItem("sessionToken", data.sessionToken || "");
+
         login(
-          { email: formData.email, role: data.role, fullName: data.fullName },
+          {
+            email: formData.email,
+            role: data.role,
+            fullName: data.fullName,
+            photoUrl: data.photoUrl,
+          },
           data.token
         );
         const dest =
@@ -213,3 +246,4 @@ const Login = () => {
 };
 
 export default Login;
+

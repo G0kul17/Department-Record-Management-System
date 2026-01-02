@@ -5,6 +5,11 @@ import { sendMail } from "../config/mailer.js";
 import { detectRole } from "../utils/roleUtils.js";
 import dotenv from "dotenv";
 import { signToken } from "../utils/tokenUtils.js";
+import {
+  createSession,
+  hasValidSession,
+  invalidateAllUserSessions,
+} from "../utils/sessionUtils.js";
 dotenv.config();
 
 const OTP_EXPIRY_MIN = Number(process.env.OTP_EXPIRY_MIN || 5);
@@ -246,7 +251,47 @@ export async function login(req, res) {
       });
     }
 
-    // generate OTP for login (two-step)
+    // Check if user has a valid session (90-day session-based login)
+    const userHasValidSession = await hasValidSession(user.id);
+    if (userHasValidSession) {
+      // User has valid session, skip OTP and return token directly
+      const token = signToken(
+        { id: user.id, email: user.email, role: user.role },
+        "6h"
+      );
+      const profile = user.profile_details || {};
+      const photoUrl =
+        profile.photo_url ||
+        profile.avatar_url ||
+        profile.image_url ||
+        profile.profile_pic ||
+        null;
+
+      // Fetch student profile data if role is student
+      let studentProfile = {};
+      if (user.role === "student") {
+        const { rows: profileRows } = await pool.query(
+          "SELECT register_number, contact_number, leetcode_url, hackerrank_url, codechef_url, github_url FROM student_profiles WHERE user_id=$1",
+          [user.id]
+        );
+        if (profileRows.length) {
+          studentProfile = profileRows[0];
+        }
+      }
+
+      return res.json({
+        message: "Login successful (session active)",
+        token,
+        role: user.role,
+        id: user.id,
+        fullName: profile.full_name || null,
+        photoUrl,
+        sessionActive: true,
+        ...studentProfile,
+      });
+    }
+
+    // No valid session, generate OTP for login (two-step)
     const otp = generateOTP();
     const expiresAt = getExpiryDate(OTP_EXPIRY_MIN);
     await pool.query(
@@ -311,6 +356,13 @@ export async function loginVerifyOTP(req, res) {
       ]);
       user.role = "admin";
     }
+
+    // Create session for this login (90-day expiration)
+    const deviceInfo = {
+      userAgent: req.get("user-agent"),
+      ipAddress: req.ip,
+    };
+    await createSession(user.id, deviceInfo);
 
     // Fetch student profile data if role is student
     let studentProfile = {};
@@ -568,3 +620,22 @@ export async function updateProfilePhoto(req, res) {
     return res.status(500).json({ message: "Server error" });
   }
 }
+
+/**
+ * Logout endpoint - invalidates user session
+ */
+export async function logout(req, res) {
+  try {
+    const sessionToken = req.headers["x-session-token"];
+
+    if (sessionToken) {
+      await invalidateAllUserSessions(req.user.id);
+    }
+
+    return res.json({ message: "Logged out successfully" });
+  } catch (err) {
+    console.error("/auth/logout error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+

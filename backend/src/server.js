@@ -15,6 +15,7 @@ import dataUploadRoutes from "./routes/dataUploadRoutes.js";
 import studentProfileRoutes from "./routes/studentProfileRoutes.js";
 import addStudentsRoutes from "./routes/addStudentsRoutes.js";
 import bulkExportRoutes from "./routes/bulkExportRoutes.js";
+import activityCoordinatorRoutes from "./routes/activityCoordinatorRoutes.js";
 import pool from "./config/db.js";
 import fs from "fs";
 import path from "path";
@@ -65,6 +66,7 @@ app.use("/api/faculty-consultancy", facultyConsultancyRoutes);
 app.use("/api/events", eventPublicRoutes);
 app.use("/api/events-admin", eventRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/activity-coordinators", activityCoordinatorRoutes);
 
 // Bulk export route
 app.use("/api", bulkExportRoutes);

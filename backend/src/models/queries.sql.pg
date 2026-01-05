@@ -105,7 +105,8 @@ CREATE TABLE IF NOT EXISTS achievements (
   user_id INTEGER,
   title VARCHAR(500) NOT NULL,
   date DATE,
-  event_id INTEGER, -- optional FK to events table if you have events (left as integer)
+  event_id INTEGER, -- deprecated (previous event-based routing)
+  activity_type VARCHAR(100), -- category like hackathon/paper/presentation/etc.
   verified BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (user_id, title, date)  -- prevent duplicates for same user
@@ -116,6 +117,7 @@ ALTER TABLE achievements ADD COLUMN IF NOT EXISTS issuer VARCHAR(255);
 ALTER TABLE achievements ADD COLUMN IF NOT EXISTS date_of_award DATE;
 ALTER TABLE achievements ADD COLUMN IF NOT EXISTS proof_file_id INTEGER;
 ALTER TABLE achievements ADD COLUMN IF NOT EXISTS name VARCHAR(255);
+ALTER TABLE achievements ADD COLUMN IF NOT EXISTS activity_type VARCHAR(100);
 -- uploader_name is deprecated; ensure it does not exist
 ALTER TABLE achievements DROP COLUMN IF EXISTS uploader_name;
 -- proof_file_url is deprecated; ensure it does not exist
@@ -128,9 +130,21 @@ ALTER TABLE projects ADD COLUMN IF NOT EXISTS team_member_names TEXT; -- comma s
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS github_url TEXT;
 -- Mentor name (free-text) for projects when mentor_id is not provided
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS mentor_name VARCHAR(255);
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS activity_type VARCHAR(100) DEFAULT 'project';
+-- Activity type for projects (default 'project')
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS activity_type VARCHAR(100) DEFAULT 'project';
 -- Prevent duplicates when mentor_name is used instead of mentor_id
 CREATE UNIQUE INDEX IF NOT EXISTS ux_projects_title_mentorname_year
   ON projects (title, mentor_name, academic_year);
+
+-- Activity coordinators (map activity_type -> staff)
+CREATE TABLE IF NOT EXISTS activity_coordinators (
+  id SERIAL PRIMARY KEY,
+  activity_type VARCHAR(100) NOT NULL,
+  staff_id INTEGER NOT NULL REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(activity_type, staff_id)
+);
 
 -- Backfill mentor_name for existing rows using users table (prefer full_name, else email)
 -- Safe on repeated runs: only executes if legacy mentor_id column still exists.
@@ -691,3 +705,5 @@ ON users ((profile_details->>'register_number'));
 
 CREATE INDEX IF NOT EXISTS idx_users_student_contact
 ON users ((profile_details->>'contact_number'));
+
+

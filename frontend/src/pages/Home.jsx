@@ -199,6 +199,39 @@ export default function Home() {
                   {eventCount === null ? "—" : eventCount}
                 </div>
               </Card>
+              <Card
+                onClick={() => nav("/faculty-research-approved")}
+                className="p-6 glitter-card bulge-card"
+              >
+                <div className="text-sm font-semibold text-slate-800">
+                  Research Publications
+                </div>
+                <div className="mt-2 text-3xl font-extrabold text-slate-900">
+                  {studentCount === null ? "—" : studentCount}
+                </div>
+              </Card>
+              <Card
+                onClick={() => nav("/faculty-consultancy-approved")}
+                className="p-6 glitter-card bulge-card"
+              >
+                <div className="text-sm font-semibold text-slate-800">
+                  Consultancy Projects
+                </div>
+                <div className="mt-2 text-3xl font-extrabold text-slate-900">
+                  {staffCount === null ? "—" : staffCount}
+                </div>
+              </Card>
+              <Card
+                onClick={() => nav("/faculty-participation-approved")}
+                className="p-6 glitter-card bulge-card"
+              >
+                <div className="text-sm font-semibold text-slate-800">
+                  Faculty Participation
+                </div>
+                <div className="mt-2 text-3xl font-extrabold text-slate-900">
+                  {eventCount === null ? "—" : eventCount}
+                </div>
+              </Card>
             </>
           )}
         </div>

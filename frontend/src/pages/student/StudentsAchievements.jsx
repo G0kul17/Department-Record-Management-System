@@ -76,6 +76,7 @@ export default function Achievements() {
       if (form.date) fd.append("date_of_award", form.date);
       if (form.date) fd.append("date", form.date); // also send generic 'date' for backend column
       if (form.event_id) fd.append("event_id", form.event_id);
+      if (form.title) fd.append("activity_type", form.title);
       if (form.name) fd.append("name", form.name);
       fd.append("post_to_community", form.post ? "true" : "false");
       if (proof) fd.append("proof", proof);

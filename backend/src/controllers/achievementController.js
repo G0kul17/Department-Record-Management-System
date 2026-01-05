@@ -14,7 +14,8 @@ export async function createAchievement(req, res) {
       date_of_award,
       post_to_community,
       date,
-      event_id,
+      event_id, // deprecated
+      activity_type,
       name,
     } = req.body;
     if (!title) return res.status(400).json({ message: "title required" });
@@ -66,8 +67,10 @@ export async function createAchievement(req, res) {
     if (dup.rows.length)
       return res.status(409).json({ message: "Duplicate achievement" });
 
+    const activityType = (activity_type || title || "").trim() || null;
+
     let insertSql =
-      "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, date, event_id, name) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *";
+      "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, date, event_id, activity_type, name) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *";
     let params = [
       userId,
       title.trim(),
@@ -76,12 +79,13 @@ export async function createAchievement(req, res) {
       proofFileId,
       date || null,
       event_id ? Number(event_id) : null,
+      activityType,
       name.trim(),
     ];
     // If staff/admin, auto-approve (verified=true)
     if (userRole === "staff" || userRole === "admin") {
       insertSql =
-        "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, date, event_id, name, verified, verification_status, verified_by, verified_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8, true, 'approved', $9, NOW()) RETURNING *";
+        "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, date, event_id, activity_type, name, verified, verification_status, verified_by, verified_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, true, 'approved', $10, NOW()) RETURNING *";
       params = [
         userId,
         title.trim(),
@@ -90,6 +94,7 @@ export async function createAchievement(req, res) {
         proofFileId,
         date || null,
         event_id ? Number(event_id) : null,
+        activityType,
         name.trim(),
         userId,
       ];
@@ -113,6 +118,9 @@ export async function createAchievement(req, res) {
 export async function listAchievements(req, res) {
   const { user_id, verified, q, limit = 20, offset = 0 } = req.query;
   try {
+    const requesterId = req.user?.id;
+    const requesterRole = req.user?.role;
+
     // Include uploader identity (prefer achievement owner, fallback to proof file uploader)
     let base = `SELECT a.*, COALESCE(u.email, u2.email, ux.email)        AS user_email,
           COALESCE(u.full_name, u2.full_name, ux.full_name) AS user_fullname,
@@ -129,6 +137,13 @@ export async function listAchievements(req, res) {
           LEFT JOIN users v ON v.id = a.verified_by`;
     const cond = [];
     const params = [];
+
+    // Staff can only see achievements for activity types they coordinate (null activity_type stays visible)
+    if (requesterRole === "staff" && requesterId) {
+      base += ` LEFT JOIN activity_coordinators ac ON ac.activity_type = a.activity_type AND ac.staff_id = $${params.length + 1}`;
+      params.push(requesterId);
+      cond.push(`ac.id IS NOT NULL`);
+    }
 
     if (user_id) {
       params.push(user_id);

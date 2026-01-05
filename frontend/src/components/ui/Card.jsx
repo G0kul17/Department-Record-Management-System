@@ -7,7 +7,7 @@ export default function Card({
   as = "div",
 }) {
   const Comp = onClick ? "button" : as;
-  const base = "rounded-md bg-white border border-gray-200 shadow-sm text-left";
+  const base = "rounded-md bg-white border-2 border-blue-800 shadow-sm text-left dark:bg-slate-800 dark:border-blue-700";
   const cls = `${base} ${className}`;
   return (
     <Comp className={cls} onClick={onClick}>

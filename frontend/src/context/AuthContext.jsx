@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }) => {
 
   const refreshUserProfile = async () => {
     // Refresh user profile data from server
-    if (!token) return;
+    if (!token || !user) return;
     try {
       const apiBase =
         import.meta.env.VITE_API_BASE || "http://localhost:5000/api";
@@ -76,6 +76,9 @@ export const AuthProvider = ({ children }) => {
       if (sessionToken) {
         headers["x-session-token"] = sessionToken;
       }
+
+      // Only fetch student profile for student users
+      if (user.role !== "student") return;
 
       const response = await fetch(`${apiBase}/student/profile`, {
         headers,

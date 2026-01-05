@@ -24,6 +24,7 @@ export default function AdminQuickActions() {
     if (key === "exportRecords") return nav("/admin/reports");
     if (key === "bulkExport") return nav("/admin/bulk-export");
     if (key === "manageUsers") return nav("/admin/users");
+    if (key === "activityCoordinators") return nav("/admin/activity-coordinators");
     return nav("/");
   };
 
@@ -177,6 +178,17 @@ export default function AdminQuickActions() {
               title="Manage Users"
               desc="View, change roles, or remove users."
               color="red"
+            />
+          </Card>
+          <Card
+            onClick={goTo("activityCoordinators")}
+            className="p-6 glitter-card bulge-card"
+          >
+            <Tile
+              icon={<IconList />}
+              title="Activity Coordinators"
+              desc="Map staff to activity types."
+              color="purple"
             />
           </Card>
         </div>

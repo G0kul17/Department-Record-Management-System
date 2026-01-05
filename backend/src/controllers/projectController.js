@@ -312,6 +312,9 @@ export async function listProjects(req, res) {
     mine,
   } = req.query;
   try {
+    const requesterId = req.user?.id;
+    const requesterRole = req.user?.role;
+
     // Include uploader info for list items (created_by or first file's uploaded_by)
     let base =
       "SELECT p.*, " +
@@ -330,6 +333,12 @@ export async function listProjects(req, res) {
       "LEFT JOIN users v ON v.id = p.verified_by";
     const conditions = [];
     const params = [];
+
+    if (requesterRole === "staff" && requesterId) {
+      base += ` LEFT JOIN activity_coordinators ac ON ac.activity_type = p.activity_type AND ac.staff_id = $${params.length + 1}`;
+      params.push(requesterId);
+      conditions.push(`(p.activity_type IS NULL OR ac.id IS NOT NULL)`);
+    }
 
     if (year) {
       params.push(year);

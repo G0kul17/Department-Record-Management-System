@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import apiClient from "../../api/axiosClient";
 import { useNavigate } from "react-router-dom";
+import BackButton from "../../components/BackButton";
 
 export default function AdminRoleUsersList({ role }) {
   const navigate = useNavigate();
@@ -43,6 +44,7 @@ export default function AdminRoleUsersList({ role }) {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950 py-10">
       <div className="mx-auto max-w-6xl px-6">
+        <BackButton />
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100 capitalize">

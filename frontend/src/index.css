@@ -311,3 +311,63 @@ textarea::placeholder {
   border-radius: 0.5rem; /* rounded */
   background-color: #f1f5f9; /* slate-100 backdrop while image loads */
 }
+
+/* High-visibility button text across the app */
+/* Applies to elements with a background color, but skips light backgrounds */
+button[class*="bg-"]:not([class*="bg-white"]):not([class*="bg-gray-50"]):not(
+    [class*="bg-slate-100"]
+  ):not([class*="bg-sky-100"]):not([class*="bg-yellow-100"]):not(
+    [class*="bg-red-100"]
+  ):not([class*="bg-green-100"]):not([class*="bg-slate-200"]),
+a[role="button"][class*="bg-"]:not([class*="bg-white"]):not(
+    [class*="bg-gray-50"]
+  ):not([class*="bg-slate-100"]):not([class*="bg-sky-100"]):not(
+    [class*="bg-yellow-100"]
+  ):not([class*="bg-red-100"]):not([class*="bg-green-100"]):not(
+    [class*="bg-slate-200"]
+  ),
+a[class*="bg-"]:not([class*="bg-white"]):not([class*="bg-gray-50"]):not(
+    [class*="bg-slate-100"]
+  ):not([class*="bg-sky-100"]):not([class*="bg-yellow-100"]):not(
+    [class*="bg-red-100"]
+  ):not([class*="bg-green-100"]):not([class*="bg-slate-200"]) {
+  color: #ffffff !important;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.55), 0 0 2px rgba(0, 0, 0, 0.4),
+    0 0 6px rgba(0, 0, 0, 0.25);
+  -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.35);
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+}
+
+/* Ensure default buttons without bg- utilities still have readable text */
+button {
+  font-weight: 600;
+}
+
+/* Strengthen visibility for any explicit white-text buttons */
+button[class*="text-white"],
+a[role="button"][class*="text-white"],
+a[class*="text-white"][class*="bg-"] {
+  color: #ffffff !important;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.55), 0 0 2px rgba(0, 0, 0, 0.4),
+    0 0 6px rgba(0, 0, 0, 0.25);
+  -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.35);
+}
+
+/* Button outlines across the app */
+button,
+a[role="button"],
+a[class*="bg-"] {
+  border-width: 2px;
+  border-style: solid;
+  border-color: rgba(15, 23, 42, 0.25); /* slate-900 @ 25% */
+}
+.dark button,
+.dark a[role="button"],
+.dark a[class*="bg-"] {
+  border-color: rgba(255, 255, 255, 0.35);
+}

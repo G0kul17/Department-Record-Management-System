@@ -56,6 +56,9 @@ app.use(
   express.static(path.resolve(process.env.FILE_STORAGE_PATH || "./uploads"))
 );
 
+// Serve exported files statically for easy download by staff/admin
+app.use("/exports", express.static(path.resolve("./exports")));
+
 // after app.use('/api/auth', authRoutes);
 app.use("/api/staff", staffRoutes);
 app.use("/api/faculty-participations", facultyParticipationRoutes);

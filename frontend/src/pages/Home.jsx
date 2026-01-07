@@ -18,6 +18,9 @@ export default function Home() {
   const [studentCount, setStudentCount] = useState(null);
   const [staffCount, setStaffCount] = useState(null);
   const [eventCount, setEventCount] = useState(null);
+  const [researchCount, setResearchCount] = useState(null);
+  const [consultancyCount, setConsultancyCount] = useState(null);
+  const [participationCount, setParticipationCount] = useState(null);
 
   // use shared events data
   // events is imported from ../data/events
@@ -72,6 +75,23 @@ export default function Home() {
         setStudentCount(0);
         setStaffCount(0);
         setEventCount(0);
+      }
+      // Load admin-only faculty stats counts
+      try {
+        const [fr, fc, fp] = await Promise.all([
+          apiClient.get("/faculty-research"),
+          apiClient.get("/faculty-consultancy"),
+          apiClient.get("/faculty-participations"),
+        ]);
+        if (!mounted) return;
+        setResearchCount(Array.isArray(fr?.data) ? fr.data.length : 0);
+        setConsultancyCount(Array.isArray(fc?.data) ? fc.data.length : 0);
+        setParticipationCount(Array.isArray(fp?.data) ? fp.data.length : 0);
+      } catch (e) {
+        if (!mounted) return;
+        setResearchCount(0);
+        setConsultancyCount(0);
+        setParticipationCount(0);
       }
     })();
     return () => {
@@ -207,7 +227,7 @@ export default function Home() {
                   Research Publications
                 </div>
                 <div className="mt-2 text-3xl font-extrabold text-slate-900">
-                  {studentCount === null ? "—" : studentCount}
+                  {researchCount === null ? "—" : researchCount}
                 </div>
               </Card>
               <Card
@@ -218,7 +238,7 @@ export default function Home() {
                   Consultancy Projects
                 </div>
                 <div className="mt-2 text-3xl font-extrabold text-slate-900">
-                  {staffCount === null ? "—" : staffCount}
+                  {consultancyCount === null ? "—" : consultancyCount}
                 </div>
               </Card>
               <Card
@@ -229,7 +249,7 @@ export default function Home() {
                   Faculty Participation
                 </div>
                 <div className="mt-2 text-3xl font-extrabold text-slate-900">
-                  {eventCount === null ? "—" : eventCount}
+                  {participationCount === null ? "—" : participationCount}
                 </div>
               </Card>
             </>

@@ -10,7 +10,7 @@ export default function Achievements() {
     title: "",
     issuer: "",
     date: "",
-    event_id: "",
+    event_name: "",
     name: "",
     post: false,
   });
@@ -75,7 +75,7 @@ export default function Achievements() {
       if (form.issuer) fd.append("issuer", form.issuer);
       if (form.date) fd.append("date_of_award", form.date);
       if (form.date) fd.append("date", form.date); // also send generic 'date' for backend column
-      if (form.event_id) fd.append("event_id", form.event_id);
+      if (form.event_name) fd.append("event_name", form.event_name);
       if (form.title) fd.append("activity_type", form.title);
       if (form.name) fd.append("name", form.name);
       fd.append("post_to_community", form.post ? "true" : "false");
@@ -89,7 +89,7 @@ export default function Achievements() {
         issuer: "",
         date: "",
         proof_file_url: "",
-        event_id: "",
+        event_name: "",
         name: "",
         post: false,
       });
@@ -227,11 +227,11 @@ export default function Achievements() {
                   <span className="text-slate-500 font-normal">(optional)</span>
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
-                  value={form.event_id}
+                  value={form.event_name}
                   onChange={(e) =>
-                    setForm({ ...form, event_id: e.target.value })
+                    setForm({ ...form, event_name: e.target.value })
                   }
                 />
               </div>

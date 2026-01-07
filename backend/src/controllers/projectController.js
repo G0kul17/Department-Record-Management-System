@@ -335,9 +335,11 @@ export async function listProjects(req, res) {
     const params = [];
 
     if (requesterRole === "staff" && requesterId) {
-      base += ` LEFT JOIN activity_coordinators ac ON ac.activity_type = p.activity_type AND ac.staff_id = $${params.length + 1}`;
+      base += ` LEFT JOIN activity_coordinators ac ON ac.activity_type = p.activity_type AND ac.staff_id = $${
+        params.length + 1
+      }`;
       params.push(requesterId);
-      conditions.push(`(p.activity_type IS NULL OR ac.id IS NOT NULL)`);
+      conditions.push(`ac.id IS NOT NULL`);
     }
 
     if (year) {
@@ -392,6 +394,24 @@ export async function getProjectDetails(req, res) {
   if (!Number.isInteger(id) || Number.isNaN(id))
     return res.status(400).json({ message: "Invalid project id" });
   try {
+    // Staff should only access projects for activity types they coordinate
+    const requesterRole = req.user?.role;
+    const requesterId = req.user?.id;
+    if (requesterRole === "staff" && requesterId) {
+      const { rows: auth } = await pool.query(
+        `SELECT 1 FROM projects p
+           JOIN activity_coordinators ac
+             ON ac.activity_type = p.activity_type AND ac.staff_id = $1
+          WHERE p.id = $2`,
+        [requesterId, id]
+      );
+      if (!auth.length) {
+        return res
+          .status(403)
+          .json({ message: "Not authorized to view this project" });
+      }
+    }
+
     const { rows } = await pool.query(
       `SELECT p.*, u.email AS uploader_email, u.full_name AS uploader_full_name
          FROM projects p
@@ -439,6 +459,22 @@ export async function verifyProject(req, res) {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || Number.isNaN(id))
       return res.status(400).json({ message: "Invalid project id" });
+    const requesterRole = req.user?.role;
+    const requesterId = req.user?.id;
+    if (requesterRole === "staff" && requesterId) {
+      const { rows: auth } = await pool.query(
+        `SELECT 1 FROM projects p
+          JOIN activity_coordinators ac
+            ON ac.activity_type = p.activity_type AND ac.staff_id = $1
+         WHERE p.id = $2`,
+        [requesterId, id]
+      );
+      if (!auth.length) {
+        return res
+          .status(403)
+          .json({ message: "Not authorized to approve this project" });
+      }
+    }
     await pool.query(
       "UPDATE projects SET verified = true, verification_status='approved', verified_by=$2, verified_at=NOW() WHERE id=$1",
       [id, req.user?.id || null]
@@ -456,6 +492,22 @@ export async function rejectProject(req, res) {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || Number.isNaN(id))
       return res.status(400).json({ message: "Invalid project id" });
+    const requesterRole = req.user?.role;
+    const requesterId = req.user?.id;
+    if (requesterRole === "staff" && requesterId) {
+      const { rows: auth } = await pool.query(
+        `SELECT 1 FROM projects p
+          JOIN activity_coordinators ac
+            ON ac.activity_type = p.activity_type AND ac.staff_id = $1
+         WHERE p.id = $2`,
+        [requesterId, id]
+      );
+      if (!auth.length) {
+        return res
+          .status(403)
+          .json({ message: "Not authorized to reject this project" });
+      }
+    }
     await pool.query(
       "UPDATE projects SET verified = false, verification_status='rejected', verified_by=$2, verified_at=NOW() WHERE id=$1",
       [id, req.user?.id || null]

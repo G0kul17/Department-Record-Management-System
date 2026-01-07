@@ -14,6 +14,8 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({ message: "", type: "success" });
   const [isLoginSuccess, setIsLoginSuccess] = useState(false);
+  // Allow users to choose OTP-based login; default is session-based direct login
+  const [useOtp, setUseOtp] = useState(false);
   // OTP expiry timer (5 minutes)
   const [otpExpiresAt, setOtpExpiresAt] = useState(null);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -211,12 +213,34 @@ const Login = () => {
                 placeholder="Enter your password"
                 required
               />
+              <div className="flex items-center justify-between mb-4">
+                <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4"
+                    checked={useOtp}
+                    onChange={(e) => setUseOtp(e.target.checked)}
+                  />
+                  <span>Login with OTP (two-step)</span>
+                </label>
+                {useOtp && (
+                  <span className="text-xs text-slate-500">
+                    First: Send OTP, then verify
+                  </span>
+                )}
+              </div>
               <button
                 type="submit"
                 disabled={loading}
                 className="w-full bg-[#87CEEB] text-white py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-sky-200"
               >
-                {loading ? "Sending..." : "Send OTP"}
+                {loading
+                  ? useOtp
+                    ? "Sending..."
+                    : "Please wait..."
+                  : useOtp
+                  ? "Send OTP"
+                  : "Login"}
               </button>
             </form>
           ) : (
@@ -271,4 +295,3 @@ const Login = () => {
 };
 
 export default Login;
-

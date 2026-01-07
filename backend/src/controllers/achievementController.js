@@ -15,6 +15,7 @@ export async function createAchievement(req, res) {
       post_to_community,
       date,
       event_id, // deprecated
+      event_name, // new free-text field
       activity_type,
       name,
     } = req.body;
@@ -69,8 +70,10 @@ export async function createAchievement(req, res) {
 
     const activityType = (activity_type || title || "").trim() || null;
 
+    const eventNameVal = (event_name || "").trim() || null;
+
     let insertSql =
-      "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, date, event_id, activity_type, name) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *";
+      "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, date, event_id, event_name, activity_type, name) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *";
     let params = [
       userId,
       title.trim(),
@@ -79,13 +82,14 @@ export async function createAchievement(req, res) {
       proofFileId,
       date || null,
       event_id ? Number(event_id) : null,
+      eventNameVal,
       activityType,
       name.trim(),
     ];
     // If staff/admin, auto-approve (verified=true)
     if (userRole === "staff" || userRole === "admin") {
       insertSql =
-        "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, date, event_id, activity_type, name, verified, verification_status, verified_by, verified_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, true, 'approved', $10, NOW()) RETURNING *";
+        "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, date, event_id, event_name, activity_type, name, verified, verification_status, verified_by, verified_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, true, 'approved', $11, NOW()) RETURNING *";
       params = [
         userId,
         title.trim(),
@@ -94,6 +98,7 @@ export async function createAchievement(req, res) {
         proofFileId,
         date || null,
         event_id ? Number(event_id) : null,
+        eventNameVal,
         activityType,
         name.trim(),
         userId,
@@ -138,9 +143,11 @@ export async function listAchievements(req, res) {
     const cond = [];
     const params = [];
 
-    // Staff can only see achievements for activity types they coordinate (null activity_type stays visible)
+    // Staff can only see achievements for activity types they coordinate
     if (requesterRole === "staff" && requesterId) {
-      base += ` LEFT JOIN activity_coordinators ac ON ac.activity_type = a.activity_type AND ac.staff_id = $${params.length + 1}`;
+      base += ` LEFT JOIN activity_coordinators ac ON ac.activity_type = a.activity_type AND ac.staff_id = $${
+        params.length + 1
+      }`;
       params.push(requesterId);
       cond.push(`ac.id IS NOT NULL`);
     }
@@ -185,6 +192,24 @@ export async function getAchievementDetails(req, res) {
     if (!Number.isInteger(id) || Number.isNaN(id))
       return res.status(400).json({ message: "Invalid achievement id" });
 
+    // Staff should only access achievements for activity types they coordinate
+    const requesterRole = req.user?.role;
+    const requesterId = req.user?.id;
+    if (requesterRole === "staff" && requesterId) {
+      const { rows: auth } = await pool.query(
+        `SELECT 1 FROM achievements a
+           JOIN activity_coordinators ac
+             ON ac.activity_type = a.activity_type AND ac.staff_id = $1
+          WHERE a.id = $2`,
+        [requesterId, id]
+      );
+      if (!auth.length) {
+        return res
+          .status(403)
+          .json({ message: "Not authorized to view this achievement" });
+      }
+    }
+
     const { rows } = await pool.query(
       `SELECT a.*,
               COALESCE(u.email, u2.email, ux.email)        AS user_email,
@@ -211,6 +236,23 @@ export async function getAchievementDetails(req, res) {
 export async function verifyAchievement(req, res) {
   try {
     const id = Number(req.params.id);
+    const requesterRole = req.user?.role;
+    const requesterId = req.user?.id;
+    // Staff can only verify achievements for activity types they coordinate
+    if (requesterRole === "staff" && requesterId) {
+      const { rows: auth } = await pool.query(
+        `SELECT 1 FROM achievements a
+          JOIN activity_coordinators ac
+            ON ac.activity_type = a.activity_type AND ac.staff_id = $1
+         WHERE a.id = $2`,
+        [requesterId, id]
+      );
+      if (!auth.length) {
+        return res
+          .status(403)
+          .json({ message: "Not authorized to approve this achievement" });
+      }
+    }
     await pool.query(
       "UPDATE achievements SET verified = true, verification_status='approved', verified_by=$2, verified_at=NOW() WHERE id=$1",
       [id, req.user?.id || null]
@@ -225,6 +267,23 @@ export async function verifyAchievement(req, res) {
 export async function rejectAchievement(req, res) {
   try {
     const id = Number(req.params.id);
+    const requesterRole = req.user?.role;
+    const requesterId = req.user?.id;
+    // Staff can only reject achievements for activity types they coordinate
+    if (requesterRole === "staff" && requesterId) {
+      const { rows: auth } = await pool.query(
+        `SELECT 1 FROM achievements a
+          JOIN activity_coordinators ac
+            ON ac.activity_type = a.activity_type AND ac.staff_id = $1
+         WHERE a.id = $2`,
+        [requesterId, id]
+      );
+      if (!auth.length) {
+        return res
+          .status(403)
+          .json({ message: "Not authorized to reject this achievement" });
+      }
+    }
     await pool.query(
       "UPDATE achievements SET verified = false, verification_status='rejected', verified_by=$2, verified_at=NOW() WHERE id=$1",
       [id, req.user?.id || null]

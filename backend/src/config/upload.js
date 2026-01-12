@@ -40,8 +40,15 @@ const storage = multer.diskStorage({
 });
 
 function fileFilter(req, file, cb) {
-  // Always allow standard proof types for the 'proof' field (achievements)
+  // Allow all file types for faculty participation proof field
   if (file.fieldname === "proof") {
+    // Check if this is a faculty participation request
+    // If the route starts with /faculty-participations, allow all file types
+    if (req.baseUrl && req.baseUrl.includes("faculty-participations")) {
+      return cb(null, true); // Allow all file types for faculty participation
+    }
+    
+    // Otherwise, for achievements proof, restrict to PDFs and images only
     const name = file.originalname || "";
     const ext = name.toLowerCase().split(".").pop();
     const extOk = ["pdf", "png", "jpg", "jpeg"].includes(ext);
@@ -124,4 +131,16 @@ export const upload = multer({
   storage,
   limits: { fileSize: MAX_BYTES },
   fileFilter,
+});
+
+// Special upload for faculty participation with 15MB limit and all file types
+export const uploadFacultyProof = multer({
+  storage,
+  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB limit
+  fileFilter: (req, file, cb) => {
+    if (file.fieldname === "proof") {
+      return cb(null, true); // Allow all file types
+    }
+    return cb(null, true); // Allow all other fields as well for flexibility
+  },
 });

@@ -327,14 +327,47 @@ export const deleteFacultyParticipation = async (req, res) => {
 // ========== LIST PARTICIPATIONS ==========
 export const listFacultyParticipations = async (req, res) => {
   try {
-    const q = `
+    const { limit = 10, offset = 0, q = "" } = req.query;
+    const searchTerm = q ? `%${q}%` : null;
+
+    let query = `
       SELECT fp.*, pf.filename AS proof_filename, pf.original_name AS proof_original_name
       FROM faculty_participations fp
-      LEFT JOIN project_files pf ON fp.proof_file_id = pf.id
-      ORDER BY fp.created_at DESC`;
+      LEFT JOIN project_files pf ON fp.proof_file_id = pf.id`;
+    
+    let countQuery = `SELECT COUNT(*) FROM faculty_participations fp`;
+    let params = [];
+    let countParams = [];
 
-    const { rows } = await pool.query(q);
-    return res.json({ data: rows });
+    if (searchTerm) {
+      query += ` WHERE (
+        fp.faculty_name ILIKE $1 OR 
+        fp.title ILIKE $1 OR 
+        fp.department ILIKE $1 OR 
+        fp.type_of_event ILIKE $1
+      )`;
+      countQuery += ` WHERE (
+        fp.faculty_name ILIKE $1 OR 
+        fp.title ILIKE $1 OR 
+        fp.department ILIKE $1 OR 
+        fp.type_of_event ILIKE $1
+      )`;
+      params.push(searchTerm);
+      countParams.push(searchTerm);
+    }
+
+    query += ` ORDER BY fp.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(Number(limit), Number(offset));
+
+    const [dataResult, countResult] = await Promise.all([
+      pool.query(query, params),
+      pool.query(countQuery, countParams)
+    ]);
+
+    return res.json({ 
+      participation: dataResult.rows,
+      total: parseInt(countResult.rows[0].count)
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });

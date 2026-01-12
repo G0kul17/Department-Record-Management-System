@@ -855,8 +855,9 @@ export default function AdminFacultyParticipation() {
           </h2>
           <UploadDropzone
             label="Upload and attach proof"
-            subtitle="PDF or image"
-            accept=".pdf,image/*"
+            subtitle="All file types allowed"
+            accept="*"
+            maxSizeMB={15}
             selectedFile={proof}
             onFileSelected={(f) => setProof(f)}
           />

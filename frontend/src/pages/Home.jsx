@@ -86,7 +86,7 @@ export default function Home() {
         if (!mounted) return;
         setResearchCount(Array.isArray(fr?.data) ? fr.data.length : 0);
         setConsultancyCount(Array.isArray(fc?.data) ? fc.data.length : 0);
-        setParticipationCount(Array.isArray(fp?.data) ? fp.data.length : 0);
+        setParticipationCount(fp?.total || (Array.isArray(fp?.participation) ? fp.participation.length : 0));
       } catch (e) {
         if (!mounted) return;
         setResearchCount(0);

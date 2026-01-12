@@ -81,6 +81,17 @@ export default function FacultyResearch() {
       </p>
 
       <form onSubmit={onSubmit} className="space-y-6">
+        {message && (
+          <div
+            className={`rounded-md px-4 py-2 text-sm ${
+              showSuccess
+                ? "bg-green-50 text-green-700 border border-green-200"
+                : "bg-red-50 text-red-700 border border-red-200"
+            }`}
+          >
+            {message}
+          </div>
+        )}
         <section className="glitter-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">
             Research Details
@@ -303,8 +314,8 @@ export default function FacultyResearch() {
           </h2>
           <UploadDropzone
             label="Upload and attach proof"
-            subtitle="Sanction order or proposal submission (PDF/Image)"
-            accept=".pdf,image/*"
+            subtitle="Sanction order, proposal, or any related proof (any file)"
+            accept="*/*"
             selectedFile={proof}
             onFileSelected={(f) => setProof(f)}
           />
@@ -312,6 +323,7 @@ export default function FacultyResearch() {
 
         <div className="flex justify-end">
           <button
+            type="submit"
             disabled={submitting}
             className="inline-flex items-center rounded-md bg-[#87CEEB] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
           >

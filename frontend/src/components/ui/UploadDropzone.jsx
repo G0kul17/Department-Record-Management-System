@@ -23,24 +23,29 @@ export default function UploadDropzone({
     const files = multiple ? Array.from(filesList) : [filesList[0]];
     setError("");
     const maxBytes = maxSizeMB * 1024 * 1024;
-    
-    // If accept is "*", allow all file types
-    const allowAllTypes = accept === "*";
-    const exts = allowAllTypes ? [] : accept
-      .split(",")
-      .map((s) => s.trim().replace(".", "").toLowerCase())
-      .filter(Boolean);
-    
+
+    // If accept is "*" or "*/*" (or contains a wildcard), allow all file types
+    const allowAllTypes =
+      accept === "*" || accept === "*/*" || /\*/.test(accept || "");
+    const exts = allowAllTypes
+      ? []
+      : accept
+          .split(",")
+          .map((s) => s.trim().replace(".", "").toLowerCase())
+          .filter(Boolean);
+
     for (const f of files) {
       if (f.size > maxBytes) {
         setError(`File too large. Max ${maxSizeMB} MB`);
         return;
       }
-      
+
       // Skip file type check if allow all types
       if (!allowAllTypes) {
         const name = (f.name || "").toLowerCase();
-        const ok = exts.length ? exts.some((e) => name.endsWith(`.${e}`)) : true;
+        const ok = exts.length
+          ? exts.some((e) => name.endsWith(`.${e}`))
+          : true;
         if (!ok) {
           setError(`Unsupported file type. Allowed: ${accept}`);
           return;

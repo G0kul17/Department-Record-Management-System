@@ -1,43 +1,50 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import apiClient from "../api/axiosClient";
 import Card from "../components/ui/Card";
 import PageHeader from "../components/ui/PageHeader";
+import AttachmentPreview from "../components/AttachmentPreview";
 
 export default function FacultyConsultancyApproved() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [total, setTotal] = useState(0);
+  const [limit] = useState(10);
+  const [previewFile, setPreviewFile] = useState(null);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       setLoading(true);
       try {
-        const params = new URLSearchParams();
-        params.set("limit", String(limit));
-        params.set("offset", String((page - 1) * limit));
-        if (q.trim()) params.set("q", q.trim());
-        const data = await apiClient.get(`/faculty-consultancy?${params.toString()}`);
+        // Backend returns { data: rows }
+        const data = await apiClient.get(`/faculty-consultancy`);
         if (!mounted) return;
-        setItems(data.consultancy || []);
-        setTotal(data.total || 0);
+        setItems(Array.isArray(data.data) ? data.data : data.consultancy || []);
       } catch (e) {
         console.error(e);
-        if (mounted) {
-          setItems([]);
-          setTotal(0);
-        }
+        if (mounted) setItems([]);
       } finally {
         if (mounted) setLoading(false);
       }
     })();
     return () => (mounted = false);
-  }, [q, page, limit]);
+  }, []);
+  const filtered = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    if (!query) return items;
+    return items.filter((it) =>
+      [it.faculty_name, it.team_members, it.agency, it.duration]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(query))
+    );
+  }, [items, q]);
 
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / limit));
+  const pageItems = useMemo(() => {
+    const start = (page - 1) * limit;
+    return filtered.slice(start, start + limit);
+  }, [filtered, page, limit]);
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950 py-10">
@@ -45,17 +52,50 @@ export default function FacultyConsultancyApproved() {
         <PageHeader title="Faculty Consultancy Projects" />
 
         {/* Search Box */}
-        <div className="mb-6 flex gap-3">
-          <div className="flex-1">
-            <input
-              value={q}
-              onChange={(e) => {
-                setQ(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search by faculty name, project title, organization..."
-              className="w-full rounded-md border border-slate-300 px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-            />
+        <div className="mx-auto max-w-3xl mb-8">
+          <div className="glitter-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="grid grid-cols-1 gap-3 items-start">
+              <div>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                  Search
+                </label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden
+                    >
+                      <circle
+                        cx="11"
+                        cy="11"
+                        r="8"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      />
+                      <path
+                        d="m21 21-4.35-4.35"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>
+                  <input
+                    value={q}
+                    onChange={(e) => {
+                      setQ(e.target.value);
+                      setPage(1);
+                    }}
+                    placeholder="Search by faculty, members, agency..."
+                    className="w-full rounded-md border border-slate-300 bg-slate-50 px-10 py-2 text-sm placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -67,71 +107,79 @@ export default function FacultyConsultancyApproved() {
         )}
 
         {/* Items Grid */}
-        {!loading && items.length > 0 && (
+        {!loading && pageItems.length > 0 && (
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mb-8">
-            {items.map((item) => (
+            {pageItems.map((item) => (
               <Card
                 key={item.id}
                 className="p-6 flex flex-col hover:shadow-lg transition-shadow"
               >
+                {/* Header */}
                 <div className="mb-4">
                   <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 line-clamp-2">
-                    {item.project_title || "Untitled Project"}
+                    {item.agency || "Consultancy"}
                   </h3>
                   <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                     {item.faculty_name || "Unknown Faculty"}
                   </p>
                 </div>
 
-                <div className="space-y-2 mb-4 flex-grow">
-                  {item.organization_name && (
-                    <div className="text-sm">
-                      <span className="font-semibold text-slate-700 dark:text-slate-300">
-                        Organization:
-                      </span>
-                      <p className="text-slate-600 dark:text-slate-400">
-                        {item.organization_name}
-                      </p>
-                    </div>
+                {/* Details */}
+                <div className="space-y-2 mb-4 flex-grow text-sm">
+                  {item.team_members && (
+                    <p>
+                      <span className="font-semibold">Team Members:</span>{" "}
+                      {item.team_members}
+                    </p>
                   )}
-                  {item.project_duration && (
-                    <div className="text-sm">
-                      <span className="font-semibold text-slate-700 dark:text-slate-300">
-                        Duration:
-                      </span>
-                      <p className="text-slate-600 dark:text-slate-400">
-                        {item.project_duration}
-                      </p>
-                    </div>
+                  {item.duration && (
+                    <p>
+                      <span className="font-semibold">Duration:</span>{" "}
+                      {item.duration}
+                    </p>
                   )}
-                  {item.project_value && (
-                    <div className="text-sm">
-                      <span className="font-semibold text-slate-700 dark:text-slate-300">
-                        Value:
-                      </span>
-                      <p className="text-slate-600 dark:text-slate-400">
-                        ₹{item.project_value}
-                      </p>
-                    </div>
+                  {(item.start_date || item.end_date) && (
+                    <p>
+                      <span className="font-semibold">Dates:</span>{" "}
+                      {item.start_date
+                        ? new Date(item.start_date).toLocaleDateString()
+                        : "—"}{" "}
+                      →{" "}
+                      {item.end_date
+                        ? new Date(item.end_date).toLocaleDateString()
+                        : "—"}
+                    </p>
                   )}
-                  {item.description && (
-                    <div className="text-sm">
-                      <span className="font-semibold text-slate-700 dark:text-slate-300">
-                        Description:
-                      </span>
-                      <p className="text-slate-600 dark:text-slate-400 line-clamp-2">
-                        {item.description}
-                      </p>
-                    </div>
+                  {item.amount && (
+                    <p>
+                      <span className="font-semibold">Amount:</span> ₹
+                      {item.amount}
+                    </p>
                   )}
                 </div>
+
+                {/* Proof */}
+                {item.proof_filename && (
+                  <button
+                    onClick={() =>
+                      setPreviewFile({
+                        filename: item.proof_filename,
+                        original_name:
+                          item.proof_original_name || item.proof_filename,
+                      })
+                    }
+                    className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                  >
+                    View Proof Document
+                  </button>
+                )}
               </Card>
             ))}
           </div>
         )}
 
         {/* Empty State */}
-        {!loading && items.length === 0 && (
+        {!loading && filtered.length === 0 && (
           <div className="text-center py-12">
             <p className="text-slate-600 dark:text-slate-400">
               No consultancy projects found
@@ -160,6 +208,13 @@ export default function FacultyConsultancyApproved() {
               Next
             </button>
           </div>
+        )}
+
+        {previewFile && (
+          <AttachmentPreview
+            file={previewFile}
+            onClose={() => setPreviewFile(null)}
+          />
         )}
       </div>
     </div>

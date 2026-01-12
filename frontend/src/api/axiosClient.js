@@ -106,6 +106,20 @@ class ApiClient {
       body: formData,
     });
 
+    // Handle 401 Unauthorized consistently (same behavior as request())
+    if (response.status === 401) {
+      try {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.pathname = "/login";
+      } catch (_) {
+        try {
+          window.location.assign("/login");
+        } catch (_) {}
+      }
+      throw new Error("Unauthorized");
+    }
+
     const contentType = response.headers.get("content-type") || "";
     const parseBody = async () => {
       if (contentType.includes("application/json")) {

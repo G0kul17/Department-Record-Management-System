@@ -1,44 +1,56 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import apiClient from "../api/axiosClient";
-import { Link } from "react-router-dom";
 import Card from "../components/ui/Card";
 import PageHeader from "../components/ui/PageHeader";
+import AttachmentPreview from "../components/AttachmentPreview";
 
 export default function FacultyResearchApproved() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [total, setTotal] = useState(0);
+  const [limit] = useState(10);
+  const [previewFile, setPreviewFile] = useState(null);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       setLoading(true);
       try {
-        const params = new URLSearchParams();
-        params.set("limit", String(limit));
-        params.set("offset", String((page - 1) * limit));
-        if (q.trim()) params.set("q", q.trim());
-        const data = await apiClient.get(`/faculty-research?${params.toString()}`);
+        // Backend returns { data: rows }
+        const data = await apiClient.get(`/faculty-research`);
         if (!mounted) return;
-        setItems(data.research || []);
-        setTotal(data.total || 0);
+        setItems(Array.isArray(data.data) ? data.data : data.research || []);
       } catch (e) {
         console.error(e);
-        if (mounted) {
-          setItems([]);
-          setTotal(0);
-        }
+        if (mounted) setItems([]);
       } finally {
         if (mounted) setLoading(false);
       }
     })();
     return () => (mounted = false);
-  }, [q, page, limit]);
+  }, []);
+  const filtered = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    if (!query) return items;
+    return items.filter((it) => {
+      return [
+        it.faculty_name,
+        it.principal_investigator,
+        it.title,
+        it.agency,
+        it.current_status,
+      ]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(query));
+    });
+  }, [items, q]);
 
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / limit));
+  const pageItems = useMemo(() => {
+    const start = (page - 1) * limit;
+    return filtered.slice(start, start + limit);
+  }, [filtered, page, limit]);
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950 py-10">
@@ -46,17 +58,50 @@ export default function FacultyResearchApproved() {
         <PageHeader title="Faculty Research Publications" />
 
         {/* Search Box */}
-        <div className="mb-6 flex gap-3">
-          <div className="flex-1">
-            <input
-              value={q}
-              onChange={(e) => {
-                setQ(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search by faculty name, publication title..."
-              className="w-full rounded-md border border-slate-300 px-4 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-            />
+        <div className="mx-auto max-w-3xl mb-8">
+          <div className="glitter-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="grid grid-cols-1 gap-3 items-start">
+              <div>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                  Search
+                </label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden
+                    >
+                      <circle
+                        cx="11"
+                        cy="11"
+                        r="8"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      />
+                      <path
+                        d="m21 21-4.35-4.35"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>
+                  <input
+                    value={q}
+                    onChange={(e) => {
+                      setQ(e.target.value);
+                      setPage(1);
+                    }}
+                    placeholder="Search by faculty, title, PI, agency..."
+                    className="w-full rounded-md border border-slate-300 bg-slate-50 px-10 py-2 text-sm placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -68,64 +113,92 @@ export default function FacultyResearchApproved() {
         )}
 
         {/* Items Grid */}
-        {!loading && items.length > 0 && (
+        {!loading && pageItems.length > 0 && (
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mb-8">
-            {items.map((item) => (
+            {pageItems.map((item) => (
               <Card
                 key={item.id}
                 className="p-6 flex flex-col hover:shadow-lg transition-shadow"
               >
+                {/* Header */}
                 <div className="mb-4">
                   <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 line-clamp-2">
-                    {item.title || "Untitled"}
+                    {item.title || "Untitled Research"}
                   </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                    {item.author_name || "Unknown Author"}
-                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {item.funded_type && (
+                      <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        {item.funded_type}
+                      </span>
+                    )}
+                    {item.current_status && (
+                      <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+                        {item.current_status}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <div className="space-y-2 mb-4 flex-grow">
-                  {item.publication_name && (
-                    <div className="text-sm">
-                      <span className="font-semibold text-slate-700 dark:text-slate-300">
-                        Publication:
-                      </span>
-                      <p className="text-slate-600 dark:text-slate-400">
-                        {item.publication_name}
-                      </p>
-                    </div>
+                {/* Details */}
+                <div className="space-y-2 mb-4 flex-grow text-sm">
+                  {item.faculty_name && (
+                    <p>
+                      <span className="font-semibold">Faculty:</span>{" "}
+                      {item.faculty_name}
+                    </p>
                   )}
-                  {item.publication_date && (
-                    <div className="text-sm">
-                      <span className="font-semibold text-slate-700 dark:text-slate-300">
-                        Date:
-                      </span>
-                      <p className="text-slate-600 dark:text-slate-400">
-                        {new Date(item.publication_date).toLocaleDateString()}
-                      </p>
-                    </div>
+                  {item.principal_investigator && (
+                    <p>
+                      <span className="font-semibold">PI:</span>{" "}
+                      {item.principal_investigator}
+                    </p>
                   )}
-                  {item.doi && (
-                    <div className="text-sm">
-                      <span className="font-semibold text-slate-700 dark:text-slate-300">
-                        DOI:
-                      </span>
-                      <p className="text-slate-600 dark:text-slate-400 break-all">
-                        {item.doi}
-                      </p>
-                    </div>
+                  {item.agency && (
+                    <p>
+                      <span className="font-semibold">Agency:</span>{" "}
+                      {item.agency}
+                    </p>
+                  )}
+                  {item.duration && (
+                    <p>
+                      <span className="font-semibold">Duration:</span>{" "}
+                      {item.duration}
+                    </p>
+                  )}
+                  {(item.start_date || item.end_date) && (
+                    <p>
+                      <span className="font-semibold">Dates:</span>{" "}
+                      {item.start_date
+                        ? new Date(item.start_date).toLocaleDateString()
+                        : "—"}{" "}
+                      →{" "}
+                      {item.end_date
+                        ? new Date(item.end_date).toLocaleDateString()
+                        : "—"}
+                    </p>
+                  )}
+                  {item.amount && (
+                    <p>
+                      <span className="font-semibold">Amount:</span> ₹
+                      {item.amount}
+                    </p>
                   )}
                 </div>
 
-                {item.research_url && (
-                  <a
-                    href={item.research_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 dark:text-blue-400 hover:underline text-sm font-semibold"
+                {/* Proof */}
+                {item.proof_filename && (
+                  <button
+                    onClick={() =>
+                      setPreviewFile({
+                        filename: item.proof_filename,
+                        original_name:
+                          item.proof_original_name || item.proof_filename,
+                      })
+                    }
+                    className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                   >
-                    View Publication →
-                  </a>
+                    View Proof Document
+                  </button>
                 )}
               </Card>
             ))}
@@ -133,7 +206,7 @@ export default function FacultyResearchApproved() {
         )}
 
         {/* Empty State */}
-        {!loading && items.length === 0 && (
+        {!loading && filtered.length === 0 && (
           <div className="text-center py-12">
             <p className="text-slate-600 dark:text-slate-400">
               No research publications found
@@ -162,6 +235,13 @@ export default function FacultyResearchApproved() {
               Next
             </button>
           </div>
+        )}
+
+        {previewFile && (
+          <AttachmentPreview
+            file={previewFile}
+            onClose={() => setPreviewFile(null)}
+          />
         )}
       </div>
     </div>

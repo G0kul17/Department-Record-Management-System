@@ -31,12 +31,21 @@ export default function AdminFacultyResearch() {
     setMessage("");
     try {
       const fd = new FormData();
-      Object.entries(form).forEach(([k, v]) => fd.append(k, v || ""));
+      // Normalize fields for backend expectations
+      Object.entries(form).forEach(([k, v]) => {
+        if (k === "teamMembers") {
+          // Backend expects team_members or team_member_names
+          fd.append("team_member_names", (v || []).join(", "));
+        } else if (k !== "teamMembersCount") {
+          fd.append(k, v || "");
+        }
+      });
       if (proof) fd.append("proof", proof);
       await apiClient.uploadFile("/faculty-research", fd);
       setMessage("Faculty research added");
       setShowSuccess(true);
       setForm({
+        faculty_name: "",
         funded_type: "",
         principal_investigator: "",
         team_members: "",
@@ -73,6 +82,17 @@ export default function AdminFacultyResearch() {
       </p>
 
       <form onSubmit={onSubmit} className="space-y-6">
+        {message && (
+          <div
+            className={`rounded-md px-4 py-2 text-sm ${
+              showSuccess
+                ? "bg-green-50 text-green-700 border border-green-200"
+                : "bg-red-50 text-red-700 border border-red-200"
+            }`}
+          >
+            {message}
+          </div>
+        )}
         <section className="glitter-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">
             Research Details
@@ -105,68 +125,79 @@ export default function AdminFacultyResearch() {
                 <option value="sponsored">Sponsored</option>
                 <option value="inhouse">Inhouse</option>
               </select>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  Total Team Members <span className="text-red-600">*</span>
-                </label>
-                <select
-                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-                  value={form.teamMembersCount || 0}
-                  onChange={(e) => {
-                    const count = Number(e.target.value);
-                    const existing = Array.isArray(form.teamMembers)
-                      ? form.teamMembers
-                      : [];
-                    const next = Array.from(
-                      { length: count },
-                      (_, i) => existing[i] || ""
-                    );
-                    setForm((prev) => ({
-                      ...prev,
-                      teamMembersCount: count,
-                      teamMembers: next,
-                    }));
-                  }}
-                  required
-                >
-                  <option value={0} disabled>
-                    Select Count
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                Principal Investigator <span className="text-red-600">*</span>
+              </label>
+              <input
+                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                value={form.principal_investigator}
+                onChange={update("principal_investigator")}
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                Total Team Members <span className="text-red-600">*</span>
+              </label>
+              <select
+                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                value={form.teamMembersCount || 0}
+                onChange={(e) => {
+                  const count = Number(e.target.value);
+                  const existing = Array.isArray(form.teamMembers)
+                    ? form.teamMembers
+                    : [];
+                  const next = Array.from(
+                    { length: count },
+                    (_, i) => existing[i] || ""
+                  );
+                  setForm((prev) => ({
+                    ...prev,
+                    teamMembersCount: count,
+                    teamMembers: next,
+                  }));
+                }}
+                required
+              >
+                <option value={0} disabled>
+                  Select Count
+                </option>
+                {[...Array(10)].map((_, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    {i + 1}
                   </option>
-                  {[...Array(10)].map((_, i) => (
-                    <option key={i + 1} value={i + 1}>
-                      {i + 1}
-                    </option>
-                  ))}
-                </select>
-                <div className="mt-2 space-y-2">
-                  {Array.from({ length: form.teamMembersCount || 0 }).map(
-                    (_, idx) => (
-                      <div key={idx}>
-                        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                          Team Member {idx + 1}{" "}
-                          <span className="text-red-600">*</span>
-                        </label>
-                        <input
-                          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-                          value={
-                            (form.teamMembers && form.teamMembers[idx]) || ""
-                          }
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setForm((prev) => {
-                              const arr = Array.isArray(prev.teamMembers)
-                                ? [...prev.teamMembers]
-                                : [];
-                              arr[idx] = val;
-                              return { ...prev, teamMembers: arr };
-                            });
-                          }}
-                          required
-                        />
-                      </div>
-                    )
-                  )}
-                </div>
+                ))}
+              </select>
+              <div className="mt-2 space-y-2">
+                {Array.from({ length: form.teamMembersCount || 0 }).map(
+                  (_, idx) => (
+                    <div key={idx}>
+                      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                        Team Member {idx + 1}{" "}
+                        <span className="text-red-600">*</span>
+                      </label>
+                      <input
+                        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                        value={
+                          (form.teamMembers && form.teamMembers[idx]) || ""
+                        }
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setForm((prev) => {
+                            const arr = Array.isArray(prev.teamMembers)
+                              ? [...prev.teamMembers]
+                              : [];
+                            arr[idx] = val;
+                            return { ...prev, teamMembers: arr };
+                          });
+                        }}
+                        required
+                      />
+                    </div>
+                  )
+                )}
               </div>
             </div>
             <div>
@@ -284,8 +315,8 @@ export default function AdminFacultyResearch() {
           </h2>
           <UploadDropzone
             label="Upload and attach proof"
-            subtitle="Sanction order or proposal submission (PDF/Image)"
-            accept=".pdf,image/*"
+            subtitle="Sanction order, proposal, or any related proof (any file)"
+            accept="*/*"
             selectedFile={proof}
             onFileSelected={(f) => setProof(f)}
           />
@@ -293,6 +324,7 @@ export default function AdminFacultyResearch() {
 
         <div className="flex justify-end">
           <button
+            type="submit"
             disabled={submitting}
             className="inline-flex items-center rounded-md bg-[#87CEEB] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
           >

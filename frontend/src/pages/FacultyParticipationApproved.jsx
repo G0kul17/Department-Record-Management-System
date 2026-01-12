@@ -20,7 +20,9 @@ export default function FacultyParticipationApproved() {
         params.set("limit", String(limit));
         params.set("offset", String((page - 1) * limit));
         if (q.trim()) params.set("q", q.trim());
-        const data = await apiClient.get(`/faculty-participations?${params.toString()}`);
+        const data = await apiClient.get(
+          `/faculty-participations?${params.toString()}`
+        );
         if (!mounted) return;
         setItems(data.participation || []);
         setTotal(data.total || 0);
@@ -41,7 +43,6 @@ export default function FacultyParticipationApproved() {
 
   return (
     <div className="mx-auto max-w-6xl p-6">
-
       {/* Centered search below navbar */}
       <div className="mx-auto max-w-3xl mb-8">
         <div className="glitter-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -52,9 +53,27 @@ export default function FacultyParticipationApproved() {
               </label>
               <div className="relative">
                 <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                    <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2"/>
-                    <path d="m21 21-4.35-4.35" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden
+                  >
+                    <circle
+                      cx="11"
+                      cy="11"
+                      r="8"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="m21 21-4.35-4.35"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
                   </svg>
                 </span>
                 <input
@@ -76,7 +95,9 @@ export default function FacultyParticipationApproved() {
       {loading && (
         <div className="text-center py-12">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-          <p className="mt-4 text-slate-600 dark:text-slate-400">Loading participations...</p>
+          <p className="mt-4 text-slate-600 dark:text-slate-400">
+            Loading participations...
+          </p>
         </div>
       )}
 
@@ -114,19 +135,29 @@ export default function FacultyParticipationApproved() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 {item.faculty_name && (
                   <div>
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Faculty Name</span>
-                    <p className="text-sm text-slate-900 dark:text-slate-100 font-medium">{item.faculty_name}</p>
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      Faculty Name
+                    </span>
+                    <p className="text-sm text-slate-900 dark:text-slate-100 font-medium">
+                      {item.faculty_name}
+                    </p>
                   </div>
                 )}
                 {item.department && (
                   <div>
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Department</span>
-                    <p className="text-sm text-slate-900 dark:text-slate-100">{item.department}</p>
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      Department
+                    </span>
+                    <p className="text-sm text-slate-900 dark:text-slate-100">
+                      {item.department}
+                    </p>
                   </div>
                 )}
                 {item.start_date && (
                   <div>
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Start Date</span>
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      Start Date
+                    </span>
                     <p className="text-sm text-slate-900 dark:text-slate-100">
                       {new Date(item.start_date).toLocaleDateString()}
                     </p>
@@ -134,7 +165,9 @@ export default function FacultyParticipationApproved() {
                 )}
                 {item.end_date && (
                   <div>
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">End Date</span>
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      End Date
+                    </span>
                     <p className="text-sm text-slate-900 dark:text-slate-100">
                       {new Date(item.end_date).toLocaleDateString()}
                     </p>
@@ -142,53 +175,86 @@ export default function FacultyParticipationApproved() {
                 )}
                 {item.conducted_by && (
                   <div>
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Conducted By</span>
-                    <p className="text-sm text-slate-900 dark:text-slate-100">{item.conducted_by}</p>
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      Conducted By
+                    </span>
+                    <p className="text-sm text-slate-900 dark:text-slate-100">
+                      {item.conducted_by}
+                    </p>
                   </div>
                 )}
               </div>
 
               {/* Publications Info (if available) */}
-              {(item.paper_title || item.journal_name || item.claiming_faculty_name) && (
+              {(item.paper_title ||
+                item.journal_name ||
+                item.claiming_faculty_name) && (
                 <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                  <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Publication Details</h4>
+                  <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                    Publication Details
+                  </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {item.claiming_faculty_name && (
                       <div>
-                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Claiming Faculty</span>
-                        <p className="text-sm text-slate-900 dark:text-slate-100">{item.claiming_faculty_name}</p>
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                          Claiming Faculty
+                        </span>
+                        <p className="text-sm text-slate-900 dark:text-slate-100">
+                          {item.claiming_faculty_name}
+                        </p>
                       </div>
                     )}
                     {item.paper_title && (
                       <div className="md:col-span-2">
-                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Paper Title</span>
-                        <p className="text-sm text-slate-900 dark:text-slate-100">{item.paper_title}</p>
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                          Paper Title
+                        </span>
+                        <p className="text-sm text-slate-900 dark:text-slate-100">
+                          {item.paper_title}
+                        </p>
                       </div>
                     )}
                     {item.journal_name && (
                       <div>
-                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Journal/Conference</span>
-                        <p className="text-sm text-slate-900 dark:text-slate-100">{item.journal_name}</p>
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                          Journal/Conference
+                        </span>
+                        <p className="text-sm text-slate-900 dark:text-slate-100">
+                          {item.journal_name}
+                        </p>
                       </div>
                     )}
                     {item.publication_indexing && (
                       <div>
-                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Indexing</span>
-                        <p className="text-sm text-slate-900 dark:text-slate-100">{item.publication_indexing}</p>
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                          Indexing
+                        </span>
+                        <p className="text-sm text-slate-900 dark:text-slate-100">
+                          {item.publication_indexing}
+                        </p>
                       </div>
                     )}
                     {item.impact_factor && (
                       <div>
-                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Impact Factor</span>
-                        <p className="text-sm text-slate-900 dark:text-slate-100">{item.impact_factor}</p>
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                          Impact Factor
+                        </span>
+                        <p className="text-sm text-slate-900 dark:text-slate-100">
+                          {item.impact_factor}
+                        </p>
                       </div>
                     )}
-                    {item.citations_count !== null && item.citations_count !== undefined && (
-                      <div>
-                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Citations</span>
-                        <p className="text-sm text-slate-900 dark:text-slate-100">{item.citations_count}</p>
-                      </div>
-                    )}
+                    {item.citations_count !== null &&
+                      item.citations_count !== undefined && (
+                        <div>
+                          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                            Citations
+                          </span>
+                          <p className="text-sm text-slate-900 dark:text-slate-100">
+                            {item.citations_count}
+                          </p>
+                        </div>
+                      )}
                   </div>
                 </div>
               )}
@@ -196,8 +262,12 @@ export default function FacultyParticipationApproved() {
               {/* Description */}
               {item.details && (
                 <div className="mt-4">
-                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Details</span>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{item.details}</p>
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                    Details
+                  </span>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                    {item.details}
+                  </p>
                 </div>
               )}
 
@@ -205,16 +275,36 @@ export default function FacultyParticipationApproved() {
               {item.proof_filename && (
                 <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
                   <button
-                    onClick={() => setPreviewFile({
-                      url: `/uploads/${item.proof_filename}`,
-                      name: item.proof_original_name || item.proof_filename,
-                      type: item.proof_filename.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg'
-                    })}
+                    onClick={() =>
+                      setPreviewFile({
+                        filename: item.proof_filename,
+                        original_name:
+                          item.proof_original_name || item.proof_filename,
+                      })
+                    }
                     className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <polyline points="13 2 13 9 20 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <polyline
+                        points="13 2 13 9 20 9"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
                     </svg>
                     View Proof Document
                   </button>
@@ -241,9 +331,13 @@ export default function FacultyParticipationApproved() {
               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
             />
           </svg>
-          <p className="text-lg font-medium text-slate-900 dark:text-slate-100">No participation records found</p>
+          <p className="text-lg font-medium text-slate-900 dark:text-slate-100">
+            No participation records found
+          </p>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {q ? "Try adjusting your search query" : "No faculty participation records available yet"}
+            {q
+              ? "Try adjusting your search query"
+              : "No faculty participation records available yet"}
           </p>
         </div>
       )}
@@ -273,7 +367,10 @@ export default function FacultyParticipationApproved() {
 
       {/* Attachment Preview Modal */}
       {previewFile && (
-        <AttachmentPreview file={previewFile} onClose={() => setPreviewFile(null)} />
+        <AttachmentPreview
+          file={previewFile}
+          onClose={() => setPreviewFile(null)}
+        />
       )}
     </div>
   );

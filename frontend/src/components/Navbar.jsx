@@ -184,7 +184,7 @@ const Navbar = () => {
                 <Link
                   to="/profile"
                   onClick={() => setSidebarOpen(false)}
-                  className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-slate-700 hover:bg-slate-100"
+                  className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-slate-700 hover:bg-slate-100 outline-none focus:outline-none focus:ring-0 border-0"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -207,7 +207,7 @@ const Navbar = () => {
                 </Link>
                 <button
                   type="button"
-                  className="mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-red-600 hover:bg-red-50"
+                  className="mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-left bg-red-600 text-white hover:bg-red-700 active:bg-red-800 outline-none focus:outline-none focus:ring-0 border-0"
                   onClick={() => {
                     setSidebarOpen(false);
                     handleLogout();
@@ -217,7 +217,7 @@ const Navbar = () => {
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
                     fill="none"
-                    className="h-5 w-5"
+                    className="h-5 w-5 text-white"
                   >
                     <path
                       d="M10 17l5-5-5-5"
@@ -239,7 +239,7 @@ const Navbar = () => {
                       strokeLinecap="round"
                     />
                   </svg>
-                  <span>Logout</span>
+                  <span className="font-semibold">Logout</span>
                 </button>
               </div>
             </div>

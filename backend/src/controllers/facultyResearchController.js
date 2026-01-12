@@ -11,6 +11,7 @@ export const createResearch = async (req, res) => {
       funded_type,
       principal_investigator,
       team_members,
+      team_member_names,
       title,
       agency,
       current_status,
@@ -58,7 +59,9 @@ export const createResearch = async (req, res) => {
       faculty_name || null,
       funded_type,
       principal_investigator,
-      team_members || null,
+      (team_members && String(team_members).trim()) ||
+        (team_member_names && String(team_member_names).trim()) ||
+        null,
       title,
       agency || null,
       current_status,
@@ -91,6 +94,7 @@ export const updateResearch = async (req, res) => {
       funded_type,
       principal_investigator,
       team_members,
+      team_member_names,
       title,
       agency,
       current_status,
@@ -143,7 +147,9 @@ export const updateResearch = async (req, res) => {
       faculty_name,
       funded_type,
       principal_investigator,
-      team_members,
+      (team_members && String(team_members).trim()) ||
+        (team_member_names && String(team_member_names).trim()) ||
+        null,
       title,
       agency,
       current_status,

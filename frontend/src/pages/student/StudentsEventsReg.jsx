@@ -65,6 +65,10 @@ export default function Events() {
             ...e,
             event_url: e.event_url || e.eventUrl || null,
             attachments: Array.isArray(attachments) ? attachments : [],
+            // Build a usable thumbnail URL if present
+            thumbnail: e.thumbnail_filename
+              ? `/uploads/${encodeURIComponent(e.thumbnail_filename)}`
+              : null,
           };
         });
         setEvents(evs);

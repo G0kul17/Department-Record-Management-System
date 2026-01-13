@@ -54,16 +54,50 @@ export async function createEvent(req, res) {
         .json({ message: "event_url must start with http or https" });
     }
 
-    // attachments are optional; if files uploaded, save metadata
-    const attachments = (req.files || []).map((f) => ({
-      filename: f.filename,
-      original_name: f.originalname,
-      mime_type: f.mimetype,
-      size: f.size,
-    }));
+    // attachments are optional; handle multiple multer styles
+    let attachments = [];
+    if (Array.isArray(req.files)) {
+      attachments = req.files.map((f) => ({
+        filename: f.filename,
+        original_name: f.originalname,
+        mime_type: f.mimetype,
+        size: f.size,
+      }));
+    } else if (req.files && Array.isArray(req.files.files)) {
+      attachments = req.files.files.map((f) => ({
+        filename: f.filename,
+        original_name: f.originalname,
+        mime_type: f.mimetype,
+        size: f.size,
+      }));
+    } else if (req.files && Array.isArray(req.files.attachments)) {
+      attachments = req.files.attachments.map((f) => ({
+        filename: f.filename,
+        original_name: f.originalname,
+        mime_type: f.mimetype,
+        size: f.size,
+      }));
+    }
 
-    const q = `INSERT INTO events (title, description, venue, start_date, end_date, organizer_id, attachments, event_url)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`;
+    // Optional thumbnail
+    let thumb = null;
+    if (
+      req.files &&
+      Array.isArray(req.files.thumbnail) &&
+      req.files.thumbnail[0]
+    ) {
+      const f = req.files.thumbnail[0];
+      thumb = {
+        filename: f.filename,
+        original_name: f.originalname,
+        mime: f.mimetype,
+        size: f.size,
+      };
+    }
+
+    const q = `INSERT INTO events (title, description, venue, start_date, end_date, organizer_id, attachments, event_url,
+                                   thumbnail_filename, thumbnail_original_name, thumbnail_mime, thumbnail_size)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`;
     const values = [
       title,
       description || null,
@@ -73,6 +107,10 @@ export async function createEvent(req, res) {
       staffId,
       attachments.length ? JSON.stringify(attachments) : null,
       event_url || null,
+      thumb?.filename || null,
+      thumb?.original_name || null,
+      thumb?.mime || null,
+      thumb?.size || null,
     ];
     const { rows } = await pool.query(q, values);
 
@@ -133,7 +171,8 @@ export async function listEvents(req, res) {
   try {
     const { upcomingOnly, order, limit } = req.query;
     // select created_at so caller can order by creation time
-    const cols = "id, title, description, venue, start_date, end_date, attachments, event_url, created_at";
+    const cols =
+      "id, title, description, venue, start_date, end_date, attachments, event_url, created_at, thumbnail_filename, thumbnail_original_name, thumbnail_mime, thumbnail_size";
     let q = `SELECT ${cols} FROM events`;
     const parts = [];
     if (upcomingOnly === "true") {

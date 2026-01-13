@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import apiClient from "../api/axiosClient";
 import EventsCarousel from "../components/EventsCarousel";
-import AchievementsFeed from "../components/AchievementsFeed";
+import AchievementsRecentGrid from "../components/AchievementsRecentGrid";
 import BlurText from "../components/ui/BlurText";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
@@ -86,7 +86,10 @@ export default function Home() {
         if (!mounted) return;
         setResearchCount(Array.isArray(fr?.data) ? fr.data.length : 0);
         setConsultancyCount(Array.isArray(fc?.data) ? fc.data.length : 0);
-        setParticipationCount(fp?.total || (Array.isArray(fp?.participation) ? fp.participation.length : 0));
+        setParticipationCount(
+          fp?.total ||
+            (Array.isArray(fp?.participation) ? fp.participation.length : 0)
+        );
       } catch (e) {
         if (!mounted) return;
         setResearchCount(0);
@@ -147,8 +150,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Achievements feed below events for admin landing */}
-      {user && <AchievementsFeed title="Recent Achievements" limit={12} />}
+      {/* Recent Achievements grid (latest 6) */}
+      <AchievementsRecentGrid limit={6} />
 
       {/* Stats */}
       <div className="mx-auto max-w-6xl px-6 pb-24">

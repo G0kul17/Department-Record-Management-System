@@ -9,7 +9,7 @@ import apiClient from "../../api/axiosClient";
 import { useEffect, useState } from "react";
 import { formatDisplayName } from "../../utils/displayName";
 import EventsCarousel from "../../components/EventsCarousel";
-import AchievementsFeed from "../../components/AchievementsFeed";
+import AchievementsRecentGrid from "../../components/AchievementsRecentGrid";
 
 const StaffDashboard = () => {
   const { user } = useAuth();
@@ -185,8 +185,8 @@ function OverviewPanel({ user }) {
         )}
       </div>
 
-      {/* Achievements feed below events for staff dashboard */}
-      <AchievementsFeed title="Recent Achievements" limit={12} />
+      {/* Recent Achievements grid (latest 6) for staff */}
+      <AchievementsRecentGrid limit={6} />
     </div>
   );
 }

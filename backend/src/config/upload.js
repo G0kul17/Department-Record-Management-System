@@ -47,7 +47,7 @@ function fileFilter(req, file, cb) {
     if (req.baseUrl && req.baseUrl.includes("faculty-participations")) {
       return cb(null, true); // Allow all file types for faculty participation
     }
-    
+
     // Otherwise, for achievements proof, restrict to PDFs and images only
     const name = file.originalname || "";
     const ext = name.toLowerCase().split(".").pop();
@@ -56,15 +56,42 @@ function fileFilter(req, file, cb) {
     return cb(new Error("Invalid proof file type"), false);
   }
 
-  // Restrict project attachments to ZIP only for field 'files'
+  // 'files' is used by projects to upload ZIPs; scope ZIP-only rule to project routes
   if (file.fieldname === "files") {
+    const isProjectRoute = (req.baseUrl || "").includes("projects");
+    if (isProjectRoute) {
+      const name = file.originalname || "";
+      const ext = path.extname(name).toLowerCase();
+      const isZipMime =
+        file.mimetype === "application/zip" ||
+        file.mimetype === "application/x-zip-compressed";
+      if (isZipMime || ext === ".zip") return cb(null, true);
+      return cb(
+        new Error("Only .zip files are allowed for attachments"),
+        false
+      );
+    }
+    // For non-project routes (e.g., events), allow by default; rely on component accept
+    return cb(null, true);
+  }
+
+  // Allow standard image types for 'thumbnail' field (event thumbnails)
+  if (file.fieldname === "thumbnail") {
     const name = file.originalname || "";
-    const ext = path.extname(name).toLowerCase();
-    const isZipMime =
-      file.mimetype === "application/zip" ||
-      file.mimetype === "application/x-zip-compressed";
-    if (isZipMime || ext === ".zip") return cb(null, true);
-    return cb(new Error("Only .zip files are allowed for attachments"), false);
+    const ext = name.toLowerCase().split(".").pop();
+    const allowedExts = new Set(["png", "jpg", "jpeg", "gif"]);
+    const allowedMimes = new Set([
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/gif",
+      "image/x-png",
+      "image/pjpeg",
+    ]);
+    if (allowedMimes.has(file.mimetype) || allowedExts.has(ext)) {
+      return cb(null, true);
+    }
+    return cb(new Error("Invalid image type for thumbnail"), false);
   }
 
   // Allow CSV/Excel specifically for 'document' field (data uploads)

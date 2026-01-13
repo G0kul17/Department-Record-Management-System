@@ -246,6 +246,12 @@ $$;
 -- Add event_url for registration links
 ALTER TABLE events ADD COLUMN IF NOT EXISTS event_url TEXT;
 
+-- Add thumbnail metadata for event cards
+ALTER TABLE events ADD COLUMN IF NOT EXISTS thumbnail_filename VARCHAR(1024);
+ALTER TABLE events ADD COLUMN IF NOT EXISTS thumbnail_original_name VARCHAR(1024);
+ALTER TABLE events ADD COLUMN IF NOT EXISTS thumbnail_mime VARCHAR(255);
+ALTER TABLE events ADD COLUMN IF NOT EXISTS thumbnail_size BIGINT;
+
 -- ==========================================================
 -- FACULTY PARTICIPATIONS (Added for Staff Dashboard)
 -- ==========================================================

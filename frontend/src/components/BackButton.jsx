@@ -26,9 +26,9 @@ export default function BackButton() {
           onClick={() => nav(-1)}
           title="Go back"
           aria-label="Go back"
-          className="inline-flex items-center gap-3 rounded-full bg-white/95 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 px-3 py-2 shadow-sm hover:shadow-md transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-300"
+          className="inline-flex items-center gap-3 rounded-full bg-white/95 dark:bg-slate-800/80 border border-sky-300 dark:border-sky-600 px-3 py-2 shadow-sm hover:shadow-md transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-300"
         >
-          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white dark:bg-slate-900/80 border border-slate-100 dark:border-slate-700 text-slate-800 dark:text-slate-100 drop-shadow-sm">
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white dark:bg-slate-900/80 border border-sky-200 dark:border-sky-600 text-slate-800 dark:text-slate-100 drop-shadow-sm">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"

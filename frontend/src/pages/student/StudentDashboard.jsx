@@ -5,7 +5,7 @@ import { useAuth } from "../../hooks/useAuth";
 import apiClient from "../../api/axiosClient";
 import { useNavigate } from "react-router-dom";
 import EventsCarousel from "../../components/EventsCarousel";
-import AchievementsFeed from "../../components/AchievementsFeed";
+import AchievementsRecentGrid from "../../components/AchievementsRecentGrid";
 import Card from "../../components/ui/Card";
 
 export default function StudentDashboard() {
@@ -65,11 +65,16 @@ export default function StudentDashboard() {
           } catch (_) {
             attachments = [];
           }
+          const uploadsBase =
+            apiClient.baseURL.replace(/\/api$/, "") + "/uploads/";
           return {
             ...e,
             description: e.description || e.summary || "",
             event_url: e.event_url || e.eventUrl || null,
             attachments: Array.isArray(attachments) ? attachments : [],
+            thumbnail: e.thumbnail_filename
+              ? uploadsBase + encodeURIComponent(e.thumbnail_filename)
+              : null,
           };
         });
         setEvents(evs);
@@ -184,8 +189,8 @@ export default function StudentDashboard() {
         )}
       </div>
 
-      {/* Achievements feed below events */}
-      {user && <AchievementsFeed title="Recent Achievements" limit={12} />}
+      {/* Recent Achievements grid (latest 6) */}
+      <AchievementsRecentGrid limit={6} />
 
       {/* Stats */}
       <div className="mx-auto max-w-6xl px-6 pb-24">

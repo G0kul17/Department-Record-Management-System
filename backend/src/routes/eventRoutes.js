@@ -15,7 +15,10 @@ router.post(
   "/",
   requireAuth,
   requireRole(["staff", "admin"]),
-  upload.array("files", 10),
+  upload.fields([
+    { name: "attachments", maxCount: 10 },
+    { name: "thumbnail", maxCount: 1 },
+  ]),
   createEvent
 );
 

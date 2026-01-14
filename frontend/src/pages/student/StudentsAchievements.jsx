@@ -13,14 +13,19 @@ export default function Achievements() {
     event_name: "",
     name: "",
     post: false,
+    prize_amount: "",
+    position: "",
   });
   const [proof, setProof] = useState(null);
+  const [certificate, setCertificate] = useState(null);
+  const [eventPhotos, setEventPhotos] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [list, setList] = useState([]);
   const [loadingMine, setLoadingMine] = useState(false);
+  const [previewModal, setPreviewModal] = useState({ open: false, item: null });
 
   const loadMine = async () => {
     setLoadingMine(true);
@@ -47,29 +52,8 @@ export default function Achievements() {
     setMessage("");
     setSuccess(false);
     try {
-      // Client-side file type guard for better UX
-      if (proof) {
-        const allowed = new Set([
-          "application/pdf",
-          "image/png",
-          "image/jpeg",
-          "image/jpg",
-          "image/webp",
-          // Common Windows/IE legacy aliases
-          "image/x-png",
-          "image/pjpeg",
-        ]);
-        const typeOk = allowed.has(proof.type);
-        const name = proof.name || proof.filename || "";
-        const ext = name.toLowerCase().split(".").pop();
-        const extOk = ["pdf", "png", "jpg", "jpeg"].includes(ext);
-        if (!(typeOk || extOk)) {
-          setMessage("Please upload a PDF or JPG/PNG image");
-          setSuccess(false);
-          setSubmitting(false);
-          return;
-        }
-      }
+      // Allow all file types - no validation
+
       const fd = new FormData();
       fd.append("title", form.title.trim());
       if (form.issuer) fd.append("issuer", form.issuer);
@@ -78,8 +62,12 @@ export default function Achievements() {
       if (form.event_name) fd.append("event_name", form.event_name);
       if (form.title) fd.append("activity_type", form.title);
       if (form.name) fd.append("name", form.name);
+      if (form.prize_amount) fd.append("prize_amount", form.prize_amount);
+      if (form.position) fd.append("position", form.position);
       fd.append("post_to_community", form.post ? "true" : "false");
       if (proof) fd.append("proof", proof);
+      if (certificate) fd.append("certificate", certificate);
+      if (eventPhotos) fd.append("event_photos", eventPhotos);
       await apiClient.uploadFile("/achievements", fd);
       setSuccess(true);
       setMessage("Achievement submitted successfully.");
@@ -92,8 +80,12 @@ export default function Achievements() {
         event_name: "",
         name: "",
         post: false,
+        prize_amount: "",
+        position: "",
       });
       setProof(null);
+      setCertificate(null);
+      setEventPhotos(null);
       await loadMine();
     } catch (err) {
       setSuccess(false);
@@ -121,7 +113,7 @@ export default function Achievements() {
           Add Achievement
         </h2>
         <p className="text-slate-600 dark:text-slate-300 mb-6">
-          Provide details and optionally upload a proof document.
+          Provide details and optionally upload proof documents.
         </p>
 
         {message && (
@@ -235,6 +227,24 @@ export default function Achievements() {
                   }
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Position{" "}
+                  <span className="text-slate-500 font-normal">(optional)</span>
+                </label>
+                <select
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
+                  value={form.position}
+                  onChange={(e) =>
+                    setForm({ ...form, position: e.target.value })
+                  }
+                >
+                  <option value="">Select position</option>
+                  <option value="1st">1st Place</option>
+                  <option value="2nd">2nd Place</option>
+                  <option value="3rd">3rd Place</option>
+                </select>
+              </div>
             </div>
 
             <div className="mt-4">
@@ -251,10 +261,53 @@ export default function Achievements() {
             </div>
 
             <div className="mt-4">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+                Prize Amount{" "}
+                <span className="text-slate-500 font-normal">(optional)</span>
+              </label>
+              <div className="mt-1 flex items-center">
+                <span className="text-slate-700 dark:text-slate-200 mr-2">₹</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="flex-1 rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
+                  value={form.prize_amount}
+                  onChange={(e) =>
+                    setForm({ ...form, prize_amount: e.target.value })
+                  }
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
+            <div className="mt-4">
               <UploadDropzone
-                label="Upload and attach proof"
-                subtitle="PDF or image (jpeg, jpg, png)"
-                accept=".pdf,.png,.jpg,.jpeg"
+                label="Upload Certificate"
+                subtitle="Any file format - Mandatory"
+                accept="*"
+                maxSizeMB={25}
+                selectedFile={certificate}
+                onFileSelected={(f) => setCertificate(f)}
+              />
+            </div>
+
+            <div className="mt-4">
+              <UploadDropzone
+                label="Upload Event Photos"
+                subtitle="Any file format - Optional"
+                accept="*"
+                maxSizeMB={25}
+                selectedFile={eventPhotos}
+                onFileSelected={(f) => setEventPhotos(f)}
+              />
+            </div>
+
+            <div className="mt-4">
+              <UploadDropzone
+                label="Upload Other Proofs"
+                subtitle="Any file format - Required"
+                accept="*"
                 maxSizeMB={25}
                 selectedFile={proof}
                 onFileSelected={(f) => setProof(f)}
@@ -315,7 +368,7 @@ export default function Achievements() {
                     className="rounded-lg border border-slate-200 p-4 dark:border-slate-700"
                   >
                     <div className="flex items-center justify-between">
-                      <div>
+                      <div className="flex-1">
                         <div className="font-semibold text-slate-800 dark:text-slate-100">
                           {a.title}
                         </div>
@@ -323,19 +376,28 @@ export default function Achievements() {
                           {a.issuer || ""}
                         </div>
                       </div>
-                      {isApproved ? (
-                        <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-300">
-                          Approved
-                        </span>
-                      ) : isRejected ? (
-                        <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-300">
-                          Rejected
-                        </span>
-                      ) : (
-                        <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
-                          Pending
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewModal({ open: true, item: a })}
+                          className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100"
+                        >
+                          View
+                        </button>
+                        {isApproved ? (
+                          <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-300">
+                            Approved
+                          </span>
+                        ) : isRejected ? (
+                          <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                            Rejected
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
+                            Pending
+                          </span>
+                        )}
+                      </div>
                     </div>
                     {a.date_of_award && (
                       <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -350,6 +412,161 @@ export default function Achievements() {
           </div>
         </div>
       </div>
+
+      {/* Preview Modal */}
+      {previewModal.open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto"
+          onClick={() => setPreviewModal({ open: false, item: null })}
+        >
+          <div
+            className="max-w-3xl w-full rounded-xl bg-white p-6 shadow-xl dark:bg-slate-900 my-8 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                Achievement Preview
+              </h3>
+              <button
+                className="rounded-md bg-slate-200 px-3 py-1 text-sm hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700"
+                onClick={() => setPreviewModal({ open: false, item: null })}
+              >
+                Close
+              </button>
+            </div>
+            <div className="space-y-3 text-sm text-slate-700 dark:text-slate-300">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <span className="font-semibold">Title:</span>{" "}
+                  {previewModal.item?.title}
+                </div>
+                <div>
+                  <span className="font-semibold">Issuer:</span>{" "}
+                  {previewModal.item?.issuer}
+                </div>
+                <div>
+                  <span className="font-semibold">Award Date:</span>{" "}
+                  {previewModal.item?.date_of_award
+                    ? new Date(previewModal.item.date_of_award).toLocaleDateString()
+                    : "-"}
+                </div>
+                <div>
+                  <span className="font-semibold">Name:</span>{" "}
+                  {previewModal.item?.name}
+                </div>
+                {previewModal.item?.event_name && (
+                  <div>
+                    <span className="font-semibold">Event Name:</span>{" "}
+                    {previewModal.item.event_name}
+                  </div>
+                )}
+                {previewModal.item?.position && (
+                  <div>
+                    <span className="font-semibold">Position:</span>{" "}
+                    {previewModal.item.position}
+                  </div>
+                )}
+                {previewModal.item?.prize_amount && (
+                  <div>
+                    <span className="font-semibold">Prize Amount:</span> ₹
+                    {parseFloat(previewModal.item.prize_amount).toFixed(2)}
+                  </div>
+                )}
+                <div>
+                  <span className="font-semibold">Status:</span>{" "}
+                  {previewModal.item?.verification_status === "approved" ||
+                  previewModal.item?.verified
+                    ? "Approved"
+                    : previewModal.item?.verification_status === "rejected"
+                    ? "Rejected"
+                    : "Pending"}
+                </div>
+              </div>
+
+              {/* Main Proof */}
+              {previewModal.item?.proof_filename && (
+                <div className="mt-4">
+                  <div className="font-semibold mb-2">Main Proof:</div>
+                  {previewModal.item?.proof_mime?.startsWith("image/") ? (
+                    <img
+                      alt={previewModal.item?.proof_name || "proof"}
+                      src={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
+                        previewModal.item?.proof_filename
+                      }`}
+                      className="max-h-80 rounded border"
+                    />
+                  ) : (
+                    <a
+                      href={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
+                        previewModal.item?.proof_filename
+                      }`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-blue-600 hover:underline dark:text-blue-400"
+                    >
+                      {previewModal.item?.proof_name || "Download proof"}
+                    </a>
+                  )}
+                </div>
+              )}
+
+              {/* Certificate */}
+              {previewModal.item?.certificate_filename && (
+                <div className="mt-4">
+                  <div className="font-semibold mb-2">Certificate:</div>
+                  {previewModal.item?.certificate_mime?.startsWith("image/") ? (
+                    <img
+                      alt={previewModal.item?.certificate_name || "certificate"}
+                      src={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
+                        previewModal.item?.certificate_filename
+                      }`}
+                      className="max-h-80 rounded border"
+                    />
+                  ) : (
+                    <a
+                      href={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
+                        previewModal.item?.certificate_filename
+                      }`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-blue-600 hover:underline dark:text-blue-400"
+                    >
+                      {previewModal.item?.certificate_name || "Download certificate"}
+                    </a>
+                  )}
+                </div>
+              )}
+
+              {/* Event Photos */}
+              {previewModal.item?.event_photos_filename && (
+                <div className="mt-4">
+                  <div className="font-semibold mb-2">Event Photos:</div>
+                  {previewModal.item?.event_photos_mime?.startsWith("image/") ? (
+                    <img
+                      alt={previewModal.item?.event_photos_name || "event photos"}
+                      src={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
+                        previewModal.item?.event_photos_filename
+                      }`}
+                      className="max-h-80 rounded border"
+                    />
+                  ) : (
+                    <a
+                      href={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
+                        previewModal.item?.event_photos_filename
+                      }`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-blue-600 hover:underline dark:text-blue-400"
+                    >
+                      {previewModal.item?.event_photos_name || "Download photos"}
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

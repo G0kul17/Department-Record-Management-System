@@ -120,6 +120,12 @@ ALTER TABLE achievements ADD COLUMN IF NOT EXISTS name VARCHAR(255);
 ALTER TABLE achievements ADD COLUMN IF NOT EXISTS activity_type VARCHAR(100);
 -- Free-text event name for achievements (UI now sends this instead of numeric event_id)
 ALTER TABLE achievements ADD COLUMN IF NOT EXISTS event_name VARCHAR(255);
+-- New proof types: certificates and event photos
+ALTER TABLE achievements ADD COLUMN IF NOT EXISTS certificate_file_id INTEGER;
+ALTER TABLE achievements ADD COLUMN IF NOT EXISTS event_photos_file_id INTEGER;
+-- Additional achievement details
+ALTER TABLE achievements ADD COLUMN IF NOT EXISTS prize_amount DECIMAL(10, 2);
+ALTER TABLE achievements ADD COLUMN IF NOT EXISTS position VARCHAR(50);
 -- uploader_name is deprecated; ensure it does not exist
 ALTER TABLE achievements DROP COLUMN IF EXISTS uploader_name;
 -- proof_file_url is deprecated; ensure it does not exist

@@ -182,9 +182,21 @@ export default function AchievementsManagement() {
                 <div>
                   <span className="font-semibold">Name:</span> {a.name || "—"}
                 </div>
+                {a.position && (
+                  <div>
+                    <span className="font-semibold">Position:</span>{" "}
+                    {a.position}
+                  </div>
+                )}
+                {a.prize_amount && (
+                  <div>
+                    <span className="font-semibold">Prize Amount:</span> ₹
+                    {parseFloat(a.prize_amount).toFixed(2)}
+                  </div>
+                )}
                 {a.proof_filename && (
                   <div className="mt-2">
-                    <span className="font-semibold">Proof:</span>{" "}
+                    <span className="font-semibold">Main Proof:</span>{" "}
                     {a.proof_mime && a.proof_mime.startsWith("image/") ? (
                       <img
                         src={`/uploads/${a.proof_filename}`}
@@ -203,6 +215,50 @@ export default function AchievementsManagement() {
                     )}
                   </div>
                 )}
+                {a.certificate_filename && (
+                  <div className="mt-2">
+                    <span className="font-semibold">Certificate:</span>{" "}
+                    {a.certificate_mime &&
+                    a.certificate_mime.startsWith("image/") ? (
+                      <img
+                        src={`/uploads/${a.certificate_filename}`}
+                        alt={a.certificate_name || "Certificate"}
+                        className="mt-2 max-h-64 rounded border"
+                      />
+                    ) : (
+                      <a
+                        href={`/uploads/${a.certificate_filename}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        {a.certificate_name || "Download certificate"}
+                      </a>
+                    )}
+                  </div>
+                )}
+                {a.event_photos_filename && (
+                  <div className="mt-2">
+                    <span className="font-semibold">Event Photos:</span>{" "}
+                    {a.event_photos_mime &&
+                    a.event_photos_mime.startsWith("image/") ? (
+                      <img
+                        src={`/uploads/${a.event_photos_filename}`}
+                        alt={a.event_photos_name || "Event Photos"}
+                        className="mt-2 max-h-64 rounded border"
+                      />
+                    ) : (
+                      <a
+                        href={`/uploads/${a.event_photos_filename}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        {a.event_photos_name || "Download photos"}
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -210,11 +266,11 @@ export default function AchievementsManagement() {
       </div>
       {modal.open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto"
           onClick={closeModal}
         >
           <div
-            className="max-w-2xl w-full rounded-xl bg-white p-6 shadow-xl dark:bg-slate-900"
+            className="max-w-2xl w-full rounded-xl bg-white p-6 shadow-xl dark:bg-slate-900 my-8"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -228,7 +284,7 @@ export default function AchievementsManagement() {
                 Close
               </button>
             </div>
-            <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
+            <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300 max-h-96 overflow-y-auto">
               <div>
                 <span className="font-semibold">Title:</span>{" "}
                 {modal.item?.title}
@@ -244,12 +300,24 @@ export default function AchievementsManagement() {
               <div>
                 <span className="font-semibold">Name:</span> {modal.item?.name}
               </div>
+              {modal.item?.position && (
+                <div>
+                  <span className="font-semibold">Position:</span>{" "}
+                  {modal.item?.position}
+                </div>
+              )}
+              {modal.item?.prize_amount && (
+                <div>
+                  <span className="font-semibold">Prize Amount:</span> ₹
+                  {parseFloat(modal.item?.prize_amount).toFixed(2)}
+                </div>
+              )}
               <div>
                 <span className="font-semibold">Uploaded By:</span>{" "}
                 {modal.item?.user_email}
               </div>
               <div className="mt-3">
-                <span className="font-semibold">Proof:</span>
+                <span className="font-semibold">Main Proof:</span>
                 {modal.item?.proof_mime &&
                 modal.item?.proof_mime.startsWith("image/") ? (
                   <div className="mt-2">
@@ -277,6 +345,64 @@ export default function AchievementsManagement() {
                   <span className="ml-2">No file</span>
                 )}
               </div>
+              {modal.item?.certificate_filename && (
+                <div className="mt-3">
+                  <span className="font-semibold">Certificate:</span>
+                  {modal.item?.certificate_mime &&
+                  modal.item?.certificate_mime.startsWith("image/") ? (
+                    <div className="mt-2">
+                      <img
+                        alt={modal.item?.certificate_name || "certificate"}
+                        src={`${apiClient.baseURL.replace(
+                          /\/api$/,
+                          ""
+                        )}/uploads/${modal.item?.certificate_filename}`}
+                        className="max-h-80 rounded"
+                      />
+                    </div>
+                  ) : (
+                    <a
+                      href={`${apiClient.baseURL.replace(/\/api$/, "")}/uploads/${
+                        modal.item?.certificate_filename
+                      }`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="ml-2 text-blue-600 hover:underline"
+                    >
+                      Download certificate
+                    </a>
+                  )}
+                </div>
+              )}
+              {modal.item?.event_photos_filename && (
+                <div className="mt-3">
+                  <span className="font-semibold">Event Photos:</span>
+                  {modal.item?.event_photos_mime &&
+                  modal.item?.event_photos_mime.startsWith("image/") ? (
+                    <div className="mt-2">
+                      <img
+                        alt={modal.item?.event_photos_name || "event photos"}
+                        src={`${apiClient.baseURL.replace(
+                          /\/api$/,
+                          ""
+                        )}/uploads/${modal.item?.event_photos_filename}`}
+                        className="max-h-80 rounded"
+                      />
+                    </div>
+                  ) : (
+                    <a
+                      href={`${apiClient.baseURL.replace(/\/api$/, "")}/uploads/${
+                        modal.item?.event_photos_filename
+                      }`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="ml-2 text-blue-600 hover:underline"
+                    >
+                      Download photos
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

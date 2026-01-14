@@ -48,12 +48,33 @@ function fileFilter(req, file, cb) {
       return cb(null, true); // Allow all file types for faculty participation
     }
 
-    // Otherwise, for achievements proof, restrict to PDFs and images only
+    // Allow all file types for achievements
+    if (req.baseUrl && req.baseUrl.includes("achievements")) {
+      return cb(null, true); // Allow all file types for achievements
+    }
+
+    // Otherwise, for other proof fields, restrict to PDFs and images only
     const name = file.originalname || "";
     const ext = name.toLowerCase().split(".").pop();
     const extOk = ["pdf", "png", "jpg", "jpeg"].includes(ext);
     if (proofAllowedMimes.has(file.mimetype) || extOk) return cb(null, true);
     return cb(new Error("Invalid proof file type"), false);
+  }
+
+  // Allow all file types for certificate field in achievements
+  if (file.fieldname === "certificate") {
+    if (req.baseUrl && req.baseUrl.includes("achievements")) {
+      return cb(null, true); // Allow all file types for achievements
+    }
+    return cb(new Error("Invalid certificate file type"), false);
+  }
+
+  // Allow all file types for event_photos field in achievements
+  if (file.fieldname === "event_photos") {
+    if (req.baseUrl && req.baseUrl.includes("achievements")) {
+      return cb(null, true); // Allow all file types for achievements
+    }
+    return cb(new Error("Invalid event photo file type"), false);
   }
 
   // 'files' is used by projects to upload ZIPs; scope ZIP-only rule to project routes

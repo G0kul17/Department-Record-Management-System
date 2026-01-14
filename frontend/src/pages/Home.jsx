@@ -4,6 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import apiClient from "../api/axiosClient";
 import EventsCarousel from "../components/EventsCarousel";
 import AchievementsRecentGrid from "../components/AchievementsRecentGrid";
+import AchievementsLeaderboard from "../components/AchievementsLeaderboard";
 import BlurText from "../components/ui/BlurText";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
@@ -105,159 +106,163 @@ export default function Home() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-white">
       {/* Content */}
-      <div className="mx-auto max-w-6xl px-6 pt-16 pb-10 text-center">
-        <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-slate-800">
-          <BlurText text="Sona College of Technology" />
-        </h1>
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pt-8 sm:pt-10 md:pt-12 pb-6 sm:pb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-center">
+          <div className="md:col-span-2 text-center">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-800 leading-tight">
+              <BlurText text="Sona College of Technology" />
+            </h1>
 
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-600">
-          Your central hub for achievements, projects, and community engagement.
-        </p>
+            <p className="mx-auto mt-3 sm:mt-4 max-w-3xl text-sm sm:text-base md:text-lg text-slate-600">
+              Your central hub for achievements, projects, and community engagement.
+            </p>
 
-        <div className="mt-10">
-          <Button onClick={goToQuickActions} className="px-6 py-3">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden
-            >
-              <path
-                d="M14 4l6 6-6 6-6-6 6-6z"
-                fill="currentColor"
-                opacity=".15"
-              />
-              <path
-                d="M14 4l6 6-6 6m0-12l-6 6 6 6"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <span className="font-semibold">Explore Actions</span>
-          </Button>
+            <div className="mt-6 sm:mt-8 flex justify-center">
+              <Button onClick={goToQuickActions} className="px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base shadow-md hover:shadow-lg transition-all">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden
+                >
+                  <path
+                    d="M14 4l6 6-6 6-6-6 6-6z"
+                    fill="currentColor"
+                    opacity=".15"
+                  />
+                  <path
+                    d="M14 4l6 6-6 6m0-12l-6 6 6 6"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span className="font-semibold">Explore Actions</span>
+              </Button>
+            </div>
+          </div>
+
+          <div className="md:col-span-1">
+            <div className="rounded-lg sm:rounded-xl border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 p-3 sm:p-5 shadow-lg">
+              <h2 className="text-sm sm:text-base font-bold text-slate-100 mb-2 sm:mb-3">
+                At a Glance
+              </h2>
+              <div className="grid grid-cols-2 gap-2 sm:gap-2">
+                <button
+                  onClick={() => nav("/projects/approved")}
+                  className="rounded-lg p-2 sm:p-3 bg-slate-700/50 hover:bg-slate-700 transition-colors text-left border-2 border-cyan-500 hover:border-cyan-400"
+                >
+                  <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide">Projects</div>
+                  <div className="mt-1 text-lg sm:text-xl font-extrabold text-slate-100">
+                    {projCount === null ? "—" : projCount}
+                  </div>
+                </button>
+                <button
+                  onClick={() => nav("/achievements/approved")}
+                  className="rounded-lg p-2 sm:p-3 bg-slate-700/50 hover:bg-slate-700 transition-colors text-left border-2 border-fuchsia-500 hover:border-fuchsia-400"
+                >
+                  <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                    Achievements
+                  </div>
+                  <div className="mt-1 text-lg sm:text-xl font-extrabold text-slate-100">
+                    {achCount === null ? "—" : achCount}
+                  </div>
+                </button>
+                {user?.role === "admin" && (
+                  <>
+                    <button
+                      onClick={() => nav("/admin/students")}
+                      className="rounded-lg p-2 sm:p-3 bg-slate-700/50 hover:bg-slate-700 transition-colors text-left border-2 border-emerald-500 hover:border-emerald-400"
+                    >
+                      <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                        Students
+                      </div>
+                      <div className="mt-1 text-lg sm:text-xl font-extrabold text-slate-100">
+                        {studentCount === null ? "—" : studentCount}
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => nav("/admin/staff")}
+                      className="rounded-lg p-2 sm:p-3 bg-slate-700/50 hover:bg-slate-700 transition-colors text-left border-2 border-violet-500 hover:border-violet-400"
+                    >
+                      <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                        Staff
+                      </div>
+                      <div className="mt-1 text-lg sm:text-xl font-extrabold text-slate-100">
+                        {staffCount === null ? "—" : staffCount}
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => nav("/events")}
+                      className="rounded-lg p-2 sm:p-3 bg-slate-700/50 hover:bg-slate-700 transition-colors text-left border-2 border-amber-500 hover:border-amber-400"
+                    >
+                      <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                        Events
+                      </div>
+                      <div className="mt-1 text-lg sm:text-xl font-extrabold text-slate-100">
+                        {eventCount === null ? "—" : eventCount}
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => nav("/faculty-research-approved")}
+                      className="rounded-lg p-2 sm:p-3 bg-slate-700/50 hover:bg-slate-700 transition-colors text-left border-2 border-blue-500 hover:border-blue-400"
+                    >
+                      <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                        Research
+                      </div>
+                      <div className="mt-1 text-lg sm:text-xl font-extrabold text-slate-100">
+                        {researchCount === null ? "—" : researchCount}
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => nav("/faculty-consultancy-approved")}
+                      className="rounded-lg p-2 sm:p-3 bg-slate-700/50 hover:bg-slate-700 transition-colors text-left border-2 border-rose-500 hover:border-rose-400"
+                    >
+                      <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                        Consultancy
+                      </div>
+                      <div className="mt-1 text-lg sm:text-xl font-extrabold text-slate-100">
+                        {consultancyCount === null ? "—" : consultancyCount}
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => nav("/faculty-participation-approved")}
+                      className="rounded-lg p-2 sm:p-3 bg-slate-700/50 hover:bg-slate-700 transition-colors text-left border-2 border-indigo-500 hover:border-indigo-400"
+                    >
+                      <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                        Participation
+                      </div>
+                      <div className="mt-1 text-lg sm:text-xl font-extrabold text-slate-100">
+                        {participationCount === null ? "—" : participationCount}
+                      </div>
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Events carousel (latest 4 events) */}
-      <div className="mx-auto max-w-6xl px-6 pb-16">
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-6 sm:pb-8">
         <PageHeader title="Events" />
-        <div className="mt-2">
-          <EventsCarousel events={events} intervalMs={5000} />
+        <div className="mt-2 sm:mt-3 grid gap-4 sm:gap-6 md:grid-cols-3">
+          <div className="md:col-span-2">
+            <EventsCarousel events={events} intervalMs={5000} />
+          </div>
+          <div className="md:col-span-1">
+            <AchievementsLeaderboard />
+          </div>
         </div>
       </div>
 
       {/* Recent Achievements grid (latest 6) */}
-      <AchievementsRecentGrid limit={6} />
-
-      {/* Stats */}
-      <div className="mx-auto max-w-6xl px-6 pb-24">
-        <PageHeader title="At a Glance" />
-        <div
-          className={`grid gap-4 ${
-            user?.role === "admin"
-              ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-              : "grid-cols-1 sm:grid-cols-2"
-          }`}
-        >
-          <Card
-            onClick={() => nav("/projects/approved")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <div className="text-sm font-semibold text-slate-800">Projects</div>
-            <div className="mt-2 flex items-end gap-3">
-              <div className="text-3xl font-extrabold text-slate-900">
-                {projCount === null ? "—" : projCount}
-              </div>
-            </div>
-          </Card>
-          <Card
-            onClick={() => nav("/achievements/approved")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <div className="text-sm font-semibold text-slate-800">
-              Achievements
-            </div>
-            <div className="mt-2 flex items-end gap-3">
-              <div className="text-3xl font-extrabold text-slate-900">
-                {achCount === null ? "—" : achCount}
-              </div>
-            </div>
-          </Card>
-          {user?.role === "admin" && (
-            <>
-              <Card
-                onClick={() => nav("/admin/students")}
-                className="p-6 glitter-card bulge-card"
-              >
-                <div className="text-sm font-semibold text-slate-800">
-                  Students
-                </div>
-                <div className="mt-2 text-3xl font-extrabold text-slate-900">
-                  {studentCount === null ? "—" : studentCount}
-                </div>
-              </Card>
-              <Card
-                onClick={() => nav("/admin/staff")}
-                className="p-6 glitter-card bulge-card"
-              >
-                <div className="text-sm font-semibold text-slate-800">
-                  Staff
-                </div>
-                <div className="mt-2 text-3xl font-extrabold text-slate-900">
-                  {staffCount === null ? "—" : staffCount}
-                </div>
-              </Card>
-              <Card
-                onClick={() => nav("/events")}
-                className="p-6 glitter-card bulge-card"
-              >
-                <div className="text-sm font-semibold text-slate-800">
-                  Events
-                </div>
-                <div className="mt-2 text-3xl font-extrabold text-slate-900">
-                  {eventCount === null ? "—" : eventCount}
-                </div>
-              </Card>
-              <Card
-                onClick={() => nav("/faculty-research-approved")}
-                className="p-6 glitter-card bulge-card"
-              >
-                <div className="text-sm font-semibold text-slate-800">
-                  Research Publications
-                </div>
-                <div className="mt-2 text-3xl font-extrabold text-slate-900">
-                  {researchCount === null ? "—" : researchCount}
-                </div>
-              </Card>
-              <Card
-                onClick={() => nav("/faculty-consultancy-approved")}
-                className="p-6 glitter-card bulge-card"
-              >
-                <div className="text-sm font-semibold text-slate-800">
-                  Consultancy Projects
-                </div>
-                <div className="mt-2 text-3xl font-extrabold text-slate-900">
-                  {consultancyCount === null ? "—" : consultancyCount}
-                </div>
-              </Card>
-              <Card
-                onClick={() => nav("/faculty-participation-approved")}
-                className="p-6 glitter-card bulge-card"
-              >
-                <div className="text-sm font-semibold text-slate-800">
-                  Faculty Participation
-                </div>
-                <div className="mt-2 text-3xl font-extrabold text-slate-900">
-                  {participationCount === null ? "—" : participationCount}
-                </div>
-              </Card>
-            </>
-          )}
-        </div>
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-8 sm:pb-10">
+        <AchievementsRecentGrid limit={6} />
       </div>
     </div>
   );

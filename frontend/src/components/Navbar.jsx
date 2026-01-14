@@ -80,7 +80,7 @@ const Navbar = () => {
               </svg>
             </span>
             <span className="text-[15px] font-semibold tracking-tight">
-              DEPARTMENT RECORDS MANAGEMENT SYSTEM
+              DRMS
             </span>
           </Link>
 

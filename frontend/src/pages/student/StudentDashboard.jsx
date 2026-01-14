@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import EventsCarousel from "../../components/EventsCarousel";
 import AchievementsRecentGrid from "../../components/AchievementsRecentGrid";
 import Card from "../../components/ui/Card";
+import AchievementsLeaderboard from "../../components/AchievementsLeaderboard";
 
 export default function StudentDashboard() {
   const nav = useNavigate();
@@ -131,98 +132,109 @@ export default function StudentDashboard() {
       />
 
       {/* Content */}
-      <div className="mx-auto max-w-6xl px-6 pt-16 pb-10 text-center">
-        <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-slate-800 dark:text-slate-100">
-          Sona College of Technology
-        </h1>
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pt-8 sm:pt-10 md:pt-12 pb-6 sm:pb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-center">
+          {/* Left side - Title and description */}
+          <div className="md:col-span-2 text-center">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-800 dark:text-slate-100 leading-tight">
+              Sona College of Technology
+            </h1>
 
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-600 dark:text-slate-300">
-          Your central hub for achievements, projects, and community engagement.
-        </p>
+            <p className="mx-auto mt-3 sm:mt-4 max-w-3xl text-sm sm:text-base md:text-lg text-slate-600 dark:text-slate-300">
+              Your central hub for achievements, projects, and community engagement.
+            </p>
 
-        <div className="mt-10">
-          <button
-            onClick={goToQuickActions}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#87CEEB] px-6 py-3 text-white shadow hover:bg-[#78C5E6] focus:outline-none focus:ring-4 focus:ring-[#87CEEB]/40"
-          >
-            {/* Inline SVG rocket icon */}
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden
-            >
-              <path
-                d="M14 4l6 6-6 6-6-6 6-6z"
-                fill="currentColor"
-                opacity=".15"
-              />
-              <path
-                d="M14 4l6 6-6 6m0-12l-6 6 6 6"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <span className="font-semibold">Explore Actions</span>
-          </button>
+            <div className="mt-6 sm:mt-8 flex justify-center">
+              <button
+                onClick={goToQuickActions}
+                className="inline-flex items-center gap-2 rounded-xl bg-[#87CEEB] px-4 sm:px-6 py-2 sm:py-3 text-white text-sm sm:text-base shadow-md hover:bg-[#78C5E6] hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-[#87CEEB]/40 transition-all"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden
+                >
+                  <path
+                    d="M14 4l6 6-6 6-6-6 6-6z"
+                    fill="currentColor"
+                    opacity=".15"
+                  />
+                  <path
+                    d="M14 4l6 6-6 6m0-12l-6 6 6 6"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span className="font-semibold">Explore Actions</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Right side - At a Glance Stats */}
+          <div className="md:col-span-1">
+            <div className="rounded-lg sm:rounded-xl border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 p-3 sm:p-5 shadow-lg">
+              <h2 className="text-sm sm:text-base font-bold text-slate-100 mb-2 sm:mb-3">
+                At a Glance
+              </h2>
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                <button
+                  onClick={() => nav("/projects/approved")}
+                  className="rounded-lg p-2 sm:p-4 bg-slate-700/50 hover:bg-slate-700 transition-colors text-left border-2 border-cyan-500 hover:border-cyan-400"
+                >
+                  <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide">Projects</div>
+                  <div className="mt-1 text-lg sm:text-2xl font-extrabold text-slate-100">
+                    {projCount === null ? "—" : projCount}
+                  </div>
+                </button>
+                <button
+                  onClick={() => nav("/achievements/approved")}
+                  className="rounded-lg p-2 sm:p-4 bg-slate-700/50 hover:bg-slate-700 transition-colors text-left border-2 border-fuchsia-500 hover:border-fuchsia-400"
+                >
+                  <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                    Achievements
+                  </div>
+                  <div className="mt-1 text-lg sm:text-2xl font-extrabold text-slate-100">
+                    {achCount === null ? "—" : achCount}
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Events slider */}
-      <div className="mx-auto max-w-6xl px-6 pb-16">
-        <div className="mb-4">
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+      {/* Events slider and Leaderboard */}
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-6 sm:pb-8">
+        <div className="mb-2 sm:mb-3">
+          <h2 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-slate-100">
             Events
           </h2>
         </div>
 
-        {loadingEvents ? (
-          <div className="text-sm text-slate-600 p-6">Loading events...</div>
-        ) : events.length === 0 ? (
-          <div className="text-sm text-slate-600 p-6">No events yet.</div>
-        ) : (
-          <EventsCarousel events={events} intervalMs={5000} />
-        )}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+          <div className="md:col-span-2">
+            {loadingEvents ? (
+              <div className="text-sm text-slate-600 p-4 sm:p-6">Loading events...</div>
+            ) : events.length === 0 ? (
+              <div className="text-sm text-slate-600 p-4 sm:p-6">No events yet.</div>
+            ) : (
+              <EventsCarousel events={events} intervalMs={5000} />
+            )}
+          </div>
+          <div className="md:col-span-1">
+            <AchievementsLeaderboard limit={10} />
+          </div>
+        </div>
       </div>
 
       {/* Recent Achievements grid (latest 6) */}
-      <AchievementsRecentGrid limit={6} />
-
-      {/* Stats */}
-      <div className="mx-auto max-w-6xl px-6 pb-24">
-        <h2 className="mb-4 text-xl font-bold text-slate-800 dark:text-slate-100">
-          At a Glance
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Card
-            onClick={() => nav("/projects/approved")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <div className="text-sm font-semibold text-slate-800">Projects</div>
-            <div className="mt-2 flex items-end gap-3">
-              <div className="text-3xl font-extrabold text-slate-900">
-                {projCount === null ? "—" : projCount}
-              </div>
-            </div>
-          </Card>
-          <Card
-            onClick={() => nav("/achievements/approved")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <div className="text-sm font-semibold text-slate-800">
-              Achievements
-            </div>
-            <div className="mt-2 flex items-end gap-3">
-              <div className="text-3xl font-extrabold text-slate-900">
-                {achCount === null ? "—" : achCount}
-              </div>
-            </div>
-          </Card>
-        </div>
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-8 sm:pb-10">
+        <AchievementsRecentGrid limit={6} />
       </div>
     </div>
   );

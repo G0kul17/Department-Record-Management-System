@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { formatDisplayName } from "../../utils/displayName";
 import EventsCarousel from "../../components/EventsCarousel";
 import AchievementsRecentGrid from "../../components/AchievementsRecentGrid";
+import AchievementsLeaderboard from "../../components/AchievementsLeaderboard";
 
 const StaffDashboard = () => {
   const { user } = useAuth();
@@ -127,66 +128,75 @@ function OverviewPanel({ user }) {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <h1 className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">{`Welcome, ${
-          displayName || "Staff"
-        }`}</h1>
-        <p className="text-slate-600 dark:text-slate-300 mt-1">
-          Use the side menu to manage projects, achievements and events.
-        </p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+        <div className="lg:col-span-2 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <h1 className="text-2xl font-extrabold text-slate-800 dark:text-slate-100">{`Welcome, ${
+            displayName || "Staff"
+          }`}</h1>
+          <p className="text-slate-600 dark:text-slate-300 mt-1">
+            Use the side menu to manage projects, achievements and events.
+          </p>
+        </div>
+
+        <div className="lg:col-span-1">
+          <div className="rounded-xl border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 p-5 shadow-xl h-full">
+            <h2 className="text-base font-bold text-slate-100 mb-3">
+              At a Glance
+            </h2>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => (window.location.href = "/projects/approved")}
+                className="rounded-lg p-4 bg-slate-700/50 hover:bg-slate-700 transition-colors text-left border-2 border-cyan-500 hover:border-cyan-400"
+              >
+                <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                  Projects
+                </div>
+                <div className="mt-1 text-2xl font-extrabold text-slate-100">
+                  {projCount === null ? "—" : projCount}
+                </div>
+              </button>
+              <button
+                onClick={() => (window.location.href = "/achievements/approved")}
+                className="rounded-lg p-4 bg-slate-700/50 hover:bg-slate-700 transition-colors text-left border-2 border-fuchsia-500 hover:border-fuchsia-400"
+              >
+                <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                  Achievements
+                </div>
+                <div className="mt-1 text-2xl font-extrabold text-slate-100">
+                  {achCount === null ? "—" : achCount}
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <QuickActions />
 
       <div>
-        <h2 className="mb-4 text-xl font-bold text-slate-800 dark:text-slate-100">
-          At a Glance
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <button
-            onClick={() => (window.location.href = "/projects/approved")}
-            className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-cyan-200 to-blue-300 dark:from-cyan-900/50 dark:to-blue-900/60 dark:ring-white/10 text-left"
-          >
-            <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-              Projects
-            </div>
-            <div className="mt-2 flex items-end gap-3">
-              <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">
-                {projCount === null ? "—" : projCount}
-              </div>
-            </div>
-          </button>
-          <button
-            onClick={() => (window.location.href = "/achievements/approved")}
-            className="rounded-xl p-6 shadow-lg ring-1 ring-inset ring-slate-300/80 bg-gradient-to-br from-fuchsia-200 to-rose-300 dark:from-fuchsia-900/50 dark:to-rose-900/60 dark:ring-white/10 text-left"
-          >
-            <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-              Achievements
-            </div>
-            <div className="mt-2 flex items-end gap-3">
-              <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">
-                {achCount === null ? "—" : achCount}
-              </div>
-            </div>
-          </button>
+        <h3 className="mt-6 mb-3 text-xl font-bold text-slate-800 dark:text-slate-100">
+          Latest Events
+        </h3>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            {loadingEvents ? (
+              <div className="text-sm text-slate-600 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-lg">Loading events...</div>
+            ) : events.length === 0 ? (
+              <div className="text-sm text-slate-600 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-lg">No events yet.</div>
+            ) : (
+              <EventsCarousel events={events} intervalMs={4500} />
+            )}
+          </div>
+          <div className="lg:col-span-1">
+            <AchievementsLeaderboard limit={10} />
+          </div>
         </div>
       </div>
 
-      <div>
-        <h3 className="mt-6 mb-3 text-lg font-semibold text-slate-800 dark:text-slate-100">
-          Latest Events
-        </h3>
-        {loadingEvents ? (
-          <div className="text-sm text-slate-600">Loading events...</div>
-        ) : events.length === 0 ? (
-          <div className="text-sm text-slate-600">No events yet.</div>
-        ) : (
-          <EventsCarousel events={events} intervalMs={4500} />
-        )}
-      </div>
-
       {/* Recent Achievements grid (latest 6) for staff */}
-      <AchievementsRecentGrid limit={6} />
+      <div className="mt-6">
+        <AchievementsRecentGrid limit={6} />
+      </div>
     </div>
   );
 }

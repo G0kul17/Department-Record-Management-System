@@ -18,6 +18,8 @@ export async function createAchievement(req, res) {
       event_name, // new free-text field
       activity_type,
       name,
+      prize_amount,
+      position,
     } = req.body;
     if (!title) return res.status(400).json({ message: "title required" });
     // Mandatory fields per UI: issuer, date, name, proof file (event_id optional)
@@ -29,36 +31,38 @@ export async function createAchievement(req, res) {
     if (!name || !name.trim())
       return res.status(400).json({ message: "name required" });
 
-    // Require proof file upload (expect single file field 'proof')
-    let proofFileId = null;
-    if (!req.file) {
+    // Handle file uploads with req.files (from upload.fields)
+    const files = req.files || {};
+    const proofFile = files.proof ? files.proof[0] : null;
+    const certificateFile = files.certificate ? files.certificate[0] : null;
+    const eventPhotosFile = files.event_photos ? files.event_photos[0] : null;
+
+    // Require proof file upload
+    if (!proofFile) {
       return res.status(400).json({ message: "proof file required" });
     }
-    // Enforce allowed proof types: PDF or JPG/JPEG/PNG
-    const allowedProofTypes = new Set([
-      "application/pdf",
-      "image/png",
-      "image/jpeg",
-      "image/jpg",
-      // Common aliases
-      "image/x-png",
-      "image/pjpeg",
-    ]);
-    const f = req.file;
-    const fileName = f.originalname || "";
-    const ext = fileName.toLowerCase().split(".").pop();
-    const extOk = ["pdf", "png", "jpg", "jpeg"].includes(ext);
-    if (!(allowedProofTypes.has(f.mimetype) || extOk)) {
-      return res
-        .status(400)
-        .json({ message: "Invalid proof type. Upload PDF or JPG/PNG image." });
+
+    // Accept all file types - no validation
+
+    // Helper function to insert file and return id
+    const insertFileRecord = async (file, fileType) => {
+      const ins = await pool.query(
+        "INSERT INTO project_files (filename, original_name, mime_type, size, file_type, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id",
+        [file.filename, file.originalname, file.mimetype, file.size, fileType, userId]
+      );
+      return ins.rows[0].id;
+    };
+
+    // Insert all files
+    const proofFileId = await insertFileRecord(proofFile, "proof");
+    let certificateFileId = null;
+    if (certificateFile) {
+      certificateFileId = await insertFileRecord(certificateFile, "certificate");
     }
-    const fileType = "proof";
-    const ins = await pool.query(
-      "INSERT INTO project_files (filename, original_name, mime_type, size, file_type, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id",
-      [f.filename, f.originalname, f.mimetype, f.size, fileType, userId]
-    );
-    proofFileId = ins.rows[0].id;
+    let eventPhotosFileId = null;
+    if (eventPhotosFile) {
+      eventPhotosFileId = await insertFileRecord(eventPhotosFile, "event_photos");
+    }
 
     // duplicate check for same user
     const dup = await pool.query(
@@ -69,38 +73,64 @@ export async function createAchievement(req, res) {
       return res.status(409).json({ message: "Duplicate achievement" });
 
     const activityType = (activity_type || title || "").trim() || null;
-
     const eventNameVal = (event_name || "").trim() || null;
 
+    // Parse prize_amount safely
+    let prizeAmount = null;
+    if (prize_amount) {
+      const parsed = parseFloat(prize_amount);
+      if (!isNaN(parsed)) {
+        prizeAmount = parsed;
+      }
+    }
+
+    // Position validation - only allow 1st, 2nd, 3rd
+    let pos = null;
+    if (position) {
+      const posVal = (position || "").trim().toLowerCase();
+      if (["1st", "2nd", "3rd"].includes(posVal)) {
+        pos = posVal;
+      }
+    }
+
     let insertSql =
-      "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, date, event_id, event_name, activity_type, name) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *";
+      "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, certificate_file_id, event_photos_file_id, date, event_id, event_name, activity_type, name, prize_amount, position) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *";
     let params = [
       userId,
       title.trim(),
       issuer.trim(),
       date_of_award || null,
       proofFileId,
+      certificateFileId,
+      eventPhotosFileId,
       date || null,
       event_id ? Number(event_id) : null,
       eventNameVal,
       activityType,
       name.trim(),
+      prizeAmount,
+      pos,
     ];
+
     // If staff/admin, auto-approve (verified=true)
     if (userRole === "staff" || userRole === "admin") {
       insertSql =
-        "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, date, event_id, event_name, activity_type, name, verified, verification_status, verified_by, verified_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, true, 'approved', $11, NOW()) RETURNING *";
+        "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, certificate_file_id, event_photos_file_id, date, event_id, event_name, activity_type, name, prize_amount, position, verified, verification_status, verified_by, verified_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14, true, 'approved', $15, NOW()) RETURNING *";
       params = [
         userId,
         title.trim(),
         issuer.trim(),
         date_of_award || null,
         proofFileId,
+        certificateFileId,
+        eventPhotosFileId,
         date || null,
         event_id ? Number(event_id) : null,
         eventNameVal,
         activityType,
         name.trim(),
+        prizeAmount,
+        pos,
         userId,
       ];
     }
@@ -127,16 +157,25 @@ export async function listAchievements(req, res) {
     const requesterRole = req.user?.role;
 
     // Include uploader identity (prefer achievement owner, fallback to proof file uploader)
+    // Also include certificate and event_photos file details
     let base = `SELECT a.*, COALESCE(u.email, u2.email, ux.email)        AS user_email,
           COALESCE(u.full_name, u2.full_name, ux.full_name) AS user_fullname,
             pf.original_name                    AS proof_name,
             pf.filename                         AS proof_filename,
             pf.mime_type                        AS proof_mime,
+            pfc.original_name                   AS certificate_name,
+            pfc.filename                        AS certificate_filename,
+            pfc.mime_type                       AS certificate_mime,
+            pfe.original_name                   AS event_photos_name,
+            pfe.filename                        AS event_photos_filename,
+            pfe.mime_type                       AS event_photos_mime,
             v.full_name                         AS verified_by_fullname,
             v.email                             AS verified_by_email
             FROM achievements a
             LEFT JOIN users u ON a.user_id=u.id
             LEFT JOIN project_files pf ON a.proof_file_id = pf.id
+            LEFT JOIN project_files pfc ON a.certificate_file_id = pfc.id
+            LEFT JOIN project_files pfe ON a.event_photos_file_id = pfe.id
           LEFT JOIN users u2 ON u2.id = pf.uploaded_by
           LEFT JOIN users ux ON LOWER(ux.full_name) = LOWER(a.name)
           LEFT JOIN users v ON v.id = a.verified_by`;
@@ -216,10 +255,18 @@ export async function getAchievementDetails(req, res) {
               COALESCE(u.full_name, u2.full_name, ux.full_name) AS user_fullname,
               pf.filename                         AS proof_filename,
               pf.original_name                    AS proof_name,
-              pf.mime_type                        AS proof_mime
+              pf.mime_type                        AS proof_mime,
+              pfc.filename                        AS certificate_filename,
+              pfc.original_name                   AS certificate_name,
+              pfc.mime_type                       AS certificate_mime,
+              pfe.filename                        AS event_photos_filename,
+              pfe.original_name                   AS event_photos_name,
+              pfe.mime_type                       AS event_photos_mime
        FROM achievements a
        LEFT JOIN users u ON a.user_id = u.id
        LEFT JOIN project_files pf ON a.proof_file_id = pf.id
+       LEFT JOIN project_files pfc ON a.certificate_file_id = pfc.id
+       LEFT JOIN project_files pfe ON a.event_photos_file_id = pfe.id
        LEFT JOIN users u2 ON u2.id = pf.uploaded_by
        LEFT JOIN users ux ON LOWER(ux.full_name) = LOWER(a.name)
        WHERE a.id = $1`,
@@ -302,6 +349,32 @@ export async function getAchievementsCount(req, res) {
       "SELECT COUNT(*)::int AS count FROM achievements WHERE verified = true OR verification_status = 'approved'"
     );
     return res.json({ count: rows[0]?.count ?? 0 });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
+export async function getAchievementsLeaderboard(req, res) {
+  try {
+    const limit = Number(req.query.limit) || 10;
+    
+    const { rows } = await pool.query(
+      `SELECT 
+        u.id,
+        u.email,
+        COALESCE(u.full_name, a.name) AS name,
+        COUNT(a.id)::int AS achievement_count
+       FROM achievements a
+       JOIN users u ON a.user_id = u.id
+       WHERE (a.verified = true OR a.verification_status = 'approved')
+       GROUP BY u.id, u.email, u.full_name, a.name
+       ORDER BY achievement_count DESC, u.full_name ASC
+       LIMIT $1`,
+      [limit]
+    );
+    
+    return res.json({ leaderboard: rows });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server error" });

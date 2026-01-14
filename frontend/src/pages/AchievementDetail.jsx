@@ -66,6 +66,32 @@ export default function AchievementDetail() {
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="text-sm text-slate-700 dark:text-slate-300">
             <div>
+              <span className="font-semibold">Title:</span> {item.title || "-"}
+            </div>
+            <div className="mt-1">
+              <span className="font-semibold">Issuer:</span>{" "}
+              {item.issuer || "-"}
+            </div>
+            <div className="mt-1">
+              <span className="font-semibold">Date:</span>{" "}
+              {item.date_of_award || item.date
+                ? new Date(item.date_of_award || item.date).toLocaleDateString()
+                : "-"}
+            </div>
+            {item.position && (
+              <div className="mt-1">
+                <span className="font-semibold">Position:</span> {item.position}
+              </div>
+            )}
+            {item.prize_amount && (
+              <div className="mt-1">
+                <span className="font-semibold">Prize Amount:</span> ₹
+                {parseFloat(item.prize_amount).toFixed(2)}
+              </div>
+            )}
+          </div>
+          <div className="text-sm text-slate-700 dark:text-slate-300">
+            <div>
               <span className="font-semibold">Performed By:</span>{" "}
               {item.student_name ||
                 item.studentName ||
@@ -81,93 +107,97 @@ export default function AchievementDetail() {
                 item.uploaded_by ||
                 "-"}
             </div>
+            {item.event_name && (
+              <div className="mt-1">
+                <span className="font-semibold">Event Name:</span>{" "}
+                {item.event_name}
+              </div>
+            )}
           </div>
         </div>
-        {(() => {
-          // Support multiple attachment fields used across the app
-          const candidate =
-            item?.proof_files ||
-            item?.proof_file ||
-            item?.files ||
-            item?.attachments;
-          const single =
-            item?.proof_filename || item?.proof_file_name || item?.proofName;
-          if (!candidate && !single) return null;
-          let arr = [];
-          if (candidate) {
-            try {
-              arr =
-                typeof candidate === "string"
-                  ? JSON.parse(candidate)
-                  : candidate;
-            } catch (_) {
-              arr = Array.isArray(candidate) ? candidate : [candidate];
-            }
-          }
-          if (single && (!arr || arr.length === 0)) {
-            arr = [
-              {
-                filename: single,
-                original_name:
-                  item?.proof_name || item?.proof_original_name || single,
-              },
-            ];
-          }
-          const files = Array.isArray(arr) ? arr : [arr];
-          if (!files || files.length === 0) return null;
-          const base =
-            apiClient && apiClient.baseURL
-              ? String(apiClient.baseURL).replace(/\/api$/, "")
-              : window.location.origin;
-          return (
-            <div className="mt-6">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                Attachments
-              </h3>
-              <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {files.map((f, i) => {
-                  const filename =
-                    f?.filename ||
-                    f?.file ||
-                    (typeof f === "string" ? f : undefined);
-                  const original = f?.original_name || f?.name || filename;
-                  const mime =
-                    f?.mime_type ||
-                    (original?.toLowerCase().endsWith(".pdf")
-                      ? "application/pdf"
-                      : "");
-                  const url = `${base}/uploads/${filename}`;
-                  const isImage =
-                    mime?.startsWith("image/") ||
-                    (filename && /\.(png|jpe?g|gif|webp)$/i.test(filename));
-                  return (
-                    <div
-                      key={i}
-                      className="rounded border p-2 dark:border-slate-700"
-                    >
-                      {isImage ? (
-                        <img
-                          src={url}
-                          alt={original || "attachment"}
-                          className="max-h-80 w-full rounded object-contain"
-                        />
-                      ) : (
-                        <a
-                          href={url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-600 dark:text-blue-400 hover:underline"
-                        >
-                          {original || "Attachment"}
-                        </a>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+
+        {/* Main Proof */}
+        {item.proof_filename && (
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              Main Proof
+            </h3>
+            <div className="mt-3">
+              {item.proof_mime && item.proof_mime.startsWith("image/") ? (
+                <img
+                  src={`/uploads/${item.proof_filename}`}
+                  alt={item.proof_name || "Main Proof"}
+                  className="max-h-96 w-full rounded object-contain border"
+                />
+              ) : (
+                <a
+                  href={`/uploads/${item.proof_filename}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  {item.proof_name || "Download Main Proof"}
+                </a>
+              )}
             </div>
-          );
-        })()}
+          </div>
+        )}
+
+        {/* Certificate */}
+        {item.certificate_filename && (
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              Certificate
+            </h3>
+            <div className="mt-3">
+              {item.certificate_mime &&
+              item.certificate_mime.startsWith("image/") ? (
+                <img
+                  src={`/uploads/${item.certificate_filename}`}
+                  alt={item.certificate_name || "Certificate"}
+                  className="max-h-96 w-full rounded object-contain border"
+                />
+              ) : (
+                <a
+                  href={`/uploads/${item.certificate_filename}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  {item.certificate_name || "Download Certificate"}
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Event Photos */}
+        {item.event_photos_filename && (
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              Event Photos
+            </h3>
+            <div className="mt-3">
+              {item.event_photos_mime &&
+              item.event_photos_mime.startsWith("image/") ? (
+                <img
+                  src={`/uploads/${item.event_photos_filename}`}
+                  alt={item.event_photos_name || "Event Photos"}
+                  className="max-h-96 w-full rounded object-contain border"
+                />
+              ) : (
+                <a
+                  href={`/uploads/${item.event_photos_filename}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  {item.event_photos_name || "Download Event Photos"}
+                </a>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

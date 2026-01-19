@@ -44,8 +44,10 @@ router.post(
 // Public count endpoint for homepage stats (must be BEFORE any ":id" route)
 router.get("/count", getProjectsCount);
 
-router.get("/", requireAuth, listProjects);
-router.get("/:id", requireAuth, getProjectDetails);
+// Public list endpoint (for homepage display)
+router.get("/", listProjects);
+// Public details endpoint (for viewing project details)
+router.get("/:id", getProjectDetails);
 
 // Admin verifies project
 router.post(

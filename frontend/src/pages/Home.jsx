@@ -4,6 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import apiClient from "../api/axiosClient";
 import EventsCarousel from "../components/EventsCarousel";
 import AchievementsRecentGrid from "../components/AchievementsRecentGrid";
+import ProjectsRecentGrid from "../components/ProjectsRecentGrid";
 import AchievementsLeaderboard from "../components/AchievementsLeaderboard";
 import BlurText from "../components/ui/BlurText";
 import Button from "../components/ui/Button";
@@ -104,21 +105,21 @@ export default function Home() {
   }, [user?.role]);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-white">
+    <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-white to-slate-50">
       {/* Content */}
-      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pt-8 sm:pt-10 md:pt-12 pb-6 sm:pb-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-center">
-          <div className="md:col-span-2 text-center">
-            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-800 leading-tight">
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pt-8 sm:pt-12 md:pt-16 pb-8 sm:pb-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-stretch">
+          <div className="md:col-span-2 text-center md:text-left space-y-4">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-800 leading-tight">
               <BlurText text="Sona College of Technology" />
             </h1>
 
-            <p className="mx-auto mt-3 sm:mt-4 max-w-3xl text-sm sm:text-base md:text-lg text-slate-600">
+            <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto md:mx-0">
               Your central hub for achievements, projects, and community engagement.
             </p>
 
-            <div className="mt-6 sm:mt-8 flex justify-center">
-              <Button onClick={goToQuickActions} className="px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base shadow-md hover:shadow-lg transition-all">
+            <div className="pt-2 flex justify-center md:justify-start">
+              <Button onClick={goToQuickActions} className="px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
                 <svg
                   width="18"
                   height="18"
@@ -140,34 +141,34 @@ export default function Home() {
                     strokeLinejoin="round"
                   />
                 </svg>
-                <span className="font-semibold">Explore Actions</span>
+                <span>Explore Actions</span>
               </Button>
             </div>
           </div>
 
           <div className="md:col-span-1">
-            <div className="rounded-lg sm:rounded-xl border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 p-3 sm:p-5 shadow-lg">
-              <h2 className="text-sm sm:text-base font-bold text-slate-100 mb-2 sm:mb-3">
+            <div className="rounded-2xl border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 p-6 sm:p-7 shadow-xl h-full">
+              <h2 className="text-base sm:text-lg font-bold text-slate-100 mb-4 sm:mb-5">
                 At a Glance
               </h2>
-              <div className="grid grid-cols-2 gap-2 sm:gap-2">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <button
                   onClick={() => nav("/projects/approved")}
-                  className="rounded-lg p-2 sm:p-3 bg-slate-700/50 hover:bg-slate-700 transition-colors text-left border-2 border-cyan-500 hover:border-cyan-400"
+                  className="rounded-xl p-4 sm:p-5 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-cyan-500 hover:border-cyan-400 hover:shadow-lg"
                 >
-                  <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide">Projects</div>
-                  <div className="mt-1 text-lg sm:text-xl font-extrabold text-slate-100">
+                  <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Projects</div>
+                  <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-100">
                     {projCount === null ? "—" : projCount}
                   </div>
                 </button>
                 <button
                   onClick={() => nav("/achievements/approved")}
-                  className="rounded-lg p-2 sm:p-3 bg-slate-700/50 hover:bg-slate-700 transition-colors text-left border-2 border-fuchsia-500 hover:border-fuchsia-400"
+                  className="rounded-xl p-4 sm:p-5 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-fuchsia-500 hover:border-fuchsia-400 hover:shadow-lg"
                 >
-                  <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                  <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
                     Achievements
                   </div>
-                  <div className="mt-1 text-lg sm:text-xl font-extrabold text-slate-100">
+                  <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-100">
                     {achCount === null ? "—" : achCount}
                   </div>
                 </button>
@@ -175,67 +176,67 @@ export default function Home() {
                   <>
                     <button
                       onClick={() => nav("/admin/students")}
-                      className="rounded-lg p-2 sm:p-3 bg-slate-700/50 hover:bg-slate-700 transition-colors text-left border-2 border-emerald-500 hover:border-emerald-400"
+                      className="rounded-xl p-4 sm:p-5 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-emerald-500 hover:border-emerald-400 hover:shadow-lg"
                     >
-                      <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                      <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Students
                       </div>
-                      <div className="mt-1 text-lg sm:text-xl font-extrabold text-slate-100">
+                      <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-100">
                         {studentCount === null ? "—" : studentCount}
                       </div>
                     </button>
                     <button
                       onClick={() => nav("/admin/staff")}
-                      className="rounded-lg p-2 sm:p-3 bg-slate-700/50 hover:bg-slate-700 transition-colors text-left border-2 border-violet-500 hover:border-violet-400"
+                      className="rounded-xl p-4 sm:p-5 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-violet-500 hover:border-violet-400 hover:shadow-lg"
                     >
-                      <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                      <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Staff
                       </div>
-                      <div className="mt-1 text-lg sm:text-xl font-extrabold text-slate-100">
+                      <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-100">
                         {staffCount === null ? "—" : staffCount}
                       </div>
                     </button>
                     <button
                       onClick={() => nav("/events")}
-                      className="rounded-lg p-2 sm:p-3 bg-slate-700/50 hover:bg-slate-700 transition-colors text-left border-2 border-amber-500 hover:border-amber-400"
+                      className="rounded-xl p-4 sm:p-5 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-amber-500 hover:border-amber-400 hover:shadow-lg"
                     >
-                      <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                      <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Events
                       </div>
-                      <div className="mt-1 text-lg sm:text-xl font-extrabold text-slate-100">
+                      <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-100">
                         {eventCount === null ? "—" : eventCount}
                       </div>
                     </button>
                     <button
                       onClick={() => nav("/faculty-research-approved")}
-                      className="rounded-lg p-2 sm:p-3 bg-slate-700/50 hover:bg-slate-700 transition-colors text-left border-2 border-blue-500 hover:border-blue-400"
+                      className="rounded-xl p-4 sm:p-5 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-blue-500 hover:border-blue-400 hover:shadow-lg"
                     >
-                      <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                      <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Research
                       </div>
-                      <div className="mt-1 text-lg sm:text-xl font-extrabold text-slate-100">
+                      <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-100">
                         {researchCount === null ? "—" : researchCount}
                       </div>
                     </button>
                     <button
                       onClick={() => nav("/faculty-consultancy-approved")}
-                      className="rounded-lg p-2 sm:p-3 bg-slate-700/50 hover:bg-slate-700 transition-colors text-left border-2 border-rose-500 hover:border-rose-400"
+                      className="rounded-xl p-4 sm:p-5 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-rose-500 hover:border-rose-400 hover:shadow-lg"
                     >
-                      <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                      <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Consultancy
                       </div>
-                      <div className="mt-1 text-lg sm:text-xl font-extrabold text-slate-100">
+                      <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-100">
                         {consultancyCount === null ? "—" : consultancyCount}
                       </div>
                     </button>
                     <button
                       onClick={() => nav("/faculty-participation-approved")}
-                      className="rounded-lg p-2 sm:p-3 bg-slate-700/50 hover:bg-slate-700 transition-colors text-left border-2 border-indigo-500 hover:border-indigo-400"
+                      className="rounded-xl p-4 sm:p-5 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-indigo-500 hover:border-indigo-400 hover:shadow-lg"
                     >
-                      <div className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                      <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
                         Participation
                       </div>
-                      <div className="mt-1 text-lg sm:text-xl font-extrabold text-slate-100">
+                      <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-100">
                         {participationCount === null ? "—" : participationCount}
                       </div>
                     </button>
@@ -248,9 +249,14 @@ export default function Home() {
       </div>
 
       {/* Events carousel (latest 4 events) */}
-      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-6 sm:pb-8">
-        <PageHeader title="Events" />
-        <div className="mt-2 sm:mt-3 grid gap-4 sm:gap-6 md:grid-cols-3">
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-8 sm:pb-10">
+        <div className="mb-5 sm:mb-6">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">
+            Latest Events
+          </h2>
+          <div className="h-1 w-16 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full mt-3"></div>
+        </div>
+        <div className="grid gap-6 sm:gap-8 md:grid-cols-3">
           <div className="md:col-span-2">
             <EventsCarousel events={events} intervalMs={5000} />
           </div>
@@ -260,8 +266,25 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Recent Achievements grid (latest 6) */}
+      {/* Recent Projects grid (latest 6) */}
       <div className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-8 sm:pb-10">
+        <div className="mb-5 sm:mb-6">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">
+            Recent Projects
+          </h2>
+          <div className="h-1 w-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full mt-3"></div>
+        </div>
+        <ProjectsRecentGrid limit={6} />
+      </div>
+
+      {/* Recent Achievements grid (latest 6) */}
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-12 sm:pb-16">
+        <div className="mb-5 sm:mb-6">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">
+            Recent Achievements
+          </h2>
+          <div className="h-1 w-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mt-3"></div>
+        </div>
         <AchievementsRecentGrid limit={6} />
       </div>
     </div>

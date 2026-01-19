@@ -271,22 +271,6 @@ const Login = () => {
             <Link to="/forgot" className="text-blue-600 hover:underline block">
               Forgot Password?
             </Link>
-            <div className="text-gray-600">
-              Don't have an account?{" "}
-              <Link
-                to="/register-student"
-                className="text-blue-600 hover:underline"
-              >
-                Register as Student
-              </Link>
-              {" or "}
-              <Link
-                to="/register-staff"
-                className="text-blue-600 hover:underline"
-              >
-                Register as Staff
-              </Link>
-            </div>
           </div>
         </div>
       )}

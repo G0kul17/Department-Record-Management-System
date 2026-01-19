@@ -29,14 +29,14 @@ router.post(
   createAchievement
 );
 
-router.get("/", requireAuth, listAchievements);
+router.get("/", listAchievements);
 // Public count endpoint for homepage stats
 router.get("/count", getAchievementsCount);
 // Public leaderboard endpoint
 router.get("/leaderboard", getAchievementsLeaderboard);
 
 // Single achievement details
-router.get("/:id", requireAuth, getAchievementDetails);
+router.get("/:id", getAchievementDetails);
 
 // Admin verifies achievement
 router.post(

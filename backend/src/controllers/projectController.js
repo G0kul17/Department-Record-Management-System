@@ -334,6 +334,11 @@ export async function listProjects(req, res) {
     const conditions = [];
     const params = [];
 
+    // If not authenticated, only show verified projects
+    if (!requesterId) {
+      conditions.push(`p.verified = true`);
+    }
+
     if (requesterRole === "staff" && requesterId) {
       base += ` LEFT JOIN activity_coordinators ac ON ac.activity_type = p.activity_type AND ac.staff_id = $${
         params.length + 1
@@ -397,7 +402,14 @@ export async function getProjectDetails(req, res) {
     // Staff should only access projects for activity types they coordinate
     const requesterRole = req.user?.role;
     const requesterId = req.user?.id;
-    if (requesterRole === "staff" && requesterId) {
+    
+    // If not authenticated, only show verified projects
+    let whereClause = "WHERE p.id = $1";
+    const params = [id];
+    if (!requesterId) {
+      whereClause += " AND p.verified = true";
+    } else if (requesterRole === "staff" && requesterId) {
+      // Staff should only access projects for activity types they coordinate
       const { rows: auth } = await pool.query(
         `SELECT 1 FROM projects p
            JOIN activity_coordinators ac
@@ -416,8 +428,8 @@ export async function getProjectDetails(req, res) {
       `SELECT p.*, u.email AS uploader_email, u.full_name AS uploader_full_name
          FROM projects p
          LEFT JOIN users u ON u.id = p.created_by
-        WHERE p.id = $1`,
-      [id]
+        ${whereClause}`,
+      params
     );
     if (!rows.length) return res.status(404).json({ message: "Not found" });
     const project = rows[0];

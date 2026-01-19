@@ -182,6 +182,11 @@ export async function listAchievements(req, res) {
     const cond = [];
     const params = [];
 
+    // If not authenticated, only show verified achievements
+    if (!requesterId) {
+      cond.push(`a.verified = true`);
+    }
+
     // Staff can only see achievements for activity types they coordinate
     if (requesterRole === "staff" && requesterId) {
       base += ` LEFT JOIN activity_coordinators ac ON ac.activity_type = a.activity_type AND ac.staff_id = $${
@@ -234,7 +239,13 @@ export async function getAchievementDetails(req, res) {
     // Staff should only access achievements for activity types they coordinate
     const requesterRole = req.user?.role;
     const requesterId = req.user?.id;
-    if (requesterRole === "staff" && requesterId) {
+    
+    // If not authenticated, only show verified achievements
+    let whereClause = "WHERE a.id = $1";
+    const params = [id];
+    if (!requesterId) {
+      whereClause += " AND a.verified = true";
+    } else if (requesterRole === "staff" && requesterId) {
       const { rows: auth } = await pool.query(
         `SELECT 1 FROM achievements a
            JOIN activity_coordinators ac
@@ -269,8 +280,8 @@ export async function getAchievementDetails(req, res) {
        LEFT JOIN project_files pfe ON a.event_photos_file_id = pfe.id
        LEFT JOIN users u2 ON u2.id = pf.uploaded_by
        LEFT JOIN users ux ON LOWER(ux.full_name) = LOWER(a.name)
-       WHERE a.id = $1`,
-      [id]
+       ${whereClause}`,
+      params
     );
     if (!rows.length) return res.status(404).json({ message: "Not found" });
     return res.json({ achievement: rows[0] });
@@ -363,12 +374,12 @@ export async function getAchievementsLeaderboard(req, res) {
       `SELECT 
         u.id,
         u.email,
-        COALESCE(u.full_name, a.name) AS name,
+        COALESCE(u.full_name, u.email) AS name,
         COUNT(a.id)::int AS achievement_count
        FROM achievements a
        JOIN users u ON a.user_id = u.id
        WHERE (a.verified = true OR a.verification_status = 'approved')
-       GROUP BY u.id, u.email, u.full_name, a.name
+       GROUP BY u.id, u.email, u.full_name
        ORDER BY achievement_count DESC, u.full_name ASC
        LIMIT $1`,
       [limit]

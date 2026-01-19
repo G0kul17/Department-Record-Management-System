@@ -56,7 +56,7 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
         <div className="space-y-3">
           {leaderboard.map((student, index) => (
             <div
-              key={student.id || index}
+              key={`${student.id}-${index}`}
               className="flex items-center justify-between p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors"
             >
               <div className="flex items-center gap-3 flex-1 min-w-0">

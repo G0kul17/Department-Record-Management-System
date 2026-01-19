@@ -60,50 +60,6 @@ export default function AdminQuickActions() {
             />
           </Card>
           <Card
-            onClick={goTo("achievements")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconCheck />}
-              title="Add Achievement"
-              desc="Create an achievement on behalf of faculty/student."
-              color="blue"
-            />
-          </Card>
-          <Card
-            onClick={goTo("projects")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconWindow />}
-              title="Upload Project"
-              desc="Share recent projects with the department."
-              color="green"
-            />
-          </Card>
-          <Card
-            onClick={goTo("verifyAchievements")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconList />}
-              title="Verify Achievement"
-              desc="Review and approve submitted achievements."
-              color="violet"
-            />
-          </Card>
-          <Card
-            onClick={goTo("verifyProjects")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconChat />}
-              title="Verify Project"
-              desc="Approve or reject project submissions."
-              color="orange"
-            />
-          </Card>
-          <Card
             onClick={goTo("staffEvents")}
             className="p-6 glitter-card bulge-card"
           >
@@ -112,39 +68,6 @@ export default function AdminQuickActions() {
               title="Upload Events"
               desc="Create and manage department events."
               color="indigo"
-            />
-          </Card>
-          <Card
-            onClick={goTo("facultyParticipation")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconList />}
-              title="Faculty Participation"
-              desc="Add faculty training/participation details."
-              color="sky"
-            />
-          </Card>
-          <Card
-            onClick={goTo("facultyResearch")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconList />}
-              title="Faculty Research"
-              desc="Add research funding and project details."
-              color="teal"
-            />
-          </Card>
-          <Card
-            onClick={goTo("facultyConsultancy")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconList />}
-              title="Faculty Consultancy"
-              desc="Add consultancy engagements and proof."
-              color="emerald"
             />
           </Card>
           <Card

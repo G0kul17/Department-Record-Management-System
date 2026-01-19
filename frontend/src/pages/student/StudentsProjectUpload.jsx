@@ -24,6 +24,7 @@ export default function ProjectUpload() {
   const [submitting, setSubmitting] = useState(false);
   const [projects, setProjects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
+  const [previewModal, setPreviewModal] = useState({ open: false, item: null });
 
   const loadProjects = async (retainExisting = false) => {
     setLoadingProjects(true);
@@ -404,7 +405,7 @@ export default function ProjectUpload() {
                   className="rounded-lg border border-slate-200 p-4 dark:border-slate-700"
                 >
                   <div className="flex items-center justify-between">
-                    <div>
+                    <div className="flex-1">
                       <div className="font-semibold text-slate-800 dark:text-slate-100">
                         {p.title}
                       </div>
@@ -416,15 +417,24 @@ export default function ProjectUpload() {
                         Status: {p.status || "ongoing"}
                       </div>
                     </div>
-                    {p.verified ? (
-                      <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-300">
-                        Verified
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
-                        Pending
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewModal({ open: true, item: p })}
+                        className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100"
+                      >
+                        View
+                      </button>
+                      {p.verified ? (
+                        <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-300">
+                          Verified
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
+                          Pending
+                        </span>
+                      )}
+                    </div>
                   </div>
                   {p.created_at && (
                     <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -437,6 +447,127 @@ export default function ProjectUpload() {
           </div>
         </div>
       </div>
+
+      {/* Preview Modal */}
+      {previewModal.open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto"
+          onClick={() => setPreviewModal({ open: false, item: null })}
+        >
+          <div
+            className="max-w-3xl w-full rounded-xl bg-white p-6 shadow-xl dark:bg-slate-900 my-8 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                Project Preview
+              </h3>
+              <button
+                className="rounded-md bg-slate-200 px-3 py-1 text-sm hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700"
+                onClick={() => setPreviewModal({ open: false, item: null })}
+              >
+                Close
+              </button>
+            </div>
+            <div className="space-y-3 text-sm text-slate-700 dark:text-slate-300">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <span className="font-semibold">Title:</span>{" "}
+                  {previewModal.item?.title}
+                </div>
+                {previewModal.item?.description && (
+                  <div className="md:col-span-2">
+                    <span className="font-semibold">Description:</span>{" "}
+                    {previewModal.item.description}
+                  </div>
+                )}
+                <div>
+                  <span className="font-semibold">Mentor:</span>{" "}
+                  {previewModal.item?.mentor_name || "-"}
+                </div>
+                <div>
+                  <span className="font-semibold">Academic Year:</span>{" "}
+                  {previewModal.item?.academic_year || "-"}
+                </div>
+                <div>
+                  <span className="font-semibold">Status:</span>{" "}
+                  {previewModal.item?.status || "ongoing"}
+                </div>
+                <div>
+                  <span className="font-semibold">Team Members:</span>{" "}
+                  {previewModal.item?.team_members_count || "1"}
+                </div>
+                {previewModal.item?.github_url && (
+                  <div className="md:col-span-2">
+                    <span className="font-semibold">GitHub URL:</span>{" "}
+                    <a
+                      href={previewModal.item.github_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-blue-600 hover:underline dark:text-blue-400"
+                    >
+                      {previewModal.item.github_url}
+                    </a>
+                  </div>
+                )}
+                <div>
+                  <span className="font-semibold">Verification:</span>{" "}
+                  {previewModal.item?.verified
+                    ? "Verified"
+                    : previewModal.item?.verification_status === "rejected"
+                    ? "Rejected"
+                    : "Pending"}
+                </div>
+                {previewModal.item?.created_at && (
+                  <div>
+                    <span className="font-semibold">Uploaded:</span>{" "}
+                    {new Date(previewModal.item.created_at).toLocaleDateString()}
+                  </div>
+                )}
+              </div>
+
+              {/* Files */}
+              {Array.isArray(previewModal.item?.files) &&
+                previewModal.item.files.length > 0 && (
+                  <div className="mt-4">
+                    <div className="font-semibold mb-2">Attached Files:</div>
+                    <div className="space-y-2">
+                      {previewModal.item.files.map((f) => (
+                        <div key={f.id} className="border rounded p-2">
+                          {f.mime_type?.startsWith("image/") ? (
+                            <img
+                              alt={f.original_name || f.filename}
+                              src={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
+                                f.filename
+                              }`}
+                              className="max-h-80 rounded border"
+                            />
+                          ) : (
+                            <a
+                              href={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
+                                f.filename
+                              }`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-blue-600 hover:underline dark:text-blue-400"
+                            >
+                              {f.original_name || f.filename}
+                            </a>
+                          )}
+                          {f.mime_type && (
+                            <div className="text-xs text-slate-500 mt-1">
+                              {f.mime_type}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

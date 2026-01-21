@@ -84,8 +84,47 @@ const Navbar = () => {
             </span>
           </Link>
 
-          {/* Center nav links removed per spec (hide dashboard/achievements/projects/events) */}
-          <div className="hidden md:flex items-center gap-4" />
+          {/* Admin Navigation Links */}
+          {token && user?.role === "admin" && (
+            <div className="hidden md:flex items-center gap-6">
+              <button
+                onClick={() => {
+                  const element = document.getElementById("visualization");
+                  element?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
+              >
+                Visualization
+              </button>
+              <button
+                onClick={() => {
+                  const element = document.getElementById("events");
+                  element?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
+              >
+                Events
+              </button>
+              <button
+                onClick={() => {
+                  const element = document.getElementById("projects");
+                  element?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
+              >
+                Projects
+              </button>
+              <button
+                onClick={() => {
+                  const element = document.getElementById("achievements");
+                  element?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
+              >
+                Achievements
+              </button>
+            </div>
+          )}
 
           <div className="flex items-center gap-4">
             {token ? (

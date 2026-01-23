@@ -1,16 +1,59 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import apiClient from "../api/axiosClient";
+import { useAuth } from "../hooks/useAuth";
+
+const CATEGORY_OPTIONS = [
+  { key: "achievements", label: "Achievements" },
+  { key: "projects", label: "Projects" },
+  { key: "faculty_research", label: "Faculty Research" },
+  { key: "faculty_consultancy", label: "Faculty Consultancy" },
+  { key: "faculty_participation", label: "Faculty Participation" },
+];
 
 export default function AchievementsLeaderboard({ limit = 10 }) {
+  const { user } = useAuth();
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [category, setCategory] = useState("achievements");
+
+  const title = useMemo(() => {
+    switch (category) {
+      case "projects":
+        return "Top Project Submitters";
+      case "faculty_research":
+        return "Top Faculty Research";
+      case "faculty_consultancy":
+        return "Top Faculty Consultancy";
+      case "faculty_participation":
+        return "Top Faculty Participation";
+      default:
+        return "Top Achievers";
+    }
+  }, [category]);
+
+  const subtitle = useMemo(() => {
+    switch (category) {
+      case "projects":
+        return "Most approved projects";
+      case "faculty_research":
+        return "Most faculty research submissions";
+      case "faculty_consultancy":
+        return "Most faculty consultancy submissions";
+      case "faculty_participation":
+        return "Most faculty participation submissions";
+      default:
+        return "Most approved achievements";
+    }
+  }, [category]);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       setLoading(true);
       try {
-        const data = await apiClient.get(`/achievements/leaderboard?limit=${limit}`);
+        const data = await apiClient.get(
+          `/achievements/leaderboard?type=${category}&limit=${limit}`
+        );
         if (!mounted) return;
         setLeaderboard(data.leaderboard || []);
       } catch (err) {
@@ -23,7 +66,7 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
     return () => {
       mounted = false;
     };
-  }, [limit]);
+  }, [limit, category]);
 
   return (
     <div className="rounded-xl border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 p-6 shadow-lg">
@@ -37,12 +80,30 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
         </svg>
         <h3 className="text-lg font-bold text-slate-100">
-          Top Achievers
+          {title}
         </h3>
       </div>
       <p className="text-xs text-slate-300 mb-4">
-        Most Approved Achievements
+        {subtitle}
       </p>
+
+      {user?.role === "admin" && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {CATEGORY_OPTIONS.map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setCategory(opt.key)}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors border ${
+                category === opt.key
+                  ? "bg-[#87CEEB] text-slate-900 border-[#87CEEB]"
+                  : "bg-slate-800 text-slate-200 border-slate-600 hover:border-slate-400"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
       
       {loading ? (
         <div className="text-sm text-slate-300 py-4">
@@ -50,7 +111,7 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
         </div>
       ) : leaderboard.length === 0 ? (
         <div className="text-sm text-slate-300 py-4">
-          No achievements yet.
+          No records yet.
         </div>
       ) : (
         <div className="space-y-3">

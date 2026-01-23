@@ -3,14 +3,18 @@ import apiClient from "../api/axiosClient";
 import Card from "../components/ui/Card";
 import PageHeader from "../components/ui/PageHeader";
 import AttachmentPreview from "../components/AttachmentPreview";
+import { generateAcademicYears } from "../utils/academicYears";
 
 export default function FacultyResearchApproved() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
+  const [academicYear, setAcademicYear] = useState("");
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [previewFile, setPreviewFile] = useState(null);
+
+  const academicYearOptions = useMemo(() => generateAcademicYears(), []);
 
   useEffect(() => {
     let mounted = true;
@@ -32,8 +36,9 @@ export default function FacultyResearchApproved() {
   }, []);
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
-    if (!query) return items;
-    return items.filter((it) => {
+    let result = items;
+    if (query) {
+      result = result.filter((it) => {
       return [
         it.faculty_name,
         it.principal_investigator,
@@ -43,8 +48,16 @@ export default function FacultyResearchApproved() {
       ]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(query));
-    });
-  }, [items, q]);
+      });
+    }
+    if (academicYear) {
+      result = result.filter((it) => {
+        const itemYear = it.academic_year || it.start_date?.substring(0, 4);
+        return itemYear && itemYear.includes(academicYear.substring(0, 4));
+      });
+    }
+    return result;
+  }, [items, q, academicYear]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / limit));
   const pageItems = useMemo(() => {
@@ -60,7 +73,7 @@ export default function FacultyResearchApproved() {
         {/* Search Box */}
         <div className="mx-auto max-w-3xl mb-8">
           <div className="glitter-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className="grid grid-cols-1 gap-3 items-start">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
               <div>
                 <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
                   Search
@@ -100,6 +113,27 @@ export default function FacultyResearchApproved() {
                     className="w-full rounded-md border border-slate-300 bg-slate-50 px-10 py-2 text-sm placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                   />
                 </div>
+              </div>
+              {/* Academic Year dropdown */}
+              <div>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                  Academic Year
+                </label>
+                <select
+                  value={academicYear}
+                  onChange={(e) => {
+                    setAcademicYear(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                >
+                  <option value="">All Years</option>
+                  {academicYearOptions.map(year => (
+                    <option key={year.value} value={year.value}>
+                      {year.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>

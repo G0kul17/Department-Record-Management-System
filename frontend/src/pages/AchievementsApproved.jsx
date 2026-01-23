@@ -8,12 +8,13 @@ export default function AchievementsApproved() {
   const [loading, setLoading] = useState(false);
   const [previewFile, setPreviewFile] = useState(null);
   const [q, setQ] = useState("");
+  const [academicYear, setAcademicYear] = useState("");
   // Status fixed to approved; UI control removed
   const [category, setCategory] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [refreshId, setRefreshId] = useState(0);
-
+  const academicYearOptions = useMemo(() => generateAcademicYears(), []);
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -25,6 +26,7 @@ export default function AchievementsApproved() {
         params.set("offset", String((page - 1) * limit));
         const qCombined = `${q.trim()} ${category.trim()}`.trim();
         if (qCombined) params.set("q", qCombined);
+        if (academicYear) params.set("year", academicYear);
         const data = await apiClient.get(`/achievements?${params.toString()}`);
         if (!mounted) return;
         setItems(data.achievements || []);
@@ -36,7 +38,7 @@ export default function AchievementsApproved() {
       }
     })();
     return () => (mounted = false);
-  }, [q, category, page, limit, refreshId]);
+  }, [q, academicYear, category, page, limit, refreshId]);
 
   // Enrich any items missing user_email by fetching details
   useEffect(() => {
@@ -77,9 +79,9 @@ export default function AchievementsApproved() {
   return (
     <div className="mx-auto max-w-6xl p-6">
       {/* Centered search + filters below navbar */}
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-4xl">
         <div className="glitter-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-start">
             {/* Search input with icon */}
             <div>
               <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
@@ -197,7 +199,27 @@ export default function AchievementsApproved() {
                 </select>
               </div>
             </div>
-            {/* Status filter removed as requested */}
+            {/* Academic Year dropdown */}
+            <div>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                Academic Year
+              </label>
+              <select
+                value={academicYear}
+                onChange={(e) => {
+                  setAcademicYear(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              >
+                <option value="">All Years</option>
+                {academicYearOptions.map(year => (
+                  <option key={year.value} value={year.value}>
+                    {year.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </div>

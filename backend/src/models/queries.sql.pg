@@ -123,10 +123,9 @@ ALTER TABLE achievements ADD COLUMN IF NOT EXISTS event_name VARCHAR(255);
 -- New proof types: certificates and event photos
 ALTER TABLE achievements ADD COLUMN IF NOT EXISTS certificate_file_id INTEGER;
 ALTER TABLE achievements ADD COLUMN IF NOT EXISTS event_photos_file_id INTEGER;
--- Additional achievement details
 ALTER TABLE achievements ADD COLUMN IF NOT EXISTS prize_amount DECIMAL(10, 2);
 ALTER TABLE achievements ADD COLUMN IF NOT EXISTS position VARCHAR(50);
--- uploader_name is deprecated; ensure it does not exist
+ALTER TABLE achievements ADD COLUMN IF NOT EXISTS academic_year VARCHAR(10);
 ALTER TABLE achievements DROP COLUMN IF EXISTS uploader_name;
 -- proof_file_url is deprecated; ensure it does not exist
 ALTER TABLE achievements DROP COLUMN IF EXISTS proof_file_url;
@@ -258,9 +257,6 @@ ALTER TABLE events ADD COLUMN IF NOT EXISTS thumbnail_original_name VARCHAR(1024
 ALTER TABLE events ADD COLUMN IF NOT EXISTS thumbnail_mime VARCHAR(255);
 ALTER TABLE events ADD COLUMN IF NOT EXISTS thumbnail_size BIGINT;
 
--- ==========================================================
--- FACULTY PARTICIPATIONS (Added for Staff Dashboard)
--- ==========================================================
 CREATE TABLE IF NOT EXISTS faculty_participations (
   id SERIAL PRIMARY KEY,
   faculty_name VARCHAR(255) NOT NULL,
@@ -289,6 +285,7 @@ CREATE TABLE IF NOT EXISTS faculty_participations (
   page_or_doi VARCHAR(100),
   issn_or_isbn VARCHAR(100),
   pub_month_year VARCHAR(10),
+  academic_year VARCHAR(10),
   citations_count INTEGER,
   paper_url TEXT,
   journal_home_url TEXT,

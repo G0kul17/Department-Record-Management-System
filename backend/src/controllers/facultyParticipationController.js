@@ -327,7 +327,7 @@ export const deleteFacultyParticipation = async (req, res) => {
 // ========== LIST PARTICIPATIONS ==========
 export const listFacultyParticipations = async (req, res) => {
   try {
-    const { limit = 10, offset = 0, q = "" } = req.query;
+     const { limit = 10, offset = 0, q = "", year } = req.query;
     const searchTerm = q ? `%${q}%` : null;
 
     let query = `
@@ -338,22 +338,71 @@ export const listFacultyParticipations = async (req, res) => {
     let countQuery = `SELECT COUNT(*) FROM faculty_participations fp`;
     let params = [];
     let countParams = [];
+      let conditions = [];
 
     if (searchTerm) {
-      query += ` WHERE (
-        fp.faculty_name ILIKE $1 OR 
-        fp.title ILIKE $1 OR 
-        fp.department ILIKE $1 OR 
-        fp.type_of_event ILIKE $1
-      )`;
-      countQuery += ` WHERE (
-        fp.faculty_name ILIKE $1 OR 
-        fp.title ILIKE $1 OR 
-        fp.department ILIKE $1 OR 
-        fp.type_of_event ILIKE $1
-      )`;
+      const idx = params.length + 1;
+      conditions.push(`(
+        fp.faculty_name ILIKE $${idx} OR 
+        fp.title ILIKE $${idx} OR 
+        fp.department ILIKE $${idx} OR 
+        fp.type_of_event ILIKE $${idx}
+      )`);
       params.push(searchTerm);
       countParams.push(searchTerm);
+    }
+    
+    if (year) {
+      const yearRaw = String(year).trim();
+      const startYear4 = yearRaw.match(/\d{4}/)?.[0];
+      const startYear2 = startYear4 ? startYear4.slice(-2) : null;
+      const endYear2 = startYear4 ? String(parseInt(startYear4) + 1).slice(-2) : null;
+      
+      const clauses = [];
+
+      // Exact match variations for academic_year field
+      params.push(yearRaw);
+      countParams.push(yearRaw);
+      clauses.push(`fp.academic_year = $${params.length}`);
+
+      if (startYear4) {
+        // Match patterns like "2025-2026" or "2025-26"
+        const nextYear = String(parseInt(startYear4) + 1);
+        params.push(`${startYear4}-${nextYear}`);
+        countParams.push(`${startYear4}-${nextYear}`);
+        clauses.push(`fp.academic_year = $${params.length}`);
+        
+        if (startYear2 && endYear2) {
+          params.push(`${startYear2}-${endYear2}`);
+          countParams.push(`${startYear2}-${endYear2}`);
+          clauses.push(`fp.academic_year = $${params.length}`);
+        }
+        
+        // Fallback to date fields only if academic_year is NULL/empty
+        params.push(startYear4);
+        countParams.push(startYear4);
+        clauses.push(`(fp.academic_year IS NULL AND to_char(fp.start_date, 'YYYY') = $${params.length})`);
+
+        params.push(startYear4);
+        countParams.push(startYear4);
+        clauses.push(`(fp.academic_year IS NULL AND to_char(fp.end_date, 'YYYY') = $${params.length})`);
+
+        params.push(`%${startYear4}%`);
+        countParams.push(`%${startYear4}%`);
+        clauses.push(`(fp.academic_year IS NULL AND fp.pub_month_year ILIKE $${params.length})`);
+
+        params.push(startYear4);
+        countParams.push(startYear4);
+        clauses.push(`(fp.academic_year IS NULL AND to_char(fp.created_at, 'YYYY') = $${params.length})`);
+      }
+
+      conditions.push(`(${clauses.join(" OR ")})`);
+    }
+
+    if (conditions.length > 0) {
+      const whereClause = ` WHERE ${conditions.join(' AND ')}`;
+      query += whereClause;
+      countQuery += whereClause;
     }
 
     query += ` ORDER BY fp.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;

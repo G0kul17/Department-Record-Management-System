@@ -348,8 +348,34 @@ export async function listProjects(req, res) {
     }
 
     if (year) {
-      params.push(year);
-      conditions.push(`p.academic_year = $${params.length}`);
+      const yearRaw = String(year).trim();
+      const startYear4 = yearRaw.match(/\d{4}/)?.[0];
+      const startYear2 = startYear4 ? startYear4.slice(-2) : null;
+      const endYear2 = startYear4 ? String(parseInt(startYear4) + 1).slice(-2) : null;
+      
+      const yearClauses = [];
+
+      // Exact match variations for academic_year field
+      params.push(yearRaw);
+      yearClauses.push(`p.academic_year = $${params.length}`);
+
+      if (startYear4) {
+        // Match patterns like "2025-2026" or "2025-26"
+        const nextYear = String(parseInt(startYear4) + 1);
+        params.push(`${startYear4}-${nextYear}`);
+        yearClauses.push(`p.academic_year = $${params.length}`);
+        
+        if (startYear2 && endYear2) {
+          params.push(`${startYear2}-${endYear2}`);
+          yearClauses.push(`p.academic_year = $${params.length}`);
+        }
+        
+        // Only fallback to created_at if academic_year is NULL/empty
+        params.push(startYear4);
+        yearClauses.push(`(p.academic_year IS NULL AND to_char(p.created_at, 'YYYY') = $${params.length})`);
+      }
+
+      conditions.push(`(${yearClauses.join(" OR ")})`);
     }
     if (mentor_name) {
       params.push(mentor_name);

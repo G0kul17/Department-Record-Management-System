@@ -151,7 +151,7 @@ export async function createAchievement(req, res) {
 }
 
 export async function listAchievements(req, res) {
-  const { user_id, verified, q, limit = 20, offset = 0 } = req.query;
+  const { user_id, verified, q, year, limit = 20, offset = 0 } = req.query;
   try {
     const requesterId = req.user?.id;
     const requesterRole = req.user?.role;
@@ -213,6 +213,42 @@ export async function listAchievements(req, res) {
       cond.push(
         `(a.title ILIKE $${params.length} OR a.issuer ILIKE $${params.length})`
       );
+    }
+    if (year) {
+      const yearRaw = String(year).trim();
+      const startYear4 = yearRaw.match(/\d{4}/)?.[0];
+      const startYear2 = startYear4 ? startYear4.slice(-2) : null;
+      const endYear2 = startYear4 ? String(parseInt(startYear4) + 1).slice(-2) : null;
+      
+      const yearClauses = [];
+
+      // Exact match variations for academic_year field
+      params.push(yearRaw);
+      yearClauses.push(`a.academic_year = $${params.length}`);
+
+      if (startYear4) {
+        // Match patterns like "2025-2026" or "2025-26"
+        const nextYear = String(parseInt(startYear4) + 1);
+        params.push(`${startYear4}-${nextYear}`);
+        yearClauses.push(`a.academic_year = $${params.length}`);
+        
+        if (startYear2 && endYear2) {
+          params.push(`${startYear2}-${endYear2}`);
+          yearClauses.push(`a.academic_year = $${params.length}`);
+        }
+        
+        // Fallback to date fields only if academic_year is NULL/empty
+        params.push(startYear4);
+        yearClauses.push(`(a.academic_year IS NULL AND to_char(a.date_of_award, 'YYYY') = $${params.length})`);
+        
+        params.push(startYear4);
+        yearClauses.push(`(a.academic_year IS NULL AND to_char(a.date, 'YYYY') = $${params.length})`);
+        
+        params.push(startYear4);
+        yearClauses.push(`(a.academic_year IS NULL AND to_char(a.created_at, 'YYYY') = $${params.length})`);
+      }
+
+      cond.push(`(${yearClauses.join(" OR ")})`);
     }
 
     if (cond.length) base += " WHERE " + cond.join(" AND ");
@@ -369,23 +405,92 @@ export async function getAchievementsCount(req, res) {
 export async function getAchievementsLeaderboard(req, res) {
   try {
     const limit = Number(req.query.limit) || 10;
-    
-    const { rows } = await pool.query(
-      `SELECT 
-        u.id,
-        u.email,
-        COALESCE(u.full_name, u.email) AS name,
-        COUNT(a.id)::int AS achievement_count
-       FROM achievements a
-       JOIN users u ON a.user_id = u.id
-       WHERE (a.verified = true OR a.verification_status = 'approved')
-       GROUP BY u.id, u.email, u.full_name
-       ORDER BY achievement_count DESC, u.full_name ASC
-       LIMIT $1`,
-      [limit]
-    );
-    
-    return res.json({ leaderboard: rows });
+    const type = (req.query.type || "achievements").toLowerCase();
+
+    // Map of supported leaderboard queries keyed by type
+    const queries = {
+      achievements: {
+        sql: `SELECT 
+                u.id,
+                u.email,
+                COALESCE(u.full_name, u.email) AS name,
+                COUNT(a.id)::int AS item_count
+              FROM achievements a
+              JOIN users u ON a.user_id = u.id
+              WHERE (a.verified = true OR a.verification_status = 'approved')
+              GROUP BY u.id, u.email, u.full_name
+              ORDER BY item_count DESC, u.full_name ASC
+              LIMIT $1`,
+        params: [limit],
+      },
+      projects: {
+        sql: `SELECT
+                u.id,
+                u.email,
+                COALESCE(u.full_name, u.email) AS name,
+                COUNT(p.id)::int AS item_count
+              FROM projects p
+              JOIN users u ON p.created_by = u.id
+              WHERE (p.verified = true OR p.verification_status = 'approved')
+              GROUP BY u.id, u.email, u.full_name
+              ORDER BY item_count DESC, u.full_name ASC
+              LIMIT $1`,
+        params: [limit],
+      },
+      faculty_research: {
+        sql: `SELECT
+                u.id,
+                u.email,
+                COALESCE(u.full_name, u.email) AS name,
+                COUNT(fr.id)::int AS item_count
+              FROM faculty_research fr
+              JOIN users u ON fr.created_by = u.id
+              GROUP BY u.id, u.email, u.full_name
+              ORDER BY item_count DESC, u.full_name ASC
+              LIMIT $1`,
+        params: [limit],
+      },
+      faculty_consultancy: {
+        sql: `SELECT
+                u.id,
+                u.email,
+                COALESCE(u.full_name, u.email) AS name,
+                COUNT(fc.id)::int AS item_count
+              FROM faculty_consultancy fc
+              JOIN users u ON fc.created_by = u.id
+              GROUP BY u.id, u.email, u.full_name
+              ORDER BY item_count DESC, u.full_name ASC
+              LIMIT $1`,
+        params: [limit],
+      },
+      faculty_participation: {
+        sql: `SELECT
+                u.id,
+                u.email,
+                COALESCE(u.full_name, u.email) AS name,
+                COUNT(fp.id)::int AS item_count
+              FROM faculty_participations fp
+              JOIN users u ON fp.created_by = u.id
+              GROUP BY u.id, u.email, u.full_name
+              ORDER BY item_count DESC, u.full_name ASC
+              LIMIT $1`,
+        params: [limit],
+      },
+    };
+
+    const key = queries[type] ? type : "achievements";
+    const { sql, params } = queries[key];
+    const { rows } = await pool.query(sql, params);
+
+    // Normalize field name for the frontend
+    const leaderboard = rows.map((row) => ({
+      id: row.id,
+      email: row.email,
+      name: row.name,
+      achievement_count: row.item_count,
+    }));
+
+    return res.json({ leaderboard });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server error" });

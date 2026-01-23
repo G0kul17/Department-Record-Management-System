@@ -1,15 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import apiClient from "../api/axiosClient";
 import AttachmentPreview from "../components/AttachmentPreview";
+import { generateAcademicYears } from "../utils/academicYears";
 
 export default function FacultyParticipationApproved() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [previewFile, setPreviewFile] = useState(null);
   const [q, setQ] = useState("");
+  const [academicYear, setAcademicYear] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
+
+  const academicYearOptions = useMemo(() => generateAcademicYears(), []);
 
   useEffect(() => {
     let mounted = true;
@@ -20,6 +24,7 @@ export default function FacultyParticipationApproved() {
         params.set("limit", String(limit));
         params.set("offset", String((page - 1) * limit));
         if (q.trim()) params.set("q", q.trim());
+          if (academicYear) params.set("year", academicYear);
         const data = await apiClient.get(
           `/faculty-participations?${params.toString()}`
         );
@@ -37,7 +42,7 @@ export default function FacultyParticipationApproved() {
       }
     })();
     return () => (mounted = false);
-  }, [q, page, limit]);
+  }, [q, academicYear, page, limit]);
 
   const totalPages = Math.ceil(total / limit);
 
@@ -46,7 +51,7 @@ export default function FacultyParticipationApproved() {
       {/* Centered search below navbar */}
       <div className="mx-auto max-w-3xl mb-8">
         <div className="glitter-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="grid grid-cols-1 gap-3 items-start">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
             <div>
               <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
                 Search
@@ -86,6 +91,27 @@ export default function FacultyParticipationApproved() {
                   className="w-full rounded-md border border-slate-300 bg-slate-50 px-10 py-2 text-sm placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
                 />
               </div>
+            </div>
+            {/* Academic Year dropdown */}
+            <div>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                Academic Year
+              </label>
+              <select
+                value={academicYear}
+                onChange={(e) => {
+                  setAcademicYear(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              >
+                <option value="">All Years</option>
+                {academicYearOptions.map(year => (
+                  <option key={year.value} value={year.value}>
+                    {year.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

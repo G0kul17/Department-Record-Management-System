@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import EventCard from "../../components/EventCard";
 import apiClient from "../../api/axiosClient";
+import { generateAcademicYears } from "../../utils/academicYears";
 
 function GrantBox({ grant }) {
   if (!grant) return null;
@@ -37,6 +38,9 @@ export default function Events() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
+  const [academicYear, setAcademicYear] = useState("");
+
+  const academicYearOptions = useMemo(() => generateAcademicYears(), []);
 
   // compute selected event early so hooks can react to it
   const selectedEvent = id
@@ -223,125 +227,123 @@ export default function Events() {
     );
   }
 
+  const q = query.trim().toLowerCase();
+  const filtered = events.filter((e) => {
+    const matchesSearch = !q
+      || [e.title, e.venue, e.description]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q));
+
+    const eventYear = e.academic_year || e.start_date?.substring(0, 4);
+    const matchesYear = !academicYear
+      || (eventYear && eventYear.includes(academicYear.substring(0, 4)));
+
+    return matchesSearch && matchesYear;
+  });
+
   return (
     <div className="mx-auto max-w-6xl p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h1 className="text-2xl font-bold">Events</h1>
-        <div className="flex-1 sm:max-w-xl">
-          {/* Outlined search bar container */}
-          <div className="rounded-2xl border border-sky-200 p-2 bg-white">
-            <div className="relative">
-              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M21 21l-4.3-4.3"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <circle
-                    cx="11"
-                    cy="11"
-                    r="7"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  />
-                </svg>
-              </span>
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search events..."
-                className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-12 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300"
-              />
-              <button
-                type="button"
-                aria-label="Search"
-                onClick={() => {
-                  /* live filter, button kept for UI */
-                }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center rounded-md bg-sky-400 text-white shadow hover:bg-sky-500"
+      <h1 className="text-2xl font-bold mb-4">Events</h1>
+      
+      {/* Search and Filter Bar */}
+      <div className="mb-6">
+        <div className="glitter-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+            {/* Search input */}
+            <div>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                Search
+              </label>
+              <div className="relative">
+                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M21 21l-4.3-4.3"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <circle
+                      cx="11"
+                      cy="11"
+                      r="7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
+                  </svg>
+                </span>
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search events..."
+                  className="w-full rounded-md border border-slate-300 bg-slate-50 pl-9 py-2 text-sm placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+                />
+              </div>
+            </div>
+            {/* Academic Year dropdown */}
+            <div>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                Academic Year
+              </label>
+              <select
+                value={academicYear}
+                onChange={(e) => setAcademicYear(e.target.value)}
+                className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
               >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M21 21l-4.3-4.3"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <circle
-                    cx="11"
-                    cy="11"
-                    r="7"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  />
-                </svg>
-              </button>
+                <option value="">All Years</option>
+                {academicYearOptions.map(year => (
+                  <option key={year.value} value={year.value}>
+                    {year.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
-        <div className="text-sm text-slate-600 whitespace-nowrap">
+      </div>
+      
+      <div className="flex items-center justify-between mt-4 mb-2">
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          Filter by title, venue, or description.
+        </p>
+        <div className="text-sm text-slate-600 dark:text-slate-300 whitespace-nowrap">
           {loading ? "Loading..." : `${events.length} total`}
         </div>
       </div>
-      <p className="mt-2 text-sm text-slate-600">
-        Filter by title, venue, or description.
-      </p>
 
-      {(() => {
-        const q = query.trim().toLowerCase();
-        const filtered = q
-          ? events.filter((e) =>
-              [e.title, e.venue, e.description]
-                .filter(Boolean)
-                .some((v) => String(v).toLowerCase().includes(q))
-            )
-          : events;
-        if (!loading && filtered.length === 0) {
-          return (
-            <div className="mt-8 text-sm text-slate-600">
-              No events match your search.
-            </div>
-          );
-        }
-        return (
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filtered.map((ev) => (
-              <EventCard
-                key={ev.id}
-                id={ev.id}
-                title={ev.title}
-                summary={ev.description}
-                start_date={ev.start_date}
-                end_date={ev.end_date}
-                time={ev.time}
-                location={ev.venue}
-                venue={ev.venue}
-                image={ev.image || ev.thumbnail}
-                attachments={ev.attachments}
-                grant={null}
-                eventUrl={ev.event_url}
-                to={ev.event_url ? undefined : `/events/${ev.id}`}
-              />
-            ))}
-          </div>
-        );
-      })()}
+      {!loading && filtered.length === 0 ? (
+        <div className="mt-8 text-sm text-slate-600">
+          No events match your search.
+        </div>
+      ) : (
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          {filtered.map((ev) => (
+            <EventCard
+              key={ev.id}
+              id={ev.id}
+              title={ev.title}
+              summary={ev.description}
+              start_date={ev.start_date}
+              end_date={ev.end_date}
+              time={ev.time}
+              location={ev.venue}
+              venue={ev.venue}
+              image={ev.image || ev.thumbnail}
+              attachments={ev.attachments}
+              grant={null}
+              eventUrl={ev.event_url}
+              to={ev.event_url ? undefined : `/events/${ev.id}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

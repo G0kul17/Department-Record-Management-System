@@ -94,10 +94,10 @@ export default function ProjectsManagement() {
                 setView("pending");
                 await load();
               }}
-              className={`text-xs rounded-md px-2 py-0.5 font-semibold ${
+              className={`btn btn-xs ${
                 view === "pending"
-                  ? "bg-blue-600 text-white"
-                  : "bg-slate-100 text-slate-800"
+                  ? "btn-primary"
+                  : "btn-ghost"
               }`}
             >
               Pending
@@ -121,7 +121,7 @@ export default function ProjectsManagement() {
         <button
           onClick={() => (view === "pending" ? load() : showRejected())}
           disabled={loading}
-          className="text-xs rounded-md bg-blue-600 px-3 py-1 font-semibold text-white shadow hover:bg-blue-700 disabled:opacity-50"
+          className="btn btn-primary btn-sm"
         >
           {loading ? "Refreshing..." : "Refresh"}
         </button>
@@ -175,7 +175,7 @@ export default function ProjectsManagement() {
                   <button
                     onClick={() => approve(p.id)}
                     disabled={busyId === p.id}
-                    className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white shadow hover:bg-blue-700 disabled:opacity-50"
+                    className="btn btn-primary btn-xs"
                   >
                     {busyId === p.id ? "Processing..." : "Approve"}
                   </button>
@@ -205,7 +205,7 @@ export default function ProjectsManagement() {
                       href={p.github_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-blue-600 hover:underline"
+                      className="link link-primary"
                     >
                       {p.github_url}
                     </a>
@@ -221,7 +221,7 @@ export default function ProjectsManagement() {
                             href={`/uploads/${f.filename}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-blue-600 hover:underline"
+                            className="link link-primary"
                           >
                             {f.original_name || f.filename}
                           </a>
@@ -282,7 +282,7 @@ export default function ProjectsManagement() {
                     href={modal.item.github_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-blue-600 hover:underline"
+                    className="link link-primary"
                   >
                     {modal.item.github_url}
                   </a>
@@ -314,7 +314,7 @@ export default function ProjectsManagement() {
                               )}/uploads/${f.filename}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-blue-600 hover:underline"
+                              className="link link-primary"
                             >
                               {f.original_name || f.filename}
                             </a>

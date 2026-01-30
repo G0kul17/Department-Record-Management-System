@@ -504,7 +504,7 @@ export default function ProjectUpload() {
                       href={previewModal.item.github_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-blue-600 hover:underline dark:text-blue-400"
+                      className="link link-primary"
                     >
                       {previewModal.item.github_url}
                     </a>

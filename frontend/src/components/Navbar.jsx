@@ -89,15 +89,6 @@ const Navbar = () => {
             <div className="hidden md:flex items-center gap-6">
               <button
                 onClick={() => {
-                  const element = document.getElementById("visualization");
-                  element?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }}
-                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
-              >
-                Visualization
-              </button>
-              <button
-                onClick={() => {
                   const element = document.getElementById("events");
                   element?.scrollIntoView({ behavior: "smooth", block: "start" });
                 }}
@@ -122,6 +113,15 @@ const Navbar = () => {
                 className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
               >
                 Achievements
+              </button>
+              <button
+                onClick={() => {
+                  const element = document.getElementById("visualization");
+                  element?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
+              >
+                Visualization
               </button>
             </div>
           )}

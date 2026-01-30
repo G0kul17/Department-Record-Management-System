@@ -377,7 +377,7 @@ export default function AchievementsApproved() {
                   <Link
                     to={`/achievements/${a.id}`}
                     state={{ achievement: a }}
-                    className="inline-block rounded-md bg-blue-600 px-3 py-1 text-white text-sm"
+                    className="btn btn-primary btn-sm"
                   >
                     View
                   </Link>

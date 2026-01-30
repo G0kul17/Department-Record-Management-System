@@ -118,7 +118,7 @@ export default function Events() {
       return (
         <div className="p-8">
           <h3 className="text-xl">Event not found</h3>
-          <Link to="/events" className="text-blue-600 underline">
+          <Link to="/events" className="link link-primary">
             Back to events
           </Link>
         </div>
@@ -211,7 +211,7 @@ export default function Events() {
                           href={a.url || a}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-blue-600 underline"
+                          className="link link-primary"
                         >
                           {a.name || a}
                         </a>

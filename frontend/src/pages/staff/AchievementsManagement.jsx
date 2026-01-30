@@ -84,10 +84,10 @@ export default function AchievementsManagement() {
                 setView("pending");
                 await load();
               }}
-              className={`text-xs rounded-md px-2 py-0.5 font-semibold ${
+              className={`btn btn-xs ${
                 view === "pending"
-                  ? "bg-blue-600 text-white"
-                  : "bg-slate-100 text-slate-800"
+                  ? "btn-primary"
+                  : "btn-ghost"
               }`}
             >
               Pending
@@ -111,7 +111,7 @@ export default function AchievementsManagement() {
         <button
           onClick={() => (view === "pending" ? load() : showRejected())}
           disabled={loading}
-          className="text-xs rounded-md bg-blue-600 px-3 py-1 font-semibold text-white shadow hover:bg-blue-700 disabled:opacity-50"
+          className="btn btn-primary btn-sm"
         >
           {loading ? "Refreshing..." : "Refresh"}
         </button>
@@ -162,7 +162,7 @@ export default function AchievementsManagement() {
                   <button
                     onClick={() => approve(a.id)}
                     disabled={busyId === a.id}
-                    className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white shadow hover:bg-blue-700 disabled:opacity-50"
+                    className="btn btn-primary btn-xs"
                   >
                     {busyId === a.id ? "Processing..." : "Approve"}
                   </button>
@@ -208,7 +208,7 @@ export default function AchievementsManagement() {
                         href={`/uploads/${a.proof_filename}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-blue-600 hover:underline"
+                        className="link link-primary"
                       >
                         {a.proof_name || "Download proof"}
                       </a>
@@ -230,7 +230,7 @@ export default function AchievementsManagement() {
                         href={`/uploads/${a.certificate_filename}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-blue-600 hover:underline"
+                        className="link link-primary"
                       >
                         {a.certificate_name || "Download certificate"}
                       </a>
@@ -252,7 +252,7 @@ export default function AchievementsManagement() {
                         href={`/uploads/${a.event_photos_filename}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-blue-600 hover:underline"
+                        className="link link-primary"
                       >
                         {a.event_photos_name || "Download photos"}
                       </a>
@@ -337,7 +337,7 @@ export default function AchievementsManagement() {
                     }`}
                     target="_blank"
                     rel="noreferrer"
-                    className="ml-2 text-blue-600 hover:underline"
+                    className="link link-primary ml-2"
                   >
                     Download proof
                   </a>
@@ -367,7 +367,7 @@ export default function AchievementsManagement() {
                       }`}
                       target="_blank"
                       rel="noreferrer"
-                      className="ml-2 text-blue-600 hover:underline"
+                      className="link link-primary ml-2"
                     >
                       Download certificate
                     </a>
@@ -396,7 +396,7 @@ export default function AchievementsManagement() {
                       }`}
                       target="_blank"
                       rel="noreferrer"
-                      className="ml-2 text-blue-600 hover:underline"
+                      className="link link-primary ml-2"
                     >
                       Download photos
                     </a>

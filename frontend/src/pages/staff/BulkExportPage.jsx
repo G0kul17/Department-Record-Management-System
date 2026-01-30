@@ -77,10 +77,10 @@ export default function BulkExportPage({ isAdminView = false }) {
           </div>
 
           {/* Info Card */}
-          <div className="mb-6 rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+          <div className="alert alert-info mb-6">
             <div className="flex items-start gap-3">
               <svg
-                className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400"
+                className="mt-0.5 h-5 w-5 flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -93,10 +93,10 @@ export default function BulkExportPage({ isAdminView = false }) {
                 />
               </svg>
               <div className="flex-1">
-                <h3 className="font-semibold text-blue-900 dark:text-blue-100">
+                <h3 className="font-semibold">
                   What's included in the export?
                 </h3>
-                <ul className="mt-2 space-y-1 text-sm text-blue-800 dark:text-blue-200">
+                <ul className="mt-2 space-y-1 text-sm">
                   <li>• All user accounts and profiles</li>
                   <li>• All projects (approved and pending)</li>
                   <li>• All achievements (approved and pending)</li>

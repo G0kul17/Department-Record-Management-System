@@ -23,6 +23,7 @@ export default function Home({ hideAtAGlance = false }) {
   const [researchCount, setResearchCount] = useState(null);
   const [consultancyCount, setConsultancyCount] = useState(null);
   const [participationCount, setParticipationCount] = useState(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   // use shared events data
   // events is imported from ../data/events
@@ -104,7 +105,26 @@ export default function Home({ hideAtAGlance = false }) {
     };
   }, [user?.role]);
 
+  // Scroll to top button visibility
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
+    <>
     <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-white to-slate-50">
       {/* Hero Section */}
       <div className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pt-8 sm:pt-12 md:pt-20 pb-12 sm:pb-16 md:pb-20 bg-gradient-to-br from-blue-50 via-white to-cyan-50">
@@ -119,7 +139,7 @@ export default function Home({ hideAtAGlance = false }) {
             </p>
 
             <div className="pt-4 flex justify-center md:justify-start">
-              <Button onClick={goToQuickActions} className="px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
+              <Button onClick={goToQuickActions} className="btn btn-primary px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
                 <svg
                   width="18"
                   height="18"
@@ -146,44 +166,54 @@ export default function Home({ hideAtAGlance = false }) {
             </div>
           </div>
 
-          {user?.role !== "admin" && (
-            <div className="md:col-span-1">
-              <div className="rounded-2xl border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 p-6 sm:p-7 shadow-xl h-full">
-                <h2 className="text-base sm:text-lg font-bold text-slate-100 mb-4 sm:mb-5">
-                  At a Glance
-                </h2>
-                <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                  <button
-                    onClick={() => nav("/projects/approved")}
-                    className="rounded-xl p-4 sm:p-5 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-cyan-500 hover:border-cyan-400 hover:shadow-lg"
-                  >
-                    <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Projects</div>
-                    <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-100">
-                      {projCount === null ? "—" : projCount}
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => nav("/achievements/approved")}
-                    className="rounded-xl p-4 sm:p-5 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-fuchsia-500 hover:border-fuchsia-400 hover:shadow-lg"
-                  >
-                    <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                      Achievements
-                    </div>
-                    <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-100">
-                      {achCount === null ? "—" : achCount}
-                    </div>
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Top Achievers removed from hero - will be displayed with events */}
         </div>
+      </div>
+
+      {/* Latest Events Section with Top Achievers on the right */}
+      <div id="events" className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pt-8 sm:pt-12 md:pt-16 pb-8 sm:pb-10">
+        <div className="mb-5 sm:mb-6">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">
+            Latest Events
+          </h2>
+          <div className="h-1 w-16 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full mt-3"></div>
+        </div>
+        <div className="grid gap-6 sm:gap-8 md:grid-cols-2">
+          <div className="md:col-span-1">
+            <EventsCarousel events={events} intervalMs={5000} />
+          </div>
+          <div className="md:col-span-1">
+            <AchievementsLeaderboard />
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Projects Section */}
+      <div id="projects" className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-8 sm:pb-10">
+        <div className="mb-5 sm:mb-6">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">
+            Recent Projects
+          </h2>
+          <div className="h-1 w-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full mt-3"></div>
+        </div>
+        <ProjectsRecentGrid limit={6} />
+      </div>
+
+      {/* Recent Achievements grid (latest 6) */}
+      <div id="achievements" className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-8 sm:pb-10">
+        <div className="mb-5 sm:mb-6">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">
+            Recent Achievements
+          </h2>
+          <div className="h-1 w-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mt-3"></div>
+        </div>
+        <AchievementsRecentGrid limit={6} />
       </div>
 
       {/* Analytics & Visualization Section - Admin Only */}
       {user?.role === "admin" && (
-        <div id="visualization" className="bg-gradient-to-br from-slate-50 via-white to-slate-50">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-16">
+        <div id="visualization" className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-12 sm:pb-16 bg-gradient-to-br from-slate-50 via-white to-slate-50">
+          <div className="py-8 sm:py-12 md:py-16">
             <div className="mb-2">
               <h1 className="text-3xl sm:text-4xl font-bold text-slate-800">Analytics & Visualization</h1>
               <p className="mt-2 text-slate-600 text-base">Visual overview of activities and trends</p>
@@ -208,133 +238,122 @@ export default function Home({ hideAtAGlance = false }) {
 
           {/* Charts - Row 1 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-            {/* Activities Overview - Horizontal Bar Chart */}
-            <HorizontalBarChart
-              title="All Activities Overview"
-              data={[
-                { label: "Projects", value: projCount ?? 0 },
-                { label: "Achievements", value: achCount ?? 0 },
-                ...(user?.role === "admin" ? [
-                  { label: "Research", value: researchCount ?? 0 },
-                  { label: "Consultancy", value: consultancyCount ?? 0 },
-                  { label: "Participation", value: participationCount ?? 0 },
-                ] : []),
-              ]}
-              color="blue"
-            />
-            
-            {/* Users Distribution - Pie Chart (Admin only) */}
-            {user?.role === "admin" ? (
-              <DonutChart
-                title={`Total Users: ${(studentCount ?? 0) + (staffCount ?? 0)}`}
-                data={[
-                  { label: "Students", value: studentCount ?? 0 },
-                  { label: "Staff", value: staffCount ?? 0 },
-                ]}
-              />
-            ) : (
-              <DonutChart
-                title={`Total Items: ${(projCount ?? 0) + (achCount ?? 0)}`}
+            {/* Left Column */}
+            <div className="space-y-6 lg:space-y-8">
+              {/* Activities Overview - Horizontal Bar Chart */}
+              <HorizontalBarChart
+                title="All Activities Overview"
                 data={[
                   { label: "Projects", value: projCount ?? 0 },
                   { label: "Achievements", value: achCount ?? 0 },
+                  ...(user?.role === "admin" ? [
+                    { label: "Research", value: researchCount ?? 0 },
+                    { label: "Consultancy", value: consultancyCount ?? 0 },
+                    { label: "Participation", value: participationCount ?? 0 },
+                  ] : []),
                 ]}
+                color="blue"
               />
-            )}
-          </div>
 
-          {/* Charts - Row 2 */}
-          {user?.role === "admin" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mt-6 lg:mt-8">
               {/* Faculty Activities - Bar Chart */}
-              <BarChart
-                title="Faculty Activities Breakdown"
-                data={[
-                  { label: "Research", value: researchCount ?? 0 },
-                  { label: "Consultancy", value: consultancyCount ?? 0 },
-                  { label: "Participation", value: participationCount ?? 0 },
-                ]}
-                color="purple"
-              />
-              
+              {user?.role === "admin" && (
+                <BarChart
+                  title="Faculty Activities Breakdown"
+                  data={[
+                    { label: "Research", value: researchCount ?? 0 },
+                    { label: "Consultancy", value: consultancyCount ?? 0 },
+                    { label: "Participation", value: participationCount ?? 0 },
+                  ]}
+                  color="purple"
+                />
+              )}
+            </div>
+            
+            {/* Right Column */}
+            <div className="space-y-6 lg:space-y-8">
+              {/* Users Distribution - Pie Chart (Admin only) */}
+              <div>
+                {user?.role === "admin" ? (
+                  <DonutChart
+                    title={`Total Users: ${(studentCount ?? 0) + (staffCount ?? 0)}`}
+                    data={[
+                      { label: "Students", value: studentCount ?? 0 },
+                      { label: "Staff", value: staffCount ?? 0 },
+                    ]}
+                  />
+                ) : (
+                  <DonutChart
+                    title={`Total Items: ${(projCount ?? 0) + (achCount ?? 0)}`}
+                    data={[
+                      { label: "Projects", value: projCount ?? 0 },
+                      { label: "Achievements", value: achCount ?? 0 },
+                    ]}
+                  />
+                )}
+              </div>
+
               {/* Main Activities Comparison - Vertical Bar Chart */}
-              <VerticalBarChart
-                title="Projects & Achievements Comparison"
-                data={[
-                  { label: "Projects", value: projCount ?? 0 },
-                  { label: "Achievements", value: achCount ?? 0 },
-                ]}
-                color="emerald"
-              />
-            </div>
-          )}
+              {user?.role === "admin" && (
+                <VerticalBarChart
+                  title="Projects & Achievements Comparison"
+                  data={[
+                    { label: "Projects", value: projCount ?? 0 },
+                    { label: "Achievements", value: achCount ?? 0 },
+                  ]}
+                  color="emerald"
+                />
+              )}
 
-          {/* Charts - Row 3 (Pie Chart for all activities) */}
-          {user?.role === "admin" && (
-            <div className="mt-6 lg:mt-8">
-              <PieChart
-                title="All Activities Distribution"
-                data={[
-                  { label: "Projects", value: projCount ?? 0 },
-                  { label: "Achievements", value: achCount ?? 0 },
-                  { label: "Research", value: researchCount ?? 0 },
-                  { label: "Consultancy", value: consultancyCount ?? 0 },
-                  { label: "Participation", value: participationCount ?? 0 },
-                ]}
-              />
+              {/* All Activities Distribution - Pie Chart */}
+              {user?.role === "admin" && (
+                <PieChart
+                  title="All Activities Distribution"
+                  data={[
+                    { label: "Projects", value: projCount ?? 0 },
+                    { label: "Achievements", value: achCount ?? 0 },
+                    { label: "Research", value: researchCount ?? 0 },
+                    { label: "Consultancy", value: consultancyCount ?? 0 },
+                    { label: "Participation", value: participationCount ?? 0 },
+                  ]}
+                />
+              )}
             </div>
-          )}
+          </div>
+          </div>
         </div>
-      </div>
       )}
-
-      {/* Content */}
-      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pt-8 sm:pt-12 md:pt-16 pb-8 sm:pb-10">
-        {/* Events carousel (latest 4 events) */}
-        <div id="events" className="mb-5 sm:mb-6">
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">
-            Latest Events
-          </h2>
-          <div className="h-1 w-16 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full mt-3"></div>
-        </div>
-        <div className="grid gap-6 sm:gap-8 md:grid-cols-3">
-          <div className="md:col-span-2">
-            <EventsCarousel events={events} intervalMs={5000} />
-          </div>
-          <div className="md:col-span-1">
-            <AchievementsLeaderboard />
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Projects grid (latest 6) */}
-      <div id="projects" className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-8 sm:pb-10">
-        <div className="mb-5 sm:mb-6">
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">
-            Recent Projects
-          </h2>
-          <div className="h-1 w-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full mt-3"></div>
-        </div>
-        <ProjectsRecentGrid limit={6} />
-      </div>
-
-      {/* Recent Achievements grid (latest 6) */}
-      <div id="achievements" className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-12 sm:pb-16">
-        <div className="mb-5 sm:mb-6">
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">
-            Recent Achievements
-          </h2>
-          <div className="h-1 w-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mt-3"></div>
-        </div>
-        <AchievementsRecentGrid limit={6} />
-      </div>
     </div>
+
+    {/* Scroll to Top Button */}
+    {showScrollTop && (
+      <button
+        onClick={scrollToTop}
+        className="fixed bottom-8 right-8 z-50 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
+        aria-label="Scroll to top"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M5 10l7-7m0 0l7 7m-7-7v18"
+          />
+        </svg>
+      </button>
+    )}
+    </>
   );
 }
 
 function StatCard({ label, value, icon, color, onClick }) {
   const colorClasses = {
-    blue: "bg-blue-100 text-blue-600",
+    blue: "bg-primary/10 text-primary",
     green: "bg-green-100 text-green-600",
     purple: "bg-purple-100 text-purple-600",
     orange: "bg-orange-100 text-orange-600",
@@ -345,7 +364,7 @@ function StatCard({ label, value, icon, color, onClick }) {
   };
 
   const iconColorClasses = {
-    blue: "text-blue-600",
+    blue: "text-primary",
     green: "text-green-600",
     purple: "text-purple-600",
     orange: "text-orange-600",
@@ -356,7 +375,7 @@ function StatCard({ label, value, icon, color, onClick }) {
   };
 
   return (
-    <button onClick={onClick} className="rounded-xl borderborder-slate-200 p-5 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer text-left">
+    <button onClick={onClick} className="rounded-xl border border-slate-200 p-5 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer text-left">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-bold">{label}</p>
@@ -409,10 +428,10 @@ function DonutChart({ title, data }) {
   let cumulativePercent = 0;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-7 shadow-md hover:shadow-lg transition-all duration-200">
-      <h3 className="text-lg sm:text-xl font-bold text-slate-800 mb-5">{title}</h3>
-      <div className="flex items-center justify-center gap-8">
-        <svg width="140" height="140" viewBox="0 0 140 140">
+    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-md hover:shadow-lg transition-all duration-200">
+      <h3 className="text-lg sm:text-xl font-bold text-slate-800 mb-4">{title}</h3>
+      <div className="flex items-center justify-center gap-6">
+        <svg width="110" height="110" viewBox="0 0 110 110">
           {total > 0 ? (
             data.map((item, idx) => {
               const percent = (item.value / total) * 100;
@@ -422,16 +441,16 @@ function DonutChart({ title, data }) {
 
               const startRad = (startAngle * Math.PI) / 180;
               const endRad = (endAngle * Math.PI) / 180;
-              const x1 = 70 + 50 * Math.cos(startRad);
-              const y1 = 70 + 50 * Math.sin(startRad);
-              const x2 = 70 + 50 * Math.cos(endRad);
-              const y2 = 70 + 50 * Math.sin(endRad);
+              const x1 = 55 + 40 * Math.cos(startRad);
+              const y1 = 55 + 40 * Math.sin(startRad);
+              const x2 = 55 + 40 * Math.cos(endRad);
+              const y2 = 55 + 40 * Math.sin(endRad);
               const largeArc = percent > 50 ? 1 : 0;
 
               return (
                 <g key={idx}>
                   <path
-                    d={`M 70 70 L ${x1} ${y1} A 50 50 0 ${largeArc} 1 ${x2} ${y2} Z`}
+                    d={`M 55 55 L ${x1} ${y1} A 40 40 0 ${largeArc} 1 ${x2} ${y2} Z`}
                     fill={colors[idx]}
                     stroke="white"
                     strokeWidth="3"
@@ -440,12 +459,12 @@ function DonutChart({ title, data }) {
               );
             })
           ) : (
-            <circle cx="70" cy="70" r="50" fill="#e2e8f0" stroke="white" strokeWidth="3" />
+            <circle cx="55" cy="55" r="40" fill="#e2e8f0" stroke="white" strokeWidth="3" />
           )}
-          <circle cx="70" cy="70" r="35" fill="white" />
+          <circle cx="55" cy="55" r="28" fill="white" />
           <text
-            x="70"
-            y="75"
+            x="55"
+            y="60"
             textAnchor="middle"
             className="text-sm font-bold"
             fill="#374151"
@@ -453,11 +472,11 @@ function DonutChart({ title, data }) {
             {total}
           </text>
         </svg>
-        <div className="space-y-3">
+        <div className="space-y-2">
           {data.map((item, idx) => (
-            <div key={idx} className="flex items-center gap-3">
+            <div key={idx} className="flex items-center gap-2">
               <div
-                className="w-4 h-4 rounded-full"
+                className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: colors[idx] }}
               ></div>
               <div>
@@ -507,25 +526,25 @@ function VerticalBarChart({ title, data, color }) {
   const maxValue = Math.max(...data.map((d) => d.value), 1);
   const colors = ["#10b981", "#06b6d4"];
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-7 shadow-md hover:shadow-lg transition-all duration-200">
-      <h3 className="text-lg sm:text-xl font-bold text-slate-800 mb-6">{title}</h3>
-      <div className="flex items-end justify-center gap-8 h-64">
+    <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-md hover:shadow-lg transition-all duration-200">
+      <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-4">{title}</h3>
+      <div className="flex items-end justify-center gap-6 h-40">
         {data.map((item, idx) => (
           <div key={idx} className="flex flex-col items-center gap-2">
             <div className="flex flex-col items-center">
-              <span className="text-lg font-bold text-slate-900 mb-2">
+              <span className="text-base font-bold text-slate-900 mb-1">
                 {item.value}
               </span>
               <div
                 className="rounded-t-lg transition-all duration-500"
                 style={{
-                  width: "60px",
-                  height: `${(item.value / maxValue) * 200}px`,
+                  width: "50px",
+                  height: `${(item.value / maxValue) * 120}px`,
                   backgroundColor: colors[idx],
                 }}
               ></div>
             </div>
-            <span className="text-sm font-semibold text-slate-700 text-center">
+            <span className="text-xs font-semibold text-slate-700 text-center">
               {item.label}
             </span>
           </div>
@@ -549,8 +568,8 @@ function PieChart({ title, data }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-7 shadow-md hover:shadow-lg transition-all duration-200">
       <h3 className="text-lg sm:text-xl font-bold text-slate-800 mb-5">{title}</h3>
-      <div className="flex items-center gap-6">
-        <svg width="120" height="120" viewBox="0 0 120 120">
+      <div className="flex items-center justify-center gap-8">
+        <svg width="140" height="140" viewBox="0 0 140 140">
           {total > 0 ? (
             data.map((item, idx) => {
               const percent = (item.value / total) * 100;
@@ -560,16 +579,16 @@ function PieChart({ title, data }) {
 
               const startRad = (startAngle * Math.PI) / 180;
               const endRad = (endAngle * Math.PI) / 180;
-              const x1 = 60 + 45 * Math.cos(startRad);
-              const y1 = 60 + 45 * Math.sin(startRad);
-              const x2 = 60 + 45 * Math.cos(endRad);
-              const y2 = 60 + 45 * Math.sin(endRad);
+              const x1 = 70 + 55 * Math.cos(startRad);
+              const y1 = 70 + 55 * Math.sin(startRad);
+              const x2 = 70 + 55 * Math.cos(endRad);
+              const y2 = 70 + 55 * Math.sin(endRad);
               const largeArc = percent > 50 ? 1 : 0;
 
               return (
                 <path
                   key={idx}
-                  d={`M 60 60 L ${x1} ${y1} A 45 45 0 ${largeArc} 1 ${x2} ${y2} Z`}
+                  d={`M 70 70 L ${x1} ${y1} A 55 55 0 ${largeArc} 1 ${x2} ${y2} Z`}
                   fill={colors[idx]}
                   stroke="white"
                   strokeWidth="2"
@@ -577,7 +596,7 @@ function PieChart({ title, data }) {
               );
             })
           ) : (
-            <circle cx="60" cy="60" r="45" fill="#e2e8f0" stroke="white" strokeWidth="2" />
+            <circle cx="70" cy="70" r="55" fill="#e2e8f0" stroke="white" strokeWidth="2" />
           )}
         </svg>
         <div className="space-y-2">

@@ -137,7 +137,7 @@ export default function AdminStaffCoordinators() {
 					)}
 					<button
 						onClick={() => setShowModal(true)}
-						className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+						className="btn btn-primary btn-sm"
 					>
 						+ Add Coordinator
 					</button>

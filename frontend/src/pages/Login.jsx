@@ -268,7 +268,7 @@ const Login = () => {
           )}
 
           <div className="mt-4 text-center space-y-2">
-            <Link to="/forgot" className="text-blue-600 hover:underline block">
+            <Link to="/forgot" className="link link-primary block">
               Forgot Password?
             </Link>
           </div>

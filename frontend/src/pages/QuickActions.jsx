@@ -47,7 +47,7 @@ export default function QuickActions() {
             className="p-6 glitter-card bulge-card"
           >
             <div className="flex items-center gap-3">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-blue-100 text-blue-600">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
                 <svg
                   width="20"
                   height="20"
@@ -387,7 +387,7 @@ export default function QuickActions() {
                 className="p-6 glitter-card bulge-card"
               >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-blue-100 text-blue-600">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
                     <svg
                       width="20"
                       height="20"

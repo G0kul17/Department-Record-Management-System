@@ -1,0 +1,151 @@
+/* DaisyUI Cyberpunk Theme - Use semantic component classes */
+
+/* Import daisyUI component styles */
+@layer components {
+  /* Buttons - use btn-primary, btn-secondary, btn-accent instead of bg-blue */
+  .btn-cyberpunk {
+    @apply btn btn-primary;
+  }
+  
+  /* Cards */
+  .card-cyberpunk {
+    @apply card bg-base-100 shadow-xl;
+  }
+  
+  /* Badges */
+  .badge-cyberpunk {
+    @apply badge badge-primary;
+  }
+  
+  /* Alerts */
+  .alert-cyberpunk {
+    @apply alert alert-info;
+  }
+  
+  /* Links */
+  .link-cyberpunk {
+    @apply link link-primary;
+  }
+}
+
+/* Override hardcoded Tailwind blue classes to use cyberpunk colors */
+[data-theme="cyberpunk"] {
+  /* Cyberpunk theme color variables from daisyUI */
+  --cyber-primary: #ff7598;
+  --cyber-primary-dark: #e5568a;
+  --cyber-primary-darker: #cc3d75;
+  --cyber-primary-light: #ffb3c6;
+  --cyber-secondary: #75d1f0;
+  --cyber-accent: #ffed4e;
+  --cyber-neutral: #2d1b69;
+  --cyber-base-100: #fffb00;
+  --cyber-info: #0091d5;
+  --cyber-success: #00d66f;
+  --cyber-warning: #ff8800;
+  --cyber-error: #ff0050;
+}
+
+/* Override all blue backgrounds with cyberpunk pink */
+[data-theme="cyberpunk"] .bg-blue-50 { background-color: #fff5f8 !important; }
+[data-theme="cyberpunk"] .bg-blue-100 { background-color: #ffe4ec !important; }
+[data-theme="cyberpunk"] .bg-blue-500 { background-color: var(--cyber-primary) !important; }
+[data-theme="cyberpunk"] .bg-blue-600 { background-color: var(--cyber-primary-dark) !important; }
+[data-theme="cyberpunk"] .bg-blue-700 { background-color: var(--cyber-primary-darker) !important; }
+[data-theme="cyberpunk"] .bg-blue-800 { background-color: #b32960 !important; }
+[data-theme="cyberpunk"] .bg-blue-900 { background-color: #991f4a !important; }
+
+/* Override text colors with cyberpunk pink */
+[data-theme="cyberpunk"] .text-blue-400 { color: var(--cyber-primary-light) !important; }
+[data-theme="cyberpunk"] .text-blue-500 { color: var(--cyber-primary) !important; }
+[data-theme="cyberpunk"] .text-blue-600 { color: var(--cyber-primary-dark) !important; }
+[data-theme="cyberpunk"] .text-blue-700 { color: var(--cyber-primary-darker) !important; }
+[data-theme="cyberpunk"] .text-blue-800 { color: #b32960 !important; }
+[data-theme="cyberpunk"] .text-blue-900 { color: #991f4a !important; }
+[data-theme="cyberpunk"] .text-blue-100 { color: #ffe4ec !important; }
+[data-theme="cyberpunk"] .text-blue-200 { color: #ffc9dc !important; }
+
+/* Override border colors */
+[data-theme="cyberpunk"] .border-blue-500 { border-color: var(--cyber-primary) !important; }
+[data-theme="cyberpunk"] .border-blue-600 { border-color: var(--cyber-primary-dark) !important; }
+
+/* Override hover states */
+[data-theme="cyberpunk"] .hover\:bg-blue-700:hover { background-color: var(--cyber-primary-darker) !important; }
+[data-theme="cyberpunk"] .hover\:bg-blue-600:hover { background-color: var(--cyber-primary-dark) !important; }
+[data-theme="cyberpunk"] .hover\:text-blue-700:hover { color: var(--cyber-primary-darker) !important; }
+
+/* Override focus states */
+[data-theme="cyberpunk"] .focus\:border-blue-500:focus { border-color: var(--cyber-primary) !important; }
+[data-theme="cyberpunk"] .focus\:ring-blue-500:focus { --tw-ring-color: var(--cyber-primary) !important; }
+
+/* Override gradient backgrounds with cyberpunk colors */
+[data-theme="cyberpunk"] .from-blue-50 { --tw-gradient-from: #fff5f8 !important; }
+[data-theme="cyberpunk"] .from-blue-500 { --tw-gradient-from: var(--cyber-primary) !important; }
+[data-theme="cyberpunk"] .from-blue-600 { --tw-gradient-from: var(--cyber-primary-dark) !important; }
+[data-theme="cyberpunk"] .via-blue-500 { --tw-gradient-via: var(--cyber-primary) !important; }
+[data-theme="cyberpunk"] .to-blue-500 { --tw-gradient-to: var(--cyber-primary) !important; }
+
+/* Override cyan colors with cyberpunk cyan/secondary */
+[data-theme="cyberpunk"] .bg-cyan-100 { background-color: #e0f7fc !important; }
+[data-theme="cyberpunk"] .bg-cyan-500 { background-color: var(--cyber-secondary) !important; }
+[data-theme="cyberpunk"] .from-cyan-500 { --tw-gradient-from: var(--cyber-secondary) !important; }
+[data-theme="cyberpunk"] .to-cyan-50 { --tw-gradient-to: #f0fbfe !important; }
+[data-theme="cyberpunk"] .text-cyan-600 { color: var(--cyber-secondary) !important; }
+
+/* Override indigo with cyberpunk accent yellow */
+[data-theme="cyberpunk"] .from-indigo-500 { --tw-gradient-from: var(--cyber-accent) !important; }
+[data-theme="cyberpunk"] .to-indigo-500 { --tw-gradient-to: var(--cyber-accent) !important; }
+[data-theme="cyberpunk"] .bg-indigo-600 { background-color: var(--cyber-accent) !important; }
+[data-theme="cyberpunk"] .text-indigo-600 { color: var(--cyber-neutral) !important; }
+
+/* Override slate backgrounds with cyberpunk base */
+[data-theme="cyberpunk"] .bg-slate-50 { background-color: #fffef5 !important; }
+[data-theme="cyberpunk"] .bg-slate-100 { background-color: #fffce0 !important; }
+
+/* Dark mode adjustments for cyberpunk theme */
+.dark [data-theme="cyberpunk"] .text-blue-400 { color: var(--cyber-primary-light) !important; }
+.dark [data-theme="cyberpunk"] .bg-blue-600 { background-color: var(--cyber-primary-dark) !important; }
+.dark [data-theme="cyberpunk"] .bg-blue-900 { background-color: rgba(153, 31, 74, 0.2) !important; }
+.dark [data-theme="cyberpunk"] .text-blue-100 { color: #ffe4ec !important; }
+.dark [data-theme="cyberpunk"] .text-blue-200 { color: #ffc9dc !important; }
+[data-theme="aqua"] .text-blue-600 { color: var(--aqua-primary-dark) !important; }
+[data-theme="aqua"] .text-blue-700 { color: var(--aqua-primary-darker) !important; }
+
+/* Override border colors */
+[data-theme="aqua"] .border-blue-500 { border-color: var(--aqua-primary) !important; }
+[data-theme="aqua"] .border-blue-600 { border-color: var(--aqua-primary-dark) !important; }
+
+/* Override hover states */
+[data-theme="aqua"] .hover\:bg-blue-700:hover { background-color: var(--aqua-primary-darker) !important; }
+[data-theme="aqua"] .hover\:bg-blue-600:hover { background-color: var(--aqua-primary-dark) !important; }
+[data-theme="aqua"] .hover\:text-blue-700:hover { color: var(--aqua-primary-darker) !important; }
+
+/* Override focus states */
+[data-theme="aqua"] .focus\:border-blue-500:focus { border-color: var(--aqua-primary) !important; }
+[data-theme="aqua"] .focus\:ring-blue-500:focus { --tw-ring-color: var(--aqua-primary) !important; }
+
+/* Override gradient backgrounds */
+[data-theme="aqua"] .from-blue-50 { --tw-gradient-from: #e0f9fa !important; }
+[data-theme="aqua"] .from-blue-500 { --tw-gradient-from: var(--aqua-primary) !important; }
+[data-theme="aqua"] .from-blue-600 { --tw-gradient-from: var(--aqua-primary-dark) !important; }
+[data-theme="aqua"] .via-blue-500 { --tw-gradient-via: var(--aqua-primary) !important; }
+[data-theme="aqua"] .to-blue-500 { --tw-gradient-to: var(--aqua-primary) !important; }
+
+/* Override cyan colors with aqua variations */
+[data-theme="aqua"] .bg-cyan-100 { background-color: #d4fbfd !important; }
+[data-theme="aqua"] .bg-cyan-500 { background-color: #09ecf3 !important; }
+[data-theme="aqua"] .from-cyan-500 { --tw-gradient-from: #09ecf3 !important; }
+[data-theme="aqua"] .to-cyan-50 { --tw-gradient-to: #e0f9fa !important; }
+[data-theme="aqua"] .text-cyan-600 { color: var(--aqua-primary-dark) !important; }
+
+/* Override indigo with aqua secondary */
+[data-theme="aqua"] .from-indigo-500 { --tw-gradient-from: var(--aqua-secondary) !important; }
+[data-theme="aqua"] .to-indigo-500 { --tw-gradient-to: var(--aqua-secondary) !important; }
+[data-theme="aqua"] .bg-indigo-600 { background-color: var(--aqua-secondary) !important; }
+
+/* Override slate backgrounds */
+[data-theme="aqua"] .bg-slate-50 { background-color: #f8fcfe !important; }
+[data-theme="aqua"] .bg-slate-100 { background-color: #e0f9fa !important; }
+
+/* Dark mode adjustments for aqua theme */
+.dark [data-theme="aqua"] .text-blue-400 { color: var(--aqua-primary-light) !important; }
+.dark [data-theme="aqua"] .bg-blue-600 { background-color: var(--aqua-primary-dark) !important; }

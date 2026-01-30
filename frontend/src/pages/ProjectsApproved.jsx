@@ -226,7 +226,7 @@ export default function ProjectsApproved() {
                         href={p.github_url}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-blue-600 dark:text-blue-400 hover:underline break-all"
+                        className="link link-primary break-all"
                       >
                         {p.github_url}
                       </a>

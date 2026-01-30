@@ -134,7 +134,7 @@ export default function AchievementDetail() {
                   href={`/uploads/${item.proof_filename}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                  className="link link-primary"
                 >
                   {item.proof_name || "Download Main Proof"}
                 </a>
@@ -162,7 +162,7 @@ export default function AchievementDetail() {
                   href={`/uploads/${item.certificate_filename}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                  className="link link-primary"
                 >
                   {item.certificate_name || "Download Certificate"}
                 </a>
@@ -190,7 +190,7 @@ export default function AchievementDetail() {
                   href={`/uploads/${item.event_photos_filename}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                  className="link link-primary"
                 >
                   {item.event_photos_name || "Download Event Photos"}
                 </a>

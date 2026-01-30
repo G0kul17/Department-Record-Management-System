@@ -88,7 +88,7 @@ export default function ProjectDetail() {
                   href={project.github_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-blue-600 dark:text-blue-400 hover:underline break-all"
+                  className="link link-primary break-all"
                 >
                   {project.github_url}
                 </a>
@@ -147,7 +147,7 @@ export default function ProjectDetail() {
                         href={url}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-blue-600 dark:text-blue-400 hover:underline"
+                        className="link link-primary"
                       >
                         {original || "Attachment"}
                       </a>

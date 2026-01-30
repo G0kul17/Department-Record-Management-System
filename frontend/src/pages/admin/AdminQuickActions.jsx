@@ -302,7 +302,7 @@ function IconUsers() {
 // Small helper to render tile content consistently inside Card
 function Tile({ icon, title, desc, color }) {
   const colorMap = {
-    blue: "bg-blue-100 text-blue-600",
+    blue: "bg-primary/10 text-primary",
     sky: "bg-sky-100 text-sky-600",
     green: "bg-green-100 text-green-600",
     teal: "bg-teal-100 text-teal-600",

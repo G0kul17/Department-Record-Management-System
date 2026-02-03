@@ -10,11 +10,13 @@ import {
 
 const router = express.Router();
 
-// Admin only
+// Get activity types - allow authenticated users (for frontend form loading)
+router.get("/types", requireAuth, getActivityTypes);
+
+// All other endpoints - Admin only
 router.use(requireAuth, requireRole(["admin"]));
 
 router.get("/", getAllActivityCoordinators);
-router.get("/types", getActivityTypes);
 router.post("/", createActivityCoordinator);
 router.delete("/:mappingId", deleteActivityCoordinator);
 

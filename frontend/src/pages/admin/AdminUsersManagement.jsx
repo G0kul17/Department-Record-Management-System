@@ -31,10 +31,7 @@ export default function AdminUsersManagement() {
   const updateRole = async (id, role) => {
     setBusyId(id);
     try {
-      await apiClient.request(`/admin/users/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ role }),
-      });
+      await apiClient.patch(`/admin/users/${id}`, { role });
       await load();
     } catch (e) {
       setError(e.message || "Failed to update role");

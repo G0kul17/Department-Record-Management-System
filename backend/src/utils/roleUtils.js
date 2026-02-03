@@ -8,8 +8,8 @@ export function detectRole(email) {
   // Student: letters + optional dot + 2 digits + letters (e.g., gokulnathan.23ads or gokulnathan23ads)
   const studentRegex = /^[a-zA-Z]+\.?[0-9]{2}[a-zA-Z]+$/;
 
-  // Staff: alphabetic local-part only (no digits)
-  const staffRegex = /^[a-zA-Z]+$/;
+  // Staff: alphabetic local-part only (e.g., john) OR staffname.dept format (e.g., santhoshkumar.it)
+  const staffRegex = /^[a-zA-Z]+(\.[a-zA-Z]+)?$/;
 
   if (studentRegex.test(local)) return "student";
   if (staffRegex.test(local)) return "staff";

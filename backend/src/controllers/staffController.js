@@ -17,7 +17,7 @@ export async function approveProject(req, res) {
         `SELECT 1
            FROM projects p
            JOIN activity_coordinators ac
-             ON ac.activity_type = p.activity_type AND ac.staff_id = $1
+             ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = $1
           WHERE p.id = $2`,
         [staffId, projectId]
       );
@@ -84,7 +84,7 @@ export async function rejectProject(req, res) {
         `SELECT 1
            FROM projects p
            JOIN activity_coordinators ac
-             ON ac.activity_type = p.activity_type AND ac.staff_id = $1
+             ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = $1
           WHERE p.id = $2`,
         [staffId, projectId]
       );
@@ -151,7 +151,7 @@ export async function approveAchievement(req, res) {
         `SELECT 1
            FROM achievements a
            JOIN activity_coordinators ac
-             ON ac.activity_type = a.activity_type AND ac.staff_id = $1
+             ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = $1
           WHERE a.id = $2`,
         [staffId, achievementId]
       );
@@ -166,7 +166,8 @@ export async function approveAchievement(req, res) {
                SET verification_status='approved',
                    verification_comment=$1,
                    verified_by=$2,
-                   verified_at=NOW()
+                   verified_at=NOW(),
+                   verified=true
                WHERE id=$3
                RETURNING id, title, user_id`;
     const { rows } = await pool.query(q, [
@@ -217,7 +218,7 @@ export async function rejectAchievement(req, res) {
         `SELECT 1
            FROM achievements a
            JOIN activity_coordinators ac
-             ON ac.activity_type = a.activity_type AND ac.staff_id = $1
+             ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = $1
           WHERE a.id = $2`,
         [staffId, achievementId]
       );
@@ -232,7 +233,8 @@ export async function rejectAchievement(req, res) {
                SET verification_status='rejected',
                    verification_comment=$1,
                    verified_by=$2,
-                   verified_at=NOW()
+                   verified_at=NOW(),
+                   verified=false
                WHERE id=$3
                RETURNING id, title, user_id`;
     const { rows } = await pool.query(q, [
@@ -286,7 +288,7 @@ export async function staffDashboard(req, res) {
               `SELECT p.id, p.title, p.academic_year, p.created_by, p.created_at, u.email as created_by_email
                         FROM projects p
                         LEFT JOIN users u ON p.created_by = u.id
-                        JOIN activity_coordinators ac ON ac.activity_type = p.activity_type AND ac.staff_id = $1
+                        JOIN activity_coordinators ac ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = $1
                        WHERE p.verification_status = 'pending'
                        ORDER BY p.created_at DESC LIMIT 50`,
               [staffId]
@@ -300,7 +302,7 @@ export async function staffDashboard(req, res) {
               `SELECT a.id, a.title, a.user_id, a.date_of_award, a.created_at, u.email as user_email
                         FROM achievements a
                         LEFT JOIN users u ON a.user_id = u.id
-                        JOIN activity_coordinators ac ON ac.activity_type = a.activity_type AND ac.staff_id = $1
+                        JOIN activity_coordinators ac ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = $1
                        WHERE a.verification_status = 'pending'
                        ORDER BY a.created_at DESC LIMIT 50`,
               [staffId]

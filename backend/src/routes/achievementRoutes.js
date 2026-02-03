@@ -1,6 +1,6 @@
 // src/routes/achievementRoutes.js
 import express from "express";
-import { requireAuth } from "../middleware/authMiddleware.js";
+import { requireAuth, optionalAuth } from "../middleware/authMiddleware.js";
 import { requireRole } from "../middleware/roleAuth.js";
 import {
   createAchievement,
@@ -29,14 +29,14 @@ router.post(
   createAchievement
 );
 
-router.get("/", listAchievements);
+router.get("/", optionalAuth, listAchievements);
 // Public count endpoint for homepage stats
 router.get("/count", getAchievementsCount);
 // Public leaderboard endpoint
 router.get("/leaderboard", getAchievementsLeaderboard);
 
 // Single achievement details
-router.get("/:id", getAchievementDetails);
+router.get("/:id", optionalAuth, getAchievementDetails);
 
 // Admin verifies achievement
 router.post(

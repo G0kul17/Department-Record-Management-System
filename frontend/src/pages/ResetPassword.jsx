@@ -41,7 +41,7 @@ const ResetPassword = () => {
     try {
       await apiClient.post("/auth/reset", {
         email,
-        otp,
+        otp: (otp || "").trim(),
         newPassword: formData.password,
       });
       setSuccess("Password reset successful. Redirecting to login...");

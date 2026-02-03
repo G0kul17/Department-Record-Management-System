@@ -147,11 +147,12 @@ export async function verifyOTP(req, res) {
   if (!email || !otp)
     return res.status(400).json({ message: "Email and OTP required" });
 
-  const emailLower = email.toLowerCase();
+  const emailLower = String(email).trim().toLowerCase();
+  const otpClean = String(otp).trim();
   try {
     const { rows } = await pool.query(
-      "SELECT * FROM otp_verifications WHERE email=$1 AND otp_code=$2",
-      [emailLower, otp]
+      "SELECT * FROM otp_verifications WHERE email=$1 AND TRIM(otp_code)=$2",
+      [emailLower, otpClean]
     );
     if (!rows.length) return res.status(400).json({ message: "Invalid OTP" });
 
@@ -325,11 +326,12 @@ export async function loginVerifyOTP(req, res) {
   if (!email || !otp)
     return res.status(400).json({ message: "Email and OTP required" });
 
-  const emailLower = email.toLowerCase();
+  const emailLower = String(email).trim().toLowerCase();
+  const otpClean = String(otp).trim();
   try {
     const { rows } = await pool.query(
-      "SELECT * FROM otp_verifications WHERE email=$1 AND otp_code=$2",
-      [emailLower, otp]
+      "SELECT * FROM otp_verifications WHERE email=$1 AND TRIM(otp_code)=$2",
+      [emailLower, otpClean]
     );
     if (!rows.length) return res.status(400).json({ message: "Invalid OTP" });
 
@@ -457,11 +459,12 @@ export async function resetPassword(req, res) {
     });
   }
 
-  const emailLower = email.toLowerCase();
+  const emailLower = String(email).trim().toLowerCase();
+  const otpClean = String(otp).trim();
   try {
     const { rows } = await pool.query(
-      "SELECT * FROM otp_verifications WHERE email=$1 AND otp_code=$2",
-      [emailLower, otp]
+      "SELECT * FROM otp_verifications WHERE email=$1 AND TRIM(otp_code)=$2",
+      [emailLower, otpClean]
     );
     if (!rows.length) return res.status(400).json({ message: "Invalid OTP" });
 

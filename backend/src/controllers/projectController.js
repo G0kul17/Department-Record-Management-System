@@ -340,7 +340,7 @@ export async function listProjects(req, res) {
     }
 
     if (requesterRole === "staff" && requesterId) {
-      base += ` LEFT JOIN activity_coordinators ac ON ac.activity_type = p.activity_type AND ac.staff_id = $${
+      base += ` LEFT JOIN activity_coordinators ac ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = $${
         params.length + 1
       }`;
       params.push(requesterId);
@@ -400,8 +400,11 @@ export async function listProjects(req, res) {
         `(p.title ILIKE $${params.length} OR p.description ILIKE $${params.length})`
       );
     }
-    if (mine !== undefined && mine !== "false" && req.user?.id) {
-      params.push(req.user.id);
+    if (mine !== undefined && mine !== "false") {
+      if (!requesterId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      params.push(requesterId);
       conditions.push(`p.created_by = $${params.length}`);
     }
 
@@ -439,7 +442,7 @@ export async function getProjectDetails(req, res) {
       const { rows: auth } = await pool.query(
         `SELECT 1 FROM projects p
            JOIN activity_coordinators ac
-             ON ac.activity_type = p.activity_type AND ac.staff_id = $1
+             ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = $1
           WHERE p.id = $2`,
         [requesterId, id]
       );
@@ -503,7 +506,7 @@ export async function verifyProject(req, res) {
       const { rows: auth } = await pool.query(
         `SELECT 1 FROM projects p
           JOIN activity_coordinators ac
-            ON ac.activity_type = p.activity_type AND ac.staff_id = $1
+            ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = $1
          WHERE p.id = $2`,
         [requesterId, id]
       );
@@ -536,7 +539,7 @@ export async function rejectProject(req, res) {
       const { rows: auth } = await pool.query(
         `SELECT 1 FROM projects p
           JOIN activity_coordinators ac
-            ON ac.activity_type = p.activity_type AND ac.staff_id = $1
+            ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = $1
          WHERE p.id = $2`,
         [requesterId, id]
       );

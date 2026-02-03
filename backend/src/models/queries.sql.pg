@@ -153,6 +153,10 @@ CREATE TABLE IF NOT EXISTS activity_coordinators (
   UNIQUE(activity_type, staff_id)
 );
 
+-- Add case-insensitive unique index for activity_coordinators (prevent duplicate mappings with different cases)
+CREATE UNIQUE INDEX IF NOT EXISTS activity_coordinators_type_staff_unique 
+  ON activity_coordinators (LOWER(activity_type), staff_id);
+
 -- Backfill mentor_name for existing rows using users table (prefer full_name, else email)
 -- Safe on repeated runs: only executes if legacy mentor_id column still exists.
 DO $$

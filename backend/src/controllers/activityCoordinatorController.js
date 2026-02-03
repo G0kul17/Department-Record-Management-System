@@ -29,7 +29,7 @@ export async function createActivityCoordinator(req, res) {
     return res.status(400).json({ message: "staffId is required" });
   }
 
-  const type = activityType.trim();
+  const type = activityType.trim().toLowerCase();
 
   try {
     const staffCheck = await pool.query(
@@ -44,17 +44,21 @@ export async function createActivityCoordinator(req, res) {
       return res.status(400).json({ message: "User must be staff or admin" });
     }
 
+    // Check if mapping already exists (case-insensitive)
+    const existingCheck = await pool.query(
+      "SELECT id FROM activity_coordinators WHERE LOWER(activity_type) = $1 AND staff_id = $2",
+      [type, staffId]
+    );
+    if (existingCheck.rows.length) {
+      return res.status(409).json({ message: "Mapping already exists" });
+    }
+
     const { rows } = await pool.query(
       `INSERT INTO activity_coordinators (activity_type, staff_id)
          VALUES ($1, $2)
-         ON CONFLICT (activity_type, staff_id) DO NOTHING
          RETURNING id, activity_type, staff_id, created_at`,
       [type, staffId]
     );
-
-    if (!rows.length) {
-      return res.status(409).json({ message: "Mapping already exists" });
-    }
 
     return res.status(201).json({ mapping: rows[0] });
   } catch (err) {

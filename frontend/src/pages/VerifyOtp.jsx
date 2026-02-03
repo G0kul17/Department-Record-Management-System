@@ -54,7 +54,10 @@ const VerifyOtp = () => {
 
     try {
       if (type === "login") {
-        const data = await apiClient.post("/auth/login-verify", { email, otp });
+        const data = await apiClient.post("/auth/login-verify", {
+          email,
+          otp: otp.trim(),
+        });
         // Expect: { token, role }
         if (data?.token && data?.role) {
           login(
@@ -72,12 +75,14 @@ const VerifyOtp = () => {
         }
         navigate("/");
       } else if (type === "forgot") {
-        // Just verify presence then go to reset screen
-        await apiClient.post("/auth/verify", { email, otp });
-        navigate("/reset", { state: { email, otp } });
+        // Do not verify OTP here; reset endpoint will validate
+        navigate("/reset", { state: { email, otp: otp.trim() } });
       } else {
         // registration verification -> backend returns token + role
-        const data = await apiClient.post("/auth/verify", { email, otp });
+        const data = await apiClient.post("/auth/verify", {
+          email,
+          otp: otp.trim(),
+        });
         if (data?.token && data?.role) {
           login(
             { email, role: data.role, fullName: data.fullName },

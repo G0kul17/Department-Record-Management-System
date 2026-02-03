@@ -151,7 +151,15 @@ export async function createAchievement(req, res) {
 }
 
 export async function listAchievements(req, res) {
-  const { user_id, verified, q, year, limit = 20, offset = 0 } = req.query;
+  const {
+    user_id,
+    verified,
+    q,
+    year,
+    mine,
+    limit = 20,
+    offset = 0,
+  } = req.query;
   try {
     const requesterId = req.user?.id;
     const requesterRole = req.user?.role;
@@ -187,9 +195,18 @@ export async function listAchievements(req, res) {
       cond.push(`a.verified = true`);
     }
 
+    // If mine=true, require auth and only return requester's achievements
+    if (mine !== undefined && mine !== "false") {
+      if (!requesterId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      params.push(requesterId);
+      cond.push(`a.user_id=$${params.length}`);
+    }
+
     // Staff can only see achievements for activity types they coordinate
     if (requesterRole === "staff" && requesterId) {
-      base += ` LEFT JOIN activity_coordinators ac ON ac.activity_type = a.activity_type AND ac.staff_id = $${
+      base += ` LEFT JOIN activity_coordinators ac ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = $${
         params.length + 1
       }`;
       params.push(requesterId);
@@ -197,7 +214,16 @@ export async function listAchievements(req, res) {
     }
 
     if (user_id) {
-      params.push(user_id);
+      const requestedUserId = Number(user_id);
+      if (!Number.isInteger(requestedUserId)) {
+        return res.status(400).json({ message: "Invalid user_id" });
+      }
+      if (requesterId && requesterRole !== "admin" && requesterRole !== "staff") {
+        if (requestedUserId !== requesterId) {
+          return res.status(403).json({ message: "Not authorized" });
+        }
+      }
+      params.push(requestedUserId);
       cond.push(`a.user_id=$${params.length}`);
     }
     if (verified !== undefined) {
@@ -285,7 +311,7 @@ export async function getAchievementDetails(req, res) {
       const { rows: auth } = await pool.query(
         `SELECT 1 FROM achievements a
            JOIN activity_coordinators ac
-             ON ac.activity_type = a.activity_type AND ac.staff_id = $1
+             ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = $1
           WHERE a.id = $2`,
         [requesterId, id]
       );
@@ -337,7 +363,7 @@ export async function verifyAchievement(req, res) {
       const { rows: auth } = await pool.query(
         `SELECT 1 FROM achievements a
           JOIN activity_coordinators ac
-            ON ac.activity_type = a.activity_type AND ac.staff_id = $1
+            ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = $1
          WHERE a.id = $2`,
         [requesterId, id]
       );
@@ -368,7 +394,7 @@ export async function rejectAchievement(req, res) {
       const { rows: auth } = await pool.query(
         `SELECT 1 FROM achievements a
           JOIN activity_coordinators ac
-            ON ac.activity_type = a.activity_type AND ac.staff_id = $1
+            ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = $1
          WHERE a.id = $2`,
         [requesterId, id]
       );

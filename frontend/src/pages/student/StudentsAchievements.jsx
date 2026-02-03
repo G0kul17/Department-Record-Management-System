@@ -30,11 +30,9 @@ export default function Achievements() {
   const loadMine = async () => {
     setLoadingMine(true);
     try {
-      const data = await apiClient.get(`/achievements?limit=100`);
-      const mine = (data.achievements || []).filter(
-        (a) => a.user_email === user?.email
-      );
-      setList(mine);
+      // Pass user_id parameter to get only my achievements
+      const data = await apiClient.get(`/achievements?user_id=${user?.id}&limit=100`);
+      setList(data.achievements || []);
     } catch (e) {
       console.error(e);
     } finally {
@@ -43,8 +41,10 @@ export default function Achievements() {
   };
 
   useEffect(() => {
-    loadMine();
-  }, []);
+    if (user?.id) {
+      loadMine();
+    }
+  }, [user?.id]);
 
   const submit = async (e) => {
     e.preventDefault();

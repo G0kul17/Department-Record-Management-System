@@ -61,7 +61,7 @@ export async function createAnnouncement(req, res) {
           brochureFile.size,
           "announcement_brochure",
           staffId,
-        ]
+        ],
       );
       brochureFileId = fileRows[0]?.id || null;
     }
@@ -74,7 +74,7 @@ export async function createAnnouncement(req, res) {
         message.trim(),
         brochureFileId,
         staffId,
-      ]
+      ],
     );
 
     const announcementId = rows[0]?.id;
@@ -83,17 +83,17 @@ export async function createAnnouncement(req, res) {
     }
 
     const uniqueIds = Array.from(new Set(recipientIds));
-    const valuesSql = uniqueIds
-      .map((_, idx) => `($1,$${idx + 2})`)
-      .join(",");
+    const valuesSql = uniqueIds.map((_, idx) => `($1,$${idx + 2})`).join(",");
     await pool.query(
       `INSERT INTO staff_announcement_recipients (announcement_id, user_id)
        VALUES ${valuesSql}
        ON CONFLICT (announcement_id, user_id) DO NOTHING`,
-      [announcementId, ...uniqueIds]
+      [announcementId, ...uniqueIds],
     );
 
-    return res.status(201).json({ message: "Announcement sent", id: announcementId });
+    return res
+      .status(201)
+      .json({ message: "Announcement sent", id: announcementId });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server error" });
@@ -127,7 +127,7 @@ export async function listMyAnnouncements(req, res) {
         WHERE ar.user_id = $1
         ORDER BY ar.created_at DESC
         LIMIT $2`,
-      [userId, limit]
+      [userId, limit],
     );
 
     return res.json({ announcements: rows });

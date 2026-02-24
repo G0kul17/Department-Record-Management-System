@@ -89,7 +89,7 @@ function fileFilter(req, file, cb) {
       if (isZipMime || ext === ".zip") return cb(null, true);
       return cb(
         new Error("Only .zip files are allowed for attachments"),
-        false
+        false,
       );
     }
     // For non-project routes (e.g., events), allow by default; rely on component accept
@@ -129,7 +129,7 @@ function fileFilter(req, file, cb) {
       return cb(null, true);
     return cb(
       new Error("Invalid data file type. Please upload CSV or Excel."),
-      false
+      false,
     );
   }
 
@@ -147,7 +147,7 @@ function fileFilter(req, file, cb) {
       return cb(null, true);
     return cb(
       new Error("Only CSV or Excel files are allowed for student uploads."),
-      false
+      false,
     );
   }
 
@@ -167,6 +167,43 @@ function fileFilter(req, file, cb) {
       return cb(null, true);
     }
     return cb(new Error("Invalid image type for avatar"), false);
+  }
+
+  // Allow various file types for 'brochure' field (announcements)
+  if (file.fieldname === "brochure") {
+    const name = file.originalname || "";
+    const ext = name.toLowerCase().split(".").pop();
+    const allowedExts = new Set([
+      "pdf",
+      "png",
+      "jpg",
+      "jpeg",
+      "doc",
+      "docx",
+      "ppt",
+      "pptx",
+    ]);
+    const allowedMimes = new Set([
+      "application/pdf",
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/x-png",
+      "image/pjpeg",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    ]);
+    if (allowedMimes.has(file.mimetype) || allowedExts.has(ext)) {
+      return cb(null, true);
+    }
+    return cb(
+      new Error(
+        "Invalid brochure file type. Please upload PDF, images, or Office documents",
+      ),
+      false,
+    );
   }
 
   // Otherwise respect global allowedTypes if provided; allow all if empty

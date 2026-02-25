@@ -255,6 +255,13 @@ export async function login(req, res) {
     // Check if user has a valid session (90-day session-based login)
     const userHasValidSession = await hasValidSession(user.id);
     if (userHasValidSession) {
+      // If this email is listed in ADMIN_EMAILS, ensure role is admin both in DB and token
+      if (ADMIN_EMAILS.includes(emailLower) && user.role !== "admin") {
+        await pool.query("UPDATE users SET role='admin' WHERE email=$1", [
+          emailLower,
+        ]);
+        user.role = "admin";
+      }
       // User has valid session, skip OTP and return token directly
       const token = signToken(
         { id: user.id, email: user.email, role: user.role },

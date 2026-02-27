@@ -107,6 +107,26 @@ export async function createProject(req, res) {
         .json({ message: "github_url must be a valid GitHub link" });
     }
 
+    // Check if GitHub URL already exists (prevent duplicate team submissions)
+    if (gh) {
+      const { rows: githubDup } = await pool.query(
+        "SELECT id, title, team_member_names, created_by FROM projects WHERE LOWER(TRIM(github_url)) = LOWER(TRIM($1))",
+        [gh],
+      );
+      if (githubDup.length) {
+        const existingProject = githubDup[0];
+        return res.status(409).json({
+          message:
+            "Your team has already uploaded this project. GitHub URL must be unique.",
+          existingProject: {
+            id: existingProject.id,
+            title: existingProject.title,
+            team_members: existingProject.team_member_names,
+          },
+        });
+      }
+    }
+
     // duplicate check (title + mentor_name + year)
     const { rows: dup } = await pool.query(
       "SELECT id FROM projects WHERE title=$1 AND mentor_name=$2 AND academic_year=$3",
@@ -421,8 +441,23 @@ export async function listProjects(req, res) {
       if (!requesterId) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      params.push(requesterId);
-      conditions.push(`p.created_by = $${params.length}`);
+      // Get user's full name for matching in team_member_names
+      const { rows: userRows } = await pool.query(
+        "SELECT full_name FROM users WHERE id = $1",
+        [requesterId],
+      );
+      if (userRows.length && userRows[0].full_name) {
+        params.push(requesterId);
+        const createdByParam = params.length;
+        params.push(userRows[0].full_name);
+        const nameParam = params.length;
+        conditions.push(
+          `(p.created_by = $${createdByParam} OR LOWER(p.team_member_names) LIKE LOWER('%' || $${nameParam} || '%'))`,
+        );
+      } else {
+        params.push(requesterId);
+        conditions.push(`p.created_by = $${params.length}`);
+      }
     }
 
     if (conditions.length) base += " WHERE " + conditions.join(" AND ");

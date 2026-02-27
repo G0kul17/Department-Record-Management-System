@@ -13,7 +13,7 @@ export default function ProjectUpload() {
     academic_year: "",
     status: "ongoing",
     team_members_count: "",
-
+    team_members: [],
     github_url: "",
   });
   const [zipFile, setZipFile] = useState(null);
@@ -72,7 +72,7 @@ export default function ProjectUpload() {
       // Basic validation: SRS document is mandatory
       if (!srsFile) {
         throw new Error(
-          "Please attach the SRS document (PDF) before uploading."
+          "Please attach the SRS document (PDF) before uploading.",
         );
       }
       const fd = new FormData();
@@ -88,9 +88,17 @@ export default function ProjectUpload() {
         fd.append(
           "team_member_names",
           form.team_members
-            .map((s) => s?.trim())
+            .map((member) => {
+              const name =
+                typeof member === "string" ? member : member?.name || "";
+              const role =
+                typeof member === "object"
+                  ? member?.role || "Team Member"
+                  : "Team Member";
+              return name.trim() ? `${name.trim()} (${role})` : "";
+            })
             .filter(Boolean)
-            .join(", ")
+            .join(", "),
         );
       // Attach mandatory SRS document
       fd.append("srs_document", srsFile);
@@ -131,7 +139,14 @@ export default function ProjectUpload() {
       await loadProjects(true); // refresh but retain optimistic if API returns empty immediately
     } catch (e) {
       setSuccess(false);
-      setMessage(e.message || "Failed to upload project");
+      // Check if it's a duplicate GitHub URL error
+      if (e.message && e.message.includes("team has already uploaded")) {
+        setMessage(
+          "⚠️ Your team has already uploaded this project. GitHub URL must be unique. Please check with your team members.",
+        );
+      } else {
+        setMessage(e.message || "Failed to upload project");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -311,11 +326,12 @@ export default function ProjectUpload() {
                     const raw = e.target.value;
                     const n = Math.max(
                       1,
-                      Math.min(10, parseInt(raw || "", 10) || 0)
+                      Math.min(10, parseInt(raw || "", 10) || 0),
                     );
                     const next = [...(form.team_members || [])];
                     if (n > next.length) {
-                      while (next.length < n) next.push("");
+                      while (next.length < n)
+                        next.push({ name: "", role: "Team Member" });
                     } else if (n < next.length) {
                       next.length = n;
                     }
@@ -330,28 +346,63 @@ export default function ProjectUpload() {
               </div>
               <div className="sm:col-span-2 space-y-3">
                 {Number(form.team_members_count) > 0 &&
-                  (form.team_members || []).map((name, idx) => (
+                  (form.team_members || []).map((member, idx) => (
                     <div key={idx}>
                       <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                         Team Member {idx + 1}{" "}
                         <span className="text-red-600">*</span>
                       </label>
-                      <input
-                        type="text"
-                        placeholder={`Name of member ${idx + 1}`}
-                        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-400"
-                        value={name}
-                        onChange={(e) => {
-                          const next = [...(form.team_members || [])];
-                          next[idx] = e.target.value;
-                          setForm({ ...form, team_members: next });
-                        }}
-                        required
-                      />
+                      <div className="mt-1 relative">
+                        <input
+                          type="text"
+                          placeholder={`Name of member ${idx + 1}`}
+                          className="w-full rounded-lg border border-slate-300 pl-3 pr-32 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-400"
+                          value={
+                            typeof member === "string"
+                              ? member
+                              : member?.name || ""
+                          }
+                          onChange={(e) => {
+                            const next = [...(form.team_members || [])];
+                            next[idx] = {
+                              name: e.target.value,
+                              role:
+                                typeof member === "object"
+                                  ? member?.role || "Team Member"
+                                  : "Team Member",
+                            };
+                            setForm({ ...form, team_members: next });
+                          }}
+                          required
+                        />
+                        <select
+                          className="absolute right-0 top-0 h-full rounded-r-lg border border-slate-300 bg-slate-50 px-2 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 cursor-pointer"
+                          value={
+                            typeof member === "object"
+                              ? member?.role || "Team Member"
+                              : "Team Member"
+                          }
+                          onChange={(e) => {
+                            const next = [...(form.team_members || [])];
+                            next[idx] = {
+                              name:
+                                typeof member === "string"
+                                  ? member
+                                  : member?.name || "",
+                              role: e.target.value,
+                            };
+                            setForm({ ...form, team_members: next });
+                          }}
+                          title="Select role"
+                        >
+                          <option value="Team Leader">Leader</option>
+                          <option value="Team Member">Member</option>
+                        </select>
+                      </div>
                     </div>
                   ))}
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  We’ll save the names in order you enter.
+                  We'll save the names with their roles in the order you enter.
                 </p>
               </div>
             </div>
@@ -548,13 +599,15 @@ export default function ProjectUpload() {
                   {previewModal.item?.verified
                     ? "Verified"
                     : previewModal.item?.verification_status === "rejected"
-                    ? "Rejected"
-                    : "Pending"}
+                      ? "Rejected"
+                      : "Pending"}
                 </div>
                 {previewModal.item?.created_at && (
                   <div>
                     <span className="font-semibold">Uploaded:</span>{" "}
-                    {new Date(previewModal.item.created_at).toLocaleDateString()}
+                    {new Date(
+                      previewModal.item.created_at,
+                    ).toLocaleDateString()}
                   </div>
                 )}
               </div>

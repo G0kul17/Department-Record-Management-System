@@ -16,18 +16,29 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("achievements");
 
+  // Only show Achievements and Projects for students
+  const availableCategories = useMemo(() => {
+    return CATEGORY_OPTIONS.filter(
+      (opt) => opt.key === "achievements" || opt.key === "projects",
+    );
+  }, []);
+
+  // Reset category if it's not available
+  useEffect(() => {
+    const isValidCategory = availableCategories.some(
+      (opt) => opt.key === category,
+    );
+    if (!isValidCategory) {
+      setCategory("achievements");
+    }
+  }, [category, availableCategories]);
+
   const title = useMemo(() => {
     switch (category) {
       case "projects":
-        return "Top Project Submitters";
-      case "faculty_research":
-        return "Top Faculty Research";
-      case "faculty_consultancy":
-        return "Top Faculty Consultancy";
-      case "faculty_participation":
-        return "Top Faculty Participation";
+        return "Top Student Project Submitters";
       default:
-        return "Top Achievers";
+        return "Top Student Achievers";
     }
   }, [category]);
 
@@ -52,7 +63,7 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
       setLoading(true);
       try {
         const data = await apiClient.get(
-          `/achievements/leaderboard?type=${category}&limit=${limit}`
+          `/achievements/leaderboard?type=${category}&limit=${limit}&role=student`,
         );
         if (!mounted) return;
         setLeaderboard(data.leaderboard || []);
@@ -79,17 +90,13 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
         >
           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
         </svg>
-        <h3 className="text-lg font-bold text-slate-100">
-          {title}
-        </h3>
+        <h3 className="text-lg font-bold text-slate-100">{title}</h3>
       </div>
-      <p className="text-xs text-slate-300 mb-4">
-        {subtitle}
-      </p>
+      <p className="text-xs text-slate-300 mb-4">{subtitle}</p>
 
       {user?.role === "admin" && (
         <div className="mb-4 flex flex-wrap gap-2">
-          {CATEGORY_OPTIONS.map((opt) => (
+          {availableCategories.map((opt) => (
             <button
               key={opt.key}
               onClick={() => setCategory(opt.key)}
@@ -104,15 +111,11 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
           ))}
         </div>
       )}
-      
+
       {loading ? (
-        <div className="text-sm text-slate-300 py-4">
-          Loading...
-        </div>
+        <div className="text-sm text-slate-300 py-4">Loading...</div>
       ) : leaderboard.length === 0 ? (
-        <div className="text-sm text-slate-300 py-4">
-          No records yet.
-        </div>
+        <div className="text-sm text-slate-300 py-4">No records yet.</div>
       ) : (
         <div className="space-y-3">
           {leaderboard.map((student, index) => (

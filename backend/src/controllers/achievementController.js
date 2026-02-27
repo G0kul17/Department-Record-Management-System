@@ -48,7 +48,14 @@ export async function createAchievement(req, res) {
     const insertFileRecord = async (file, fileType) => {
       const ins = await pool.query(
         "INSERT INTO project_files (filename, original_name, mime_type, size, file_type, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id",
-        [file.filename, file.originalname, file.mimetype, file.size, fileType, userId]
+        [
+          file.filename,
+          file.originalname,
+          file.mimetype,
+          file.size,
+          fileType,
+          userId,
+        ],
       );
       return ins.rows[0].id;
     };
@@ -57,17 +64,23 @@ export async function createAchievement(req, res) {
     const proofFileId = await insertFileRecord(proofFile, "proof");
     let certificateFileId = null;
     if (certificateFile) {
-      certificateFileId = await insertFileRecord(certificateFile, "certificate");
+      certificateFileId = await insertFileRecord(
+        certificateFile,
+        "certificate",
+      );
     }
     let eventPhotosFileId = null;
     if (eventPhotosFile) {
-      eventPhotosFileId = await insertFileRecord(eventPhotosFile, "event_photos");
+      eventPhotosFileId = await insertFileRecord(
+        eventPhotosFile,
+        "event_photos",
+      );
     }
 
     // duplicate check for same user
     const dup = await pool.query(
       "SELECT id FROM achievements WHERE user_id=$1 AND title=$2 AND date_of_award=$3",
-      [userId, title.trim(), date_of_award || null]
+      [userId, title.trim(), date_of_award || null],
     );
     if (dup.rows.length)
       return res.status(409).json({ message: "Duplicate achievement" });
@@ -191,7 +204,10 @@ export async function listAchievements(req, res) {
     const params = [];
 
     // Check if viewing verified/approved achievements (not in management mode)
-    const isViewingVerified = verified === "true" || req.query.status === "approved" || req.query.status === "verified";
+    const isViewingVerified =
+      verified === "true" ||
+      req.query.status === "approved" ||
+      req.query.status === "verified";
 
     // If not authenticated, only show verified achievements
     // Also show verified if explicitly requesting verified achievements (but not if filtering by status, which has its own logic)
@@ -215,7 +231,12 @@ export async function listAchievements(req, res) {
     // Staff can only see achievements for activity types they coordinate (only in management/verification mode)
     // If staff is viewing verified/approved achievements OR viewing own achievements (mine=true), no activity_type restriction needed
     // Only apply filter when looking for unverified/pending achievements that aren't their own
-    if (requesterRole === "staff" && requesterId && !isViewingVerified && !isMine) {
+    if (
+      requesterRole === "staff" &&
+      requesterId &&
+      !isViewingVerified &&
+      !isMine
+    ) {
       base += ` LEFT JOIN activity_coordinators ac ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = $${
         params.length + 1
       }`;
@@ -228,7 +249,11 @@ export async function listAchievements(req, res) {
       if (!Number.isInteger(requestedUserId)) {
         return res.status(400).json({ message: "Invalid user_id" });
       }
-      if (requesterId && requesterRole !== "admin" && requesterRole !== "staff") {
+      if (
+        requesterId &&
+        requesterRole !== "admin" &&
+        requesterRole !== "staff"
+      ) {
         if (requestedUserId !== requesterId) {
           return res.status(403).json({ message: "Not authorized" });
         }
@@ -247,15 +272,17 @@ export async function listAchievements(req, res) {
     if (q) {
       params.push(`%${q}%`);
       cond.push(
-        `(a.title ILIKE $${params.length} OR a.issuer ILIKE $${params.length})`
+        `(a.title ILIKE $${params.length} OR a.issuer ILIKE $${params.length})`,
       );
     }
     if (year) {
       const yearRaw = String(year).trim();
       const startYear4 = yearRaw.match(/\d{4}/)?.[0];
       const startYear2 = startYear4 ? startYear4.slice(-2) : null;
-      const endYear2 = startYear4 ? String(parseInt(startYear4) + 1).slice(-2) : null;
-      
+      const endYear2 = startYear4
+        ? String(parseInt(startYear4) + 1).slice(-2)
+        : null;
+
       const yearClauses = [];
 
       // Exact match variations for academic_year field
@@ -267,21 +294,27 @@ export async function listAchievements(req, res) {
         const nextYear = String(parseInt(startYear4) + 1);
         params.push(`${startYear4}-${nextYear}`);
         yearClauses.push(`a.academic_year = $${params.length}`);
-        
+
         if (startYear2 && endYear2) {
           params.push(`${startYear2}-${endYear2}`);
           yearClauses.push(`a.academic_year = $${params.length}`);
         }
-        
+
         // Fallback to date fields only if academic_year is NULL/empty
         params.push(startYear4);
-        yearClauses.push(`(a.academic_year IS NULL AND to_char(a.date_of_award, 'YYYY') = $${params.length})`);
-        
+        yearClauses.push(
+          `(a.academic_year IS NULL AND to_char(a.date_of_award, 'YYYY') = $${params.length})`,
+        );
+
         params.push(startYear4);
-        yearClauses.push(`(a.academic_year IS NULL AND to_char(a.date, 'YYYY') = $${params.length})`);
-        
+        yearClauses.push(
+          `(a.academic_year IS NULL AND to_char(a.date, 'YYYY') = $${params.length})`,
+        );
+
         params.push(startYear4);
-        yearClauses.push(`(a.academic_year IS NULL AND to_char(a.created_at, 'YYYY') = $${params.length})`);
+        yearClauses.push(
+          `(a.academic_year IS NULL AND to_char(a.created_at, 'YYYY') = $${params.length})`,
+        );
       }
 
       cond.push(`(${yearClauses.join(" OR ")})`);
@@ -311,7 +344,7 @@ export async function getAchievementDetails(req, res) {
     // Staff should only access achievements for activity types they coordinate
     const requesterRole = req.user?.role;
     const requesterId = req.user?.id;
-    
+
     // If not authenticated, only show verified achievements
     let whereClause = "WHERE a.id = $1";
     const params = [id];
@@ -320,7 +353,7 @@ export async function getAchievementDetails(req, res) {
     } else if (requesterRole === "staff" && requesterId) {
       const { rows: statusRows } = await pool.query(
         "SELECT verified, verification_status FROM achievements WHERE id = $1",
-        [id]
+        [id],
       );
       if (!statusRows.length) {
         return res.status(404).json({ message: "Not found" });
@@ -334,7 +367,7 @@ export async function getAchievementDetails(req, res) {
              JOIN activity_coordinators ac
                ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = $1
             WHERE a.id = $2`,
-          [requesterId, id]
+          [requesterId, id],
         );
         if (!auth.length) {
           return res
@@ -365,7 +398,7 @@ export async function getAchievementDetails(req, res) {
        LEFT JOIN users u2 ON u2.id = pf.uploaded_by
        LEFT JOIN users ux ON LOWER(ux.full_name) = LOWER(a.name)
        ${whereClause}`,
-      params
+      params,
     );
     if (!rows.length) return res.status(404).json({ message: "Not found" });
     return res.json({ achievement: rows[0] });
@@ -387,7 +420,7 @@ export async function verifyAchievement(req, res) {
           JOIN activity_coordinators ac
             ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = $1
          WHERE a.id = $2`,
-        [requesterId, id]
+        [requesterId, id],
       );
       if (!auth.length) {
         return res
@@ -400,7 +433,7 @@ export async function verifyAchievement(req, res) {
       typeof comment === "string" && comment.trim() ? comment.trim() : null;
     await pool.query(
       "UPDATE achievements SET verified = true, verification_status='approved', verification_comment=$3, verified_by=$2, verified_at=NOW() WHERE id=$1",
-      [id, req.user?.id || null, verificationComment]
+      [id, req.user?.id || null, verificationComment],
     );
     return res.json({ message: "Achievement approved" });
   } catch (err) {
@@ -421,7 +454,7 @@ export async function rejectAchievement(req, res) {
           JOIN activity_coordinators ac
             ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = $1
          WHERE a.id = $2`,
-        [requesterId, id]
+        [requesterId, id],
       );
       if (!auth.length) {
         return res
@@ -434,7 +467,7 @@ export async function rejectAchievement(req, res) {
       typeof comment === "string" && comment.trim() ? comment.trim() : null;
     await pool.query(
       "UPDATE achievements SET verified = false, verification_status='rejected', verification_comment=$3, verified_by=$2, verified_at=NOW() WHERE id=$1",
-      [id, req.user?.id || null, verificationComment]
+      [id, req.user?.id || null, verificationComment],
     );
     return res.json({ message: "Achievement rejected" });
   } catch (err) {
@@ -447,7 +480,7 @@ export async function getAchievementsCount(req, res) {
   try {
     const { verified } = req.query;
     const { rows } = await pool.query(
-      "SELECT COUNT(*)::int AS count FROM achievements WHERE verified = true OR verification_status = 'approved'"
+      "SELECT COUNT(*)::int AS count FROM achievements WHERE verified = true OR verification_status = 'approved'",
     );
     return res.json({ count: rows[0]?.count ?? 0 });
   } catch (err) {
@@ -460,6 +493,7 @@ export async function getAchievementsLeaderboard(req, res) {
   try {
     const limit = Number(req.query.limit) || 10;
     const type = (req.query.type || "achievements").toLowerCase();
+    const role = (req.query.role || "student").toLowerCase();
 
     // Map of supported leaderboard queries keyed by type
     const queries = {
@@ -472,24 +506,28 @@ export async function getAchievementsLeaderboard(req, res) {
               FROM achievements a
               JOIN users u ON a.user_id = u.id
               WHERE (a.verified = true OR a.verification_status = 'approved')
+                AND u.role = $2
               GROUP BY u.id, u.email, u.full_name
               ORDER BY item_count DESC, u.full_name ASC
               LIMIT $1`,
-        params: [limit],
+        params: [limit, role],
       },
       projects: {
         sql: `SELECT
                 u.id,
                 u.email,
                 COALESCE(u.full_name, u.email) AS name,
-                COUNT(p.id)::int AS item_count
-              FROM projects p
-              JOIN users u ON p.created_by = u.id
-              WHERE (p.verified = true OR p.verification_status = 'approved')
+                COUNT(DISTINCT p.id)::int AS item_count
+              FROM users u
+              LEFT JOIN projects p ON (
+                (p.created_by = u.id OR LOWER(p.team_member_names) LIKE LOWER('%' || u.full_name || '%'))
+                AND (p.verified = true OR p.verification_status = 'approved')
+              )
+              WHERE u.role = $2 AND p.id IS NOT NULL
               GROUP BY u.id, u.email, u.full_name
               ORDER BY item_count DESC, u.full_name ASC
               LIMIT $1`,
-        params: [limit],
+        params: [limit, role],
       },
       faculty_research: {
         sql: `SELECT
@@ -499,10 +537,11 @@ export async function getAchievementsLeaderboard(req, res) {
                 COUNT(fr.id)::int AS item_count
               FROM faculty_research fr
               JOIN users u ON fr.created_by = u.id
+              WHERE u.role = $2
               GROUP BY u.id, u.email, u.full_name
               ORDER BY item_count DESC, u.full_name ASC
               LIMIT $1`,
-        params: [limit],
+        params: [limit, role],
       },
       faculty_consultancy: {
         sql: `SELECT
@@ -512,10 +551,11 @@ export async function getAchievementsLeaderboard(req, res) {
                 COUNT(fc.id)::int AS item_count
               FROM faculty_consultancy fc
               JOIN users u ON fc.created_by = u.id
+              WHERE u.role = $2
               GROUP BY u.id, u.email, u.full_name
               ORDER BY item_count DESC, u.full_name ASC
               LIMIT $1`,
-        params: [limit],
+        params: [limit, role],
       },
       faculty_participation: {
         sql: `SELECT
@@ -525,10 +565,11 @@ export async function getAchievementsLeaderboard(req, res) {
                 COUNT(fp.id)::int AS item_count
               FROM faculty_participations fp
               JOIN users u ON fp.created_by = u.id
+              WHERE u.role = $2
               GROUP BY u.id, u.email, u.full_name
               ORDER BY item_count DESC, u.full_name ASC
               LIMIT $1`,
-        params: [limit],
+        params: [limit, role],
       },
     };
 

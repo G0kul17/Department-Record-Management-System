@@ -9,6 +9,18 @@ A comprehensive web-based system for managing department records, including stud
 
 ---
 
+## 🎉 What's New in v1.1.0 (February 2026)
+
+- 👥 **Team Collaboration Enhanced**: Add team members with designated roles (Team Leader/Member)
+- 🔒 **Duplicate Prevention**: GitHub URL uniqueness prevents multiple team submissions
+- ⭐ **Fair Credit System**: All team members receive credit in leaderboards and project counts
+- 🎯 **Event-Linked Achievements**: Track achievements by specific department events
+- 🧭 **Improved Navigation**: Fixed admin navbar for seamless section navigation
+- 🏆 **Student-Focused Leaderboard**: Streamlined to display only student rankings
+- 🎨 **Enhanced UI/UX**: Integrated role dropdowns and responsive form layouts
+
+---
+
 ## 🌟 Features
 
 ### 🔐 Authentication & Authorization
@@ -22,11 +34,18 @@ A comprehensive web-based system for managing department records, including stud
 ### 👨‍🎓 Student Features
 
 - **Project Submission**: Upload projects with attachments (ZIP files)
+  - **Team Collaboration**: Add multiple team members with role designation (Team Leader/Team Member)
+  - **Duplicate Prevention**: GitHub URL uniqueness check prevents multiple submissions of same project
+  - **Integrated Role Dropdown**: Select team member roles directly in the input field
 - **Achievement Management**: Submit achievements with certificates and event photos
+  - **Event Linkage**: Achievements can be linked to specific department events
 - **Event Registration**: View and register for department events
 - **Personal Dashboard**: Track submissions, approvals, and notifications
 - **Profile Management**: Update personal information and view stats
 - **Leaderboard**: View top achievers based on achievements and projects
+  - **Student-Focused**: Displays only student rankings
+  - **Team Credit**: All team members receive credit for uploaded projects
+  - **My Projects**: View all projects where you are creator or team member
 
 ### 👨‍🏫 Staff Features
 
@@ -229,6 +248,14 @@ psql -U postgres -d drms_db -f migrations/001_initial_schema.sql
 
 This will create all necessary tables, indexes, and constraints. The application **no longer creates tables automatically** at runtime.
 
+> ⚠️ **Important Schema Changes (v1.1.0):**
+>
+> - Added `event_id` column to `achievements` table (links achievements to events)
+> - Updated `projects` table to enforce GitHub URL uniqueness
+> - Enhanced team member credit system with name pattern matching
+>
+> If upgrading from v1.0.0, these changes are included in the migration file.
+
 **Verify migration applied:**
 
 ```bash
@@ -376,13 +403,20 @@ The frontend will run at `http://localhost:5173`
 
 1. **Submit Project**:
    - Dashboard → Upload Project
-   - Fill project details
+   - Fill project details (title, description, GitHub URL)
+   - **Add Team Members**:
+     - Click "Add Team Member" button
+     - Enter team member name
+     - Select role from dropdown (Team Leader or Team Member)
+     - Add multiple team members as needed
    - Attach ZIP file (code/documentation)
    - Submit for approval
+   - **Note**: If GitHub URL already exists, system will prevent duplicate submission
 
 2. **Submit Achievement**:
    - Dashboard → My Achievements → Add Achievement
    - Provide achievement details
+   - **Optional**: Link to specific event (select from dropdown)
    - Upload certificate and event photos
    - Submit for verification
 
@@ -395,6 +429,12 @@ The frontend will run at `http://localhost:5173`
    - Check project/achievement status
    - View feedback from staff
    - Track approval timeline
+   - **My Projects**: View all projects where you're creator or team member
+
+5. **Track Performance**:
+   - View leaderboard (student rankings only)
+   - Check your achievements count
+   - See project count (includes team projects)
 
 ### Staff Workflow
 
@@ -511,14 +551,17 @@ The frontend will run at `http://localhost:5173`
 #### projects
 
 - Student project submissions
-- Columns: id, title, description, student_id, status, files
+- Columns: id, title, description, student_id, github_url, team_member_names, status, files
 - Status: pending, approved, rejected
+- Team members stored with roles: "Name (Team Leader)", "Name (Team Member)"
+- GitHub URL enforced as unique to prevent duplicate team submissions
 
 #### achievements
 
 - Student achievement records
-- Columns: id, title, description, student_id, certificate, status
+- Columns: id, title, description, student_id, event_id, certificate, status
 - Linked to users via foreign key
+- Linked to events via event_id for tracking event-based achievements
 
 #### events
 
@@ -564,8 +607,122 @@ staff_announcements
   └─ N:M → users (via staff_announcement_recipients)
 
 events
-  └─ N:M → users (via event_registrations)
+  ├─ N:M → users (via event_registrations)
+  └─ 1:N → achievements (event-linked achievements)
+
+projects
+  └─ N:M → users (via team_member_names field with pattern matching)
 ```
+
+---
+
+## 👥 Team Project System
+
+### Overview
+
+The system supports collaborative team projects with the following features:
+
+### Key Features
+
+#### 1. Team Member Role Management
+
+- **Team Leader**: Primary project owner who uploads the project
+- **Team Member**: Additional contributors to the project
+- Each team member can have a designated role
+- Roles are displayed with names: "John Doe (Team Leader)", "Jane Smith (Team Member)"
+
+#### 2. Duplicate Prevention
+
+- **GitHub URL Uniqueness**: Prevents multiple uploads of the same project
+- When a team member attempts to upload a project with an existing GitHub URL:
+  - System returns a 409 Conflict error
+  - Displays existing project details (title, uploader, team members)
+  - Shows user-friendly message: "Your team has already uploaded this project"
+- Ensures only one submission per team project
+
+#### 3. Team Credit Distribution
+
+- **Leaderboard Credit**: All team members receive credit for the project
+  - Creator gets credit automatically (via `created_by` field)
+  - Team members get credit via name matching in `team_member_names` field
+  - Uses case-insensitive LIKE pattern matching
+- **My Projects Filter**: Shows projects where user is:
+  - The original uploader (creator), OR
+  - Listed as a team member
+- **Fair Recognition**: Ensures all contributors are recognized in rankings
+
+#### 4. Implementation Details
+
+**Database Schema:**
+
+```sql
+-- projects table includes:
+github_url VARCHAR(255) UNIQUE NOT NULL,  -- Enforces uniqueness
+team_member_names TEXT,                    -- Stores: "Name1 (Role1), Name2 (Role2)"
+created_by INTEGER REFERENCES users(id)    -- Original uploader
+```
+
+**Backend Validation:**
+
+```javascript
+// Check for existing project with same GitHub URL
+const existingProject = await pool.query(
+  "SELECT id, title, team_member_names FROM projects WHERE LOWER(TRIM(github_url)) = LOWER(TRIM($1))",
+  [github_url],
+);
+
+if (existingProject.rows.length > 0) {
+  return res.status(409).json({
+    message: "Your team has already uploaded this project...",
+    existingProject: existingProject.rows[0],
+  });
+}
+```
+
+**Leaderboard Query:**
+
+```sql
+-- Credit all team members in project counts
+LEFT JOIN projects p ON (
+  (p.created_by = u.id OR LOWER(p.team_member_names) LIKE LOWER('%' || u.full_name || '%'))
+  AND p.verified = true
+)
+COUNT(DISTINCT p.id) as project_count
+```
+
+**Frontend UI:**
+
+- Integrated dropdown for role selection within team member input field
+- Responsive design: stacked layout on mobile, inline on desktop
+- Real-time validation and error display
+- Clear error messages for duplicate submissions
+
+### Usage Example
+
+1. **Student A uploads a project:**
+   - Title: "E-Commerce Website"
+   - GitHub URL: "https://github.com/team/ecommerce"
+   - Team Members:
+     - Student A (Team Leader)
+     - Student B (Team Member)
+     - Student C (Team Member)
+
+2. **Student B attempts to upload the same project:**
+   - Enters same GitHub URL: "https://github.com/team/ecommerce"
+   - System detects duplicate and shows error
+   - Error message includes existing project details
+   - Upload is prevented
+
+3. **Leaderboard & Credits:**
+   - Student A: Gets credit (uploaded the project)
+   - Student B: Gets credit (name in team_member_names)
+   - Student C: Gets credit (name in team_member_names)
+   - All three students' project counts increase by 1
+
+4. **My Projects View:**
+   - Student A sees the project (creator)
+   - Student B sees the project (team member)
+   - Student C sees the project (team member)
 
 ---
 
@@ -588,11 +745,17 @@ GET    /auth/me                  # Get current user profile
 
 ```
 GET    /api/projects               # List all approved projects
-GET    /api/projects/my            # List user's projects
+GET    /api/projects/my            # List user's projects (as creator or team member)
 GET    /api/projects/:id           # Get project details
-POST   /api/projects               # Create new project
+POST   /api/projects               # Create new project (checks GitHub URL uniqueness)
 PUT    /api/projects/:id           # Update project
 DELETE /api/projects/:id           # Delete project
+
+Query Parameters:
+  - mine=true                      # Filter to show only user's projects (creator or team member)
+
+Response Codes:
+  - 409 Conflict                   # GitHub URL already exists (duplicate project)
 ```
 
 ### Achievements (`/api/achievements`)
@@ -605,6 +768,16 @@ GET    /api/achievements/:id           # Get achievement details
 POST   /api/achievements               # Submit new achievement
 PUT    /api/achievements/:id           # Update achievement
 DELETE /api/achievements/:id           # Delete achievement
+
+Query Parameters (leaderboard):
+  - type=achievements|projects         # Filter by category
+  - role=student                       # Fixed to student role
+  - limit=10                           # Number of top achievers to return
+
+Leaderboard Features:
+  - Students only (no staff rankings)
+  - Team members credited for projects
+  - Sorted by achievement/project count
 ```
 
 ### Events (`/api/events`, `/api/events-admin`)
@@ -687,12 +860,17 @@ GET    /api/bulk-export/:type          # Export data (CSV/Excel)
 #### Student Features
 
 - [ ] Submit project with file upload
+- [ ] Add multiple team members with role selection (Team Leader/Team Member)
+- [ ] Verify GitHub URL uniqueness validation (duplicate prevention)
+- [ ] Confirm team members receive credit in leaderboard
+- [ ] Check "My Projects" shows projects as creator and team member
 - [ ] Submit achievement with certificate
+- [ ] Link achievement to event (event_id selection)
 - [ ] View project/achievement status
 - [ ] Edit pending submissions
 - [ ] View approved projects/achievements
 - [ ] Register for events
-- [ ] View leaderboard
+- [ ] View student-only leaderboard (Achievements/Projects categories)
 
 #### Staff Features
 
@@ -818,6 +996,41 @@ cors({
 - Verify `sessionUtils.js` is in `backend/src/utils/`
 - Ensure session token is stored in localStorage
 - Check browser console for `x-session-token` header
+
+#### 7. Team Project Upload Fails with Duplicate Error
+
+```
+Error: Your team has already uploaded this project
+```
+
+**Solution**:
+
+- This is expected behavior - GitHub URL must be unique
+- Check with your team members if someone already uploaded the project
+- Verify the GitHub URL is correct and unique to your project
+- If you need to update the project, ask the original uploader to edit it
+- All team members listed will automatically receive credit
+
+#### 8. Team Member Not Receiving Credit
+
+**Symptoms**: Team member's name appears in project but not counted in leaderboard
+
+**Solution**:
+
+- Ensure the exact name in the team member list matches the user's `full_name` in the database
+- Name matching is case-insensitive but must match exactly (including spaces)
+- Check the team member's name was saved correctly during upload
+- Format should be: "John Doe (Team Leader)", "Jane Smith (Team Member)"
+- Database query uses LIKE pattern: `LOWER(team_member_names) LIKE LOWER('%John Doe%')`
+
+#### 9. Admin Navbar Not Scrolling
+
+**Solution**:
+
+- Ensure you're on the `/admin` page before scrolling
+- The navbar now automatically navigates to admin page before scrolling
+- Clear browser cache if experiencing issues
+- Check browser console for JavaScript errors
 
 ---
 
@@ -1071,7 +1284,23 @@ If you encounter any issues or have questions:
 
 ### Version History
 
-- **v1.0.0** (Current) - Initial release with core features
+- **v1.1.0** (February 2026) - Team Collaboration & UI Enhancements
+  - 🎯 **Event-Linked Achievements**: Added `event_id` column to achievements table for tracking achievements by events
+  - 🧭 **Admin Navigation Fix**: Fixed admin navbar to properly navigate before scrolling to sections
+  - 🏆 **Student-Only Leaderboard**: Simplified leaderboard to display only students (removed staff toggle)
+  - 👥 **Team Role Management**: Added Team Leader/Member dropdown for project uploads
+    - Integrated dropdown design within team member input fields
+    - Proper role tracking for all team members
+  - 🔒 **Duplicate Project Prevention**: GitHub URL uniqueness validation
+    - Prevents multiple team members from uploading the same project
+    - Returns user-friendly error message with existing project details
+  - ⭐ **Team Credit System**: All team members now receive credit for projects
+    - Leaderboard counts projects where user is creator OR team member
+    - "My Projects" filter shows projects where user is creator OR team member
+    - Uses LIKE pattern matching on `team_member_names` field
+  - 🎨 **UI/UX Improvements**: Responsive design fixes for dropdowns and form layouts
+
+- **v1.0.0** (January 2026) - Initial release with core features
   - RBAC authentication with 90-day sessions
   - Project and achievement management
   - Event management and announcements
@@ -1107,6 +1336,11 @@ If you encounter any issues or have questions:
 3. **Files**: Scan files before uploading
 4. **Data**: Verify information before submitting
 5. **Updates**: Keep browser updated for best experience
+6. **Team Projects**:
+   - Coordinate with team members before uploading projects
+   - Use unique GitHub URLs for each project
+   - Ensure team member names match exactly with registered names
+   - Only one team member needs to upload; all will receive credit
 
 ---
 

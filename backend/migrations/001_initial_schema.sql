@@ -146,6 +146,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_project_files_one_zip_per_project
 CREATE TABLE IF NOT EXISTS achievements (
   id SERIAL PRIMARY KEY,
   user_id INTEGER,
+  event_id INTEGER REFERENCES events(id) ON DELETE SET NULL,
   title VARCHAR(500) NOT NULL,
   name VARCHAR(255),
   date DATE,

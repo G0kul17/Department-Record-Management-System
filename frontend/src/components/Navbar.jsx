@@ -90,11 +90,14 @@ const Navbar = () => {
             <div className="hidden md:flex items-center gap-6">
               <button
                 onClick={() => {
-                  const element = document.getElementById("events");
-                  element?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                  });
+                  nav("/admin");
+                  setTimeout(() => {
+                    const element = document.getElementById("events");
+                    element?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }, 100);
                 }}
                 className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
               >
@@ -102,11 +105,14 @@ const Navbar = () => {
               </button>
               <button
                 onClick={() => {
-                  const element = document.getElementById("projects");
-                  element?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                  });
+                  nav("/admin");
+                  setTimeout(() => {
+                    const element = document.getElementById("projects");
+                    element?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }, 100);
                 }}
                 className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
               >
@@ -114,11 +120,14 @@ const Navbar = () => {
               </button>
               <button
                 onClick={() => {
-                  const element = document.getElementById("achievements");
-                  element?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                  });
+                  nav("/admin");
+                  setTimeout(() => {
+                    const element = document.getElementById("achievements");
+                    element?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }, 100);
                 }}
                 className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
               >
@@ -126,11 +135,14 @@ const Navbar = () => {
               </button>
               <button
                 onClick={() => {
-                  const element = document.getElementById("visualization");
-                  element?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                  });
+                  nav("/admin");
+                  setTimeout(() => {
+                    const element = document.getElementById("visualization");
+                    element?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }, 100);
                 }}
                 className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
               >

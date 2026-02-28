@@ -1,5 +1,7 @@
 // src/controllers/achievementController.js
 import pool from "../config/db.js";
+import path from "path";
+import fs from "fs";
 
 // create achievement (students)
 export async function createAchievement(req, res) {
@@ -60,30 +62,17 @@ export async function createAchievement(req, res) {
       return ins.rows[0].id;
     };
 
-    // Insert all files
-    const proofFileId = await insertFileRecord(proofFile, "proof");
-    let certificateFileId = null;
-    if (certificateFile) {
-      certificateFileId = await insertFileRecord(
-        certificateFile,
-        "certificate",
-      );
-    }
-    let eventPhotosFileId = null;
-    if (eventPhotosFile) {
-      eventPhotosFileId = await insertFileRecord(
-        eventPhotosFile,
-        "event_photos",
-      );
-    }
-
-    // duplicate check for same user
+    // duplicate check for same user — must run before any file writes
     const dup = await pool.query(
       "SELECT id FROM achievements WHERE user_id=$1 AND title=$2 AND date_of_award=$3",
       [userId, title.trim(), date_of_award || null],
     );
-    if (dup.rows.length)
+    if (dup.rows.length) {
+      for (const uploadedFile of [proofFile, certificateFile, eventPhotosFile].filter(Boolean)) {
+        try { fs.unlinkSync(path.resolve(process.env.FILE_STORAGE_PATH || "./uploads", uploadedFile.filename)); } catch {}
+      }
       return res.status(409).json({ message: "Duplicate achievement" });
+    }
 
     const activityType = (activity_type || title || "").trim() || null;
     const eventNameVal = (event_name || "").trim() || null;
@@ -105,6 +94,24 @@ export async function createAchievement(req, res) {
         pos = posVal;
       }
     }
+
+    // Insert all files (after duplicate check passes)
+    const proofFileId = await insertFileRecord(proofFile, "proof");
+    let certificateFileId = null;
+    if (certificateFile) {
+      certificateFileId = await insertFileRecord(
+        certificateFile,
+        "certificate",
+      );
+    }
+    let eventPhotosFileId = null;
+    if (eventPhotosFile) {
+      eventPhotosFileId = await insertFileRecord(
+        eventPhotosFile,
+        "event_photos",
+      );
+    }
+
 
     let insertSql =
       "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, certificate_file_id, event_photos_file_id, date, event_id, event_name, activity_type, name, prize_amount, position) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *";

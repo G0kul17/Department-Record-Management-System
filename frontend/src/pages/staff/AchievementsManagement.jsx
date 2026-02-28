@@ -8,6 +8,7 @@ export default function AchievementsManagement() {
   const [expandedId, setExpandedId] = useState(null);
   const [modal, setModal] = useState({ open: false, item: null });
   const [view, setView] = useState("pending");
+  const [suggestion, setSuggestion] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -27,10 +28,14 @@ export default function AchievementsManagement() {
     load();
   }, []);
 
-  const approve = async (id) => {
+  const approve = async (id, comment) => {
     try {
       setBusyId(id);
-      const resp = await apiClient.post(`/achievements/${id}/verify`);
+      const payload =
+        typeof comment === "string" && comment.trim()
+          ? { comment: comment.trim() }
+          : {};
+      const resp = await apiClient.post(`/achievements/${id}/verify`, payload);
       if (resp) await load();
     } catch (e) {
       // optionally handle error
@@ -39,10 +44,14 @@ export default function AchievementsManagement() {
     }
   };
 
-  const reject = async (id) => {
+  const reject = async (id, comment) => {
     try {
       setBusyId(id);
-      const resp = await apiClient.post(`/achievements/${id}/reject`);
+      const payload =
+        typeof comment === "string" && comment.trim()
+          ? { comment: comment.trim() }
+          : {};
+      const resp = await apiClient.post(`/achievements/${id}/reject`, payload);
       if (resp) await load();
     } catch (e) {
       // optionally handle error
@@ -68,8 +77,24 @@ export default function AchievementsManagement() {
   const toggleView = (id) => {
     setExpandedId((prev) => (prev === id ? null : id));
   };
-  const openModal = (item) => setModal({ open: true, item });
-  const closeModal = () => setModal({ open: false, item: null });
+  const openModal = (item) => {
+    setSuggestion(item?.verification_comment || "");
+    setModal({ open: true, item });
+  };
+  const closeModal = () => {
+    setModal({ open: false, item: null });
+    setSuggestion("");
+  };
+  const approveFromModal = async () => {
+    if (!modal.item?.id) return;
+    await approve(modal.item.id, suggestion);
+    closeModal();
+  };
+  const rejectFromModal = async () => {
+    if (!modal.item?.id) return;
+    await reject(modal.item.id, suggestion);
+    closeModal();
+  };
 
   return (
     <div className="glitter-card rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -84,10 +109,10 @@ export default function AchievementsManagement() {
                 setView("pending");
                 await load();
               }}
-              className={`text-xs rounded-md px-2 py-0.5 font-semibold ${
+              className={`btn btn-xs ${
                 view === "pending"
-                  ? "bg-blue-600 text-white"
-                  : "bg-slate-100 text-slate-800"
+                  ? "btn-primary"
+                  : "btn-ghost"
               }`}
             >
               Pending
@@ -111,7 +136,7 @@ export default function AchievementsManagement() {
         <button
           onClick={() => (view === "pending" ? load() : showRejected())}
           disabled={loading}
-          className="text-xs rounded-md bg-blue-600 px-3 py-1 font-semibold text-white shadow hover:bg-blue-700 disabled:opacity-50"
+          className="btn btn-primary btn-sm"
         >
           {loading ? "Refreshing..." : "Refresh"}
         </button>
@@ -162,7 +187,7 @@ export default function AchievementsManagement() {
                   <button
                     onClick={() => approve(a.id)}
                     disabled={busyId === a.id}
-                    className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white shadow hover:bg-blue-700 disabled:opacity-50"
+                    className="btn btn-primary btn-xs"
                   >
                     {busyId === a.id ? "Processing..." : "Approve"}
                   </button>
@@ -182,9 +207,21 @@ export default function AchievementsManagement() {
                 <div>
                   <span className="font-semibold">Name:</span> {a.name || "—"}
                 </div>
+                {a.position && (
+                  <div>
+                    <span className="font-semibold">Position:</span>{" "}
+                    {a.position}
+                  </div>
+                )}
+                {a.prize_amount && (
+                  <div>
+                    <span className="font-semibold">Prize Amount:</span> ₹
+                    {parseFloat(a.prize_amount).toFixed(2)}
+                  </div>
+                )}
                 {a.proof_filename && (
                   <div className="mt-2">
-                    <span className="font-semibold">Proof:</span>{" "}
+                    <span className="font-semibold">Main Proof:</span>{" "}
                     {a.proof_mime && a.proof_mime.startsWith("image/") ? (
                       <img
                         src={`/uploads/${a.proof_filename}`}
@@ -196,9 +233,53 @@ export default function AchievementsManagement() {
                         href={`/uploads/${a.proof_filename}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-blue-600 hover:underline"
+                        className="link link-primary"
                       >
                         {a.proof_name || "Download proof"}
+                      </a>
+                    )}
+                  </div>
+                )}
+                {a.certificate_filename && (
+                  <div className="mt-2">
+                    <span className="font-semibold">Certificate:</span>{" "}
+                    {a.certificate_mime &&
+                    a.certificate_mime.startsWith("image/") ? (
+                      <img
+                        src={`/uploads/${a.certificate_filename}`}
+                        alt={a.certificate_name || "Certificate"}
+                        className="mt-2 max-h-64 rounded border"
+                      />
+                    ) : (
+                      <a
+                        href={`/uploads/${a.certificate_filename}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="link link-primary"
+                      >
+                        {a.certificate_name || "Download certificate"}
+                      </a>
+                    )}
+                  </div>
+                )}
+                {a.event_photos_filename && (
+                  <div className="mt-2">
+                    <span className="font-semibold">Event Photos:</span>{" "}
+                    {a.event_photos_mime &&
+                    a.event_photos_mime.startsWith("image/") ? (
+                      <img
+                        src={`/uploads/${a.event_photos_filename}`}
+                        alt={a.event_photos_name || "Event Photos"}
+                        className="mt-2 max-h-64 rounded border"
+                      />
+                    ) : (
+                      <a
+                        href={`/uploads/${a.event_photos_filename}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="link link-primary"
+                      >
+                        {a.event_photos_name || "Download photos"}
                       </a>
                     )}
                   </div>
@@ -210,11 +291,11 @@ export default function AchievementsManagement() {
       </div>
       {modal.open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto"
           onClick={closeModal}
         >
           <div
-            className="max-w-2xl w-full rounded-xl bg-white p-6 shadow-xl dark:bg-slate-900"
+            className="max-w-2xl w-full rounded-xl bg-white p-6 shadow-xl dark:bg-slate-900 my-8"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -228,7 +309,7 @@ export default function AchievementsManagement() {
                 Close
               </button>
             </div>
-            <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
+            <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300 max-h-96 overflow-y-auto">
               <div>
                 <span className="font-semibold">Title:</span>{" "}
                 {modal.item?.title}
@@ -244,12 +325,24 @@ export default function AchievementsManagement() {
               <div>
                 <span className="font-semibold">Name:</span> {modal.item?.name}
               </div>
+              {modal.item?.position && (
+                <div>
+                  <span className="font-semibold">Position:</span>{" "}
+                  {modal.item?.position}
+                </div>
+              )}
+              {modal.item?.prize_amount && (
+                <div>
+                  <span className="font-semibold">Prize Amount:</span> ₹
+                  {parseFloat(modal.item?.prize_amount).toFixed(2)}
+                </div>
+              )}
               <div>
                 <span className="font-semibold">Uploaded By:</span>{" "}
                 {modal.item?.user_email}
               </div>
               <div className="mt-3">
-                <span className="font-semibold">Proof:</span>
+                <span className="font-semibold">Main Proof:</span>
                 {modal.item?.proof_mime &&
                 modal.item?.proof_mime.startsWith("image/") ? (
                   <div className="mt-2">
@@ -269,7 +362,7 @@ export default function AchievementsManagement() {
                     }`}
                     target="_blank"
                     rel="noreferrer"
-                    className="ml-2 text-blue-600 hover:underline"
+                    className="link link-primary ml-2"
                   >
                     Download proof
                   </a>
@@ -277,6 +370,92 @@ export default function AchievementsManagement() {
                   <span className="ml-2">No file</span>
                 )}
               </div>
+              {modal.item?.certificate_filename && (
+                <div className="mt-3">
+                  <span className="font-semibold">Certificate:</span>
+                  {modal.item?.certificate_mime &&
+                  modal.item?.certificate_mime.startsWith("image/") ? (
+                    <div className="mt-2">
+                      <img
+                        alt={modal.item?.certificate_name || "certificate"}
+                        src={`${apiClient.baseURL.replace(
+                          /\/api$/,
+                          ""
+                        )}/uploads/${modal.item?.certificate_filename}`}
+                        className="max-h-80 rounded"
+                      />
+                    </div>
+                  ) : (
+                    <a
+                      href={`${apiClient.baseURL.replace(/\/api$/, "")}/uploads/${
+                        modal.item?.certificate_filename
+                      }`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="link link-primary ml-2"
+                    >
+                      Download certificate
+                    </a>
+                  )}
+                </div>
+              )}
+              {modal.item?.event_photos_filename && (
+                <div className="mt-3">
+                  <span className="font-semibold">Event Photos:</span>
+                  {modal.item?.event_photos_mime &&
+                  modal.item?.event_photos_mime.startsWith("image/") ? (
+                    <div className="mt-2">
+                      <img
+                        alt={modal.item?.event_photos_name || "event photos"}
+                        src={`${apiClient.baseURL.replace(
+                          /\/api$/,
+                          ""
+                        )}/uploads/${modal.item?.event_photos_filename}`}
+                        className="max-h-80 rounded"
+                      />
+                    </div>
+                  ) : (
+                    <a
+                      href={`${apiClient.baseURL.replace(/\/api$/, "")}/uploads/${
+                        modal.item?.event_photos_filename
+                      }`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="link link-primary ml-2"
+                    >
+                      Download photos
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="mt-4">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+                Suggestion to student (optional)
+              </label>
+              <textarea
+                value={suggestion}
+                onChange={(e) => setSuggestion(e.target.value)}
+                rows={3}
+                placeholder="Add a suggestion the student will see in notifications"
+                className="mt-2 w-full rounded-md border border-slate-300 bg-white p-2 text-sm text-slate-800 focus:border-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              />
+            </div>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                onClick={rejectFromModal}
+                disabled={busyId === modal.item?.id}
+                className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white shadow hover:bg-red-700 disabled:opacity-50"
+              >
+                {busyId === modal.item?.id ? "Processing..." : "Reject"}
+              </button>
+              <button
+                onClick={approveFromModal}
+                disabled={busyId === modal.item?.id}
+                className="btn btn-primary btn-xs"
+              >
+                {busyId === modal.item?.id ? "Processing..." : "Approve"}
+              </button>
             </div>
           </div>
         </div>

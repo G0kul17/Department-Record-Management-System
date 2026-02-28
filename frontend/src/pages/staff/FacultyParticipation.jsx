@@ -114,7 +114,7 @@ export default function FacultyParticipation() {
         Add training or event participation details below.
       </p>
       {message && (
-        <div className="mb-4 rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-900 dark:bg-slate-800 dark:text-slate-200">
+        <div className="alert alert-info mb-4">
           {message}
         </div>
       )}
@@ -853,8 +853,9 @@ export default function FacultyParticipation() {
           </h2>
           <UploadDropzone
             label="Upload and attach proof"
-            subtitle="PDF or image"
-            accept=".pdf,image/*"
+            subtitle="All file types allowed"
+            accept="*"
+            maxSizeMB={15}
             selectedFile={proof}
             onFileSelected={(f) => setProof(f)}
           />

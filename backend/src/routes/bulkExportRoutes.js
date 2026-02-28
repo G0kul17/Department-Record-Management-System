@@ -1,5 +1,8 @@
 import express from "express";
-import { bulkDataExport } from "../controllers/bulkExportController.js";
+import {
+  bulkDataExport,
+  listBulkExports,
+} from "../controllers/bulkExportController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 import { requireRole } from "../middleware/roleAuth.js";
 
@@ -10,6 +13,14 @@ router.get(
   requireAuth,
   requireRole(["staff", "admin"]),
   bulkDataExport
+);
+
+// List available exported files for download
+router.get(
+  "/bulk-export/list",
+  requireAuth,
+  requireRole(["staff", "admin"]),
+  listBulkExports
 );
 
 export default router;

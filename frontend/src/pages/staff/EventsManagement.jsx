@@ -15,10 +15,12 @@ export default function EventsManagement() {
     event_url: "",
   });
   const [files, setFiles] = useState([]);
+  const [thumbnail, setThumbnail] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -42,12 +44,16 @@ export default function EventsManagement() {
   };
 
   const onFiles = (list) => setFiles(Array.from(list || []));
+  const onThumbnail = (file) => setThumbnail(file || null);
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    if (!form.title || !form.start_date || !form.venue || !form.description)
+    if (!form.title || !form.start_date || !form.venue || !form.description) {
+      setErrorMsg("Please fill Title, Description, Venue and Start Date.");
       return;
+    }
     setSubmitting(true);
+    setErrorMsg("");
     try {
       const fd = new FormData();
       fd.append("title", form.title);
@@ -56,7 +62,8 @@ export default function EventsManagement() {
       fd.append("start_date", form.start_date);
       if (form.end_date) fd.append("end_date", form.end_date);
       if (form.event_url) fd.append("event_url", form.event_url);
-      for (const f of files) fd.append("files", f);
+      for (const f of files) fd.append("attachments", f);
+      if (thumbnail) fd.append("thumbnail", thumbnail);
       await apiClient.uploadFile("/events-admin", fd);
       setSuccessOpen(true);
       setForm({
@@ -68,9 +75,10 @@ export default function EventsManagement() {
         event_url: "",
       });
       setFiles([]);
+      setThumbnail(null);
       await load();
     } catch (err) {
-      // optionally show error
+      setErrorMsg(err?.message || "Upload failed. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -92,7 +100,7 @@ export default function EventsManagement() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => navigate("/")}
-                  className="rounded bg-blue-600 px-2 py-1 text-xs font-semibold text-white hover:bg-blue-700"
+                  className="btn btn-primary btn-xs"
                 >
                   View on Home
                 </button>
@@ -104,6 +112,11 @@ export default function EventsManagement() {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+        {errorMsg && (
+          <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 p-3 text-rose-800 dark:border-rose-800 dark:bg-rose-900/30 dark:text-rose-200">
+            {errorMsg}
           </div>
         )}
         <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
@@ -154,7 +167,7 @@ export default function EventsManagement() {
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium">
-                Event URL <span className="text-red-600">*</span>
+                Event URL (optional)
               </label>
               <input
                 type="url"
@@ -163,7 +176,6 @@ export default function EventsManagement() {
                 onChange={onChange}
                 placeholder="https://..."
                 className="mt-1 w-full rounded-md border px-3 py-2"
-                required
               />
             </div>
             <div>
@@ -200,6 +212,17 @@ export default function EventsManagement() {
               />
             </div>
             <div className="md:col-span-2">
+              <UploadDropzone
+                label="Thumbnail (shown in event cards)"
+                subtitle="Upload a single image to display as the event thumbnail."
+                accept="image/*"
+                multiple={false}
+                selectedFile={thumbnail}
+                onFileSelected={(f) => onThumbnail(f)}
+              />
+            </div>
+
+            <div className="md:col-span-2">
               <button
                 type="submit"
                 disabled={submitting}
@@ -217,7 +240,7 @@ export default function EventsManagement() {
                 <button
                   onClick={load}
                   disabled={loading}
-                  className="text-xs rounded-md bg-blue-600 px-3 py-1 font-semibold text-white shadow hover:bg-blue-700 disabled:opacity-50"
+                  className="btn btn-primary btn-sm"
                 >
                   {loading ? "Refreshing..." : "Refresh"}
                 </button>

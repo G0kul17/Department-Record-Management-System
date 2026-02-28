@@ -1,6 +1,6 @@
 // src/routes/projectRoutes.js
 import express from "express";
-import { requireAuth } from "../middleware/authMiddleware.js";
+import { requireAuth, optionalAuth } from "../middleware/authMiddleware.js";
 import { requireRole } from "../middleware/roleAuth.js";
 import {
   createProject,
@@ -44,8 +44,10 @@ router.post(
 // Public count endpoint for homepage stats (must be BEFORE any ":id" route)
 router.get("/count", getProjectsCount);
 
-router.get("/", requireAuth, listProjects);
-router.get("/:id", requireAuth, getProjectDetails);
+// Public list endpoint (for homepage display)
+router.get("/", optionalAuth, listProjects);
+// Public details endpoint (for viewing project details)
+router.get("/:id", optionalAuth, getProjectDetails);
 
 // Admin verifies project
 router.post(

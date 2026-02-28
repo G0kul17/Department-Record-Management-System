@@ -5,6 +5,11 @@ import { sendMail } from "../config/mailer.js";
 import { detectRole } from "../utils/roleUtils.js";
 import dotenv from "dotenv";
 import { signToken } from "../utils/tokenUtils.js";
+import {
+  createSession,
+  hasValidSession,
+  invalidateAllUserSessions,
+} from "../utils/sessionUtils.js";
 dotenv.config();
 
 const OTP_EXPIRY_MIN = Number(process.env.OTP_EXPIRY_MIN || 5);
@@ -68,7 +73,7 @@ export async function register(req, res) {
     // check duplicate
     const { rows: existing } = await pool.query(
       "SELECT id, is_verified FROM users WHERE email=$1",
-      [emailLower]
+      [emailLower],
     );
     if (existing.length) {
       // If user exists but isn't verified yet, allow updating the password hash
@@ -78,7 +83,7 @@ export async function register(req, res) {
         // Also update role in case ADMIN_EMAILS was changed or this email should be admin
         await pool.query(
           "UPDATE users SET password_hash=$1, role=$2, profile_details=$3, full_name=$4 WHERE email=$5",
-          [hashed, role, JSON.stringify(profileDetails), fullName, emailLower]
+          [hashed, role, JSON.stringify(profileDetails), fullName, emailLower],
         );
         // continue flow to send fresh OTP
       } else {
@@ -92,7 +97,7 @@ export async function register(req, res) {
       try {
         await pool.query(
           "INSERT INTO users (email, password_hash, role, profile_details, full_name) VALUES ($1, $2, $3, $4, $5)",
-          [emailLower, hashed, role, JSON.stringify(profileDetails), fullName]
+          [emailLower, hashed, role, JSON.stringify(profileDetails), fullName],
         );
       } catch (e) {
         // unique violation
@@ -108,7 +113,7 @@ export async function register(req, res) {
     const expiresAt = getExpiryDate(OTP_EXPIRY_MIN);
     await pool.query(
       "INSERT INTO otp_verifications (email, otp_code, expires_at) VALUES ($1, $2, $3)",
-      [emailLower, otp, expiresAt]
+      [emailLower, otp, expiresAt],
     );
 
     // send email
@@ -142,11 +147,12 @@ export async function verifyOTP(req, res) {
   if (!email || !otp)
     return res.status(400).json({ message: "Email and OTP required" });
 
-  const emailLower = email.toLowerCase();
+  const emailLower = String(email).trim().toLowerCase();
+  const otpClean = String(otp).trim();
   try {
     const { rows } = await pool.query(
-      "SELECT * FROM otp_verifications WHERE email=$1 AND otp_code=$2",
-      [emailLower, otp]
+      "SELECT * FROM otp_verifications WHERE email=$1 AND TRIM(otp_code)=$2",
+      [emailLower, otpClean],
     );
     if (!rows.length) return res.status(400).json({ message: "Invalid OTP" });
 
@@ -167,7 +173,7 @@ export async function verifyOTP(req, res) {
     // return jwt
     const { rows: users } = await pool.query(
       "SELECT id, email, role, profile_details FROM users WHERE email=$1",
-      [emailLower]
+      [emailLower],
     );
     const user = users[0];
     // If this email is listed in ADMIN_EMAILS, ensure role is admin both in DB and token
@@ -179,7 +185,7 @@ export async function verifyOTP(req, res) {
     }
     const token = signToken(
       { id: user.id, email: user.email, role: user.role },
-      "6h"
+      "6h",
     );
     const profile = user.profile_details || {};
     const photoUrl =
@@ -225,7 +231,7 @@ export async function login(req, res) {
       const expiresAt = getExpiryDate(OTP_EXPIRY_MIN);
       await pool.query(
         "INSERT INTO otp_verifications (email, otp_code, expires_at) VALUES ($1, $2, $3)",
-        [emailLower, otp, expiresAt]
+        [emailLower, otp, expiresAt],
       );
 
       await sendMail({
@@ -246,12 +252,59 @@ export async function login(req, res) {
       });
     }
 
-    // generate OTP for login (two-step)
+    // Check if user has a valid session (90-day session-based login)
+    const userHasValidSession = await hasValidSession(user.id);
+    if (userHasValidSession) {
+      // User has valid session, skip OTP and return token directly
+      // If this email is listed in ADMIN_EMAILS, ensure role is admin both in DB and token
+      if (ADMIN_EMAILS.includes(emailLower) && user.role !== "admin") {
+        await pool.query("UPDATE users SET role='admin' WHERE email=$1", [
+          emailLower,
+        ]);
+        user.role = "admin";
+      }
+      const token = signToken(
+        { id: user.id, email: user.email, role: user.role },
+        "6h",
+      );
+      const profile = user.profile_details || {};
+      const photoUrl =
+        profile.photo_url ||
+        profile.avatar_url ||
+        profile.image_url ||
+        profile.profile_pic ||
+        null;
+
+      // Fetch student profile data if role is student
+      let studentProfile = {};
+      if (user.role === "student") {
+        const { rows: profileRows } = await pool.query(
+          "SELECT register_number, contact_number, leetcode_url, hackerrank_url, codechef_url, github_url FROM student_profiles WHERE user_id=$1",
+          [user.id],
+        );
+        if (profileRows.length) {
+          studentProfile = profileRows[0];
+        }
+      }
+
+      return res.json({
+        message: "Login successful (session active)",
+        token,
+        role: user.role,
+        id: user.id,
+        fullName: profile.full_name || null,
+        photoUrl,
+        sessionActive: true,
+        ...studentProfile,
+      });
+    }
+
+    // No valid session, generate OTP for login (two-step)
     const otp = generateOTP();
     const expiresAt = getExpiryDate(OTP_EXPIRY_MIN);
     await pool.query(
       "INSERT INTO otp_verifications (email, otp_code, expires_at) VALUES ($1, $2, $3)",
-      [emailLower, otp, expiresAt]
+      [emailLower, otp, expiresAt],
     );
 
     await sendMail({
@@ -280,11 +333,12 @@ export async function loginVerifyOTP(req, res) {
   if (!email || !otp)
     return res.status(400).json({ message: "Email and OTP required" });
 
-  const emailLower = email.toLowerCase();
+  const emailLower = String(email).trim().toLowerCase();
+  const otpClean = String(otp).trim();
   try {
     const { rows } = await pool.query(
-      "SELECT * FROM otp_verifications WHERE email=$1 AND otp_code=$2",
-      [emailLower, otp]
+      "SELECT * FROM otp_verifications WHERE email=$1 AND TRIM(otp_code)=$2",
+      [emailLower, otpClean],
     );
     if (!rows.length) return res.status(400).json({ message: "Invalid OTP" });
 
@@ -301,7 +355,7 @@ export async function loginVerifyOTP(req, res) {
     // issue token
     const { rows: users } = await pool.query(
       "SELECT id, email, role, profile_details FROM users WHERE email=$1",
-      [emailLower]
+      [emailLower],
     );
     const user = users[0];
     // If this email is listed in ADMIN_EMAILS, ensure role is admin both in DB and token
@@ -312,12 +366,19 @@ export async function loginVerifyOTP(req, res) {
       user.role = "admin";
     }
 
+    // Create session for this login (90-day expiration)
+    const deviceInfo = {
+      userAgent: req.get("user-agent"),
+      ipAddress: req.ip,
+    };
+    await createSession(user.id, deviceInfo);
+
     // Fetch student profile data if role is student
     let studentProfile = {};
     if (user.role === "student") {
       const { rows: profileRows } = await pool.query(
         "SELECT register_number, contact_number, leetcode_url, hackerrank_url, codechef_url, github_url FROM student_profiles WHERE user_id=$1",
-        [user.id]
+        [user.id],
       );
       if (profileRows.length) {
         studentProfile = profileRows[0];
@@ -326,7 +387,7 @@ export async function loginVerifyOTP(req, res) {
 
     const token = signToken(
       { id: user.id, email: user.email, role: user.role },
-      "6h"
+      "6h",
     );
     const profile = user.profile_details || {};
     const photoUrl =
@@ -366,7 +427,7 @@ export async function initiateForgotPassword(req, res) {
     const expiresAt = getExpiryDate(OTP_EXPIRY_MIN);
     await pool.query(
       "INSERT INTO otp_verifications (email, otp_code, expires_at) VALUES ($1, $2, $3)",
-      [emailLower, otp, expiresAt]
+      [emailLower, otp, expiresAt],
     );
 
     await sendMail({
@@ -405,11 +466,12 @@ export async function resetPassword(req, res) {
     });
   }
 
-  const emailLower = email.toLowerCase();
+  const emailLower = String(email).trim().toLowerCase();
+  const otpClean = String(otp).trim();
   try {
     const { rows } = await pool.query(
-      "SELECT * FROM otp_verifications WHERE email=$1 AND otp_code=$2",
-      [emailLower, otp]
+      "SELECT * FROM otp_verifications WHERE email=$1 AND TRIM(otp_code)=$2",
+      [emailLower, otpClean],
     );
     if (!rows.length) return res.status(400).json({ message: "Invalid OTP" });
 
@@ -443,7 +505,7 @@ export async function getProfile(req, res) {
 
     const { rows } = await pool.query(
       "SELECT id, email, role, profile_details FROM users WHERE email=$1",
-      [emailLower]
+      [emailLower],
     );
     if (!rows.length)
       return res.status(404).json({ message: "User not found" });
@@ -483,7 +545,7 @@ export async function updateProfile(req, res) {
     // Get current profile_details
     const { rows: current } = await pool.query(
       "SELECT profile_details FROM users WHERE email=$1",
-      [emailLower]
+      [emailLower],
     );
 
     if (!current.length) {
@@ -506,7 +568,7 @@ export async function updateProfile(req, res) {
     if (nameValue !== undefined) {
       await pool.query(
         "UPDATE users SET profile_details=$1, full_name=$2 WHERE email=$3",
-        [JSON.stringify(updatedProfile), nameValue || null, emailLower]
+        [JSON.stringify(updatedProfile), nameValue || null, emailLower],
       );
     } else {
       await pool.query("UPDATE users SET profile_details=$1 WHERE email=$2", [
@@ -542,7 +604,7 @@ export async function updateProfilePhoto(req, res) {
     // Get current profile_details
     const { rows: current } = await pool.query(
       "SELECT profile_details FROM users WHERE email=$1",
-      [emailLower]
+      [emailLower],
     );
     if (!current.length) {
       return res.status(404).json({ message: "User not found" });
@@ -565,6 +627,24 @@ export async function updateProfilePhoto(req, res) {
     return res.json({ message: "Photo updated", photoUrl });
   } catch (err) {
     console.error("/auth/profile/photo POST error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
+/**
+ * Logout endpoint - invalidates user session
+ */
+export async function logout(req, res) {
+  try {
+    const sessionToken = req.headers["x-session-token"];
+
+    if (sessionToken) {
+      await invalidateAllUserSessions(req.user.id);
+    }
+
+    return res.json({ message: "Logged out successfully" });
+  } catch (err) {
+    console.error("/auth/logout error:", err);
     return res.status(500).json({ message: "Server error" });
   }
 }

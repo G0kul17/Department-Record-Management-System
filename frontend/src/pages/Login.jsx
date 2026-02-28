@@ -11,6 +11,9 @@ const Login = () => {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isLoginSuccess, setIsLoginSuccess] = useState(false);
+  // Allow users to choose OTP-based login; default is session-based direct login
+  const [useOtp, setUseOtp] = useState(false);
   // OTP expiry timer (5 minutes)
   const [otpExpiresAt, setOtpExpiresAt] = useState(null);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -32,6 +35,7 @@ const Login = () => {
         email: formData.email,
         password: formData.password,
       });
+
       if (resp?.needsVerification) {
         // Account not verified yet: go to verification screen
         navigate("/verify-otp", {
@@ -43,6 +47,31 @@ const Login = () => {
         });
         return;
       }
+
+      // Check if user has an active session (90-day login)
+      if (resp?.sessionActive === true && resp?.token) {
+        // Session is active, login directly without OTP
+        login(
+          {
+            email: formData.email,
+            role: resp.role,
+            fullName: resp.fullName,
+            photoUrl: resp.photoUrl,
+          },
+          resp.token
+        );
+        setIsLoginSuccess(true);
+        const dest =
+          resp.role === "admin"
+            ? "/admin"
+            : resp.role === "staff"
+            ? "/"
+            : "/student";
+        navigate(dest, { state: { loginSuccess: true } });
+        return;
+      }
+
+      // No active session, proceed with OTP verification
       // Do NOT auto-fill OTP; just move to OTP step and start a 5-minute timer
       setOtp("");
       setOtpSent(true);
@@ -65,17 +94,26 @@ const Login = () => {
         otp,
       });
       if (data?.token && data?.role) {
+        // Store session token in localStorage for future requests
+        localStorage.setItem("sessionToken", data.sessionToken || "");
+
         login(
-          { email: formData.email, role: data.role, fullName: data.fullName },
+          {
+            email: formData.email,
+            role: data.role,
+            fullName: data.fullName,
+            photoUrl: data.photoUrl,
+          },
           data.token
         );
+        setIsLoginSuccess(true);
         const dest =
           data.role === "admin"
             ? "/admin"
             : data.role === "staff"
             ? "/"
             : "/student";
-        navigate(dest);
+        navigate(dest, { state: { loginSuccess: true } });
       } else {
         navigate("/");
       }
@@ -115,99 +153,107 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-slate-900 flex items-center justify-center p-4">
-      <div className="glitter-card bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 ring-1 ring-slate-300/60 max-w-md w-full">
-        <div className="text-center mb-3">
-          <BlurText
-            text={COLLEGE_NAME}
-            className="text-2xl font-extrabold text-sky-600 dark:text-sky-400 tracking-wide"
-            delay={60}
-            step={24}
-          />
-        </div>
-        <h2 className="text-3xl font-bold text-center mb-6 text-slate-900 dark:text-slate-100">
-          Login
-        </h2>
-
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
+      {!isLoginSuccess && (
+        <div className="glitter-card bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 ring-1 ring-slate-300/60 max-w-md w-full">
+          <div className="text-center mb-3">
+            <BlurText
+              text={COLLEGE_NAME}
+              className="text-2xl font-extrabold text-sky-600 dark:text-sky-400 tracking-wide"
+              delay={60}
+              step={24}
+            />
           </div>
-        )}
+          <h2 className="text-3xl font-bold text-center mb-6 text-slate-900 dark:text-slate-100">
+            Login
+          </h2>
 
-        {!otpSent ? (
-          <form onSubmit={handleSendOtp}>
-            <InputField
-              label="Email"
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-              required
-            />
-            <InputField
-              label="Password"
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Enter your password"
-              required
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#87CEEB] text-white py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-sky-200"
-            >
-              {loading ? "Sending..." : "Send OTP"}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleLogin}>
-            <InputField
-              label="OTP"
-              type="text"
-              name="otp"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              placeholder="Enter OTP"
-              required
-            />
-            <p className="text-sm text-gray-500 mb-4">
-              OTP expires in {formatMMSS(timeLeft)}.
-            </p>
-            <button
-              type="submit"
-              disabled={loading || timeLeft === 0}
-              className="w-full bg-[#87CEEB] text-white py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-sky-200"
-            >
-              {loading ? "Logging in..." : "Login"}
-            </button>
-          </form>
-        )}
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
 
-        <div className="mt-4 text-center space-y-2">
-          <Link to="/forgot" className="text-blue-600 hover:underline block">
-            Forgot Password?
-          </Link>
-          <div className="text-gray-600">
-            Don't have an account?{" "}
-            <Link
-              to="/register-student"
-              className="text-blue-600 hover:underline"
-            >
-              Register as Student
-            </Link>
-            {" or "}
-            <Link
-              to="/register-staff"
-              className="text-blue-600 hover:underline"
-            >
-              Register as Staff
+          {!otpSent ? (
+            <form onSubmit={handleSendOtp}>
+              <InputField
+                label="Email"
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Enter your email"
+                required
+              />
+              <InputField
+                label="Password"
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Enter your password"
+                required
+              />
+              <div className="flex items-center justify-between mb-4">
+                <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4"
+                    checked={useOtp}
+                    onChange={(e) => setUseOtp(e.target.checked)}
+                  />
+                  <span>Login with OTP (two-step)</span>
+                </label>
+                {useOtp && (
+                  <span className="text-xs text-slate-500">
+                    First: Send OTP, then verify
+                  </span>
+                )}
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#87CEEB] text-white py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-sky-200"
+              >
+                {loading
+                  ? useOtp
+                    ? "Sending..."
+                    : "Please wait..."
+                  : useOtp
+                  ? "Send OTP"
+                  : "Login"}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleLogin}>
+              <InputField
+                label="OTP"
+                type="text"
+                name="otp"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="Enter OTP"
+                required
+              />
+              <p className="text-sm text-gray-500 mb-4">
+                OTP expires in {formatMMSS(timeLeft)}.
+              </p>
+              <button
+                type="submit"
+                disabled={loading || timeLeft === 0}
+                className="w-full bg-[#87CEEB] text-white py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-sky-200"
+              >
+                {loading ? "Logging in..." : "Login"}
+              </button>
+            </form>
+          )}
+
+          <div className="mt-4 text-center space-y-2">
+            <Link to="/forgot" className="link link-primary block">
+              Forgot Password?
             </Link>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

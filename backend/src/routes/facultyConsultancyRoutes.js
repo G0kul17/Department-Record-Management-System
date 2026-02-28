@@ -7,7 +7,8 @@ import {
   createConsultancy,
   updateConsultancy,
   deleteConsultancy,
-  listConsultancy
+  listConsultancy,
+  getFacultyConsultancyCount
 } from "../controllers/facultyConsultancyController.js";
 
 const router = express.Router();
@@ -18,6 +19,7 @@ router.use(requireAuth, requireRole(["staff", "admin"]));
 router.post("/", upload.single("proof"), createConsultancy);
 router.put("/:id", upload.single("proof"), updateConsultancy);
 router.delete("/:id", deleteConsultancy);
+router.get("/count", getFacultyConsultancyCount);
 router.get("/", listConsultancy);
 
 export default router;

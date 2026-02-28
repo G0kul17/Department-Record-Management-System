@@ -5,8 +5,10 @@ import { useAuth } from "../../hooks/useAuth";
 import apiClient from "../../api/axiosClient";
 import { useNavigate } from "react-router-dom";
 import EventsCarousel from "../../components/EventsCarousel";
-import AchievementsFeed from "../../components/AchievementsFeed";
+import AchievementsRecentGrid from "../../components/AchievementsRecentGrid";
+import ProjectsRecentGrid from "../../components/ProjectsRecentGrid";
 import Card from "../../components/ui/Card";
+import AchievementsLeaderboard from "../../components/AchievementsLeaderboard";
 
 export default function StudentDashboard() {
   const nav = useNavigate();
@@ -17,6 +19,7 @@ export default function StudentDashboard() {
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [projCount, setProjCount] = useState(null);
   const [achCount, setAchCount] = useState(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   const particlesInit = useCallback(async (engine) => {
     await loadSlim(engine);
@@ -65,11 +68,16 @@ export default function StudentDashboard() {
           } catch (_) {
             attachments = [];
           }
+          const uploadsBase =
+            apiClient.baseURL.replace(/\/api$/, "") + "/uploads/";
           return {
             ...e,
             description: e.description || e.summary || "",
             event_url: e.event_url || e.eventUrl || null,
             attachments: Array.isArray(attachments) ? attachments : [],
+            thumbnail: e.thumbnail_filename
+              ? uploadsBase + encodeURIComponent(e.thumbnail_filename)
+              : null,
           };
         });
         setEvents(evs);
@@ -84,6 +92,24 @@ export default function StudentDashboard() {
       mounted = false;
     };
   }, []);
+
+  // Scroll to top button visibility
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-white to-slate-50 hero-gradient">
@@ -126,99 +152,168 @@ export default function StudentDashboard() {
       />
 
       {/* Content */}
-      <div className="mx-auto max-w-6xl px-6 pt-16 pb-10 text-center">
-        <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-slate-800 dark:text-slate-100">
-          Sona College of Technology
-        </h1>
+      <div className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pt-8 sm:pt-12 md:pt-16 pb-8 sm:pb-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-stretch">
+          {/* Left side - Title and description */}
+          <div className="md:col-span-2 text-center md:text-left space-y-4">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-800 dark:text-slate-100 leading-tight">
+              Sona College of Technology
+            </h1>
 
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-600 dark:text-slate-300">
-          Your central hub for achievements, projects, and community engagement.
-        </p>
+            <p className="mx-auto md:mx-0 text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl">
+              Your central hub for achievements, projects, and community
+              engagement.
+            </p>
 
-        <div className="mt-10">
-          <button
-            onClick={goToQuickActions}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#87CEEB] px-6 py-3 text-white shadow hover:bg-[#78C5E6] focus:outline-none focus:ring-4 focus:ring-[#87CEEB]/40"
-          >
-            {/* Inline SVG rocket icon */}
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden
-            >
-              <path
-                d="M14 4l6 6-6 6-6-6 6-6z"
-                fill="currentColor"
-                opacity=".15"
-              />
-              <path
-                d="M14 4l6 6-6 6m0-12l-6 6 6 6"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <span className="font-semibold">Explore Actions</span>
-          </button>
+            <div className="pt-2 flex justify-center md:justify-start">
+              <button
+                onClick={goToQuickActions}
+                className="inline-flex items-center gap-2 rounded-xl bg-[#87CEEB] px-6 sm:px-8 py-3 sm:py-4 text-white text-sm sm:text-base font-semibold shadow-lg hover:bg-[#78C5E6] hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-[#87CEEB]/40 transition-all duration-200"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden
+                >
+                  <path
+                    d="M14 4l6 6-6 6-6-6 6-6z"
+                    fill="currentColor"
+                    opacity=".15"
+                  />
+                  <path
+                    d="M14 4l6 6-6 6m0-12l-6 6 6 6"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span>Explore Actions</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Right side - At a Glance Stats */}
+          <div className="md:col-span-1">
+            <div className="rounded-2xl border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 p-6 sm:p-7 shadow-xl h-full">
+              <h2 className="text-base sm:text-lg font-bold text-slate-100 mb-4 sm:mb-5">
+                At a Glance
+              </h2>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <button
+                  onClick={() => nav("/projects/approved")}
+                  className="rounded-xl p-4 sm:p-5 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-cyan-500 hover:border-cyan-400 hover:shadow-lg"
+                >
+                  <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                    Projects
+                  </div>
+                  <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-100">
+                    {projCount === null ? "—" : projCount}
+                  </div>
+                </button>
+                <button
+                  onClick={() => nav("/achievements/approved")}
+                  className="rounded-xl p-4 sm:p-5 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-fuchsia-500 hover:border-fuchsia-400 hover:shadow-lg"
+                >
+                  <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                    Achievements
+                  </div>
+                  <div className="mt-2 text-2xl sm:text-3xl font-extrabold text-slate-100">
+                    {achCount === null ? "—" : achCount}
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Events slider */}
-      <div className="mx-auto max-w-6xl px-6 pb-16">
-        <div className="mb-4">
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-            Events
+      {/* Events slider and Leaderboard */}
+      <div
+        id="events"
+        className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-8 sm:pb-10"
+      >
+        <div className="mb-5 sm:mb-6">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">
+            Latest Events
           </h2>
+          <div className="h-1 w-16 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full mt-2"></div>
         </div>
 
-        {loadingEvents ? (
-          <div className="text-sm text-slate-600 p-6">Loading events...</div>
-        ) : events.length === 0 ? (
-          <div className="text-sm text-slate-600 p-6">No events yet.</div>
-        ) : (
-          <EventsCarousel events={events} intervalMs={5000} />
-        )}
-      </div>
-
-      {/* Achievements feed below events */}
-      {user && <AchievementsFeed title="Recent Achievements" limit={12} />}
-
-      {/* Stats */}
-      <div className="mx-auto max-w-6xl px-6 pb-24">
-        <h2 className="mb-4 text-xl font-bold text-slate-800 dark:text-slate-100">
-          At a Glance
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Card
-            onClick={() => nav("/projects/approved")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <div className="text-sm font-semibold text-slate-800">Projects</div>
-            <div className="mt-2 flex items-end gap-3">
-              <div className="text-3xl font-extrabold text-slate-900">
-                {projCount === null ? "—" : projCount}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+          <div className="md:col-span-2">
+            {loadingEvents ? (
+              <div className="text-sm text-slate-600 p-8 bg-slate-50 dark:bg-slate-900/30 rounded-xl">
+                Loading events...
               </div>
-            </div>
-          </Card>
-          <Card
-            onClick={() => nav("/achievements/approved")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <div className="text-sm font-semibold text-slate-800">
-              Achievements
-            </div>
-            <div className="mt-2 flex items-end gap-3">
-              <div className="text-3xl font-extrabold text-slate-900">
-                {achCount === null ? "—" : achCount}
+            ) : events.length === 0 ? (
+              <div className="text-sm text-slate-600 p-8 bg-slate-50 dark:bg-slate-900/30 rounded-xl">
+                No events yet.
               </div>
-            </div>
-          </Card>
+            ) : (
+              <EventsCarousel events={events} intervalMs={5000} />
+            )}
+          </div>
+          <div className="md:col-span-1">
+            <AchievementsLeaderboard limit={10} />
+          </div>
         </div>
       </div>
+
+      {/* Recent Projects grid (latest 6) */}
+      <div
+        id="projects"
+        className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-8 sm:pb-10"
+      >
+        <div className="mb-5 sm:mb-6">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">
+            Recent Projects
+          </h2>
+          <div className="h-1 w-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full mt-2"></div>
+        </div>
+        <ProjectsRecentGrid limit={6} />
+      </div>
+
+      {/* Recent Achievements grid (latest 6) */}
+      <div
+        id="achievements"
+        className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-12 sm:pb-16"
+      >
+        <div className="mb-5 sm:mb-6">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">
+            Recent Achievements
+          </h2>
+          <div className="h-1 w-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mt-2"></div>
+        </div>
+        <AchievementsRecentGrid limit={6} />
+      </div>
+
+      {/* Scroll to Top Button */}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 z-50 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
+          aria-label="Scroll to top"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M5 10l7-7m0 0l7 7m-7-7v18"
+            />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }

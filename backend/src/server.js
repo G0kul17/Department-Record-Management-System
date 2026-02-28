@@ -15,33 +15,103 @@ import dataUploadRoutes from "./routes/dataUploadRoutes.js";
 import studentProfileRoutes from "./routes/studentProfileRoutes.js";
 import addStudentsRoutes from "./routes/addStudentsRoutes.js";
 import bulkExportRoutes from "./routes/bulkExportRoutes.js";
-import pool from "./config/db.js";
+import activityCoordinatorRoutes from "./routes/activityCoordinatorRoutes.js";
+import announcementRoutes from "./routes/announcementRoutes.js";
+import pool, { logPoolHealth, getPoolHealth } from "./config/db.js";
+import { verifyFileStorage } from "./config/upload.js";
 import fs from "fs";
 import path from "path";
-import queriesSql from "./models/queries.js";
 dotenv.config();
 
 const app = express();
 app.use(express.json());
-// CORS for local dev (Vite on 3000/4173)
-app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",
-      "http://127.0.0.1:3000",
-      "http://localhost:4173",
-      "http://127.0.0.1:4173",
-      "http://localhost:5173",
-      "http://127.0.0.1:5173",
-    ],
-    credentials: false,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+
+// ============================================================================
+// CORS CONFIGURATION - Environment-Based Strategy
+// ============================================================================
+// Development: CORS enabled with specific origins
+// Production: CORS disabled (Nginx handles /api proxying)
+// ============================================================================
+
+const NODE_ENV = process.env.NODE_ENV || "development";
+const ENABLE_CORS = process.env.ENABLE_CORS !== "false"; // Default: enabled
+
+if (ENABLE_CORS) {
+  // CORS enabled - for development or environments without reverse proxy
+  const corsOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(",").map((origin) => origin.trim())
+    : [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:4173",
+        "http://127.0.0.1:4173",
+      ];
+
+  app.use(
+    cors({
+      origin: corsOrigins,
+      credentials: false,
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization", "x-session-token"],
+    }),
+  );
+
+  console.log(`🔓 CORS enabled for origins: ${corsOrigins.join(", ")}`);
+} else {
+  // CORS disabled - expecting Nginx or reverse proxy to handle cross-origin requests
+  console.log(
+    "🔒 CORS disabled - expecting reverse proxy (Nginx/Apache) to handle /api routing",
+  );
+}
 
 // simple route
 app.get("/", (req, res) => res.json({ message: "Auth RBAC OTP API" }));
+
+// Health check endpoint with database pool stats
+app.get("/health", async (req, res) => {
+  try {
+    // Quick database ping
+    const dbStart = Date.now();
+    await pool.query("SELECT 1");
+    const dbLatency = Date.now() - dbStart;
+
+    const poolHealth = getPoolHealth();
+
+    res.json({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || "development",
+      database: {
+        connected: true,
+        latency: `${dbLatency}ms`,
+        pool: {
+          total: poolHealth.totalCount,
+          idle: poolHealth.idleCount,
+          waiting: poolHealth.waitingCount,
+          health: poolHealth.health.status,
+        },
+      },
+    });
+  } catch (err) {
+    res.status(503).json({
+      status: "error",
+      timestamp: new Date().toISOString(),
+      database: {
+        connected: false,
+        error: err.message,
+      },
+    });
+  }
+});
+
+// Detailed pool stats endpoint (admin only - add auth in production)
+app.get("/pool-stats", (req, res) => {
+  const poolHealth = getPoolHealth();
+  res.json(poolHealth);
+});
 
 app.use("/api/student/profile", studentProfileRoutes);
 app.use("/api/students", addStudentsRoutes);
@@ -49,11 +119,15 @@ app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/achievements", achievementRoutes);
 app.use("/api/data-uploads", dataUploadRoutes);
+app.use("/api/announcements", announcementRoutes);
 
-app.use(
-  "/uploads",
-  express.static(path.resolve(process.env.FILE_STORAGE_PATH || "./uploads"))
-);
+// Serve uploaded files statically
+// Use explicit FILE_STORAGE_PATH (no fallback in production)
+const FILE_STORAGE_PATH = process.env.FILE_STORAGE_PATH || "./uploads";
+app.use("/uploads", express.static(path.resolve(FILE_STORAGE_PATH)));
+
+// Serve exported files statically for easy download by staff/admin
+app.use("/exports", express.static(path.resolve("./exports")));
 
 // after app.use('/api/auth', authRoutes);
 app.use("/api/staff", staffRoutes);
@@ -65,176 +139,127 @@ app.use("/api/faculty-consultancy", facultyConsultancyRoutes);
 app.use("/api/events", eventPublicRoutes);
 app.use("/api/events-admin", eventRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/activity-coordinators", activityCoordinatorRoutes);
 
 // Bulk export route
 app.use("/api", bulkExportRoutes);
 
-// optional: create tables if not exist on startup
-async function ensureTables() {
+// ============================================================================
+// DATABASE CONNECTION VERIFICATION (NO SCHEMA MODIFICATIONS)
+// ============================================================================
+// The application ONLY verifies database connectivity at startup.
+// All schema changes must be applied via migration scripts in /migrations/
+// Run: psql -U <user> -d <database> -f backend/migrations/001_initial_schema.sql
+// ============================================================================
+
+async function verifyDatabaseConnection() {
   try {
-    // Execute the whole SQL file in one call. Splitting by semicolons
-    // can break dollar-quoted blocks (DO $$ ... $$) or semicolons inside
-    // quoted strings. Let Postgres parse the full script instead.
-    const sql = (queriesSql || "").trim();
-    if (!sql) {
-      console.log("No SQL migration script found; skipping ensureTables");
-      return;
-    }
+    const result = await pool.query(
+      "SELECT NOW() as current_time, current_database() as database",
+    );
+    const { current_time, database } = result.rows[0];
+    console.log(`✅ Database connected: ${database}`);
+    console.log(`   Server time: ${current_time}`);
 
+    // Optional: Check if schema_version table exists to verify migrations were run
     try {
-      await pool.query(sql);
-      console.log("Database tables ensured");
-    } catch (e) {
-      console.error("Error executing SQL migration script:", e.message || e);
-      // Re-throw so the caller can see the failure
-      throw e;
-    }
-  } catch (err) {
-    console.error("Error ensuring tables", err);
-  }
-}
-
-// Minimal, non-destructive migrations to align existing DB with code expectations
-// Adds missing columns if the tables were created previously without them.
-async function ensureColumns() {
-  try {
-    // Add id to users if missing
-    await pool.query("ALTER TABLE users ADD COLUMN IF NOT EXISTS id BIGSERIAL");
-    // Backfill any NULL ids (from rows that existed before the column was added)
-    await pool.query("UPDATE users SET id = DEFAULT WHERE id IS NULL");
-
-    // Ensure users.id is part of a primary key or unique constraint
-    try {
-      // Add primary key constraint if one does not exist. If a PK already
-      // exists this will fail; swallow that error.
-      await pool.query(
-        "ALTER TABLE users ADD CONSTRAINT users_pkey PRIMARY KEY (id)"
+      const versionResult = await pool.query(
+        "SELECT version, description, applied_at FROM schema_version ORDER BY version DESC LIMIT 1",
       );
+      if (versionResult.rows.length > 0) {
+        const { version, description, applied_at } = versionResult.rows[0];
+        console.log(`   Schema version: ${version} (${description})`);
+        console.log(`   Applied at: ${applied_at}`);
+      } else {
+        console.log("   ⚠️  No schema version found. Please run migrations.");
+      }
     } catch (e) {
-      // ignore errors (constraint exists or other benign issues)
+      console.warn(
+        "⚠️  Schema version table not found. Please run migrations:",
+      );
+      console.warn(
+        "   psql -U <user> -d <database> -f backend/migrations/001_initial_schema.sql",
+      );
     }
 
-    // If users.id still lacks a PK/unique constraint (common on legacy DBs
-    // where email was the PK), add a UNIQUE constraint so foreign keys can
-    // reference users(id).
-    const { rows: hasIdKey } = await pool.query(
-      `SELECT 1
-         FROM information_schema.table_constraints tc
-         JOIN information_schema.key_column_usage kcu
-           ON tc.constraint_name = kcu.constraint_name
-          AND tc.table_name = kcu.table_name
-        WHERE tc.table_name = 'users'
-          AND kcu.column_name = 'id'
-          AND tc.constraint_type IN ('PRIMARY KEY','UNIQUE')
-        LIMIT 1`
-    );
-    if (!hasIdKey.length) {
-      try {
-        await pool.query(
-          "ALTER TABLE users ADD CONSTRAINT users_id_unique UNIQUE (id)"
-        );
-      } catch (e) {
-        // ignore if another process added it concurrently
-      }
-    }
-
-    // Ensure critical user columns exist
-    await pool.query(
-      "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE"
-    );
-    // Normalize nulls to false where applicable
-    await pool.query(
-      "UPDATE users SET is_verified = COALESCE(is_verified, FALSE) WHERE is_verified IS NULL"
-    );
-
-    await pool.query(
-      "ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)"
-    );
-    await pool.query(
-      "ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20)"
-    );
-    await pool.query(
-      "ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
-    );
-
-    // Add optional profile fields if missing
-    await pool.query(
-      "ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(255)"
-    );
-
-    // Backfill full_name from profile_details where missing
-    await pool.query(
-      "UPDATE users SET full_name = COALESCE(NULLIF(full_name, ''), NULLIF(profile_details->>'full_name', ''), NULLIF(TRIM((profile_details->>'first_name') || ' ' || (profile_details->>'last_name')), '')) WHERE (full_name IS NULL OR full_name = '')"
-    );
-
-    // Optional profile fields
-    await pool.query(
-      "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(30)"
-    );
-    await pool.query(
-      "ALTER TABLE users ADD COLUMN IF NOT EXISTS roll_number VARCHAR(50)"
-    );
-
-    // Add profile_details JSONB column for storing student registration info
-    await pool.query(
-      "ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_details JSONB"
-    );
-
-    // For existing users without profile_details, initialize with empty object
-    await pool.query(
-      "UPDATE users SET profile_details = '{}' WHERE profile_details IS NULL AND role = 'student'"
-    );
-
-    // If legacy schemas enforced NOT NULL on full_name, relax it so minimal inserts work
-    const { rows: hasFullName } = await pool.query(
-      "SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='full_name'"
-    );
-    if (hasFullName.length) {
-      try {
-        await pool.query(
-          "ALTER TABLE users ALTER COLUMN full_name DROP NOT NULL"
-        );
-      } catch (e) {
-        // ignore if already nullable or other benign errors
-      }
-    }
-
-    // Add id to otp_verifications if missing
-    await pool.query(
-      "ALTER TABLE otp_verifications ADD COLUMN IF NOT EXISTS id BIGSERIAL"
-    );
-    await pool.query(
-      "UPDATE otp_verifications SET id = DEFAULT WHERE id IS NULL"
-    );
-
-    console.log(
-      "Database columns ensured (users: id/is_verified/password_hash/role/created_at; otp_verifications: id)"
-    );
+    // Log pool health after successful connection
+    logPoolHealth();
   } catch (err) {
-    console.error("Error ensuring columns", err);
+    console.error("❌ Database connection failed:", err.message);
+    console.error("   Error code:", err.code);
+    console.error(
+      "   Ensure PostgreSQL is running and credentials are correct",
+    );
+    throw err;
   }
 }
 
 const PORT = process.env.PORT || 5000;
-// Ensure critical columns (and primary key on users.id) before running full migrations
-ensureColumns()
-  .then(() => ensureTables())
-  .then(() => {
-    app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
-  })
-  .catch((err) => {
-    console.error("Startup migration error:", err);
-    // still attempt to start server so humans can inspect logs, but warn
-    app.listen(PORT, () =>
-      console.log(`Server listening on port ${PORT} (with migration warnings)`)
-    );
-  });
+
+// ============================================================================
+// APPLICATION STARTUP - Verify Database & File Storage
+// ============================================================================
+// Clean application startup - NO schema modifications at runtime
+// 1. Verify database connectivity
+// 2. Verify file storage configuration
+// 3. Start HTTP server
+// ============================================================================
+
+async function startApplication() {
+  try {
+    // Step 1: Verify database connection
+    await verifyDatabaseConnection();
+
+    // Step 2: Verify file storage (already verified on module load, but re-check)
+    try {
+      verifyFileStorage();
+    } catch (err) {
+      if (process.env.NODE_ENV === "production") {
+        throw new Error(`File storage verification failed: ${err.message}`);
+      }
+      console.warn(
+        "⚠️  File storage verification failed (non-fatal in development)",
+      );
+    }
+
+    // Step 3: Start server
+    app.listen(PORT, () => {
+      console.log(`🚀 Server listening on port ${PORT}`);
+      console.log(`   Environment: ${process.env.NODE_ENV || "development"}`);
+      console.log(`   API Base: http://localhost:${PORT}/api`);
+    });
+  } catch (err) {
+    console.error("❌ Startup failed:", err.message);
+    console.error("   Fix the error and restart the server");
+    process.exit(1);
+  }
+}
+
+startApplication();
 
 // Global error handler to always return JSON (handles multer/file-filter errors too)
 // Keep this AFTER routes and server start to catch async route errors via next(err)
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err);
+
+  // Handle multer errors specifically
+  if (err.name === "MulterError") {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({
+        message: `File too large. Maximum size is ${Math.floor(process.env.FILE_SIZE_LIMIT_MB || 50)} MB`,
+      });
+    }
+    if (err.code === "LIMIT_UNEXPECTED_FILE") {
+      return res.status(400).json({
+        message: "Unexpected file field",
+      });
+    }
+    return res
+      .status(400)
+      .json({ message: err.message || "File upload error" });
+  }
+
   const status = err.status || 400; // default to 400 for validation-like issues
   const message = err.message || "Server error";
   res.status(status).json({ message });

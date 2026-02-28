@@ -21,6 +21,8 @@ export default function QuickActions() {
     if (key === "facultyConsultancy") return nav("/faculty-consultancy");
     if (key === "uploadExtra") return nav("/upload-extra-curricular");
     if (key === "studentsBatch") return nav("/upload-students-batch");
+    if (key === "topAchieversAnnouncement")
+      return nav("/top-achievers-announcement");
 
     if (key === "exportRecords") return nav("/staff/reports");
     if (key === "bulkExport") return nav("/staff/bulk-export");
@@ -34,7 +36,7 @@ export default function QuickActions() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-white">
-      <div className="mx-auto max-w-6xl px-6 py-12">
+      <div className="mx-auto max-w-7xl w-full px-6 py-12">
         <PageHeader
           title="Quick Actions"
           subtitle="Get started with your most common tasks."
@@ -47,7 +49,7 @@ export default function QuickActions() {
             className="p-6 glitter-card bulge-card"
           >
             <div className="flex items-center gap-3">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-blue-100 text-blue-600">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
                 <svg
                   width="20"
                   height="20"
@@ -339,6 +341,35 @@ export default function QuickActions() {
                 </p>
               </Card>
               <Card
+                onClick={goTo("topAchieversAnnouncement")}
+                className="p-6 glitter-card bulge-card"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-yellow-100 text-yellow-600">
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <path
+                        d="M12 4l3 6 6 .5-4.5 4 1.5 6-6-3.5-6 3.5 1.5-6L3 10.5 9 10l3-6z"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                  <h3 className="text-lg font-semibold text-slate-800">
+                    Top Achievers
+                  </h3>
+                </div>
+                <p className="mt-2 text-slate-600">
+                  Send announcements to selected top achievers.
+                </p>
+              </Card>
+              <Card
                 onClick={goTo("exportRecords")}
                 className="p-6 glitter-card bulge-card"
               >
@@ -387,7 +418,7 @@ export default function QuickActions() {
                 className="p-6 glitter-card bulge-card"
               >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-blue-100 text-blue-600">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
                     <svg
                       width="20"
                       height="20"

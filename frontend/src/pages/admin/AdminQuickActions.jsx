@@ -24,6 +24,7 @@ export default function AdminQuickActions() {
     if (key === "exportRecords") return nav("/admin/reports");
     if (key === "bulkExport") return nav("/admin/bulk-export");
     if (key === "manageUsers") return nav("/admin/users");
+    if (key === "activityCoordinators") return nav("/admin/activity-coordinators");
     return nav("/");
   };
 
@@ -59,50 +60,6 @@ export default function AdminQuickActions() {
             />
           </Card>
           <Card
-            onClick={goTo("achievements")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconCheck />}
-              title="Add Achievement"
-              desc="Create an achievement on behalf of faculty/student."
-              color="blue"
-            />
-          </Card>
-          <Card
-            onClick={goTo("projects")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconWindow />}
-              title="Upload Project"
-              desc="Share recent projects with the department."
-              color="green"
-            />
-          </Card>
-          <Card
-            onClick={goTo("verifyAchievements")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconList />}
-              title="Verify Achievement"
-              desc="Review and approve submitted achievements."
-              color="violet"
-            />
-          </Card>
-          <Card
-            onClick={goTo("verifyProjects")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconChat />}
-              title="Verify Project"
-              desc="Approve or reject project submissions."
-              color="orange"
-            />
-          </Card>
-          <Card
             onClick={goTo("staffEvents")}
             className="p-6 glitter-card bulge-card"
           >
@@ -111,39 +68,6 @@ export default function AdminQuickActions() {
               title="Upload Events"
               desc="Create and manage department events."
               color="indigo"
-            />
-          </Card>
-          <Card
-            onClick={goTo("facultyParticipation")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconList />}
-              title="Faculty Participation"
-              desc="Add faculty training/participation details."
-              color="sky"
-            />
-          </Card>
-          <Card
-            onClick={goTo("facultyResearch")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconList />}
-              title="Faculty Research"
-              desc="Add research funding and project details."
-              color="teal"
-            />
-          </Card>
-          <Card
-            onClick={goTo("facultyConsultancy")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconList />}
-              title="Faculty Consultancy"
-              desc="Add consultancy engagements and proof."
-              color="emerald"
             />
           </Card>
           <Card
@@ -177,6 +101,17 @@ export default function AdminQuickActions() {
               title="Manage Users"
               desc="View, change roles, or remove users."
               color="red"
+            />
+          </Card>
+          <Card
+            onClick={goTo("activityCoordinators")}
+            className="p-6 glitter-card bulge-card"
+          >
+            <Tile
+              icon={<IconList />}
+              title="Activity Coordinators"
+              desc="Map staff to activity types."
+              color="purple"
             />
           </Card>
         </div>
@@ -367,7 +302,7 @@ function IconUsers() {
 // Small helper to render tile content consistently inside Card
 function Tile({ icon, title, desc, color }) {
   const colorMap = {
-    blue: "bg-blue-100 text-blue-600",
+    blue: "bg-primary/10 text-primary",
     sky: "bg-sky-100 text-sky-600",
     green: "bg-green-100 text-green-600",
     teal: "bg-teal-100 text-teal-600",

@@ -8,6 +8,7 @@ export default function ProjectsManagement() {
   const [expandedId, setExpandedId] = useState(null);
   const [view, setView] = useState("pending");
   const [modal, setModal] = useState({ open: false, item: null });
+  const [suggestion, setSuggestion] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -30,10 +31,14 @@ export default function ProjectsManagement() {
     load();
   }, []);
 
-  const approve = async (id) => {
+  const approve = async (id, comment) => {
     try {
       setBusyId(id);
-      const resp = await apiClient.post(`/projects/${id}/verify`);
+      const payload =
+        typeof comment === "string" && comment.trim()
+          ? { comment: comment.trim() }
+          : {};
+      const resp = await apiClient.post(`/projects/${id}/verify`, payload);
       if (resp) {
         // refresh pending list from server to reflect actual DB state
         await load();
@@ -45,10 +50,14 @@ export default function ProjectsManagement() {
     }
   };
 
-  const reject = async (id) => {
+  const reject = async (id, comment) => {
     try {
       setBusyId(id);
-      const resp = await apiClient.post(`/projects/${id}/reject`);
+      const payload =
+        typeof comment === "string" && comment.trim()
+          ? { comment: comment.trim() }
+          : {};
+      const resp = await apiClient.post(`/projects/${id}/reject`, payload);
       if (resp) {
         // refresh pending list from server to reflect actual DB state
         await load();
@@ -78,8 +87,24 @@ export default function ProjectsManagement() {
   const toggleView = (id) => {
     setExpandedId((prev) => (prev === id ? null : id));
   };
-  const openModal = (item) => setModal({ open: true, item });
-  const closeModal = () => setModal({ open: false, item: null });
+  const openModal = (item) => {
+    setSuggestion(item?.verification_comment || "");
+    setModal({ open: true, item });
+  };
+  const closeModal = () => {
+    setModal({ open: false, item: null });
+    setSuggestion("");
+  };
+  const approveFromModal = async () => {
+    if (!modal.item?.id) return;
+    await approve(modal.item.id, suggestion);
+    closeModal();
+  };
+  const rejectFromModal = async () => {
+    if (!modal.item?.id) return;
+    await reject(modal.item.id, suggestion);
+    closeModal();
+  };
 
   return (
     <div className="glitter-card rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -94,10 +119,10 @@ export default function ProjectsManagement() {
                 setView("pending");
                 await load();
               }}
-              className={`text-xs rounded-md px-2 py-0.5 font-semibold ${
+              className={`btn btn-xs ${
                 view === "pending"
-                  ? "bg-blue-600 text-white"
-                  : "bg-slate-100 text-slate-800"
+                  ? "btn-primary"
+                  : "btn-ghost"
               }`}
             >
               Pending
@@ -121,7 +146,7 @@ export default function ProjectsManagement() {
         <button
           onClick={() => (view === "pending" ? load() : showRejected())}
           disabled={loading}
-          className="text-xs rounded-md bg-blue-600 px-3 py-1 font-semibold text-white shadow hover:bg-blue-700 disabled:opacity-50"
+          className="btn btn-primary btn-sm"
         >
           {loading ? "Refreshing..." : "Refresh"}
         </button>
@@ -175,7 +200,7 @@ export default function ProjectsManagement() {
                   <button
                     onClick={() => approve(p.id)}
                     disabled={busyId === p.id}
-                    className="rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white shadow hover:bg-blue-700 disabled:opacity-50"
+                    className="btn btn-primary btn-xs"
                   >
                     {busyId === p.id ? "Processing..." : "Approve"}
                   </button>
@@ -198,19 +223,21 @@ export default function ProjectsManagement() {
                   <span className="font-semibold">Year:</span>{" "}
                   {p.academic_year || "—"}
                 </div>
-                {p.github_url && (
-                  <div>
-                    <span className="font-semibold">GitHub:</span>{" "}
+                <div>
+                  <span className="font-semibold">GitHub:</span>{" "}
+                  {p.github_url ? (
                     <a
                       href={p.github_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-blue-600 hover:underline"
+                      className="link link-primary"
                     >
                       {p.github_url}
                     </a>
-                  </div>
-                )}
+                  ) : (
+                    <span>—</span>
+                  )}
+                </div>
                 {Array.isArray(p.files) && p.files.length > 0 && (
                   <div className="mt-2">
                     <span className="font-semibold">Files:</span>
@@ -221,7 +248,7 @@ export default function ProjectsManagement() {
                             href={`/uploads/${f.filename}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-blue-600 hover:underline"
+                            className="link link-primary"
                           >
                             {f.original_name || f.filename}
                           </a>
@@ -275,19 +302,21 @@ export default function ProjectsManagement() {
                 <span className="font-semibold">Year:</span>{" "}
                 {modal.item?.academic_year}
               </div>
-              {modal.item?.github_url && (
-                <div>
-                  <span className="font-semibold">GitHub:</span>{" "}
+              <div>
+                <span className="font-semibold">GitHub:</span>{" "}
+                {modal.item?.github_url ? (
                   <a
                     href={modal.item.github_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-blue-600 hover:underline"
+                    className="link link-primary"
                   >
                     {modal.item.github_url}
                   </a>
-                </div>
-              )}
+                ) : (
+                  <span>—</span>
+                )}
+              </div>
               {Array.isArray(modal.item?.files) &&
                 modal.item.files.length > 0 && (
                   <div className="mt-3">
@@ -314,7 +343,7 @@ export default function ProjectsManagement() {
                               )}/uploads/${f.filename}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-blue-600 hover:underline"
+                              className="link link-primary"
                             >
                               {f.original_name || f.filename}
                             </a>
@@ -325,6 +354,34 @@ export default function ProjectsManagement() {
                     </ul>
                   </div>
                 )}
+            </div>
+            <div className="mt-4">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+                Suggestion to student (optional)
+              </label>
+              <textarea
+                value={suggestion}
+                onChange={(e) => setSuggestion(e.target.value)}
+                rows={3}
+                placeholder="Add a suggestion the student will see in notifications"
+                className="mt-2 w-full rounded-md border border-slate-300 bg-white p-2 text-sm text-slate-800 focus:border-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              />
+            </div>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                onClick={rejectFromModal}
+                disabled={busyId === modal.item?.id}
+                className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white shadow hover:bg-red-700 disabled:opacity-50"
+              >
+                {busyId === modal.item?.id ? "Processing..." : "Reject"}
+              </button>
+              <button
+                onClick={approveFromModal}
+                disabled={busyId === modal.item?.id}
+                className="btn btn-primary btn-xs"
+              >
+                {busyId === modal.item?.id ? "Processing..." : "Approve"}
+              </button>
             </div>
           </div>
         </div>

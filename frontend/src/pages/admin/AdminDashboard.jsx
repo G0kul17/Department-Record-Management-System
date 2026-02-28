@@ -1,7 +1,7 @@
 import React from "react";
 import Home from "../Home";
 
-// Render the same landing home for admins
+// Admin dashboard renders Home without the "At a Glance" section.
 export default function AdminDashboard() {
-  return <Home />;
+  return <Home hideAtAGlance />;
 }

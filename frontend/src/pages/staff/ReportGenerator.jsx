@@ -49,7 +49,7 @@ export default function ReportGenerator() {
         let endpoint = "/achievements?limit=2000";
         if (mode === "projects") endpoint = "/projects?limit=2000";
         if (mode === "participation")
-          endpoint = "/faculty-participation?limit=2000";
+          endpoint = "/faculty-participations?limit=2000";
         if (mode === "research") endpoint = "/faculty-research?limit=2000";
         if (mode === "consultancy")
           endpoint = "/faculty-consultancy?limit=2000";
@@ -60,7 +60,7 @@ export default function ReportGenerator() {
         else if (mode === "projects") setItems(data.projects || []);
         else if (mode === "participation")
           setItems(
-            data.participations || data.facultyParticipation || data.items || []
+            data.participation || data.participations || data.facultyParticipation || data.items || []
           );
         else if (mode === "research")
           setItems(data.research || data.facultyResearch || data.items || []);
@@ -427,7 +427,7 @@ export default function ReportGenerator() {
       <BackButton />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-          Staff Reports
+          Export Records
         </h1>
         <div className="text-sm text-slate-600 dark:text-slate-300">
           Generate Excel/CSV reports

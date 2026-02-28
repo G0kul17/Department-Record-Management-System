@@ -65,14 +65,14 @@ const ForgotPassword = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+            className="btn btn-primary w-full"
           >
             {loading ? "Sending..." : "Send OTP"}
           </button>
         </form>
 
         <div className="mt-4 text-center">
-          <Link to="/login" className="text-blue-600 hover:underline">
+          <Link to="/login" className="link link-primary">
             Back to Login
           </Link>
         </div>

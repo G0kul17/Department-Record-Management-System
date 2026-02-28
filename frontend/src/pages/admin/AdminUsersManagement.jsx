@@ -31,10 +31,7 @@ export default function AdminUsersManagement() {
   const updateRole = async (id, role) => {
     setBusyId(id);
     try {
-      await apiClient.request(`/admin/users/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ role }),
-      });
+      await apiClient.patch(`/admin/users/${id}`, { role });
       await load();
     } catch (e) {
       setError(e.message || "Failed to update role");
@@ -86,7 +83,7 @@ export default function AdminUsersManagement() {
             <button
               onClick={load}
               disabled={loading}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700 disabled:opacity-50"
+              className="btn btn-primary btn-sm"
             >
               {loading ? "Refreshing..." : "Refresh"}
             </button>

@@ -42,8 +42,8 @@ export async function createProject(req, res) {
           fs.unlinkSync(
             path.resolve(
               process.env.FILE_STORAGE_PATH || "./uploads",
-              otherFiles[i].filename
-            )
+              otherFiles[i].filename,
+            ),
           );
         } catch {}
       }
@@ -64,8 +64,8 @@ export async function createProject(req, res) {
           fs.unlinkSync(
             path.resolve(
               process.env.FILE_STORAGE_PATH || "./uploads",
-              zip.filename
-            )
+              zip.filename,
+            ),
           );
         } catch {}
         return res
@@ -77,8 +77,8 @@ export async function createProject(req, res) {
           fs.unlinkSync(
             path.resolve(
               process.env.FILE_STORAGE_PATH || "./uploads",
-              zip.filename
-            )
+              zip.filename,
+            ),
           );
         } catch {}
         return res
@@ -107,10 +107,30 @@ export async function createProject(req, res) {
         .json({ message: "github_url must be a valid GitHub link" });
     }
 
+    // Check if GitHub URL already exists (prevent duplicate team submissions)
+    if (gh) {
+      const { rows: githubDup } = await pool.query(
+        "SELECT id, title, team_member_names, created_by FROM projects WHERE LOWER(TRIM(github_url)) = LOWER(TRIM($1))",
+        [gh],
+      );
+      if (githubDup.length) {
+        const existingProject = githubDup[0];
+        return res.status(409).json({
+          message:
+            "Your team has already uploaded this project. GitHub URL must be unique.",
+          existingProject: {
+            id: existingProject.id,
+            title: existingProject.title,
+            team_members: existingProject.team_member_names,
+          },
+        });
+      }
+    }
+
     // duplicate check (title + mentor_name + year)
     const { rows: dup } = await pool.query(
       "SELECT id FROM projects WHERE title=$1 AND mentor_name=$2 AND academic_year=$3",
-      [title.trim(), mentor_name.trim(), academic_year || null]
+      [title.trim(), mentor_name.trim(), academic_year || null],
     );
     if (dup.length)
       return res.status(409).json({
@@ -166,7 +186,7 @@ export async function createProject(req, res) {
           f.size,
           fileType,
           created_by || null,
-        ]
+        ],
       );
       if (ins && ins[0]) insertedFiles.push(ins[0]);
     }
@@ -174,7 +194,7 @@ export async function createProject(req, res) {
     // Persist a summary of files into projects.files JSONB for easy viewing
     const { rows: pf } = await pool.query(
       "SELECT id, filename, original_name, mime_type, size, file_type, uploaded_at FROM project_files WHERE project_id=$1 ORDER BY id ASC",
-      [project.id]
+      [project.id],
     );
     await pool.query("UPDATE projects SET files = $2 WHERE id = $1", [
       project.id,
@@ -217,8 +237,8 @@ export async function uploadFilesToProject(req, res) {
           fs.unlinkSync(
             path.resolve(
               process.env.FILE_STORAGE_PATH || "./uploads",
-              otherFiles[i].filename
-            )
+              otherFiles[i].filename,
+            ),
           );
         } catch {}
       }
@@ -238,8 +258,8 @@ export async function uploadFilesToProject(req, res) {
           fs.unlinkSync(
             path.resolve(
               process.env.FILE_STORAGE_PATH || "./uploads",
-              zip.filename
-            )
+              zip.filename,
+            ),
           );
         } catch {}
         return res
@@ -251,8 +271,8 @@ export async function uploadFilesToProject(req, res) {
           fs.unlinkSync(
             path.resolve(
               process.env.FILE_STORAGE_PATH || "./uploads",
-              zip.filename
-            )
+              zip.filename,
+            ),
           );
         } catch {}
         return res
@@ -274,14 +294,14 @@ export async function uploadFilesToProject(req, res) {
           f.size,
           fileType,
           req.user?.id || null,
-        ]
+        ],
       );
     }
 
     // Update projects.files JSONB summary
     const { rows: pf } = await pool.query(
       "SELECT id, filename, original_name, mime_type, size, file_type, uploaded_at FROM project_files WHERE project_id=$1 ORDER BY id ASC",
-      [projectId]
+      [projectId],
     );
     await pool.query("UPDATE projects SET files = $2 WHERE id = $1", [
       projectId,
@@ -312,6 +332,9 @@ export async function listProjects(req, res) {
     mine,
   } = req.query;
   try {
+    const requesterId = req.user?.id;
+    const requesterRole = req.user?.role;
+
     // Include uploader info for list items (created_by or first file's uploaded_by)
     let base =
       "SELECT p.*, " +
@@ -331,9 +354,65 @@ export async function listProjects(req, res) {
     const conditions = [];
     const params = [];
 
+    // Check if viewing verified/approved projects (not in management mode)
+    const isViewingVerified =
+      verified === "true" ||
+      req.query.verification_status === "approved" ||
+      req.query.verification_status === "verified";
+
+    // If not authenticated, only show verified projects
+    // Also show verified if explicitly requesting verified projects (but not if filtering by verification_status, which has its own logic)
+    if (!requesterId && !req.query.verification_status) {
+      conditions.push(`p.verified = true`);
+    } else if (verified === "true") {
+      // If verified=true is explicitly passed, enforce it
+      conditions.push(`p.verified = true`);
+    }
+
+    // Staff can only see projects for activity types they coordinate (only in management/verification mode)
+    // If staff is viewing verified/approved projects, no activity_type restriction needed
+    // Only apply filter when looking for unverified/pending projects
+    if (requesterRole === "staff" && requesterId && !isViewingVerified) {
+      base += ` LEFT JOIN activity_coordinators ac ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = $${
+        params.length + 1
+      }`;
+      params.push(requesterId);
+      conditions.push(`ac.id IS NOT NULL`);
+    }
+
     if (year) {
-      params.push(year);
-      conditions.push(`p.academic_year = $${params.length}`);
+      const yearRaw = String(year).trim();
+      const startYear4 = yearRaw.match(/\d{4}/)?.[0];
+      const startYear2 = startYear4 ? startYear4.slice(-2) : null;
+      const endYear2 = startYear4
+        ? String(parseInt(startYear4) + 1).slice(-2)
+        : null;
+
+      const yearClauses = [];
+
+      // Exact match variations for academic_year field
+      params.push(yearRaw);
+      yearClauses.push(`p.academic_year = $${params.length}`);
+
+      if (startYear4) {
+        // Match patterns like "2025-2026" or "2025-26"
+        const nextYear = String(parseInt(startYear4) + 1);
+        params.push(`${startYear4}-${nextYear}`);
+        yearClauses.push(`p.academic_year = $${params.length}`);
+
+        if (startYear2 && endYear2) {
+          params.push(`${startYear2}-${endYear2}`);
+          yearClauses.push(`p.academic_year = $${params.length}`);
+        }
+
+        // Only fallback to created_at if academic_year is NULL/empty
+        params.push(startYear4);
+        yearClauses.push(
+          `(p.academic_year IS NULL AND to_char(p.created_at, 'YYYY') = $${params.length})`,
+        );
+      }
+
+      conditions.push(`(${yearClauses.join(" OR ")})`);
     }
     if (mentor_name) {
       params.push(mentor_name);
@@ -355,12 +434,30 @@ export async function listProjects(req, res) {
     if (q) {
       params.push(`%${q}%`);
       conditions.push(
-        `(p.title ILIKE $${params.length} OR p.description ILIKE $${params.length})`
+        `(p.title ILIKE $${params.length} OR p.description ILIKE $${params.length})`,
       );
     }
-    if (mine !== undefined && mine !== "false" && req.user?.id) {
-      params.push(req.user.id);
-      conditions.push(`p.created_by = $${params.length}`);
+    if (mine !== undefined && mine !== "false") {
+      if (!requesterId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      // Get user's full name for matching in team_member_names
+      const { rows: userRows } = await pool.query(
+        "SELECT full_name FROM users WHERE id = $1",
+        [requesterId],
+      );
+      if (userRows.length && userRows[0].full_name) {
+        params.push(requesterId);
+        const createdByParam = params.length;
+        params.push(userRows[0].full_name);
+        const nameParam = params.length;
+        conditions.push(
+          `(p.created_by = $${createdByParam} OR LOWER(p.team_member_names) LIKE LOWER('%' || $${nameParam} || '%'))`,
+        );
+      } else {
+        params.push(requesterId);
+        conditions.push(`p.created_by = $${params.length}`);
+      }
     }
 
     if (conditions.length) base += " WHERE " + conditions.join(" AND ");
@@ -383,18 +480,52 @@ export async function getProjectDetails(req, res) {
   if (!Number.isInteger(id) || Number.isNaN(id))
     return res.status(400).json({ message: "Invalid project id" });
   try {
+    // Staff should only access projects for activity types they coordinate
+    const requesterRole = req.user?.role;
+    const requesterId = req.user?.id;
+
+    // If not authenticated, only show verified projects
+    let whereClause = "WHERE p.id = $1";
+    const params = [id];
+    if (!requesterId) {
+      whereClause += " AND p.verified = true";
+    } else if (requesterRole === "staff" && requesterId) {
+      // Staff can view:
+      // 1. Projects they coordinate (activity type match)
+      // 2. Any verified projects (for public viewing)
+      // 3. Projects they created
+      const { rows: auth } = await pool.query(
+        `SELECT 1 FROM projects p
+         WHERE p.id = $1 AND (
+           p.verified = true 
+           OR p.created_by = $2
+           OR EXISTS (
+             SELECT 1 FROM activity_coordinators ac
+             WHERE LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) 
+               AND ac.staff_id = $2
+           )
+         )`,
+        [id, requesterId],
+      );
+      if (!auth.length) {
+        return res
+          .status(403)
+          .json({ message: "Not authorized to view this project" });
+      }
+    }
+
     const { rows } = await pool.query(
       `SELECT p.*, u.email AS uploader_email, u.full_name AS uploader_full_name
          FROM projects p
          LEFT JOIN users u ON u.id = p.created_by
-        WHERE p.id = $1`,
-      [id]
+        ${whereClause}`,
+      params,
     );
     if (!rows.length) return res.status(404).json({ message: "Not found" });
     const project = rows[0];
     const { rows: files } = await pool.query(
       "SELECT * FROM project_files WHERE project_id=$1 ORDER BY id ASC",
-      [id]
+      [id],
     );
 
     project.files = files;
@@ -406,7 +537,7 @@ export async function getProjectDetails(req, res) {
            LEFT JOIN users u ON u.id = pf.uploaded_by
           WHERE pf.project_id = $1 AND pf.uploaded_by IS NOT NULL
           ORDER BY pf.id ASC LIMIT 1`,
-        [id]
+        [id],
       );
       if (up.length) {
         project.uploader_email = project.uploader_email || up[0].uploader_email;
@@ -430,9 +561,28 @@ export async function verifyProject(req, res) {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || Number.isNaN(id))
       return res.status(400).json({ message: "Invalid project id" });
+    const requesterRole = req.user?.role;
+    const requesterId = req.user?.id;
+    if (requesterRole === "staff" && requesterId) {
+      const { rows: auth } = await pool.query(
+        `SELECT 1 FROM projects p
+          JOIN activity_coordinators ac
+            ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = $1
+         WHERE p.id = $2`,
+        [requesterId, id],
+      );
+      if (!auth.length) {
+        return res
+          .status(403)
+          .json({ message: "Not authorized to approve this project" });
+      }
+    }
+    const { comment } = req.body || {};
+    const verificationComment =
+      typeof comment === "string" && comment.trim() ? comment.trim() : null;
     await pool.query(
-      "UPDATE projects SET verified = true, verification_status='approved', verified_by=$2, verified_at=NOW() WHERE id=$1",
-      [id, req.user?.id || null]
+      "UPDATE projects SET verified = true, verification_status='approved', verification_comment=$3, verified_by=$2, verified_at=NOW() WHERE id=$1",
+      [id, req.user?.id || null, verificationComment],
     );
     return res.json({ message: "Project approved" });
   } catch (err) {
@@ -447,9 +597,28 @@ export async function rejectProject(req, res) {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || Number.isNaN(id))
       return res.status(400).json({ message: "Invalid project id" });
+    const requesterRole = req.user?.role;
+    const requesterId = req.user?.id;
+    if (requesterRole === "staff" && requesterId) {
+      const { rows: auth } = await pool.query(
+        `SELECT 1 FROM projects p
+          JOIN activity_coordinators ac
+            ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = $1
+         WHERE p.id = $2`,
+        [requesterId, id],
+      );
+      if (!auth.length) {
+        return res
+          .status(403)
+          .json({ message: "Not authorized to reject this project" });
+      }
+    }
+    const { comment } = req.body || {};
+    const verificationComment =
+      typeof comment === "string" && comment.trim() ? comment.trim() : null;
     await pool.query(
-      "UPDATE projects SET verified = false, verification_status='rejected', verified_by=$2, verified_at=NOW() WHERE id=$1",
-      [id, req.user?.id || null]
+      "UPDATE projects SET verified = false, verification_status='rejected', verification_comment=$3, verified_by=$2, verified_at=NOW() WHERE id=$1",
+      [id, req.user?.id || null, verificationComment],
     );
     return res.json({ message: "Project rejected" });
   } catch (err) {
@@ -480,12 +649,12 @@ export async function getProjectsCount(req, res) {
       const val = verified === "true";
       const { rows } = await pool.query(
         "SELECT COUNT(*)::int AS count FROM projects WHERE verified = $1",
-        [val]
+        [val],
       );
       return res.json({ count: rows[0]?.count ?? 0 });
     }
     const { rows } = await pool.query(
-      "SELECT COUNT(*)::int AS count FROM projects WHERE verified = true OR verification_status = 'approved'"
+      "SELECT COUNT(*)::int AS count FROM projects WHERE verified = true OR verification_status = 'approved'",
     );
     return res.json({ count: rows[0]?.count ?? 0 });
   } catch (err) {

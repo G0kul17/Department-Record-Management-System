@@ -5,6 +5,9 @@ import { useAuth } from "../hooks/useAuth";
 
 const Profile = () => {
   const { user, updateUser, login, refreshUserProfile } = useAuth();
+  const isStaffOrAdmin =
+    (user?.role || "").toLowerCase() === "staff" ||
+    (user?.role || "").toLowerCase() === "admin";
   const [form, setForm] = useState({
     // Non-editable fields from profile_details
     first_name: "",
@@ -25,6 +28,8 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [exportsList, setExportsList] = useState([]);
+  const [loadingExports, setLoadingExports] = useState(false);
 
   useEffect(() => {
     // Fetch student profile from server
@@ -56,6 +61,21 @@ const Profile = () => {
           console.error("Error fetching profile:", err);
           setError("Failed to load profile data");
         });
+    }
+
+    // For staff/admin, load export files list
+    if (isStaffOrAdmin) {
+      setLoadingExports(true);
+      apiClient
+        .get("/bulk-export/list")
+        .then((data) => {
+          if (!mounted) return;
+          setExportsList(data?.files || []);
+        })
+        .catch((err) => {
+          console.error("Error fetching exports list:", err);
+        })
+        .finally(() => setLoadingExports(false));
     }
     return () => {
       mounted = false;
@@ -91,7 +111,6 @@ const Profile = () => {
           fullName: form.first_name + " " + form.last_name,
           email: form.email,
           phone: form.contact_number,
-          rollNumber: form.register_number,
         });
         if (data?.token) {
           login(
@@ -214,14 +233,17 @@ const Profile = () => {
             </h3>
 
             {/* Editable fields */}
-            <InputField
-              label="Register Number"
-              type="text"
-              name="register_number"
-              value={form.register_number}
-              onChange={onChange}
-              placeholder="Enter your register number"
-            />
+            {/* Register Number is only for students */}
+            {user?.role === "student" && (
+              <InputField
+                label="Register Number"
+                type="text"
+                name="register_number"
+                value={form.register_number}
+                onChange={onChange}
+                placeholder="Enter your register number"
+              />
+            )}
             <InputField
               label="Contact Number"
               type="tel"
@@ -230,38 +252,43 @@ const Profile = () => {
               onChange={onChange}
               placeholder="Enter your contact number"
             />
-            <InputField
-              label="LeetCode Profile"
-              type="url"
-              name="leetcode_url"
-              value={form.leetcode_url}
-              onChange={onChange}
-              placeholder="https://leetcode.com/your-profile"
-            />
-            <InputField
-              label="HackerRank Profile"
-              type="url"
-              name="hackerrank_url"
-              value={form.hackerrank_url}
-              onChange={onChange}
-              placeholder="https://hackerrank.com/your-profile"
-            />
-            <InputField
-              label="CodeChef Profile (Optional)"
-              type="url"
-              name="codechef_url"
-              value={form.codechef_url}
-              onChange={onChange}
-              placeholder="https://codechef.com/users/your-profile"
-            />
-            <InputField
-              label="GitHub Profile"
-              type="url"
-              name="github_url"
-              value={form.github_url}
-              onChange={onChange}
-              placeholder="https://github.com/your-username"
-            />
+            {/* Coding platform fields are for students only */}
+            {user?.role === "student" && (
+              <>
+                <InputField
+                  label="LeetCode Profile"
+                  type="url"
+                  name="leetcode_url"
+                  value={form.leetcode_url}
+                  onChange={onChange}
+                  placeholder="https://leetcode.com/your-profile"
+                />
+                <InputField
+                  label="HackerRank Profile"
+                  type="url"
+                  name="hackerrank_url"
+                  value={form.hackerrank_url}
+                  onChange={onChange}
+                  placeholder="https://hackerrank.com/your-profile"
+                />
+                <InputField
+                  label="CodeChef Profile (Optional)"
+                  type="url"
+                  name="codechef_url"
+                  value={form.codechef_url}
+                  onChange={onChange}
+                  placeholder="https://codechef.com/users/your-profile"
+                />
+                <InputField
+                  label="GitHub Profile"
+                  type="url"
+                  name="github_url"
+                  value={form.github_url}
+                  onChange={onChange}
+                  placeholder="https://github.com/your-username"
+                />
+              </>
+            )}
 
             <button
               type="submit"
@@ -271,6 +298,69 @@ const Profile = () => {
               {loading ? "Saving..." : "Save Changes"}
             </button>
           </form>
+
+          {/* Staff/Admin: Show downloaded files from the application */}
+          {isStaffOrAdmin && (
+            <div className="mt-8">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                  Downloaded Files
+                </h3>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setLoadingExports(true);
+                    try {
+                      const data = await apiClient.get("/bulk-export/list");
+                      setExportsList(data?.files || []);
+                    } catch (e) {
+                      console.error(e);
+                    } finally {
+                      setLoadingExports(false);
+                    }
+                  }}
+                  className="text-xs rounded-md bg-blue-600 px-3 py-1 font-semibold text-white shadow hover:bg-blue-700 disabled:opacity-50"
+                  disabled={loadingExports}
+                >
+                  {loadingExports ? "Refreshing..." : "Refresh"}
+                </button>
+              </div>
+              <div className="mt-3 rounded border border-slate-200 dark:border-slate-700">
+                {exportsList.length === 0 ? (
+                  <div className="p-4 text-sm text-slate-600 dark:text-slate-300">
+                    No files found. Generate one from Bulk Export.
+                  </div>
+                ) : (
+                  <ul className="divide-y divide-slate-200 dark:divide-slate-700">
+                    {exportsList.map((f) => (
+                      <li
+                        key={f.name}
+                        className="flex items-center justify-between p-3"
+                      >
+                        <div>
+                          <div className="font-medium text-slate-800 dark:text-slate-100">
+                            {f.name}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            {(f.size / 1024 / 1024).toFixed(2)} MB ·{" "}
+                            {new Date(f.modifiedAt).toLocaleString()}
+                          </div>
+                        </div>
+                        <a
+                          href={f.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs rounded-md bg-slate-700 px-3 py-1 font-semibold text-white shadow hover:opacity-90"
+                        >
+                          Download
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

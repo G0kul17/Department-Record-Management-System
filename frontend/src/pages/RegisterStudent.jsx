@@ -234,14 +234,14 @@ const RegisterStudent = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-6 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+            className="btn btn-primary w-full mt-6"
           >
             {loading ? "Registering..." : "Register"}
           </button>
         </form>
 
         <div className="mt-4 text-center">
-          <Link to="/login" className="text-blue-600 hover:underline">
+          <Link to="/login" className="link link-primary">
             Already have an account? Login
           </Link>
         </div>

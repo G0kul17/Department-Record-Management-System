@@ -11,6 +11,7 @@ export const createResearch = async (req, res) => {
       funded_type,
       principal_investigator,
       team_members,
+      team_member_names,
       title,
       agency,
       current_status,
@@ -58,7 +59,9 @@ export const createResearch = async (req, res) => {
       faculty_name || null,
       funded_type,
       principal_investigator,
-      team_members || null,
+      (team_members && String(team_members).trim()) ||
+        (team_member_names && String(team_member_names).trim()) ||
+        null,
       title,
       agency || null,
       current_status,
@@ -91,6 +94,7 @@ export const updateResearch = async (req, res) => {
       funded_type,
       principal_investigator,
       team_members,
+      team_member_names,
       title,
       agency,
       current_status,
@@ -143,7 +147,9 @@ export const updateResearch = async (req, res) => {
       faculty_name,
       funded_type,
       principal_investigator,
-      team_members,
+      (team_members && String(team_members).trim()) ||
+        (team_member_names && String(team_member_names).trim()) ||
+        null,
       title,
       agency,
       current_status,
@@ -192,5 +198,18 @@ export const listResearch = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ========== COUNT RESEARCH ==========
+export const getFacultyResearchCount = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT COUNT(*)::int AS count FROM faculty_research"
+    );
+    return res.json({ count: rows[0]?.count ?? 0 });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
   }
 };

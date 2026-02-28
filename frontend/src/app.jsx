@@ -48,11 +48,20 @@ const AdminBulkExportPage = React.lazy(() =>
 const BulkExportPage = React.lazy(() =>
   import("./pages/staff/BulkExportPage")
 );
+const TopAchieversAnnouncement = React.lazy(() =>
+  import("./pages/staff/TopAchieversAnnouncement")
+);
+const StudentNotifications = React.lazy(() =>
+  import("./pages/student/StudentNotifications")
+);
 const AdminUsersManagement = React.lazy(() =>
   import("./pages/admin/AdminUsersManagement.jsx")
 );
 const AdminRoleUsersList = React.lazy(() =>
   import("./pages/admin/AdminRoleUsersList")
+);
+const AdminStaffCoordinators = React.lazy(() =>
+  import("./pages/admin/AdminStaffCoordinators")
 );
 const StudentDashboard = React.lazy(() =>
   import("./pages/student/StudentDashboard")
@@ -102,6 +111,15 @@ const Events = React.lazy(() => import("./pages/student/StudentsEventsReg"));
 const ProjectsApproved = React.lazy(() => import("./pages/ProjectsApproved"));
 const AchievementsApproved = React.lazy(() =>
   import("./pages/AchievementsApproved")
+);
+const FacultyResearchApproved = React.lazy(() =>
+  import("./pages/FacultyResearchApproved")
+);
+const FacultyConsultancyApproved = React.lazy(() =>
+  import("./pages/FacultyConsultancyApproved")
+);
+const FacultyParticipationApproved = React.lazy(() =>
+  import("./pages/FacultyParticipationApproved")
 );
 const ProjectDetail = React.lazy(() => import("./pages/ProjectDetail"));
 const AchievementDetail = React.lazy(() => import("./pages/AchievementDetail"));
@@ -256,6 +274,30 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/faculty-research-approved"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "staff"]}>
+                <FacultyResearchApproved />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/faculty-consultancy-approved"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "staff"]}>
+                <FacultyConsultancyApproved />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/faculty-participation-approved"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "staff"]}>
+                <FacultyParticipationApproved />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/login" element={<Login />} />
           <Route path="/verify-otp" element={<VerifyOtp />} />
           <Route path="/register-student" element={<RegisterStudent />} />
@@ -379,6 +421,14 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/admin/activity-coordinators"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminStaffCoordinators />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/staff/*"
@@ -445,6 +495,22 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={["staff", "admin"]}>
                 <BulkExportPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/top-achievers-announcement"
+            element={
+              <ProtectedRoute allowedRoles={["staff", "admin"]}>
+                <TopAchieversAnnouncement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute allowedRoles={["student", "staff", "admin"]}>
+                <StudentNotifications />
               </ProtectedRoute>
             }
           />

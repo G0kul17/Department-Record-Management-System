@@ -1,6 +1,6 @@
 // src/routes/achievementRoutes.js
 import express from "express";
-import { requireAuth } from "../middleware/authMiddleware.js";
+import { requireAuth, optionalAuth } from "../middleware/authMiddleware.js";
 import { requireRole } from "../middleware/roleAuth.js";
 import {
   createAchievement,
@@ -9,6 +9,7 @@ import {
   rejectAchievement,
   getAchievementsCount,
   getAchievementDetails,
+  getAchievementsLeaderboard,
 } from "../controllers/achievementController.js";
 import { upload } from "../config/upload.js";
 
@@ -20,16 +21,22 @@ router.post(
   requireAuth,
   // Allow admin to create achievements too (auto-approves in controller)
   requireRole(["student", "alumni", "staff", "admin"]),
-  upload.single("proof"),
+  upload.fields([
+    { name: "proof", maxCount: 1 },
+    { name: "certificate", maxCount: 1 },
+    { name: "event_photos", maxCount: 1 },
+  ]),
   createAchievement
 );
 
-router.get("/", requireAuth, listAchievements);
+router.get("/", optionalAuth, listAchievements);
 // Public count endpoint for homepage stats
 router.get("/count", getAchievementsCount);
+// Public leaderboard endpoint
+router.get("/leaderboard", getAchievementsLeaderboard);
 
 // Single achievement details
-router.get("/:id", requireAuth, getAchievementDetails);
+router.get("/:id", optionalAuth, getAchievementDetails);
 
 // Admin verifies achievement
 router.post(

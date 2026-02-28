@@ -174,3 +174,16 @@ export const listConsultancy = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// ========== COUNT CONSULTANCY ==========
+export const getFacultyConsultancyCount = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT COUNT(*)::int AS count FROM faculty_consultancy"
+    );
+    return res.json({ count: rows[0]?.count ?? 0 });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};

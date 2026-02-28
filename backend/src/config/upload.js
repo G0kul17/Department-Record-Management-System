@@ -6,7 +6,43 @@ import { v4 as uuidv4 } from "uuid";
 import dotenv from "dotenv";
 dotenv.config();
 
-const STORAGE_PATH = process.env.FILE_STORAGE_PATH || "./uploads";
+// ============================================================================
+// EXPLICIT FILE STORAGE CONFIGURATION
+// ============================================================================
+// Problem: Relative paths cause file loss, permission errors, inconsistencies
+// Solution: Explicit configuration with validation and permission checks
+// ============================================================================
+
+const NODE_ENV = process.env.NODE_ENV || "development";
+const IS_PRODUCTION = NODE_ENV === "production";
+
+// In production: FILE_STORAGE_PATH is REQUIRED (no fallback)
+// In development: Allow fallback to ./uploads for convenience
+let STORAGE_PATH;
+
+if (IS_PRODUCTION) {
+  if (!process.env.FILE_STORAGE_PATH) {
+    throw new Error(
+      "❌ FILE_STORAGE_PATH environment variable is REQUIRED in production. " +
+        "Use absolute paths for production deployments (e.g., /var/www/drms/uploads)",
+    );
+  }
+  STORAGE_PATH = process.env.FILE_STORAGE_PATH;
+  console.log(`📁 File storage (production): ${STORAGE_PATH}`);
+} else {
+  STORAGE_PATH = process.env.FILE_STORAGE_PATH || "./uploads";
+  if (!process.env.FILE_STORAGE_PATH) {
+    console.warn(
+      `⚠️  FILE_STORAGE_PATH not set, using default: ${STORAGE_PATH}`,
+    );
+  } else {
+    console.log(`📁 File storage (development): ${STORAGE_PATH}`);
+  }
+}
+
+// Resolve to absolute path
+STORAGE_PATH = path.resolve(STORAGE_PATH);
+
 const MAX_MB = Number(process.env.FILE_SIZE_LIMIT_MB || 50);
 const MAX_BYTES = MAX_MB * 1024 * 1024;
 const allowedTypes = (process.env.ALLOWED_FILE_TYPES || "")
@@ -23,9 +59,75 @@ const proofAllowedMimes = new Set([
   "image/pjpeg",
 ]);
 
-// ensure directory exists
-if (!fs.existsSync(STORAGE_PATH))
-  fs.mkdirSync(STORAGE_PATH, { recursive: true });
+// ============================================================================
+// DIRECTORY CREATION & PERMISSION VERIFICATION
+// ============================================================================
+
+/**
+ * Verify file storage directory exists and has correct permissions
+ * @throws {Error} If directory cannot be created or lacks permissions
+ */
+export function verifyFileStorage() {
+  try {
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(STORAGE_PATH)) {
+      console.log(`📁 Creating file storage directory: ${STORAGE_PATH}`);
+      fs.mkdirSync(STORAGE_PATH, { recursive: true, mode: 0o755 });
+    }
+
+    // Verify read permission
+    try {
+      fs.accessSync(STORAGE_PATH, fs.constants.R_OK);
+    } catch (err) {
+      throw new Error(
+        `❌ No READ permission for file storage: ${STORAGE_PATH}\n` +
+          `   Run: chmod +r ${STORAGE_PATH}`,
+      );
+    }
+
+    // Verify write permission
+    try {
+      fs.accessSync(STORAGE_PATH, fs.constants.W_OK);
+    } catch (err) {
+      throw new Error(
+        `❌ No WRITE permission for file storage: ${STORAGE_PATH}\n` +
+          `   Run: chmod +w ${STORAGE_PATH}`,
+      );
+    }
+
+    // Test write by creating a temporary file
+    const testFile = path.join(STORAGE_PATH, `.write-test-${Date.now()}`);
+    try {
+      fs.writeFileSync(testFile, "test", "utf8");
+      fs.unlinkSync(testFile);
+    } catch (err) {
+      throw new Error(
+        `❌ Cannot write to file storage directory: ${STORAGE_PATH}\n` +
+          `   Error: ${err.message}\n` +
+          `   Ensure the directory exists and has write permissions.`,
+      );
+    }
+
+    console.log(`✅ File storage verified: ${STORAGE_PATH}`);
+    console.log(`   Read/Write: OK`);
+    console.log(`   Max file size: ${MAX_MB} MB`);
+
+    return true;
+  } catch (err) {
+    if (IS_PRODUCTION) {
+      // In production, fail fast
+      throw err;
+    } else {
+      // In development, warn but allow startup
+      console.error(err.message);
+      console.warn("⚠️  File uploads may not work correctly.");
+      return false;
+    }
+  }
+}
+
+// Verify on module load
+verifyFileStorage();
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -40,8 +142,20 @@ const storage = multer.diskStorage({
 });
 
 function fileFilter(req, file, cb) {
-  // Always allow standard proof types for the 'proof' field (achievements)
+  // Allow all file types for faculty participation proof field
   if (file.fieldname === "proof") {
+    // Check if this is a faculty participation request
+    // If the route starts with /faculty-participations, allow all file types
+    if (req.baseUrl && req.baseUrl.includes("faculty-participations")) {
+      return cb(null, true); // Allow all file types for faculty participation
+    }
+
+    // Allow all file types for achievements
+    if (req.baseUrl && req.baseUrl.includes("achievements")) {
+      return cb(null, true); // Allow all file types for achievements
+    }
+
+    // Otherwise, for other proof fields, restrict to PDFs and images only
     const name = file.originalname || "";
     const ext = name.toLowerCase().split(".").pop();
     const extOk = ["pdf", "png", "jpg", "jpeg"].includes(ext);
@@ -49,15 +163,58 @@ function fileFilter(req, file, cb) {
     return cb(new Error("Invalid proof file type"), false);
   }
 
-  // Restrict project attachments to ZIP only for field 'files'
+  // Allow all file types for certificate field in achievements
+  if (file.fieldname === "certificate") {
+    if (req.baseUrl && req.baseUrl.includes("achievements")) {
+      return cb(null, true); // Allow all file types for achievements
+    }
+    return cb(new Error("Invalid certificate file type"), false);
+  }
+
+  // Allow all file types for event_photos field in achievements
+  if (file.fieldname === "event_photos") {
+    if (req.baseUrl && req.baseUrl.includes("achievements")) {
+      return cb(null, true); // Allow all file types for achievements
+    }
+    return cb(new Error("Invalid event photo file type"), false);
+  }
+
+  // 'files' is used by projects to upload ZIPs; scope ZIP-only rule to project routes
   if (file.fieldname === "files") {
+    const isProjectRoute = (req.baseUrl || "").includes("projects");
+    if (isProjectRoute) {
+      const name = file.originalname || "";
+      const ext = path.extname(name).toLowerCase();
+      const isZipMime =
+        file.mimetype === "application/zip" ||
+        file.mimetype === "application/x-zip-compressed";
+      if (isZipMime || ext === ".zip") return cb(null, true);
+      return cb(
+        new Error("Only .zip files are allowed for attachments"),
+        false,
+      );
+    }
+    // For non-project routes (e.g., events), allow by default; rely on component accept
+    return cb(null, true);
+  }
+
+  // Allow standard image types for 'thumbnail' field (event thumbnails)
+  if (file.fieldname === "thumbnail") {
     const name = file.originalname || "";
-    const ext = path.extname(name).toLowerCase();
-    const isZipMime =
-      file.mimetype === "application/zip" ||
-      file.mimetype === "application/x-zip-compressed";
-    if (isZipMime || ext === ".zip") return cb(null, true);
-    return cb(new Error("Only .zip files are allowed for attachments"), false);
+    const ext = name.toLowerCase().split(".").pop();
+    const allowedExts = new Set(["png", "jpg", "jpeg", "gif"]);
+    const allowedMimes = new Set([
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/gif",
+      "image/x-png",
+      "image/pjpeg",
+    ]);
+    if (allowedMimes.has(file.mimetype) || allowedExts.has(ext)) {
+      return cb(null, true);
+    }
+    return cb(new Error("Invalid image type for thumbnail"), false);
   }
 
   // Allow CSV/Excel specifically for 'document' field (data uploads)
@@ -74,7 +231,7 @@ function fileFilter(req, file, cb) {
       return cb(null, true);
     return cb(
       new Error("Invalid data file type. Please upload CSV or Excel."),
-      false
+      false,
     );
   }
 
@@ -92,7 +249,7 @@ function fileFilter(req, file, cb) {
       return cb(null, true);
     return cb(
       new Error("Only CSV or Excel files are allowed for student uploads."),
-      false
+      false,
     );
   }
 
@@ -114,6 +271,43 @@ function fileFilter(req, file, cb) {
     return cb(new Error("Invalid image type for avatar"), false);
   }
 
+  // Allow various file types for 'brochure' field (announcements)
+  if (file.fieldname === "brochure") {
+    const name = file.originalname || "";
+    const ext = name.toLowerCase().split(".").pop();
+    const allowedExts = new Set([
+      "pdf",
+      "png",
+      "jpg",
+      "jpeg",
+      "doc",
+      "docx",
+      "ppt",
+      "pptx",
+    ]);
+    const allowedMimes = new Set([
+      "application/pdf",
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/x-png",
+      "image/pjpeg",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    ]);
+    if (allowedMimes.has(file.mimetype) || allowedExts.has(ext)) {
+      return cb(null, true);
+    }
+    return cb(
+      new Error(
+        "Invalid brochure file type. Please upload PDF, images, or Office documents",
+      ),
+      false,
+    );
+  }
+
   // Otherwise respect global allowedTypes if provided; allow all if empty
   if (!allowedTypes.length) return cb(null, true);
   if (allowedTypes.includes(file.mimetype)) return cb(null, true);
@@ -124,4 +318,16 @@ export const upload = multer({
   storage,
   limits: { fileSize: MAX_BYTES },
   fileFilter,
+});
+
+// Special upload for faculty participation with 15MB limit and all file types
+export const uploadFacultyProof = multer({
+  storage,
+  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB limit
+  fileFilter: (req, file, cb) => {
+    if (file.fieldname === "proof") {
+      return cb(null, true); // Allow all file types
+    }
+    return cb(null, true); // Allow all other fields as well for flexibility
+  },
 });

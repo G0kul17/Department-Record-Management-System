@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import apiClient from "../api/axiosClient";
 import { useAuth } from "../hooks/useAuth";
 import { formatDisplayName } from "../utils/displayName";
+import Toast from "./Toast";
 
 export default function NotificationsBell() {
   const { user } = useAuth();
@@ -11,7 +12,16 @@ export default function NotificationsBell() {
   const panelRef = useRef(null);
 
   const lastSeenKey = "notificationsLastSeen";
+  const lastToastKey = "notificationsLastToast";
+  const lastAnnouncementToastKey = "announcementsLastToast";
   const [unread, setUnread] = useState(0);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState("info");
+
+  function showToast(message, type = "info") {
+    setToastMessage(message || "");
+    setToastType(type);
+  }
 
   function timeAgo(ts) {
     const now = Date.now();
@@ -57,12 +67,13 @@ export default function NotificationsBell() {
         const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
 
         let maxTs = 0;
+        let announcements = [];
         if (role === "staff" || role === "admin") {
           // For staff/admin, new submissions awaiting approval
           const [pendingProj, pendingAch] = await Promise.all([
             apiClient.get(`/projects?verified=false&limit=20`),
             apiClient.get(
-              `/achievements?verified=false&status=pending&limit=50`
+              `/achievements?verified=false&status=pending&limit=50`,
             ),
           ]);
           const toCreatedTs = (item) => {
@@ -79,22 +90,132 @@ export default function NotificationsBell() {
           const [myProj, myAch] = await Promise.all([
             apiClient.get(`/projects?limit=20&mine=true`),
             apiClient.get(
-              `/achievements?limit=50${user?.id ? `&user_id=${user.id}` : ""}`
+              `/achievements?limit=50${user?.id ? `&user_id=${user.id}` : ""}`,
             ),
           ]);
           const toVerifiedTs = (item) => {
             const t = new Date(item?.verified_at);
             return isNaN(t.getTime()) ? 0 : t.getTime();
           };
-          const approvedMine = [
-            ...(myProj.projects || []).filter(
-              (p) => (p.verification_status || "").toLowerCase() === "approved"
-            ),
-            ...(myAch.achievements || []).filter(
-              (a) => (a.verification_status || "").toLowerCase() === "approved"
-            ),
+          const approvedProjects = (myProj.projects || []).filter(
+            (p) => (p.verification_status || "").toLowerCase() === "approved",
+          );
+          const rejectedProjects = (myProj.projects || []).filter(
+            (p) => (p.verification_status || "").toLowerCase() === "rejected",
+          );
+          const approvedAchievements = (myAch.achievements || []).filter(
+            (a) => (a.verification_status || "").toLowerCase() === "approved",
+          );
+          const rejectedAchievements = (myAch.achievements || []).filter(
+            (a) => (a.verification_status || "").toLowerCase() === "rejected",
+          );
+          const reviewedMine = [
+            ...approvedProjects,
+            ...rejectedProjects,
+            ...approvedAchievements,
+            ...rejectedAchievements,
           ];
-          maxTs = Math.max(0, ...approvedMine.map(toVerifiedTs));
+          maxTs = Math.max(0, ...reviewedMine.map(toVerifiedTs));
+
+          const lastToast = Number(localStorage.getItem(lastToastKey) || 0);
+          const suggestions = [
+            ...approvedProjects.map((p) => ({
+              kind: "project",
+              status: "approved",
+              title: p.title,
+              comment: p.verification_comment || "",
+              by:
+                formatDisplayName({
+                  fullName: p.verified_by_fullname,
+                  email: p.verified_by_email,
+                }) || "Staff",
+              ts: toVerifiedTs(p),
+            })),
+            ...rejectedProjects.map((p) => ({
+              kind: "project",
+              status: "rejected",
+              title: p.title,
+              comment: p.verification_comment || "",
+              by:
+                formatDisplayName({
+                  fullName: p.verified_by_fullname,
+                  email: p.verified_by_email,
+                }) || "Staff",
+              ts: toVerifiedTs(p),
+            })),
+            ...approvedAchievements.map((a) => ({
+              kind: "achievement",
+              status: "approved",
+              title: a.title,
+              comment: a.verification_comment || "",
+              by:
+                formatDisplayName({
+                  fullName: a.verified_by_fullname,
+                  email: a.verified_by_email,
+                }) || "Staff",
+              ts: toVerifiedTs(a),
+            })),
+            ...rejectedAchievements.map((a) => ({
+              kind: "achievement",
+              status: "rejected",
+              title: a.title,
+              comment: a.verification_comment || "",
+              by:
+                formatDisplayName({
+                  fullName: a.verified_by_fullname,
+                  email: a.verified_by_email,
+                }) || "Staff",
+              ts: toVerifiedTs(a),
+            })),
+          ].filter((item) => item.comment && item.comment.trim());
+
+          if (suggestions.length) {
+            const latest = suggestions.sort((a, b) => b.ts - a.ts)[0];
+            if (latest.ts > lastToast && latest.ts >= weekAgo) {
+              const header = `Suggestion from ${latest.by} on your ${latest.kind} "${latest.title}" (${latest.status})`;
+              const msg = `${header}\n${latest.comment}`;
+              showToast(msg, "info");
+              localStorage.setItem(lastToastKey, String(latest.ts));
+            }
+          }
+        }
+
+        try {
+          const ann = await apiClient.get(`/announcements/mine?limit=20`);
+          announcements = ann.announcements || [];
+        } catch {
+          announcements = [];
+        }
+
+        if (announcements.length) {
+          const annTs = announcements.map((a) => {
+            const t = new Date(a?.delivered_at || a?.created_at);
+            return isNaN(t.getTime()) ? 0 : t.getTime();
+          });
+          const latestAnnTs = Math.max(0, ...annTs);
+          maxTs = Math.max(maxTs, latestAnnTs);
+
+          const lastAnnToast = Number(
+            localStorage.getItem(lastAnnouncementToastKey) || 0,
+          );
+          const latestAnn = announcements
+            .map((a) => ({
+              ...a,
+              ts: new Date(a?.delivered_at || a?.created_at).getTime(),
+            }))
+            .filter((a) => !isNaN(a.ts))
+            .sort((a, b) => b.ts - a.ts)[0];
+          if (latestAnn && latestAnn.ts > lastAnnToast && latestAnn.ts >= weekAgo) {
+            const sender =
+              formatDisplayName({
+                fullName: latestAnn.created_by_name,
+                email: latestAnn.created_by_email,
+              }) || "Staff";
+            const header = `Announcement from ${sender}: ${latestAnn.title}`;
+            const msg = `${header}\n${latestAnn.message || ""}`;
+            showToast(msg, "info");
+            localStorage.setItem(lastAnnouncementToastKey, String(latestAnn.ts));
+          }
         }
 
         setUnread(maxTs > lastSeen && maxTs >= weekAgo ? 1 : 0);
@@ -136,7 +257,6 @@ export default function NotificationsBell() {
     try {
       const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
       const role = (user?.role || "").toLowerCase();
-      const me = (user?.email || "").toLowerCase();
       const normalizeDate = (d) => {
         const t = new Date(d);
         return isNaN(t.getTime()) ? Date.now() : t.getTime();
@@ -148,7 +268,7 @@ export default function NotificationsBell() {
         const [pendingProj, pendingAch] = await Promise.all([
           apiClient.get(`/projects?verified=false&limit=50`),
           apiClient.get(
-            `/achievements?verified=false&status=pending&limit=200`
+            `/achievements?verified=false&status=pending&limit=200`,
           ),
         ]);
         const projList = pendingProj.projects || [];
@@ -200,23 +320,28 @@ export default function NotificationsBell() {
         const [myProj, myAch] = await Promise.all([
           apiClient.get(`/projects?limit=20&mine=true`),
           apiClient.get(
-            `/achievements?limit=50${user?.id ? `&user_id=${user.id}` : ""}`
+            `/achievements?limit=50${user?.id ? `&user_id=${user.id}` : ""}`,
           ),
         ]);
         for (const p of myProj.projects || []) {
-          if ((p.verification_status || "").toLowerCase() === "approved") {
+          const status = (p.verification_status || "").toLowerCase();
+          if (status === "approved" || status === "rejected") {
             const ts = normalizeDate(
-              p.verified_at || p.updated_at || p.created_at
+              p.verified_at || p.updated_at || p.created_at,
             );
             if (ts >= weekAgo) {
               items.push({
-                type: "approval",
-                title: `Your project "${p.title}" was approved`,
+                type: status === "approved" ? "approval" : "rejection",
+                title:
+                  status === "approved"
+                    ? `Your project "${p.title}" was approved`
+                    : `Your project "${p.title}" was rejected`,
+                comment: p.verification_comment || "",
                 by:
                   formatDisplayName({
                     fullName: p.verified_by_fullname,
                     email: p.verified_by_email,
-                  }) || "Approved",
+                  }) || (status === "approved" ? "Approved" : "Rejected"),
                 created_at_ts: ts,
                 href: `/projects/${p.id}`,
               });
@@ -224,25 +349,60 @@ export default function NotificationsBell() {
           }
         }
         for (const a of myAch.achievements || []) {
-          if ((a.verification_status || "").toLowerCase() === "approved") {
+          const status = (a.verification_status || "").toLowerCase();
+          if (status === "approved" || status === "rejected") {
             const ts = normalizeDate(
-              a.verified_at || a.updated_at || a.created_at
+              a.verified_at || a.updated_at || a.created_at,
             );
             if (ts >= weekAgo) {
               items.push({
-                type: "approval",
-                title: `Your achievement "${a.title}" was approved`,
+                type: status === "approved" ? "approval" : "rejection",
+                title:
+                  status === "approved"
+                    ? `Your achievement "${a.title}" was approved`
+                    : `Your achievement "${a.title}" was rejected`,
+                comment: a.verification_comment || "",
                 by:
                   formatDisplayName({
                     fullName: a.verified_by_fullname,
                     email: a.verified_by_email,
-                  }) || "Approved",
+                  }) || (status === "approved" ? "Approved" : "Rejected"),
                 created_at_ts: ts,
                 href: `/achievements/${a.id}`,
               });
             }
           }
         }
+      }
+
+      try {
+        const ann = await apiClient.get(`/announcements/mine?limit=50`);
+        const baseUrl = apiClient.baseURL.replace(/\/api$/, "");
+        for (const a of ann.announcements || []) {
+          const ts = normalizeDate(a.delivered_at || a.created_at);
+          if (ts >= weekAgo) {
+            const sender =
+              formatDisplayName({
+                fullName: a.created_by_name,
+                email: a.created_by_email,
+              }) || "Staff";
+            const brochureHref = a.brochure_filename
+              ? `${baseUrl}/uploads/${a.brochure_filename}`
+              : "";
+            items.push({
+              type: "announcement",
+              title: a.title,
+              description: a.description || "",
+              message: a.message || "",
+              by: sender,
+              created_at_ts: ts,
+              href: brochureHref,
+              brochure_name: a.brochure_name || "",
+            });
+          }
+        }
+      } catch (e) {
+        // ignore announcements failure
       }
 
       // Always include recent public events
@@ -293,7 +453,7 @@ export default function NotificationsBell() {
 
       {open && (
         <div className="absolute right-0 z-10 mt-2 w-80 rounded-xl border-2 border-[#87CEEB] bg-white shadow">
-          <div className="border-b border-[#87CEEB]/40 p-3 text-sm font-semibold">
+          <div className="border-b border-[#87CEEB]/40 p-3 text-sm font-semibold text-black">
             Notifications
           </div>
           <div className="p-2 space-y-1">
@@ -302,51 +462,87 @@ export default function NotificationsBell() {
             ) : items.length === 0 ? (
               <div className="text-sm text-slate-600 p-3">No notifications</div>
             ) : (
-              items.map((n, idx) => (
-                <a
-                  key={idx}
-                  href={n.href}
-                  className="block rounded-md px-3 py-2 hover:bg-slate-100"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="text-sm text-slate-800 pr-3">
-                      {n.type === "event" ? (
-                        <span>
-                          Event: <span className="font-medium">{n.title}</span>
-                        </span>
-                      ) : n.type === "project" ? (
-                        <span>
-                          Project:{" "}
+              items.map((n, idx) => {
+                const Wrapper = n.href ? "a" : "div";
+                const wrapperProps = n.href ? { href: n.href } : {};
+                return (
+                  <Wrapper
+                    key={idx}
+                    {...wrapperProps}
+                    className="block rounded-md px-3 py-2 hover:bg-slate-100"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="text-sm text-slate-800 pr-3">
+                        {n.type === "event" ? (
+                          <span>
+                            Event:{" "}
+                            <span className="font-medium">{n.title}</span>
+                          </span>
+                        ) : n.type === "project" ? (
+                          <span>
+                            Project:{" "}
+                            <span className="font-medium">{n.title}</span>
+                          </span>
+                        ) : n.type === "achievement" ? (
+                          <span>
+                            Achievement:{" "}
+                            <span className="font-medium">{n.title}</span>
+                          </span>
+                        ) : n.type === "pending" ? (
+                          <span>
+                            <span className="font-medium">{n.title}</span>
+                          </span>
+                        ) : n.type === "approval" || n.type === "rejection" ? (
+                          <span>
+                            <span className="font-medium">{n.title}</span>
+                          </span>
+                        ) : n.type === "announcement" ? (
+                          <span>
+                            Announcement:{" "}
+                            <span className="font-medium">{n.title}</span>
+                          </span>
+                        ) : (
                           <span className="font-medium">{n.title}</span>
-                        </span>
-                      ) : n.type === "achievement" ? (
-                        <span>
-                          Achievement:{" "}
-                          <span className="font-medium">{n.title}</span>
-                        </span>
-                      ) : n.type === "pending" ? (
-                        <span>
-                          <span className="font-medium">{n.title}</span>
-                        </span>
-                      ) : n.type === "approval" ? (
-                        <span>
-                          <span className="font-medium">{n.title}</span>
-                        </span>
-                      ) : (
-                        <span className="font-medium">{n.title}</span>
-                      )}
-                      <div className="text-xs text-slate-500">{n.by || ""}</div>
+                        )}
+                        <div className="text-xs text-slate-500">{n.by || ""}</div>
+                        {n.description && n.type === "announcement" && (
+                          <div className="mt-1 text-xs text-slate-600">
+                            {n.description}
+                          </div>
+                        )}
+                        {n.message && n.type === "announcement" && (
+                          <div className="mt-1 text-xs text-slate-600">
+                            {n.message}
+                          </div>
+                        )}
+                        {n.comment && (
+                          <div className="mt-1 text-xs text-slate-600">
+                            Suggestion: {n.comment}
+                          </div>
+                        )}
+                        {n.type === "announcement" && n.href && (
+                          <div className="mt-1 text-xs text-blue-600">
+                            {n.brochure_name ? "Brochure: " : "Brochure"}
+                            {n.brochure_name || "Download"}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-xs text-slate-500 whitespace-nowrap">
+                        {timeAgo(n.created_at_ts)}
+                      </div>
                     </div>
-                    <div className="text-xs text-slate-500 whitespace-nowrap">
-                      {timeAgo(n.created_at_ts)}
-                    </div>
-                  </div>
-                </a>
-              ))
+                  </Wrapper>
+                );
+              })
             )}
           </div>
         </div>
       )}
+      <Toast
+        message={toastMessage}
+        type={toastType}
+        onClose={() => setToastMessage("")}
+      />
     </div>
   );
 }

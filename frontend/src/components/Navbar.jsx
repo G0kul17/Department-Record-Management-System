@@ -29,14 +29,14 @@ const Navbar = () => {
         user?.github_url,
       ];
       const filled = fields.filter(
-        (v) => typeof v === "string" && v.trim()
+        (v) => typeof v === "string" && v.trim(),
       ).length;
       return Math.round((filled / fields.length) * 100);
     }
     // For staff/admin, use existing logic
     const fields = [user?.fullName, user?.email, user?.phone, user?.rollNumber];
     const filled = fields.filter(
-      (v) => typeof v === "string" && v.trim()
+      (v) => typeof v === "string" && v.trim(),
     ).length;
     return Math.round((filled / fields.length) * 100);
   })();
@@ -50,7 +50,8 @@ const Navbar = () => {
 
   function goToDashboard() {
     if (user.role === "admin") nav("/admin");
-    else if (user.role === "staff") nav("/"); // Staff should see Home
+    else if (user.role === "staff")
+      nav("/"); // Staff should see Home
     else if (user.role === "student") nav("/student"); // Students go to Student Dashboard
   }
 
@@ -80,12 +81,195 @@ const Navbar = () => {
               </svg>
             </span>
             <span className="text-[15px] font-semibold tracking-tight">
-              DEPARTMENT RECORDS MANAGEMENT SYSTEM
+              DRMS
             </span>
           </Link>
 
-          {/* Center nav links removed per spec (hide dashboard/achievements/projects/events) */}
-          <div className="hidden md:flex items-center gap-4" />
+          {/* Admin Navigation Links */}
+          {token && user?.role === "admin" && (
+            <div className="hidden md:flex items-center gap-6">
+              <button
+                onClick={() => {
+                  nav("/admin");
+                  setTimeout(() => {
+                    const element = document.getElementById("events");
+                    element?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }, 100);
+                }}
+                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
+              >
+                Events
+              </button>
+              <button
+                onClick={() => {
+                  nav("/admin");
+                  setTimeout(() => {
+                    const element = document.getElementById("projects");
+                    element?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }, 100);
+                }}
+                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
+              >
+                Projects
+              </button>
+              <button
+                onClick={() => {
+                  nav("/admin");
+                  setTimeout(() => {
+                    const element = document.getElementById("achievements");
+                    element?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }, 100);
+                }}
+                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
+              >
+                Achievements
+              </button>
+              <button
+                onClick={() => {
+                  nav("/admin");
+                  setTimeout(() => {
+                    const element = document.getElementById("visualization");
+                    element?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }, 100);
+                }}
+                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
+              >
+                Visualization
+              </button>
+              <button
+                onClick={() => nav("/notifications")}
+                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
+              >
+                Notifications
+              </button>
+            </div>
+          )}
+
+          {/* Student Navigation Links */}
+          {token && user?.role === "student" && (
+            <div className="hidden md:flex items-center gap-6">
+              <button
+                onClick={() => {
+                  nav("/");
+                  setTimeout(() => {
+                    const element = document.getElementById("events");
+                    element?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }, 100);
+                }}
+                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
+              >
+                Events
+              </button>
+              <button
+                onClick={() => {
+                  nav("/");
+                  setTimeout(() => {
+                    const element = document.getElementById("projects");
+                    element?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }, 100);
+                }}
+                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
+              >
+                Projects
+              </button>
+              <button
+                onClick={() => {
+                  nav("/");
+                  setTimeout(() => {
+                    const element = document.getElementById("achievements");
+                    element?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }, 100);
+                }}
+                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
+              >
+                Achievements
+              </button>
+              <button
+                onClick={() => nav("/notifications")}
+                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
+              >
+                Notifications
+              </button>
+            </div>
+          )}
+
+          {/* Staff Navigation Links */}
+          {token && user?.role === "staff" && (
+            <div className="hidden md:flex items-center gap-6">
+              <button
+                onClick={() => {
+                  nav("/");
+                  setTimeout(() => {
+                    const element = document.getElementById("events");
+                    element?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }, 100);
+                }}
+                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
+              >
+                Events
+              </button>
+              <button
+                onClick={() => {
+                  nav("/");
+                  setTimeout(() => {
+                    const element = document.getElementById("projects");
+                    element?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }, 100);
+                }}
+                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
+              >
+                Projects
+              </button>
+              <button
+                onClick={() => {
+                  nav("/");
+                  setTimeout(() => {
+                    const element = document.getElementById("achievements");
+                    element?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }, 100);
+                }}
+                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
+              >
+                Achievements
+              </button>
+              <button
+                onClick={() => nav("/notifications")}
+                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
+              >
+                Notifications
+              </button>
+            </div>
+          )}
 
           <div className="flex items-center gap-4">
             {token ? (
@@ -184,7 +368,7 @@ const Navbar = () => {
                 <Link
                   to="/profile"
                   onClick={() => setSidebarOpen(false)}
-                  className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-slate-700 hover:bg-slate-100"
+                  className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-slate-700 hover:bg-slate-100 outline-none focus:outline-none focus:ring-0 border-0"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -205,9 +389,30 @@ const Navbar = () => {
                   </svg>
                   <span>Edit Profile</span>
                 </Link>
+                <Link
+                  to="/notifications"
+                  onClick={() => setSidebarOpen(false)}
+                  className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-slate-700 hover:bg-slate-100 outline-none focus:outline-none focus:ring-0 border-0"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className="h-5 w-5"
+                  >
+                    <path
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0018 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <span>Notifications</span>
+                </Link>
                 <button
                   type="button"
-                  className="mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-red-600 hover:bg-red-50"
+                  className="mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-left bg-red-600 text-white hover:bg-red-700 active:bg-red-800 outline-none focus:outline-none focus:ring-0 border-0"
                   onClick={() => {
                     setSidebarOpen(false);
                     handleLogout();
@@ -217,7 +422,7 @@ const Navbar = () => {
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
                     fill="none"
-                    className="h-5 w-5"
+                    className="h-5 w-5 text-white"
                   >
                     <path
                       d="M10 17l5-5-5-5"
@@ -239,12 +444,12 @@ const Navbar = () => {
                       strokeLinecap="round"
                     />
                   </svg>
-                  <span>Logout</span>
+                  <span className="font-semibold">Logout</span>
                 </button>
               </div>
             </div>
           </>,
-          document.body
+          document.body,
         )}
       <AvatarPicker
         open={avatarModalOpen}

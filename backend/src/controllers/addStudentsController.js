@@ -24,9 +24,6 @@ const parseExcel = (filePath) => {
   return xlsx.utils.sheet_to_json(sheet, { raw: false, defval: "" });
 };
 
-const studentEmailRegex = /^[a-z]+[0-9]{2}[a-z]+@sonatech\.ac\.in$/i;
-const contactRegex = /^[0-9]{10}$/;
-
 // Helper to normalize header keys
 const normalizeKey = (key) => {
   return String(key || "")

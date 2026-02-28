@@ -84,13 +84,13 @@ export async function verifySession(sessionToken) {
  */
 export async function extendSession(sessionToken) {
   try {
-    const newLastAccessed = new Date();
     const { rows } = await pool.query(
-      `UPDATE user_sessions 
-       SET last_accessed_at = $1
-       WHERE session_token = $2 AND is_active = true AND expires_at > CURRENT_TIMESTAMP
+      `UPDATE user_sessions
+       SET last_accessed_at = CURRENT_TIMESTAMP,
+           expires_at = CURRENT_TIMESTAMP + INTERVAL '90 days'
+       WHERE session_token = $1 AND is_active = true AND expires_at > CURRENT_TIMESTAMP
        RETURNING id, user_id, session_token, created_at, expires_at, last_accessed_at, is_active`,
-      [newLastAccessed, sessionToken]
+      [sessionToken]
     );
 
     if (rows.length === 0) {

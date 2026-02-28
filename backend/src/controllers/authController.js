@@ -108,9 +108,12 @@ export async function register(req, res) {
       }
     }
 
-    // generate OTP and save
+    // generate OTP and save (clear any existing OTPs for this email first)
     const otp = generateOTP();
     const expiresAt = getExpiryDate(OTP_EXPIRY_MIN);
+    await pool.query("DELETE FROM otp_verifications WHERE email=$1", [
+      emailLower,
+    ]);
     await pool.query(
       "INSERT INTO otp_verifications (email, otp_code, expires_at) VALUES ($1, $2, $3)",
       [emailLower, otp, expiresAt],
@@ -229,6 +232,9 @@ export async function login(req, res) {
       // User hasn't verified account yet: generate a fresh verification OTP and return it
       const otp = generateOTP();
       const expiresAt = getExpiryDate(OTP_EXPIRY_MIN);
+      await pool.query("DELETE FROM otp_verifications WHERE email=$1", [
+        emailLower,
+      ]);
       await pool.query(
         "INSERT INTO otp_verifications (email, otp_code, expires_at) VALUES ($1, $2, $3)",
         [emailLower, otp, expiresAt],
@@ -302,6 +308,9 @@ export async function login(req, res) {
     // No valid session, generate OTP for login (two-step)
     const otp = generateOTP();
     const expiresAt = getExpiryDate(OTP_EXPIRY_MIN);
+    await pool.query("DELETE FROM otp_verifications WHERE email=$1", [
+      emailLower,
+    ]);
     await pool.query(
       "INSERT INTO otp_verifications (email, otp_code, expires_at) VALUES ($1, $2, $3)",
       [emailLower, otp, expiresAt],
@@ -428,6 +437,9 @@ export async function initiateForgotPassword(req, res) {
     if (rows.length) {
       const otp = generateOTP();
       const expiresAt = getExpiryDate(OTP_EXPIRY_MIN);
+      await pool.query("DELETE FROM otp_verifications WHERE email=$1", [
+        emailLower,
+      ]);
       await pool.query(
         "INSERT INTO otp_verifications (email, otp_code, expires_at) VALUES ($1, $2, $3)",
         [emailLower, otp, expiresAt]

@@ -90,6 +90,9 @@ export async function createProject(req, res) {
 
     // Enforce mandatory SRS on creation
     if (srsFiles.length === 0) {
+      for (const f of otherFiles) {
+        try { fs.unlinkSync(path.resolve(process.env.FILE_STORAGE_PATH || "./uploads", f.filename)); } catch {}
+      }
       return res
         .status(400)
         .json({ message: "SRS document (PDF) is required." });
@@ -97,23 +100,32 @@ export async function createProject(req, res) {
 
     // Require GitHub URL and perform a basic validation (must be a GitHub link)
     if (!github_url || typeof github_url !== "string" || !github_url.trim()) {
+      for (const f of files) {
+        try { fs.unlinkSync(path.resolve(process.env.FILE_STORAGE_PATH || "./uploads", f.filename)); } catch {}
+      }
       return res.status(400).json({ message: "github_url is required" });
     }
     const gh = github_url.trim();
     const githubPattern = /^https?:\/\/(www\.)?github\.com\/.+/i;
     if (!githubPattern.test(gh)) {
+      for (const f of files) {
+        try { fs.unlinkSync(path.resolve(process.env.FILE_STORAGE_PATH || "./uploads", f.filename)); } catch {}
+      }
       return res
         .status(400)
         .json({ message: "github_url must be a valid GitHub link" });
     }
 
-    // Check if GitHub URL already exists (prevent duplicate team submissions)
+    // Check if GitHub URL already exists (prevent duplicate team submissions) — before any DB writes
     if (gh) {
       const { rows: githubDup } = await pool.query(
         "SELECT id, title, team_member_names, created_by FROM projects WHERE LOWER(TRIM(github_url)) = LOWER(TRIM($1))",
         [gh],
       );
       if (githubDup.length) {
+        for (const f of files) {
+          try { fs.unlinkSync(path.resolve(process.env.FILE_STORAGE_PATH || "./uploads", f.filename)); } catch {}
+        }
         const existingProject = githubDup[0];
         return res.status(409).json({
           message:
@@ -127,15 +139,19 @@ export async function createProject(req, res) {
       }
     }
 
-    // duplicate check (title + mentor_name + year)
+    // duplicate check (title + mentor_name + year) — before any DB writes
     const { rows: dup } = await pool.query(
       "SELECT id FROM projects WHERE title=$1 AND mentor_name=$2 AND academic_year=$3",
       [title.trim(), mentor_name.trim(), academic_year || null],
     );
-    if (dup.length)
+    if (dup.length) {
+      for (const f of files) {
+        try { fs.unlinkSync(path.resolve(process.env.FILE_STORAGE_PATH || "./uploads", f.filename)); } catch {}
+      }
       return res.status(409).json({
         message: "Project with same title, mentor and year already exists",
       });
+    }
 
     // If staff/admin creator, auto-approve the project
     const isStaff = req.user?.role === "staff" || req.user?.role === "admin";

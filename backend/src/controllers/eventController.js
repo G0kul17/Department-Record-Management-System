@@ -125,6 +125,8 @@ export async function createEvent(req, res) {
 export async function updateEvent(req, res) {
   try {
     const id = Number(req.params.id);
+    const userId = req.user.id;
+    const userRole = req.user.role;
     const { title, description, venue, start_date, end_date, event_url } =
       req.body;
     const q = `UPDATE events
@@ -135,7 +137,7 @@ export async function updateEvent(req, res) {
                    end_date = COALESCE($5, end_date),
                    event_url = COALESCE($6, event_url),
                    updated_at = NOW()
-               WHERE id=$7 RETURNING *`;
+               WHERE id=$7 AND (organizer_id=$8 OR $9='admin') RETURNING *`;
     const { rows } = await pool.query(q, [
       title,
       description,
@@ -144,9 +146,18 @@ export async function updateEvent(req, res) {
       end_date,
       event_url,
       id,
+      userId,
+      userRole,
     ]);
-    if (!rows.length)
-      return res.status(404).json({ message: "Event not found" });
+    if (!rows.length) {
+      const { rows: exists } = await pool.query(
+        "SELECT id FROM events WHERE id=$1",
+        [id]
+      );
+      if (!exists.length)
+        return res.status(404).json({ message: "Event not found" });
+      return res.status(403).json({ message: "Forbidden: you do not own this event" });
+    }
     return res.json({ message: "Event updated", event: rows[0] });
   } catch (err) {
     console.error(err);

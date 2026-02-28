@@ -486,9 +486,15 @@ export async function rejectAchievement(req, res) {
 export async function getAchievementsCount(req, res) {
   try {
     const { verified } = req.query;
-    const { rows } = await pool.query(
-      "SELECT COUNT(*)::int AS count FROM achievements WHERE verified = true OR verification_status = 'approved'",
-    );
+    let sql = "SELECT COUNT(*)::int AS count FROM achievements";
+    const params = [];
+
+    if (verified !== undefined) {
+      params.push(verified === "true");
+      sql += ` WHERE verified = $1`;
+    }
+
+    const { rows } = await pool.query(sql, params);
     return res.json({ count: rows[0]?.count ?? 0 });
   } catch (err) {
     console.error(err);

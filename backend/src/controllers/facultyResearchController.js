@@ -175,7 +175,20 @@ export const updateResearch = async (req, res) => {
 export const deleteResearch = async (req, res) => {
   try {
     const id = Number(req.params.id);
-    await pool.query("DELETE FROM faculty_research WHERE id=$1", [id]);
+    const userId = req.user?.id;
+    const userRole = req.user?.role;
+
+    const { rowCount } = await pool.query(
+      "DELETE FROM faculty_research WHERE id=$1 AND (created_by=$2 OR $3='admin')",
+      [id, userId, userRole],
+    );
+
+    if (rowCount === 0) {
+      const { rows } = await pool.query("SELECT id FROM faculty_research WHERE id=$1", [id]);
+      if (!rows.length) return res.status(404).json({ message: "Research record not found" });
+      return res.status(403).json({ message: "Forbidden: you do not own this record" });
+    }
+
     return res.json({ message: "Deleted successfully" });
   } catch (err) {
     console.error(err);

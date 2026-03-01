@@ -169,7 +169,20 @@ export async function updateEvent(req, res) {
 export async function deleteEvent(req, res) {
   try {
     const id = Number(req.params.id);
-    await pool.query("DELETE FROM events WHERE id=$1", [id]);
+    const userId = req.user?.id;
+    const userRole = req.user?.role;
+
+    const { rowCount } = await pool.query(
+      "DELETE FROM events WHERE id=$1 AND (organizer_id=$2 OR $3='admin')",
+      [id, userId, userRole],
+    );
+
+    if (rowCount === 0) {
+      const { rows } = await pool.query("SELECT id FROM events WHERE id=$1", [id]);
+      if (!rows.length) return res.status(404).json({ message: "Event not found" });
+      return res.status(403).json({ message: "Forbidden: you do not own this event" });
+    }
+
     return res.json({ message: "Event deleted" });
   } catch (err) {
     console.error(err);

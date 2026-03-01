@@ -3,6 +3,7 @@ import multer from "multer";
 import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
+import { fileTypeFromFile } from "file-type";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -129,7 +130,104 @@ export function verifyFileStorage() {
 // Verify on module load
 verifyFileStorage();
 
-const storage = multer.diskStorage({
+// ============================================================================
+// CONTENT-BASED FILE VALIDATION (KAN-10)
+// Validates actual file content via magic bytes and byte-pattern scanning.
+// Runs after multer writes the file to disk so the check cannot be bypassed
+// by spoofing the client-declared MIME type or file extension.
+// ============================================================================
+
+// Extensions that enable XSS or server-side execution when served statically
+const BLOCKED_EXTENSIONS = new Set([
+  ".html", ".htm", ".xhtml",
+  ".svg", ".svgz",
+  ".js", ".mjs", ".cjs", ".jsx",
+  ".ts", ".tsx",
+  ".php", ".php3", ".php4", ".php5", ".phtml",
+  ".asp", ".aspx", ".jsp", ".jspx",
+  ".sh", ".bash", ".zsh",
+  ".py", ".rb", ".pl", ".cgi",
+]);
+
+// MIME types detected from magic bytes that are always rejected
+const BLOCKED_DETECTED_MIMES = new Set([
+  "application/x-msdownload",  // Windows PE / EXE
+  "application/x-executable",
+  "application/x-elf",
+  "application/x-sharedlib",
+  "application/x-dex",         // Android DEX bytecode
+]);
+
+// Byte-level patterns at the head of a file that indicate dangerous text content.
+// file-type cannot detect text-based formats (HTML, SVG, PHP) from magic bytes,
+// so we scan the first 512 bytes of every uploaded file.
+const DANGEROUS_BYTE_PATTERNS = [
+  /^<!doctype\s+html/i,
+  /^<html[\s>]/i,
+  /^<script[\s>]/i,
+  /^<\?php/i,
+  /^<svg[\s>]/i,
+];
+
+/**
+ * Returns false if the saved file is dangerous (wrong/spoofed type, XSS risk).
+ * @param {string} filePath - Absolute path to the saved file
+ * @param {string} originalName - Original filename supplied by the client
+ */
+async function isFileSafe(filePath, originalName) {
+  // 1. Reject known-dangerous extensions (text-based formats with no magic bytes)
+  const ext = path.extname(originalName || "").toLowerCase();
+  if (BLOCKED_EXTENSIONS.has(ext)) return false;
+
+  // 2. Read the first 512 bytes and scan for dangerous markup / shebang patterns
+  try {
+    const buf = Buffer.alloc(512);
+    const fd = fs.openSync(filePath, "r");
+    const bytesRead = fs.readSync(fd, buf, 0, 512, 0);
+    fs.closeSync(fd);
+    const header = buf.slice(0, bytesRead).toString("latin1");
+    for (const pattern of DANGEROUS_BYTE_PATTERNS) {
+      if (pattern.test(header)) return false;
+    }
+  } catch {
+    return false; // unreadable file → reject
+  }
+
+  // 3. Check detected MIME from magic bytes for known-dangerous binary formats
+  const result = await fileTypeFromFile(filePath);
+  if (result && BLOCKED_DETECTED_MIMES.has(result.mime)) return false;
+
+  return true;
+}
+
+/**
+ * Wraps multer DiskStorage to run isFileSafe() immediately after each file
+ * is written to disk. Deletes the file and calls back with an error if the
+ * content check fails, so no route handler sees the dangerous file.
+ */
+class SafeDiskStorage {
+  constructor(opts) {
+    this._inner = multer.diskStorage(opts);
+  }
+
+  _handleFile(req, file, cb) {
+    this._inner._handleFile(req, file, async (err, info) => {
+      if (err) return cb(err);
+      const safe = await isFileSafe(info.path, file.originalname).catch(() => false);
+      if (!safe) {
+        fs.unlink(info.path, () => {});
+        return cb(new Error("File type not allowed"));
+      }
+      cb(null, info);
+    });
+  }
+
+  _removeFile(req, file, cb) {
+    this._inner._removeFile(req, file, cb);
+  }
+}
+
+const storage = new SafeDiskStorage({
   destination: (req, file, cb) => {
     // optionally use role/year to create subfolders
     cb(null, STORAGE_PATH);

@@ -533,7 +533,10 @@ export async function getAchievementsLeaderboard(req, res) {
                 COUNT(DISTINCT p.id)::int AS item_count
               FROM users u
               LEFT JOIN projects p ON (
-                (p.created_by = u.id OR LOWER(p.team_member_names) LIKE LOWER('%' || u.full_name || '%'))
+                (p.created_by = u.id OR u.full_name = ANY(
+                  SELECT TRIM(elem)
+                  FROM unnest(string_to_array(p.team_member_names, ',')) AS elem
+                ))
                 AND (p.verified = true OR p.verification_status = 'approved')
               )
               WHERE u.role = $2 AND p.id IS NOT NULL

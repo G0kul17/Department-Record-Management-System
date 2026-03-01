@@ -146,7 +146,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_project_files_one_zip_per_project
 CREATE TABLE IF NOT EXISTS achievements (
   id SERIAL PRIMARY KEY,
   user_id INTEGER,
-  event_id INTEGER REFERENCES events(id) ON DELETE SET NULL,
+  event_id INTEGER, -- FK to events added below after events table is created
   title VARCHAR(500) NOT NULL,
   name VARCHAR(255),
   date DATE,
@@ -245,6 +245,20 @@ CREATE TABLE IF NOT EXISTS events (
 );
 
 CREATE INDEX IF NOT EXISTS idx_events_start ON events(start_date);
+
+-- Add achievements.event_id FK now that events table exists
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'achievements_event_id_fkey'
+      AND conrelid = 'achievements'::regclass
+  ) THEN
+    ALTER TABLE achievements
+      ADD CONSTRAINT achievements_event_id_fkey
+      FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE SET NULL;
+  END IF;
+END $$;
 
 -- ============================================================================
 -- FACULTY PARTICIPATION TABLE

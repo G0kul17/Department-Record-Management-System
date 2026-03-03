@@ -1,10 +1,11 @@
 import ExcelJS from "exceljs";
 import pool from "../config/db.js";
-import path from "path";
-import fs from "fs";
 
 /* =====================================================
    Bulk Data Export Controller
+   KAN-25: export files are streamed directly to the
+   authenticated response and never written to disk,
+   eliminating the unauthenticated /exports static route.
 ===================================================== */
 
 export const bulkDataExport = async (req, res) => {
@@ -133,20 +134,23 @@ export const bulkDataExport = async (req, res) => {
       }
     } catch (err) {
       console.log("staff_uploads table not found, skipping...");
-      // Table doesn't exist, skip it
     }
 
-    /* ================= SAVE FILE ================= */
+    /* ================= STREAM DIRECTLY TO RESPONSE ================= */
+    // The workbook is written straight into the HTTP response stream.
+    // No file is ever saved to disk, so there is no persistent URL to
+    // guess and no cleanup step required.
     const fileName = `department_backup_${Date.now()}.xlsx`;
-    const filePath = path.join("exports", fileName);
-
-    if (!fs.existsSync("exports")) {
-      fs.mkdirSync("exports");
-    }
-
-    await workbook.xlsx.writeFile(filePath);
-
-    res.download(filePath, fileName);
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${fileName}"`
+    );
+    await workbook.xlsx.write(res);
+    res.end();
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Bulk export failed" });
@@ -154,32 +158,11 @@ export const bulkDataExport = async (req, res) => {
 };
 
 /* =====================================================
-   List Exported Files (for staff/admin)
+   List Exported Files
+   KAN-25: exports are no longer persisted to disk, so
+   there are no files to list. Returns an empty array
+   for backward compatibility with existing clients.
 ===================================================== */
 export const listBulkExports = async (req, res) => {
-  try {
-    const dir = path.resolve("exports");
-    if (!fs.existsSync(dir)) {
-      return res.json({ files: [] });
-    }
-    const names = fs.readdirSync(dir).filter((n) => !n.startsWith("."));
-    const files = names
-      .map((name) => {
-        const full = path.join(dir, name);
-        const stat = fs.statSync(full);
-        if (!stat.isFile()) return null;
-        return {
-          name,
-          size: stat.size,
-          modifiedAt: stat.mtimeMs,
-          url: `/exports/${encodeURIComponent(name)}`,
-        };
-      })
-      .filter(Boolean)
-      .sort((a, b) => b.modifiedAt - a.modifiedAt);
-    res.json({ files });
-  } catch (err) {
-    console.error("Failed to list exports:", err);
-    res.status(500).json({ message: "Failed to list exports" });
-  }
+  res.json({ files: [] });
 };

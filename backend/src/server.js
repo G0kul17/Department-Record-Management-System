@@ -126,9 +126,6 @@ app.use("/api/announcements", announcementRoutes);
 const FILE_STORAGE_PATH = process.env.FILE_STORAGE_PATH || "./uploads";
 app.use("/uploads", express.static(path.resolve(FILE_STORAGE_PATH)));
 
-// Serve exported files statically for easy download by staff/admin
-app.use("/exports", express.static(path.resolve("./exports")));
-
 // after app.use('/api/auth', authRoutes);
 app.use("/api/staff", staffRoutes);
 app.use("/api/faculty-participations", facultyParticipationRoutes);

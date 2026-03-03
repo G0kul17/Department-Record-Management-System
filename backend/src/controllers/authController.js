@@ -426,6 +426,55 @@ export async function loginVerifyOTP(req, res) {
   }
 }
 
+/**
+ * Validate a password-reset OTP without consuming it.
+ * Called by the frontend VerifyOtp step so that errors surface there
+ * (clear "Invalid OTP" / "OTP expired") instead of on the final reset screen.
+ * The OTP row is intentionally left in the DB so /auth/reset can consume it.
+ */
+export async function forgotVerifyOTP(req, res) {
+  const { email, otp } = req.body;
+  if (!email || !otp)
+    return res.status(400).json({ message: "Email and OTP required" });
+
+  const emailLower = String(email).trim().toLowerCase();
+  const otpClean = String(otp).trim();
+  try {
+    const { rows } = await pool.query(
+      "SELECT * FROM otp_verifications WHERE email=$1",
+      [emailLower]
+    );
+    if (!rows.length) return res.status(400).json({ message: "Invalid OTP" });
+
+    const otpRow = rows[0];
+
+    if (otpRow.attempts >= 5) {
+      await pool.query("DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+      return res.status(429).json({ message: "Too many failed attempts. Please request a new OTP." });
+    }
+
+    // Expiry before code — expired rows must not be brute-forced
+    if (new Date() > otpRow.expires_at) {
+      await pool.query("DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+      return res.status(400).json({ message: "OTP expired" });
+    }
+
+    if (otpRow.otp_code.trim() !== otpClean) {
+      await pool.query(
+        "UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1",
+        [otpRow.id]
+      );
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    // OTP is valid — leave the row in DB so /auth/reset can consume it
+    return res.json({ message: "OTP verified" });
+  } catch (err) {
+    console.error("/auth/forgot-verify error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
 export async function initiateForgotPassword(req, res) {
   const { email } = req.body;
   if (!email) return res.status(400).json({ message: "Email required" });

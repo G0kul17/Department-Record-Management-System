@@ -5,6 +5,7 @@ import {
   login,
   loginVerifyOTP,
   initiateForgotPassword,
+  forgotVerifyOTP,
   resetPassword,
   getProfile,
   updateProfile,
@@ -32,6 +33,7 @@ router.post("/verify", verifyOTP);
 router.post("/login", login);
 router.post("/login-verify", loginVerifyOTP);
 router.post("/forgot", initiateForgotPassword);
+router.post("/forgot-verify", forgotVerifyOTP);
 router.post("/reset", resetPassword);
 router.post("/logout", requireAuth, logout);
 

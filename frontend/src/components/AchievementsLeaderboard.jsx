@@ -102,7 +102,7 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
               onClick={() => setCategory(opt.key)}
               className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors border ${
                 category === opt.key
-                  ? "bg-[#87CEEB] text-slate-900 border-[#87CEEB]"
+                  ? "bg-blue-600 text-white border-blue-600"
                   : "bg-slate-800 text-slate-200 border-slate-600 hover:border-slate-400"
               }`}
             >

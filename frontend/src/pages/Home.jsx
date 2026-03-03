@@ -180,7 +180,7 @@ export default function Home({ hideAtAGlance = false }) {
               <div className="pt-4 flex justify-center md:justify-start">
                 <Button
                   onClick={goToQuickActions}
-                  className="btn btn-primary px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   <svg
                     width="18"
@@ -551,7 +551,7 @@ export default function Home({ hideAtAGlance = false }) {
 
 function StatCard({ label, value, icon, color, onClick }) {
   const colorClasses = {
-    blue: "bg-primary/10 text-primary",
+    blue: "bg-blue-100 text-blue-600",
     green: "bg-green-100 text-green-600",
     purple: "bg-purple-100 text-purple-600",
     orange: "bg-orange-100 text-orange-600",
@@ -575,7 +575,7 @@ function StatCard({ label, value, icon, color, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="rounded-xl border border-slate-200 p-5 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer text-left"
+      className="rounded-xl border border-slate-200 bg-white p-5 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer text-left"
     >
       <div className="flex items-center justify-between">
         <div>

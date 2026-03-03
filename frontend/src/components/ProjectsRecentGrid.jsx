@@ -113,7 +113,7 @@ export default function ProjectsRecentGrid({ limit = 6 }) {
           <div className="mt-6 flex justify-center">
             <a
               href="/projects/approved"
-              className="inline-flex items-center gap-2 rounded-md bg-[#87CEEB] text-white text-sm font-semibold px-4 py-2 shadow-sm hover:bg-[#5dbce3] focus:outline-none focus:ring-2 focus:ring-[#87CEEB]/50 border border-[#5dbce3]"
+              className="inline-flex items-center gap-2 rounded-md bg-blue-600 text-white text-sm font-semibold px-4 py-2 shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 border border-blue-700"
             >
               View more projects
               <svg

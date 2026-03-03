@@ -55,7 +55,7 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
                   href={href}
                   target={external ? "_blank" : undefined}
                   rel={external ? "noreferrer" : undefined}
-                  className="block rounded-xl border border-sky-200 bg-white p-4 md:p-6 shadow-sm hover:shadow-md transition"
+                  className="block rounded-xl border border-slate-200 bg-white p-4 md:p-6 shadow-sm hover:shadow-md transition"
                 >
                   <h3 className="text-lg md:text-xl font-bold text-slate-900 line-clamp-2">
                     {ev.title}
@@ -70,7 +70,7 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
                       />
                     </div>
                   ) : (
-                    <div className="mt-3 h-40 md:h-56 rounded-lg bg-gradient-to-r from-sky-100 to-indigo-100" />
+                    <div className="mt-3 h-40 md:h-56 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-100" />
                   )}
                 </a>
               </div>
@@ -83,7 +83,7 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
               key={i}
               onClick={() => setIndex(i)}
               className={`w-2 h-2 rounded-full ${
-                i === index ? "bg-sky-500" : "bg-gray-300"
+                i === index ? "bg-blue-600" : "bg-slate-300"
               }`}
               aria-label={`Show event ${i + 1}`}
             />

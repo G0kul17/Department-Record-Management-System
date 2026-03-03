@@ -126,9 +126,6 @@ export async function register(req, res) {
       text: `Your OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
     });
 
-    if (process.env.NODE_ENV !== "production") {
-      console.log(`[DEV] Registration OTP for ${emailLower}: ${otp}`);
-    }
     return res.json({
       message: `OTP sent to ${emailLower}`,
       role,
@@ -164,16 +161,17 @@ export async function verifyOTP(req, res) {
       return res.status(429).json({ message: "Too many failed attempts. Please request a new OTP." });
     }
 
+    // Check expiry BEFORE checking the code so expired rows can never be
+    // brute-forced: a wrong code would otherwise leave the row alive past
+    // its expiry window with unlimited retry time.
+    if (new Date() > otpRow.expires_at) {
+      await pool.query("DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+      return res.status(400).json({ message: "OTP expired" });
+    }
+
     if (otpRow.otp_code.trim() !== otpClean) {
       await pool.query("UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1", [otpRow.id]);
       return res.status(400).json({ message: "Invalid OTP" });
-    }
-
-    if (new Date() > otpRow.expires_at) {
-      await pool.query("DELETE FROM otp_verifications WHERE id=$1", [
-        otpRow.id,
-      ]);
-      return res.status(400).json({ message: "OTP expired" });
     }
 
     // mark verified and remove otp
@@ -255,9 +253,6 @@ export async function login(req, res) {
         text: `Your verification OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
       });
 
-      if (process.env.NODE_ENV !== "production") {
-        console.log(`[DEV] Verification OTP for ${emailLower}: ${otp}`);
-      }
       return res.json({
         message: "Please verify your account via OTP",
         needsVerification: true,
@@ -328,9 +323,6 @@ export async function login(req, res) {
       text: `Your login OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
     });
 
-    if (process.env.NODE_ENV !== "production") {
-      console.log(`[DEV] Login OTP for ${emailLower}: ${otp}`);
-    }
     return res.json({ message: "Login OTP sent to email" });
   } catch (err) {
     console.error("/auth/login error:", err);
@@ -363,16 +355,14 @@ export async function loginVerifyOTP(req, res) {
       return res.status(429).json({ message: "Too many failed attempts. Please request a new OTP." });
     }
 
+    if (new Date() > otpRow.expires_at) {
+      await pool.query("DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+      return res.status(400).json({ message: "OTP expired" });
+    }
+
     if (otpRow.otp_code.trim() !== otpClean) {
       await pool.query("UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1", [otpRow.id]);
       return res.status(400).json({ message: "Invalid OTP" });
-    }
-
-    if (new Date() > otpRow.expires_at) {
-      await pool.query("DELETE FROM otp_verifications WHERE id=$1", [
-        otpRow.id,
-      ]);
-      return res.status(400).json({ message: "OTP expired" });
     }
 
     await pool.query("DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
@@ -442,9 +432,13 @@ export async function initiateForgotPassword(req, res) {
 
   const emailLower = email.toLowerCase();
   try {
-    const { rows } = await pool.query("SELECT id FROM users WHERE email=$1", [
-      emailLower,
-    ]);
+    // Only allow verified accounts to reset their password.
+    // Unverified accounts were never proven to own the email address, so
+    // issuing a reset OTP for them would be a bypass of email verification.
+    const { rows } = await pool.query(
+      "SELECT id FROM users WHERE email=$1 AND is_verified=true",
+      [emailLower],
+    );
 
     const genericResponse = {
       message: "If this email is registered, you will receive an OTP.",
@@ -467,9 +461,6 @@ export async function initiateForgotPassword(req, res) {
         text: `Your password reset OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
       });
 
-      if (process.env.NODE_ENV !== "production") {
-        console.log(`[DEV] Password reset OTP for ${emailLower}: ${otp}`);
-      }
     }
 
     return res.json(genericResponse);
@@ -515,21 +506,21 @@ export async function resetPassword(req, res) {
       return res.status(429).json({ message: "Too many failed attempts. Please request a new OTP." });
     }
 
+    if (new Date() > otpRow.expires_at) {
+      await pool.query("DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+      return res.status(400).json({ message: "OTP expired" });
+    }
+
     if (otpRow.otp_code.trim() !== otpClean) {
       await pool.query("UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1", [otpRow.id]);
       return res.status(400).json({ message: "Invalid OTP" });
     }
 
-    if (new Date() > otpRow.expires_at) {
-      await pool.query("DELETE FROM otp_verifications WHERE id=$1", [
-        otpRow.id,
-      ]);
-      return res.status(400).json({ message: "OTP expired" });
-    }
-
     const hashed = await bcrypt.hash(newPassword, 10);
+    // Only reset password for verified accounts — unverified users must go
+    // through the registration + email-verification flow instead.
     const { rows: updated } = await pool.query(
-      "UPDATE users SET password_hash=$1 WHERE email=$2 RETURNING id",
+      "UPDATE users SET password_hash=$1 WHERE email=$2 AND is_verified=true RETURNING id",
       [hashed, emailLower],
     );
 

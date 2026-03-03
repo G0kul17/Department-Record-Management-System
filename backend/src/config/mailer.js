@@ -33,31 +33,20 @@ if (isMailConfigured) {
 
 export async function sendMail({ to, subject, text, html }) {
   if (!isMailConfigured) {
-    console.warn(
-      "[mailer] Email environment not configured. Skipping sendMail. Subject:",
-      subject,
-      "to:",
-      to
+    // Never silently skip — a missing email config means the OTP can never
+    // reach the user, which would allow account creation with undeliverable
+    // addresses. Fail loudly so the operator knows to configure EMAIL_* vars.
+    throw new Error(
+      "Email service is not configured (EMAIL_USER / EMAIL_PASS missing). " +
+        "Set the required environment variables to enable OTP delivery."
     );
-    return { skipped: true };
   }
-  try {
-    const info = await transporter.sendMail({
-      from: `"No Reply" <${process.env.EMAIL_USER}>`,
-      to,
-      subject,
-      text,
-      html,
-    });
-    return info;
-  } catch (err) {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn(
-        "[mailer] sendMail failed in dev; continuing without email:",
-        err?.message || err
-      );
-      return { skipped: true, error: err?.message || String(err) };
-    }
-    throw err;
-  }
+  const info = await transporter.sendMail({
+    from: `"No Reply" <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    text,
+    html,
+  });
+  return info;
 }

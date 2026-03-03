@@ -302,7 +302,7 @@ export default function Home({ hideAtAGlance = false }) {
           className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pt-8 sm:pt-12 md:pt-16 pb-8 sm:pb-10"
         >
           <div className="mb-5 sm:mb-6">
-            <p className="text-xs font-semibold uppercase tracking-widest text-blue-600 mb-1">Latest</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Latest</p>
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Events</h2>
           </div>
           <div className="grid gap-6 sm:gap-8 md:grid-cols-2">
@@ -321,7 +321,7 @@ export default function Home({ hideAtAGlance = false }) {
           className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-8 sm:pb-10"
         >
           <div className="mb-5 sm:mb-6">
-            <p className="text-xs font-semibold uppercase tracking-widest text-blue-600 mb-1">Recent</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Recent</p>
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Projects</h2>
           </div>
           <ProjectsRecentGrid limit={6} />
@@ -333,7 +333,7 @@ export default function Home({ hideAtAGlance = false }) {
           className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-8 sm:pb-10"
         >
           <div className="mb-5 sm:mb-6">
-            <p className="text-xs font-semibold uppercase tracking-widest text-blue-600 mb-1">Recent</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Recent</p>
             <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Achievements</h2>
           </div>
           <AchievementsRecentGrid limit={6} />
@@ -347,7 +347,7 @@ export default function Home({ hideAtAGlance = false }) {
           >
             <div className="py-8 sm:py-12 md:py-16">
               <div className="mb-8">
-                <p className="text-xs font-semibold uppercase tracking-widest text-blue-600 mb-1">Admin</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Admin</p>
                 <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">
                   Analytics & Visualization
                 </h1>

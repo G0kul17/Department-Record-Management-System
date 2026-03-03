@@ -153,7 +153,7 @@ function OverviewPanel({ user }) {
           <p className="text-slate-600 dark:text-slate-400 mt-3 text-base leading-relaxed">
             Use the side menu to manage projects, achievements and events.
           </p>
-          <div className="mt-4 h-0.5 w-16 bg-blue-600 rounded-full"></div>
+          <div className="mt-4 h-px w-16 bg-zinc-200 dark:bg-zinc-700 rounded-full"></div>
         </div>
 
         <div className="lg:col-span-1">
@@ -226,7 +226,7 @@ function OverviewPanel({ user }) {
 
       <div>
         <div className="mb-5">
-          <p className="text-xs font-semibold uppercase tracking-widest text-blue-600 mb-1">Latest</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Latest</p>
           <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Events</h3>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
@@ -248,7 +248,7 @@ function OverviewPanel({ user }) {
       {/* Recent Projects grid (latest 6) for staff */}
       <div>
         <div className="mb-5">
-          <p className="text-xs font-semibold uppercase tracking-widest text-blue-600 mb-1">Recent</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Recent</p>
           <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Projects</h3>
         </div>
         <ProjectsRecentGrid limit={6} />
@@ -257,7 +257,7 @@ function OverviewPanel({ user }) {
       {/* Recent Achievements grid (latest 6) for staff */}
       <div className="pb-8">
         <div className="mb-5">
-          <p className="text-xs font-semibold uppercase tracking-widest text-blue-600 mb-1">Recent</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Recent</p>
           <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Achievements</h3>
         </div>
         <AchievementsRecentGrid limit={6} />

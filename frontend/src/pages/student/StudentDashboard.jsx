@@ -168,7 +168,7 @@ export default function StudentDashboard() {
             <div className="pt-2 flex justify-center md:justify-start">
               <button
                 onClick={goToQuickActions}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#87CEEB] px-6 sm:px-8 py-3 sm:py-4 text-white text-sm sm:text-base font-semibold shadow-lg hover:bg-[#78C5E6] hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-[#87CEEB]/40 transition-all duration-200"
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 sm:px-8 py-3 sm:py-4 text-white text-sm sm:text-base font-semibold shadow-lg hover:bg-blue-700 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-600/30 transition-all duration-200"
               >
                 <svg
                   width="18"

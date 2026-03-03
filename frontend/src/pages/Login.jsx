@@ -158,7 +158,7 @@ const Login = () => {
           <div className="text-center mb-3">
             <BlurText
               text={COLLEGE_NAME}
-              className="text-2xl font-extrabold text-sky-600 dark:text-sky-400 tracking-wide"
+              className="text-2xl font-extrabold text-blue-700 dark:text-blue-400 tracking-wide"
               delay={60}
               step={24}
             />
@@ -212,7 +212,7 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#87CEEB] text-white py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-300"
               >
                 {loading
                   ? useOtp
@@ -240,7 +240,7 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={loading || timeLeft === 0}
-                className="w-full bg-[#87CEEB] text-white py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-300"
               >
                 {loading ? "Logging in..." : "Login"}
               </button>

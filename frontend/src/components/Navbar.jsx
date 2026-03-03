@@ -56,7 +56,7 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="bg-[#87CEEB] text-white shadow-sm">
+    <nav className="bg-slate-900 text-white shadow-md">
       {/* Full-width wrapper so right controls align flush right */}
       <div className="w-full px-4">
         <div className="flex items-center justify-between h-16">

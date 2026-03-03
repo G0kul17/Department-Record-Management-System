@@ -126,14 +126,12 @@ export async function register(req, res) {
       text: `Your OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
     });
 
-    const devPayload =
-      process.env.RETURN_OTP === "true" || process.env.NODE_ENV !== "production"
-        ? { devOtp: otp }
-        : {};
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`[DEV] Registration OTP for ${emailLower}: ${otp}`);
+    }
     return res.json({
       message: `OTP sent to ${emailLower}`,
       role,
-      ...devPayload,
     });
   } catch (err) {
     console.error("/auth/register error:", err);
@@ -257,15 +255,12 @@ export async function login(req, res) {
         text: `Your verification OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
       });
 
-      const devPayload =
-        process.env.RETURN_OTP === "true" ||
-        process.env.NODE_ENV !== "production"
-          ? { devOtp: otp }
-          : {};
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`[DEV] Verification OTP for ${emailLower}: ${otp}`);
+      }
       return res.json({
         message: "Please verify your account via OTP",
         needsVerification: true,
-        ...devPayload,
       });
     }
 
@@ -333,11 +328,10 @@ export async function login(req, res) {
       text: `Your login OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
     });
 
-    const devPayload =
-      process.env.RETURN_OTP === "true" || process.env.NODE_ENV !== "production"
-        ? { devOtp: otp }
-        : {};
-    return res.json({ message: "Login OTP sent to email", ...devPayload });
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`[DEV] Login OTP for ${emailLower}: ${otp}`);
+    }
+    return res.json({ message: "Login OTP sent to email" });
   } catch (err) {
     console.error("/auth/login error:", err);
     const payload =
@@ -473,11 +467,8 @@ export async function initiateForgotPassword(req, res) {
         text: `Your password reset OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
       });
 
-      if (
-        process.env.RETURN_OTP === "true" ||
-        process.env.NODE_ENV !== "production"
-      ) {
-        genericResponse.devOtp = otp;
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`[DEV] Password reset OTP for ${emailLower}: ${otp}`);
       }
     }
 
@@ -541,9 +532,15 @@ export async function resetPassword(req, res) {
       "UPDATE users SET password_hash=$1 WHERE email=$2 RETURNING id",
       [hashed, emailLower],
     );
-    await pool.query("DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
-    await invalidateAllUserSessions(updated[0].id);
 
+    // Consume the OTP regardless of outcome to prevent replay
+    await pool.query("DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+
+    if (!updated.length) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    await invalidateAllUserSessions(updated[0].id);
     return res.json({ message: "Password updated" });
   } catch (err) {
     console.error(err);

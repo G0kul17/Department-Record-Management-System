@@ -537,11 +537,12 @@ export async function resetPassword(req, res) {
     }
 
     const hashed = await bcrypt.hash(newPassword, 10);
-    await pool.query("UPDATE users SET password_hash=$1 WHERE email=$2", [
-      hashed,
-      emailLower,
-    ]);
+    const { rows: updated } = await pool.query(
+      "UPDATE users SET password_hash=$1 WHERE email=$2 RETURNING id",
+      [hashed, emailLower],
+    );
     await pool.query("DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+    await invalidateAllUserSessions(updated[0].id);
 
     return res.json({ message: "Password updated" });
   } catch (err) {

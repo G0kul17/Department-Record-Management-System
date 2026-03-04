@@ -18,17 +18,11 @@ export default function AchievementsRecentGrid({ limit = 6 }) {
     setError("");
     (async () => {
       try {
-        // Fetch more achievements to ensure we get enough after filtering for images
-        const fetchLimit = limit * 2;
         const data = await apiClient.get(
-          `/achievements?verified=true&order=latest&limit=${fetchLimit}`,
+          `/achievements?verified=true&order=latest&limit=${limit}`,
         );
         if (!mounted) return;
-        const rows = (data?.achievements || []).filter((a) => {
-          const mime = (a.proof_mime || "").toLowerCase();
-          return a.proof_filename && mime.startsWith("image/");
-        });
-        setItems(rows.slice(0, limit));
+        setItems((data?.achievements || []).slice(0, limit));
       } catch (e) {
         if (!mounted) return;
         setError(e?.message || "Failed to load achievements");
@@ -57,10 +51,17 @@ export default function AchievementsRecentGrid({ limit = 6 }) {
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {items.slice(0, limit).map((a) => {
-              const imgUrl = uploadsBase + encodeURIComponent(a.proof_filename);
               const href = `/achievements/${a.id}`;
               const caption = a.title || a.name || "Achievement";
               const author = a.user_fullname || a.user_email || a.name || "";
+              const imageFilename = [
+                a.proof_mime?.startsWith("image/") ? a.proof_filename : null,
+                a.certificate_mime?.startsWith("image/") ? a.certificate_filename : null,
+                a.event_photos_mime?.startsWith("image/") ? a.event_photos_filename : null,
+              ].find(Boolean);
+              const imgUrl = imageFilename
+                ? uploadsBase + encodeURIComponent(imageFilename)
+                : null;
               return (
                 <a
                   key={a.id}
@@ -68,13 +69,19 @@ export default function AchievementsRecentGrid({ limit = 6 }) {
                   className="block rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-lg transition-all duration-200 glitter-card bulge-card"
                 >
                   <div className="p-4">
-                    <div className="relative rounded-xl overflow-hidden bg-slate-50 flex items-center justify-center h-44">
-                      <img
-                        src={imgUrl}
-                        alt={caption}
-                        className="max-h-full w-auto object-contain"
-                        loading="lazy"
-                      />
+                    <div className="relative rounded-xl overflow-hidden bg-gradient-to-br from-yellow-50 to-amber-100 flex items-center justify-center h-44">
+                      {imgUrl ? (
+                        <img
+                          src={imgUrl}
+                          alt={caption}
+                          className="max-h-full w-auto object-contain"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden className="text-amber-400">
+                          <path d="M8 21h8M12 17v4M5 3H3v5c0 2.21 1.79 4 4 4h10c2.21 0 4-1.79 4-4V3h-2M5 3h14M5 3v5M19 3v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
                     </div>
                     <div className="mt-4">
                       <div className="text-xs font-semibold tracking-wide text-blue-600 uppercase">

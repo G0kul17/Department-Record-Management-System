@@ -42,7 +42,8 @@ BEGIN
   FROM pg_constraint c
   JOIN pg_class t ON t.oid = c.conrelid
   WHERE t.relname = 'activity_coordinators'
-    AND c.contype = 'u';   -- 'u' = unique constraint (not an index)
+    AND c.contype = 'u'   -- 'u' = unique constraint (not an index)
+  LIMIT 1;
 
   IF v_conname IS NOT NULL THEN
     EXECUTE format('ALTER TABLE activity_coordinators DROP CONSTRAINT %I', v_conname);

@@ -1,7 +1,7 @@
 import pool from "../config/db.js";
 import fs from "fs";
 import path from "path";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import xlsx from "xlsx";
 import csvParser from "csv-parser";
 import { sendMail } from "../config/mailer.js";

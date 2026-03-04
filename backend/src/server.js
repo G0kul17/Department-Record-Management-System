@@ -247,7 +247,7 @@ async function startApplication() {
     }
 
     // Step 3: Start server
-    app.listen(PORT, 0.0.0.0, () => {
+    app.listen(PORT, (0.0.0.0), () => {
       console.log(`🚀 Server listening on port ${PORT}`);
       console.log(`   Environment: ${process.env.NODE_ENV || "development"}`);
       console.log(`   API Base: http://localhost:${PORT}/api`);

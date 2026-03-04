@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import apiClient from "../../api/axiosClient";
+import { getFileUrl } from "../../utils/fileUrl";
 
 export default function ProjectsManagement() {
   const [items, setItems] = useState([]);
@@ -245,7 +246,7 @@ export default function ProjectsManagement() {
                       {p.files.map((f) => (
                         <li key={f.id}>
                           <a
-                            href={`/uploads/${f.filename}`}
+                            href={getFileUrl(f.filename)}
                             target="_blank"
                             rel="noreferrer"
                             className="link link-primary"
@@ -327,20 +328,14 @@ export default function ProjectsManagement() {
                           {f.mime_type?.startsWith("image/") ? (
                             <div className="mt-2">
                               <img
-                                src={`${apiClient.baseURL.replace(
-                                  /\/api$/,
-                                  ""
-                                )}/uploads/${f.filename}`}
+                                src={getFileUrl(f.filename)}
                                 alt={f.original_name || f.filename}
                                 className="max-h-80 rounded border"
                               />
                             </div>
                           ) : (
                             <a
-                              href={`${apiClient.baseURL.replace(
-                                /\/api$/,
-                                ""
-                              )}/uploads/${f.filename}`}
+                              href={getFileUrl(f.filename)}
                               target="_blank"
                               rel="noreferrer"
                               className="link link-primary"

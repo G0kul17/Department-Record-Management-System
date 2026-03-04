@@ -22,6 +22,7 @@ import pool, { logPoolHealth, getPoolHealth } from "./config/db.js";
 import { verifyFileStorage } from "./config/upload.js";
 import { requireAuth } from "./middleware/authMiddleware.js";
 import { requireRole } from "./middleware/roleAuth.js";
+import { verifyToken } from "./utils/tokenUtils.js";
 import fs from "fs";
 import path from "path";
 dotenv.config();
@@ -127,8 +128,20 @@ app.use("/api/announcements", announcementRoutes);
 
 const FILE_STORAGE_PATH = process.env.FILE_STORAGE_PATH || "./uploads";
 
-// Authenticated file serving — replaces the public /uploads static route
-app.get("/api/files/:filename", requireAuth, (req, res) => {
+// Authenticated file serving — replaces the public /uploads static route.
+// Accepts Bearer token in Authorization header OR ?token= query param
+// (query param is needed for <img src> / <a href> browser-native requests).
+app.get("/api/files/:filename", (req, res) => {
+  const headerToken = req.headers.authorization?.split(" ")[1];
+  const queryToken = req.query.token;
+  const rawToken = headerToken || queryToken;
+  if (!rawToken) return res.status(401).json({ message: "No token" });
+  try {
+    verifyToken(rawToken);
+  } catch (err) {
+    const msg = err.name === "TokenExpiredError" ? "Token expired" : "Invalid token";
+    return res.status(401).json({ message: msg });
+  }
   const uploadsDir = path.resolve(FILE_STORAGE_PATH);
   const filePath = path.resolve(path.join(uploadsDir, req.params.filename));
   if (!filePath.startsWith(uploadsDir + path.sep)) {

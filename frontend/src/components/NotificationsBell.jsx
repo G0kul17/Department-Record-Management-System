@@ -3,6 +3,7 @@ import apiClient from "../api/axiosClient";
 import { useAuth } from "../hooks/useAuth";
 import { formatDisplayName } from "../utils/displayName";
 import Toast from "./Toast";
+import { getFileUrl } from "../utils/fileUrl";
 
 export default function NotificationsBell() {
   const { user } = useAuth();
@@ -377,7 +378,6 @@ export default function NotificationsBell() {
 
       try {
         const ann = await apiClient.get(`/announcements/mine?limit=50`);
-        const baseUrl = apiClient.baseURL.replace(/\/api$/, "");
         for (const a of ann.announcements || []) {
           const ts = normalizeDate(a.delivered_at || a.created_at);
           if (ts >= weekAgo) {
@@ -387,7 +387,7 @@ export default function NotificationsBell() {
                 email: a.created_by_email,
               }) || "Staff";
             const brochureHref = a.brochure_filename
-              ? `${baseUrl}/uploads/${a.brochure_filename}`
+              ? getFileUrl(a.brochure_filename)
               : "";
             items.push({
               type: "announcement",

@@ -3,6 +3,7 @@ import apiClient from "../../api/axiosClient";
 import { useAuth } from "../../hooks/useAuth";
 import SuccessModal from "../../components/ui/SuccessModal";
 import UploadDropzone from "../../components/ui/UploadDropzone";
+import { getFileUrl } from "../../utils/fileUrl";
 
 export default function ProjectUpload() {
   const { user } = useAuth();
@@ -623,16 +624,12 @@ export default function ProjectUpload() {
                           {f.mime_type?.startsWith("image/") ? (
                             <img
                               alt={f.original_name || f.filename}
-                              src={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
-                                f.filename
-                              }`}
+                              src={getFileUrl(f.filename)}
                               className="max-h-80 rounded border"
                             />
                           ) : (
                             <a
-                              href={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
-                                f.filename
-                              }`}
+                              href={getFileUrl(f.filename)}
                               target="_blank"
                               rel="noreferrer"
                               className="text-blue-600 hover:underline dark:text-blue-400"

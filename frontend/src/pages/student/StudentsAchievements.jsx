@@ -3,6 +3,7 @@ import apiClient from "../../api/axiosClient";
 import { useAuth } from "../../hooks/useAuth";
 import SuccessModal from "../../components/ui/SuccessModal";
 import UploadDropzone from "../../components/ui/UploadDropzone";
+import { getFileUrl } from "../../utils/fileUrl";
 
 export default function Achievements() {
   const { user } = useAuth();
@@ -530,16 +531,12 @@ export default function Achievements() {
                   {previewModal.item?.proof_mime?.startsWith("image/") ? (
                     <img
                       alt={previewModal.item?.proof_name || "proof"}
-                      src={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
-                        previewModal.item?.proof_filename
-                      }`}
+                      src={getFileUrl(previewModal.item?.proof_filename)}
                       className="max-h-80 rounded border"
                     />
                   ) : (
                     <a
-                      href={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
-                        previewModal.item?.proof_filename
-                      }`}
+                      href={getFileUrl(previewModal.item?.proof_filename)}
                       target="_blank"
                       rel="noreferrer"
                       className="text-blue-600 hover:underline dark:text-blue-400"
@@ -557,16 +554,12 @@ export default function Achievements() {
                   {previewModal.item?.certificate_mime?.startsWith("image/") ? (
                     <img
                       alt={previewModal.item?.certificate_name || "certificate"}
-                      src={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
-                        previewModal.item?.certificate_filename
-                      }`}
+                      src={getFileUrl(previewModal.item?.certificate_filename)}
                       className="max-h-80 rounded border"
                     />
                   ) : (
                     <a
-                      href={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
-                        previewModal.item?.certificate_filename
-                      }`}
+                      href={getFileUrl(previewModal.item?.certificate_filename)}
                       target="_blank"
                       rel="noreferrer"
                       className="text-blue-600 hover:underline dark:text-blue-400"
@@ -584,16 +577,12 @@ export default function Achievements() {
                   {previewModal.item?.event_photos_mime?.startsWith("image/") ? (
                     <img
                       alt={previewModal.item?.event_photos_name || "event photos"}
-                      src={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
-                        previewModal.item?.event_photos_filename
-                      }`}
+                      src={getFileUrl(previewModal.item?.event_photos_filename)}
                       className="max-h-80 rounded border"
                     />
                   ) : (
                     <a
-                      href={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
-                        previewModal.item?.event_photos_filename
-                      }`}
+                      href={getFileUrl(previewModal.item?.event_photos_filename)}
                       target="_blank"
                       rel="noreferrer"
                       className="text-blue-600 hover:underline dark:text-blue-400"

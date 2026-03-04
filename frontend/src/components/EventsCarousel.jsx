@@ -1,15 +1,11 @@
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import apiClient from "../api/axiosClient";
+import { getFileUrl } from "../utils/fileUrl";
 
 export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
   const [index, setIndex] = useState(0);
   const timerRef = useRef(null);
   const length = events.length;
-
-  const uploadsBase = useMemo(
-    () => apiClient.baseURL.replace(/\/api$/, "") + "/uploads/",
-    []
-  );
 
   useEffect(() => {
     if (!length) return;
@@ -38,14 +34,14 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
               if (!u) return null;
               if (/^https?:\/\//i.test(u)) return u;
               if (u.startsWith("/uploads/"))
-                return uploadsBase + u.split("/uploads/")[1];
+                return getFileUrl(u.split("/uploads/")[1]);
               return u;
             };
             const thumb =
               makeAbsolute(ev.image) ||
               makeAbsolute(ev.thumbnail) ||
               (ev.thumbnail_filename
-                ? uploadsBase + encodeURIComponent(ev.thumbnail_filename)
+                ? getFileUrl(ev.thumbnail_filename)
                 : null);
             const href = ev.event_url ? ev.event_url : `/events/${ev.id}`;
             const external = Boolean(ev.event_url);

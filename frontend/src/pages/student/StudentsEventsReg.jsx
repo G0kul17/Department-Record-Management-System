@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import EventCard from "../../components/EventCard";
 import apiClient from "../../api/axiosClient";
 import { generateAcademicYears } from "../../utils/academicYears";
+import { getFileUrl } from "../../utils/fileUrl";
 
 function GrantBox({ grant }) {
   if (!grant) return null;
@@ -71,7 +72,7 @@ export default function Events() {
             attachments: Array.isArray(attachments) ? attachments : [],
             // Build a usable thumbnail URL if present
             thumbnail: e.thumbnail_filename
-              ? `/uploads/${encodeURIComponent(e.thumbnail_filename)}`
+              ? getFileUrl(e.thumbnail_filename)
               : null,
           };
         });

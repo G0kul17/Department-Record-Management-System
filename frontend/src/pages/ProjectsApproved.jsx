@@ -3,6 +3,7 @@ import apiClient from "../api/axiosClient";
 import { Link } from "react-router-dom";
 import AttachmentPreview from "../components/AttachmentPreview";
 import { generateAcademicYears } from "../utils/academicYears";
+import { getFileUrl } from "../utils/fileUrl";
 
 export default function ProjectsApproved() {
   const [projects, setProjects] = useState([]);
@@ -252,14 +253,7 @@ export default function ProjectsApproved() {
                             (typeof f === "string" ? f : undefined);
                           const original =
                             f.original_name || f.name || filename;
-                          const downloadUrl = `${
-                            apiClient && apiClient.baseURL
-                              ? String(apiClient.baseURL).replace(
-                                  /\/?api\/?$/,
-                                  ""
-                                )
-                              : window.location.origin
-                          }/uploads/${filename}`;
+                          const downloadUrl = getFileUrl(filename);
                           return (
                             <div
                               key={i}

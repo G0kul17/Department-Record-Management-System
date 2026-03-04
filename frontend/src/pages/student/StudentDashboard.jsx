@@ -3,6 +3,7 @@ import Particles from "react-tsparticles";
 import { loadSlim } from "tsparticles-slim";
 import { useAuth } from "../../hooks/useAuth";
 import apiClient from "../../api/axiosClient";
+import { getFileUrl } from "../../utils/fileUrl";
 import { useNavigate } from "react-router-dom";
 import EventsCarousel from "../../components/EventsCarousel";
 import AchievementsRecentGrid from "../../components/AchievementsRecentGrid";
@@ -68,15 +69,13 @@ export default function StudentDashboard() {
           } catch (_) {
             attachments = [];
           }
-          const uploadsBase =
-            apiClient.baseURL.replace(/\/api$/, "") + "/uploads/";
           return {
             ...e,
             description: e.description || e.summary || "",
             event_url: e.event_url || e.eventUrl || null,
             attachments: Array.isArray(attachments) ? attachments : [],
             thumbnail: e.thumbnail_filename
-              ? uploadsBase + encodeURIComponent(e.thumbnail_filename)
+              ? getFileUrl(e.thumbnail_filename)
               : null,
           };
         });

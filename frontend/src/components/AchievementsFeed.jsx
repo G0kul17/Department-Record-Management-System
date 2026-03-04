@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import apiClient from "../api/axiosClient";
+import { getFileUrl } from "../utils/fileUrl";
 
 // Swipeable achievements feed showing one portrait post at a time
 // Renders below Events on dashboards for admin, staff, and student
@@ -15,11 +16,6 @@ export default function AchievementsFeed({
   const touchStartX = useRef(0);
   const touchDeltaX = useRef(0);
   const timerRef = useRef(null);
-
-  const uploadsBase = useMemo(
-    () => apiClient.baseURL.replace(/\/api$/, "") + "/uploads/",
-    []
-  );
 
   useEffect(() => {
     let mounted = true;
@@ -119,9 +115,7 @@ export default function AchievementsFeed({
                   a.certificate_mime?.startsWith("image/") ? a.certificate_filename : null,
                   a.event_photos_mime?.startsWith("image/") ? a.event_photos_filename : null,
                 ].find(Boolean);
-                const imgUrl = imageFilename
-                  ? uploadsBase + encodeURIComponent(imageFilename)
-                  : null;
+                const imgUrl = imageFilename ? getFileUrl(imageFilename) : null;
                 return (
                   <div key={a.id} className="flex-shrink-0 w-full p-4">
                     <a

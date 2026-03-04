@@ -1,17 +1,10 @@
 import React, { useEffect, useState } from "react";
-import apiClient from "../api/axiosClient";
+import { getFileUrl } from "../utils/fileUrl";
 
 function makeFileUrl(file) {
   if (!file) return null;
   if (file.url && typeof file.url === "string") return file.url;
-  if (file.filename) {
-    // Use backend base URL (strip any trailing /api) so preview works from the frontend origin
-    const base =
-      apiClient && apiClient.baseURL
-        ? String(apiClient.baseURL).replace(/\/api\/?$/, "")
-        : window.location.origin;
-    return `${base}/uploads/${file.filename}`;
-  }
+  if (file.filename) return getFileUrl(file.filename);
   return null;
 }
 

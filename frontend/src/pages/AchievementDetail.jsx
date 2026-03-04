@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import apiClient from "../api/axiosClient";
+import { getFileUrl } from "../utils/fileUrl";
 
 export default function AchievementDetail() {
   const { id } = useParams();
@@ -125,13 +126,13 @@ export default function AchievementDetail() {
             <div className="mt-3">
               {item.proof_mime && item.proof_mime.startsWith("image/") ? (
                 <img
-                  src={`/uploads/${item.proof_filename}`}
+                  src={getFileUrl(item.proof_filename)}
                   alt={item.proof_name || "Main Proof"}
                   className="max-h-96 w-full rounded object-contain border"
                 />
               ) : (
                 <a
-                  href={`/uploads/${item.proof_filename}`}
+                  href={getFileUrl(item.proof_filename)}
                   target="_blank"
                   rel="noreferrer"
                   className="link link-primary"
@@ -153,13 +154,13 @@ export default function AchievementDetail() {
               {item.certificate_mime &&
               item.certificate_mime.startsWith("image/") ? (
                 <img
-                  src={`/uploads/${item.certificate_filename}`}
+                  src={getFileUrl(item.certificate_filename)}
                   alt={item.certificate_name || "Certificate"}
                   className="max-h-96 w-full rounded object-contain border"
                 />
               ) : (
                 <a
-                  href={`/uploads/${item.certificate_filename}`}
+                  href={getFileUrl(item.certificate_filename)}
                   target="_blank"
                   rel="noreferrer"
                   className="link link-primary"
@@ -181,13 +182,13 @@ export default function AchievementDetail() {
               {item.event_photos_mime &&
               item.event_photos_mime.startsWith("image/") ? (
                 <img
-                  src={`/uploads/${item.event_photos_filename}`}
+                  src={getFileUrl(item.event_photos_filename)}
                   alt={item.event_photos_name || "Event Photos"}
                   className="max-h-96 w-full rounded object-contain border"
                 />
               ) : (
                 <a
-                  href={`/uploads/${item.event_photos_filename}`}
+                  href={getFileUrl(item.event_photos_filename)}
                   target="_blank"
                   rel="noreferrer"
                   className="link link-primary"

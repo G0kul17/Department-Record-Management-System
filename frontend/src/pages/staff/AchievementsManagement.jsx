@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import apiClient from "../../api/axiosClient";
+import { getFileUrl } from "../../utils/fileUrl";
 
 export default function AchievementsManagement() {
   const [items, setItems] = useState([]);
@@ -224,13 +225,13 @@ export default function AchievementsManagement() {
                     <span className="font-semibold">Main Proof:</span>{" "}
                     {a.proof_mime && a.proof_mime.startsWith("image/") ? (
                       <img
-                        src={`/uploads/${a.proof_filename}`}
+                        src={getFileUrl(a.proof_filename)}
                         alt={a.proof_name || "Proof"}
                         className="mt-2 max-h-64 rounded border"
                       />
                     ) : (
                       <a
-                        href={`/uploads/${a.proof_filename}`}
+                        href={getFileUrl(a.proof_filename)}
                         target="_blank"
                         rel="noreferrer"
                         className="link link-primary"
@@ -246,13 +247,13 @@ export default function AchievementsManagement() {
                     {a.certificate_mime &&
                     a.certificate_mime.startsWith("image/") ? (
                       <img
-                        src={`/uploads/${a.certificate_filename}`}
+                        src={getFileUrl(a.certificate_filename)}
                         alt={a.certificate_name || "Certificate"}
                         className="mt-2 max-h-64 rounded border"
                       />
                     ) : (
                       <a
-                        href={`/uploads/${a.certificate_filename}`}
+                        href={getFileUrl(a.certificate_filename)}
                         target="_blank"
                         rel="noreferrer"
                         className="link link-primary"
@@ -268,13 +269,13 @@ export default function AchievementsManagement() {
                     {a.event_photos_mime &&
                     a.event_photos_mime.startsWith("image/") ? (
                       <img
-                        src={`/uploads/${a.event_photos_filename}`}
+                        src={getFileUrl(a.event_photos_filename)}
                         alt={a.event_photos_name || "Event Photos"}
                         className="mt-2 max-h-64 rounded border"
                       />
                     ) : (
                       <a
-                        href={`/uploads/${a.event_photos_filename}`}
+                        href={getFileUrl(a.event_photos_filename)}
                         target="_blank"
                         rel="noreferrer"
                         className="link link-primary"
@@ -348,18 +349,13 @@ export default function AchievementsManagement() {
                   <div className="mt-2">
                     <img
                       alt={modal.item?.proof_name || "proof"}
-                      src={`${apiClient.baseURL.replace(
-                        /\/api$/,
-                        ""
-                      )}/uploads/${modal.item?.proof_filename}`}
+                      src={getFileUrl(modal.item?.proof_filename)}
                       className="max-h-80 rounded"
                     />
                   </div>
                 ) : modal.item?.proof_filename ? (
                   <a
-                    href={`${apiClient.baseURL.replace(/\/api$/, "")}/uploads/${
-                      modal.item?.proof_filename
-                    }`}
+                    href={getFileUrl(modal.item?.proof_filename)}
                     target="_blank"
                     rel="noreferrer"
                     className="link link-primary ml-2"
@@ -378,18 +374,13 @@ export default function AchievementsManagement() {
                     <div className="mt-2">
                       <img
                         alt={modal.item?.certificate_name || "certificate"}
-                        src={`${apiClient.baseURL.replace(
-                          /\/api$/,
-                          ""
-                        )}/uploads/${modal.item?.certificate_filename}`}
+                        src={getFileUrl(modal.item?.certificate_filename)}
                         className="max-h-80 rounded"
                       />
                     </div>
                   ) : (
                     <a
-                      href={`${apiClient.baseURL.replace(/\/api$/, "")}/uploads/${
-                        modal.item?.certificate_filename
-                      }`}
+                      href={getFileUrl(modal.item?.certificate_filename)}
                       target="_blank"
                       rel="noreferrer"
                       className="link link-primary ml-2"
@@ -407,18 +398,13 @@ export default function AchievementsManagement() {
                     <div className="mt-2">
                       <img
                         alt={modal.item?.event_photos_name || "event photos"}
-                        src={`${apiClient.baseURL.replace(
-                          /\/api$/,
-                          ""
-                        )}/uploads/${modal.item?.event_photos_filename}`}
+                        src={getFileUrl(modal.item?.event_photos_filename)}
                         className="max-h-80 rounded"
                       />
                     </div>
                   ) : (
                     <a
-                      href={`${apiClient.baseURL.replace(/\/api$/, "")}/uploads/${
-                        modal.item?.event_photos_filename
-                      }`}
+                      href={getFileUrl(modal.item?.event_photos_filename)}
                       target="_blank"
                       rel="noreferrer"
                       className="link link-primary ml-2"

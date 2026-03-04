@@ -1,16 +1,12 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import apiClient from "../api/axiosClient";
+import { getFileUrl } from "../utils/fileUrl";
 
 // Recent Achievements grid: shows latest N image achievements
 export default function AchievementsRecentGrid({ limit = 6 }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const uploadsBase = useMemo(
-    () => apiClient.baseURL.replace(/\/api$/, "") + "/uploads/",
-    [],
-  );
 
   useEffect(() => {
     let mounted = true;
@@ -59,9 +55,7 @@ export default function AchievementsRecentGrid({ limit = 6 }) {
                 a.certificate_mime?.startsWith("image/") ? a.certificate_filename : null,
                 a.event_photos_mime?.startsWith("image/") ? a.event_photos_filename : null,
               ].find(Boolean);
-              const imgUrl = imageFilename
-                ? uploadsBase + encodeURIComponent(imageFilename)
-                : null;
+              const imgUrl = imageFilename ? getFileUrl(imageFilename) : null;
               return (
                 <a
                   key={a.id}

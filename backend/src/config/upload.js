@@ -412,6 +412,8 @@ function fileFilter(req, file, cb) {
   return cb(new Error("File type not allowed"), false);
 }
 
+export { STORAGE_PATH };
+
 export const upload = multer({
   storage,
   limits: { fileSize: MAX_BYTES },

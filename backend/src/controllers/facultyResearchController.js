@@ -1,5 +1,8 @@
 // facultyResearchController.js
+import fs from "fs";
+import path from "path";
 import pool from "../config/db.js";
+import { STORAGE_PATH } from "../config/upload.js";
 
 // ========== CREATE RESEARCH ==========
 export const createResearch = async (req, res) => {
@@ -107,8 +110,25 @@ export const updateResearch = async (req, res) => {
     } = req.body;
 
     const client = await pool.connect();
+    let oldFileFilename = null;
+    let oldFileId = null;
     try {
       await client.query("BEGIN");
+
+      // Fetch the existing proof file before any changes
+      if (req.file) {
+        const { rows: existing } = await client.query(
+          `SELECT fr.proof_file_id, pf.filename
+             FROM faculty_research fr
+             LEFT JOIN project_files pf ON pf.id = fr.proof_file_id
+            WHERE fr.id = $1`,
+          [id]
+        );
+        if (existing.length) {
+          oldFileId = existing[0].proof_file_id;
+          oldFileFilename = existing[0].filename;
+        }
+      }
 
       let proofFileId = null;
       if (req.file) {
@@ -164,7 +184,20 @@ export const updateResearch = async (req, res) => {
         return res.status(404).json({ message: "Research record not found" });
       }
 
+      // Delete the old project_files row inside the transaction while we still can roll back
+      if (oldFileId) {
+        await client.query("DELETE FROM project_files WHERE id = $1", [oldFileId]);
+      }
+
       await client.query("COMMIT");
+
+      // Remove old file from disk after the transaction is committed
+      if (oldFileFilename) {
+        fs.unlink(path.join(STORAGE_PATH, oldFileFilename), (err) => {
+          if (err) console.error("Failed to delete old research proof file:", err.message);
+        });
+      }
+
       return res.json({ message: "Updated successfully", data: rows[0] });
     } catch (err) {
       await client.query("ROLLBACK");

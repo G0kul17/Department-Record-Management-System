@@ -577,26 +577,23 @@ export async function getProjectDetails(req, res) {
 }
 
 export async function verifyProject(req, res) {
-  // Staff/Admin approves a project
+  // Staff approves a project
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || Number.isNaN(id))
       return res.status(400).json({ message: "Invalid project id" });
-    const requesterRole = req.user?.role;
     const requesterId = req.user?.id;
-    if (requesterRole === "staff" && requesterId) {
-      const { rows: auth } = await pool.query(
-        `SELECT 1 FROM projects p
-          JOIN activity_coordinators ac
-            ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = $1
-         WHERE p.id = $2`,
-        [requesterId, id],
-      );
-      if (!auth.length) {
-        return res
-          .status(403)
-          .json({ message: "Not authorized to approve this project" });
-      }
+    const { rows: auth } = await pool.query(
+      `SELECT 1 FROM projects p
+        JOIN activity_coordinators ac
+          ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = $1
+       WHERE p.id = $2`,
+      [requesterId, id],
+    );
+    if (!auth.length) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to approve this project" });
     }
     const { comment } = req.body || {};
     const verificationComment =
@@ -613,26 +610,23 @@ export async function verifyProject(req, res) {
 }
 
 export async function rejectProject(req, res) {
-  // Staff/Admin rejects a project
+  // Staff rejects a project
   try {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || Number.isNaN(id))
       return res.status(400).json({ message: "Invalid project id" });
-    const requesterRole = req.user?.role;
     const requesterId = req.user?.id;
-    if (requesterRole === "staff" && requesterId) {
-      const { rows: auth } = await pool.query(
-        `SELECT 1 FROM projects p
-          JOIN activity_coordinators ac
-            ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = $1
-         WHERE p.id = $2`,
-        [requesterId, id],
-      );
-      if (!auth.length) {
-        return res
-          .status(403)
-          .json({ message: "Not authorized to reject this project" });
-      }
+    const { rows: auth } = await pool.query(
+      `SELECT 1 FROM projects p
+        JOIN activity_coordinators ac
+          ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = $1
+       WHERE p.id = $2`,
+      [requesterId, id],
+    );
+    if (!auth.length) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to reject this project" });
     }
     const { comment } = req.body || {};
     const verificationComment =

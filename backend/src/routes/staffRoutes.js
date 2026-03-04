@@ -25,13 +25,13 @@ router.use(requireAuth, requireRole(["staff", "admin"]));
 // Dashboard (single page needs)
 router.get("/dashboard", staffDashboard);
 
-// Projects approval
-router.post("/projects/:id/approve", approveProject);
-router.post("/projects/:id/reject", rejectProject);
+// Projects approval (staff only — admins may not approve/reject)
+router.post("/projects/:id/approve", requireRole(["staff"]), approveProject);
+router.post("/projects/:id/reject", requireRole(["staff"]), rejectProject);
 
-// Achievements approval
-router.post("/achievements/:id/approve", approveAchievement);
-router.post("/achievements/:id/reject", rejectAchievement);
+// Achievements approval (staff only — admins may not approve/reject)
+router.post("/achievements/:id/approve", requireRole(["staff"]), approveAchievement);
+router.post("/achievements/:id/reject", requireRole(["staff"]), rejectAchievement);
 
 // Targeted announcements to selected users
 router.post(

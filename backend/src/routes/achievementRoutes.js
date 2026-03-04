@@ -38,19 +38,19 @@ router.get("/leaderboard", getAchievementsLeaderboard);
 // Single achievement details
 router.get("/:id", optionalAuth, getAchievementDetails);
 
-// Admin verifies achievement
+// Staff verifies achievement
 router.post(
   "/:id/verify",
   requireAuth,
-  requireRole(["admin", "staff"]),
+  requireRole(["staff"]),
   verifyAchievement
 );
 
-// Staff/Admin rejects achievement
+// Staff rejects achievement
 router.post(
   "/:id/reject",
   requireAuth,
-  requireRole(["admin", "staff"]),
+  requireRole(["staff"]),
   rejectAchievement
 );
 

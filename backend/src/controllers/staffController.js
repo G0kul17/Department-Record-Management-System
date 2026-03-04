@@ -11,21 +11,19 @@ export async function approveProject(req, res) {
     const projectId = Number(req.params.id);
     const { comment } = req.body;
 
-    // Only admins can approve any project; staff must be mapped to the project's activity_type
-    if (requesterRole !== "admin") {
-      const { rows: authRows } = await pool.query(
-        `SELECT 1
-           FROM projects p
-           JOIN activity_coordinators ac
-             ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = $1
-          WHERE p.id = $2`,
-        [staffId, projectId]
-      );
-      if (!authRows.length) {
-        return res
-          .status(403)
-          .json({ message: "Not authorized to approve this project" });
-      }
+    // Staff must be mapped to the project's activity_type
+    const { rows: authRows } = await pool.query(
+      `SELECT 1
+         FROM projects p
+         JOIN activity_coordinators ac
+           ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = $1
+        WHERE p.id = $2`,
+      [staffId, projectId]
+    );
+    if (!authRows.length) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to approve this project" });
     }
 
     const q = `UPDATE projects
@@ -78,21 +76,19 @@ export async function rejectProject(req, res) {
     const projectId = Number(req.params.id);
     const { comment } = req.body;
 
-    // Only admins can reject any project; staff must be mapped to the project's activity_type
-    if (requesterRole !== "admin") {
-      const { rows: authRows } = await pool.query(
-        `SELECT 1
-           FROM projects p
-           JOIN activity_coordinators ac
-             ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = $1
-          WHERE p.id = $2`,
-        [staffId, projectId]
-      );
-      if (!authRows.length) {
-        return res
-          .status(403)
-          .json({ message: "Not authorized to reject this project" });
-      }
+    // Staff must be mapped to the project's activity_type
+    const { rows: authRows } = await pool.query(
+      `SELECT 1
+         FROM projects p
+         JOIN activity_coordinators ac
+           ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = $1
+        WHERE p.id = $2`,
+      [staffId, projectId]
+    );
+    if (!authRows.length) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to reject this project" });
     }
 
     const q = `UPDATE projects
@@ -145,21 +141,19 @@ export async function approveAchievement(req, res) {
     const achievementId = Number(req.params.id);
     const { comment } = req.body;
 
-    // Only admins can approve any achievement; staff must be mapped to the achievement's activity_type
-    if (requesterRole !== "admin") {
-      const { rows: authRows } = await pool.query(
-        `SELECT 1
-           FROM achievements a
-           JOIN activity_coordinators ac
-             ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = $1
-          WHERE a.id = $2`,
-        [staffId, achievementId]
-      );
-      if (!authRows.length) {
-        return res
-          .status(403)
-          .json({ message: "Not authorized to approve this achievement" });
-      }
+    // Staff must be mapped to the achievement's activity_type
+    const { rows: authRows } = await pool.query(
+      `SELECT 1
+         FROM achievements a
+         JOIN activity_coordinators ac
+           ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = $1
+        WHERE a.id = $2`,
+      [staffId, achievementId]
+    );
+    if (!authRows.length) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to approve this achievement" });
     }
 
     const q = `UPDATE achievements
@@ -212,21 +206,19 @@ export async function rejectAchievement(req, res) {
     const achievementId = Number(req.params.id);
     const { comment } = req.body;
 
-    // Only admins can reject any achievement; staff must be mapped to the achievement's activity_type
-    if (requesterRole !== "admin") {
-      const { rows: authRows } = await pool.query(
-        `SELECT 1
-           FROM achievements a
-           JOIN activity_coordinators ac
-             ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = $1
-          WHERE a.id = $2`,
-        [staffId, achievementId]
-      );
-      if (!authRows.length) {
-        return res
-          .status(403)
-          .json({ message: "Not authorized to reject this achievement" });
-      }
+    // Staff must be mapped to the achievement's activity_type
+    const { rows: authRows } = await pool.query(
+      `SELECT 1
+         FROM achievements a
+         JOIN activity_coordinators ac
+           ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = $1
+        WHERE a.id = $2`,
+      [staffId, achievementId]
+    );
+    if (!authRows.length) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to reject this achievement" });
     }
 
     const q = `UPDATE achievements

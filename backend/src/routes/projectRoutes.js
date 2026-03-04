@@ -49,19 +49,19 @@ router.get("/", optionalAuth, listProjects);
 // Public details endpoint (for viewing project details)
 router.get("/:id", optionalAuth, getProjectDetails);
 
-// Admin verifies project
+// Staff verifies project
 router.post(
   "/:id/verify",
   requireAuth,
-  requireRole(["admin", "staff"]),
+  requireRole(["staff"]),
   verifyProject
 );
 
-// Staff/Admin rejects project
+// Staff rejects project
 router.post(
   "/:id/reject",
   requireAuth,
-  requireRole(["admin", "staff"]),
+  requireRole(["staff"]),
   rejectProject
 );
 

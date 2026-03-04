@@ -7,8 +7,7 @@ import pool from "../config/db.js";
    authenticated response and never written to disk.
    KAN-9:  streaming ExcelJS writer + paginated DB
    fetches keep memory bounded on large datasets.
-   password_hash is never selected; profile_details
-   JSONB is redacted to full_name only.
+   password_hash is never selected.
 ===================================================== */
 
 const BATCH = 1000;
@@ -46,23 +45,21 @@ export const bulkDataExport = async (req, res) => {
   try {
     /* ================= USERS ================= */
     // password_hash is intentionally omitted.
-    // profile_details JSONB is redacted: only full_name is exported.
     const usersSheet = workbook.addWorksheet("Users");
     usersSheet.columns = [
-      { header: "ID",         key: "id" },
-      { header: "Email",      key: "email" },
-      { header: "Full Name",  key: "full_name" },
-      { header: "Role",       key: "role" },
-      { header: "Verified",   key: "is_verified" },
-      { header: "Created At", key: "created_at" },
+      { header: "ID",                    key: "id" },
+      { header: "Email",                 key: "email" },
+      { header: "Role",                  key: "role" },
+      { header: "Verified",              key: "is_verified" },
+      { header: "Created At",            key: "created_at" },
+      { header: "Profile Details (JSON)", key: "profile_details" },
     ];
     await streamRows(
-      `SELECT id, email, role, is_verified, created_at,
-              profile_details->>'full_name' AS full_name
+      `SELECT id, email, role, is_verified, created_at, profile_details
          FROM users
         ORDER BY id`,
       [],
-      (row) => usersSheet.addRow(row).commit(),
+      (row) => usersSheet.addRow({ ...row, profile_details: JSON.stringify(row.profile_details) }).commit(),
     );
     await usersSheet.commit();
 

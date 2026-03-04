@@ -1,7 +1,7 @@
 import pool from "../config/db.js";
 import fs from "fs";
 import path from "path";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import xlsx from "xlsx";
 import csvParser from "csv-parser";
 import { sendMail } from "../config/mailer.js";
@@ -189,7 +189,7 @@ export const uploadStudents = async (req, res) => {
     const skipped = [];
 
     for (const s of validStudents) {
-      const exists = await pool.query("SELECT id FROM users WHERE email = $1", [
+      const exists = await pool.query("SELECT id FROM users WHERE LOWER(email) = LOWER($1)", [
         s.email,
       ]);
 
@@ -254,5 +254,7 @@ Department Admin
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Upload failed" });
+  } finally {
+    if (req.file?.path) fs.unlink(req.file.path, () => {});
   }
 };

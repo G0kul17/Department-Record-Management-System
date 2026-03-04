@@ -40,10 +40,12 @@ export const bulkDataExport = async (req, res) => {
     const projectsSheet = workbook.addWorksheet("Projects");
     const projects = await pool.query(`SELECT * FROM projects`);
 
-    projectsSheet.columns = Object.keys(projects.rows[0] || {}).map((k) => ({
-      header: k,
-      key: k,
-    }));
+    projectsSheet.columns = [
+      "id","title","description","team","team_members_count","team_member_names",
+      "github_url","mentor_name","academic_year","activity_type","status","files",
+      "verified","verification_status","verification_comment","verified_by",
+      "verified_at","created_by","created_at",
+    ].map((k) => ({ header: k, key: k }));
 
     projects.rows.forEach((p) => projectsSheet.addRow(p));
 
@@ -51,12 +53,12 @@ export const bulkDataExport = async (req, res) => {
     const achievementsSheet = workbook.addWorksheet("Achievements");
     const achievements = await pool.query(`SELECT * FROM achievements`);
 
-    achievementsSheet.columns = Object.keys(achievements.rows[0] || {}).map(
-      (k) => ({
-        header: k,
-        key: k,
-      })
-    );
+    achievementsSheet.columns = [
+      "id","user_id","event_id","title","name","date","date_of_award","event_name",
+      "activity_type","issuer","position","prize_amount","academic_year",
+      "proof_file_id","certificate_file_id","event_photos_file_id","verified",
+      "verification_status","verification_comment","verified_by","verified_at","created_at",
+    ].map((k) => ({ header: k, key: k }));
 
     achievements.rows.forEach((a) => achievementsSheet.addRow(a));
 
@@ -66,12 +68,17 @@ export const bulkDataExport = async (req, res) => {
       `SELECT * FROM faculty_participations`
     );
 
-    participationSheet.columns = Object.keys(participation.rows[0] || {}).map(
-      (k) => ({
-        header: k,
-        key: k,
-      })
-    );
+    participationSheet.columns = [
+      "id","faculty_name","department","type_of_event","mode_of_training","title",
+      "start_date","end_date","conducted_by","details","publications_type",
+      "claiming_faculty_name","publication_indexing","authors_list","paper_title",
+      "journal_name","volume_no","issue_no","page_or_doi","issn_or_isbn",
+      "pub_month_year","academic_year","citations_count","paper_url","journal_home_url",
+      "publisher","impact_factor","indexed_in_db","full_paper_drive_link",
+      "first_page_drive_link","sdg_mapping","joint_publication_with",
+      "publication_domain","coauthors_students","proof_file_id","created_by",
+      "created_at","updated_at",
+    ].map((k) => ({ header: k, key: k }));
 
     participation.rows.forEach((p) => participationSheet.addRow(p));
 
@@ -79,10 +86,11 @@ export const bulkDataExport = async (req, res) => {
     const researchSheet = workbook.addWorksheet("Faculty_Research");
     const research = await pool.query(`SELECT * FROM faculty_research`);
 
-    researchSheet.columns = Object.keys(research.rows[0] || {}).map((k) => ({
-      header: k,
-      key: k,
-    }));
+    researchSheet.columns = [
+      "id","faculty_name","funded_type","principal_investigator","team_members",
+      "title","agency","current_status","duration","start_date","end_date","amount",
+      "proof_file_id","created_by","created_at","updated_at",
+    ].map((k) => ({ header: k, key: k }));
 
     research.rows.forEach((r) => researchSheet.addRow(r));
 
@@ -90,12 +98,10 @@ export const bulkDataExport = async (req, res) => {
     const consultancySheet = workbook.addWorksheet("Faculty_Consultancy");
     const consultancy = await pool.query(`SELECT * FROM faculty_consultancy`);
 
-    consultancySheet.columns = Object.keys(consultancy.rows[0] || {}).map(
-      (k) => ({
-        header: k,
-        key: k,
-      })
-    );
+    consultancySheet.columns = [
+      "id","faculty_name","team_members","agency","amount","duration",
+      "start_date","end_date","proof_file_id","created_by","created_at","updated_at",
+    ].map((k) => ({ header: k, key: k }));
 
     consultancy.rows.forEach((c) => consultancySheet.addRow(c));
 
@@ -103,10 +109,11 @@ export const bulkDataExport = async (req, res) => {
     const eventsSheet = workbook.addWorksheet("Events");
     const events = await pool.query(`SELECT * FROM events`);
 
-    eventsSheet.columns = Object.keys(events.rows[0] || {}).map((k) => ({
-      header: k,
-      key: k,
-    }));
+    eventsSheet.columns = [
+      "id","title","description","venue","event_url","start_date","end_date",
+      "organizer_id","attachments","thumbnail_filename","thumbnail_original_name",
+      "thumbnail_mime","thumbnail_size","created_at","updated_at",
+    ].map((k) => ({ header: k, key: k }));
 
     events.rows.forEach((e) => eventsSheet.addRow(e));
 

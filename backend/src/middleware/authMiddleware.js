@@ -48,7 +48,10 @@ export async function requireAuth(req, res, next) {
 
     return next();
   } catch (err) {
-    return res.status(401).json({ message: "Token invalid or expired" });
+    if (err.name === "TokenExpiredError") {
+      return res.status(401).json({ message: "Token expired" });
+    }
+    return res.status(401).json({ message: "Invalid token" });
   }
 }
 
@@ -96,6 +99,9 @@ export async function optionalAuth(req, res, next) {
 
     return next();
   } catch (err) {
-    return res.status(401).json({ message: "Token invalid or expired" });
+    if (err.name === "TokenExpiredError") {
+      return res.status(401).json({ message: "Token expired" });
+    }
+    return res.status(401).json({ message: "Invalid token" });
   }
 }

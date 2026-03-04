@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
@@ -19,11 +20,14 @@ import activityCoordinatorRoutes from "./routes/activityCoordinatorRoutes.js";
 import announcementRoutes from "./routes/announcementRoutes.js";
 import pool, { logPoolHealth, getPoolHealth } from "./config/db.js";
 import { verifyFileStorage } from "./config/upload.js";
+import { requireAuth } from "./middleware/authMiddleware.js";
+import { requireRole } from "./middleware/roleAuth.js";
 import fs from "fs";
 import path from "path";
 dotenv.config();
 
 const app = express();
+app.use(helmet());
 app.use(express.json());
 
 // ============================================================================
@@ -107,8 +111,8 @@ app.get("/health", async (req, res) => {
   }
 });
 
-// Detailed pool stats endpoint (admin only - add auth in production)
-app.get("/pool-stats", (req, res) => {
+// Detailed pool stats endpoint (admin only)
+app.get("/pool-stats", requireAuth, requireRole(["admin"]), (req, res) => {
   const poolHealth = getPoolHealth();
   res.json(poolHealth);
 });
@@ -121,10 +125,20 @@ app.use("/api/achievements", achievementRoutes);
 app.use("/api/data-uploads", dataUploadRoutes);
 app.use("/api/announcements", announcementRoutes);
 
-// Serve uploaded files statically
-// Use explicit FILE_STORAGE_PATH (no fallback in production)
 const FILE_STORAGE_PATH = process.env.FILE_STORAGE_PATH || "./uploads";
-app.use("/uploads", express.static(path.resolve(FILE_STORAGE_PATH)));
+
+// Authenticated file serving — replaces the public /uploads static route
+app.get("/api/files/:filename", requireAuth, (req, res) => {
+  const uploadsDir = path.resolve(FILE_STORAGE_PATH);
+  const filePath = path.resolve(path.join(uploadsDir, req.params.filename));
+  if (!filePath.startsWith(uploadsDir + path.sep)) {
+    return res.status(400).json({ message: "Invalid file path" });
+  }
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ message: "File not found" });
+  }
+  res.sendFile(filePath);
+});
 
 // after app.use('/api/auth', authRoutes);
 app.use("/api/staff", staffRoutes);

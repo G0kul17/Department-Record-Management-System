@@ -225,7 +225,7 @@ export async function createProject(req, res) {
     console.error(err);
     return res
       .status(500)
-      .json({ message: "Server error", error: err.message });
+      .json({ message: "Server error", ...(process.env.NODE_ENV !== "production" && { error: err.message }) });
   }
 }
 

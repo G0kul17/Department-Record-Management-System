@@ -269,16 +269,14 @@ process.on("SIGINT", async () => {
 });
 
 // Handle uncaught exceptions
-process.on("uncaughtException", async (err) => {
+process.on("uncaughtException", (err) => {
   console.error("❌ Uncaught Exception:", err);
-  await closePool();
   process.exit(1);
 });
 
 // Handle unhandled promise rejections
-process.on("unhandledRejection", async (reason, promise) => {
+process.on("unhandledRejection", (reason, promise) => {
   console.error("❌ Unhandled Rejection at:", promise, "reason:", reason);
-  await closePool();
   process.exit(1);
 });
 

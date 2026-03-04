@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import InputField from "../components/InputField";
 import BlurText from "../components/ui/BlurText";
@@ -12,13 +12,17 @@ const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isLoginSuccess, setIsLoginSuccess] = useState(false);
-  // Allow users to choose OTP-based login; default is session-based direct login
-  const [useOtp, setUseOtp] = useState(false);
   // OTP expiry timer (5 minutes)
   const [otpExpiresAt, setOtpExpiresAt] = useState(null);
   const [timeLeft, setTimeLeft] = useState(0);
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect already-authenticated users to their dashboard
+  if (user) {
+    const dest = user.role === "admin" ? "/admin" : user.role === "staff" ? "/" : "/student";
+    return <Navigate to={dest} replace />;
+  }
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -193,34 +197,12 @@ const Login = () => {
                 placeholder="Enter your password"
                 required
               />
-              <div className="flex items-center justify-between mb-4">
-                <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4"
-                    checked={useOtp}
-                    onChange={(e) => setUseOtp(e.target.checked)}
-                  />
-                  <span>Login with OTP (two-step)</span>
-                </label>
-                {useOtp && (
-                  <span className="text-xs text-slate-500">
-                    First: Send OTP, then verify
-                  </span>
-                )}
-              </div>
               <button
                 type="submit"
                 disabled={loading}
                 className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-300"
               >
-                {loading
-                  ? useOtp
-                    ? "Sending..."
-                    : "Please wait..."
-                  : useOtp
-                  ? "Send OTP"
-                  : "Login"}
+                {loading ? "Please wait..." : "Login"}
               </button>
             </form>
           ) : (

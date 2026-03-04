@@ -6,6 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { formatDisplayName, getInitials } from "../utils/displayName";
 import AvatarPicker from "./ui/AvatarPicker";
 import NotificationsBell from "./NotificationsBell";
+import apiClient from "../api/axiosClient";
 
 const Navbar = () => {
   const { user, token, logout } = useAuth();
@@ -43,7 +44,12 @@ const Navbar = () => {
 
   // Professional dashboard style: light theme only
 
-  function handleLogout() {
+  async function handleLogout() {
+    try {
+      await apiClient.post("/auth/logout");
+    } catch (_) {
+      // proceed with local logout even if backend call fails
+    }
     logout();
     nav("/login");
   }

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import InputField from "../components/InputField";
 import BlurText from "../components/ui/BlurText";
@@ -15,8 +15,14 @@ const Login = () => {
   // OTP expiry timer (5 minutes)
   const [otpExpiresAt, setOtpExpiresAt] = useState(null);
   const [timeLeft, setTimeLeft] = useState(0);
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect already-authenticated users to their dashboard
+  if (user) {
+    const dest = user.role === "admin" ? "/admin" : user.role === "staff" ? "/" : "/student";
+    return <Navigate to={dest} replace />;
+  }
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

@@ -23,6 +23,8 @@ import { verifyFileStorage } from "./config/upload.js";
 import { requireAuth } from "./middleware/authMiddleware.js";
 import { requireRole } from "./middleware/roleAuth.js";
 import { verifyToken } from "./utils/tokenUtils.js";
+import { requestLogger } from "./middleware/requestLogger.js";
+import logger from "./utils/logger.js";
 import fs from "fs";
 import path from "path";
 dotenv.config();
@@ -30,6 +32,9 @@ dotenv.config();
 const app = express();
 app.use(helmet());
 app.use(express.json());
+
+// Attach correlation ID and emit ECS-structured HTTP log events for every request
+app.use(requestLogger);
 
 // ============================================================================
 // CORS CONFIGURATION - Environment-Based Strategy
@@ -63,11 +68,11 @@ if (ENABLE_CORS) {
     }),
   );
 
-  console.log(`🔓 CORS enabled for origins: ${corsOrigins.join(", ")}`);
+  logger.info("CORS enabled", { "cors.origins": corsOrigins });
 } else {
   // CORS disabled - expecting Nginx or reverse proxy to handle cross-origin requests
-  console.log(
-    "🔒 CORS disabled - expecting reverse proxy (Nginx/Apache) to handle /api routing",
+  logger.info(
+    "CORS disabled - expecting reverse proxy (Nginx/Apache) to handle /api routing",
   );
 }
 
@@ -182,8 +187,7 @@ async function verifyDatabaseConnection() {
       "SELECT NOW() as current_time, current_database() as database",
     );
     const { current_time, database } = result.rows[0];
-    console.log(`✅ Database connected: ${database}`);
-    console.log(`   Server time: ${current_time}`);
+    logger.info("Database connected", { "db.name": database, "db.server_time": current_time });
 
     // Optional: Check if schema_version table exists to verify migrations were run
     try {
@@ -192,28 +196,24 @@ async function verifyDatabaseConnection() {
       );
       if (versionResult.rows.length > 0) {
         const { version, description, applied_at } = versionResult.rows[0];
-        console.log(`   Schema version: ${version} (${description})`);
-        console.log(`   Applied at: ${applied_at}`);
+        logger.info("Schema version verified", { "db.schema.version": version, "db.schema.description": description, "db.schema.applied_at": applied_at });
       } else {
-        console.log("   ⚠️  No schema version found. Please run migrations.");
+        logger.warn("No schema version found — please run migrations");
       }
     } catch (e) {
-      console.warn(
-        "⚠️  Schema version table not found. Please run migrations:",
-      );
-      console.warn(
-        "   psql -U <user> -d <database> -f backend/migrations/001_initial_schema.sql",
-      );
+      logger.warn("Schema version table not found — please run migrations", {
+        hint: "psql -U <user> -d <database> -f backend/migrations/001_initial_schema.sql",
+      });
     }
 
     // Log pool health after successful connection
     logPoolHealth();
   } catch (err) {
-    console.error("❌ Database connection failed:", err.message);
-    console.error("   Error code:", err.code);
-    console.error(
-      "   Ensure PostgreSQL is running and credentials are correct",
-    );
+    logger.error("Database connection failed", {
+      err,
+      "db.error.code": err.code,
+      hint: "Ensure PostgreSQL is running and credentials are correct",
+    });
     throw err;
   }
 }
@@ -241,20 +241,19 @@ async function startApplication() {
       if (process.env.NODE_ENV === "production") {
         throw new Error(`File storage verification failed: ${err.message}`);
       }
-      console.warn(
-        "⚠️  File storage verification failed (non-fatal in development)",
-      );
+      logger.warn("File storage verification failed (non-fatal in development)", { err });
     }
 
     // Step 3: Start server
     app.listen(PORT, "0.0.0.0", () => {
-      console.log(`🚀 Server listening on port ${PORT}`);
-      console.log(`   Environment: ${process.env.NODE_ENV || "development"}`);
-      console.log(`   API Base: http://localhost:${PORT}/api`);
+      logger.info("Server started", {
+        "server.port": PORT,
+        "server.environment": process.env.NODE_ENV || "development",
+        "server.api_base": `http://localhost:${PORT}/api`,
+      });
     });
   } catch (err) {
-    console.error("❌ Startup failed:", err.message);
-    console.error("   Fix the error and restart the server");
+    logger.error("Startup failed — fix the error and restart", { err });
     process.exit(1);
   }
 }
@@ -265,7 +264,13 @@ startApplication();
 // Keep this AFTER routes and server start to catch async route errors via next(err)
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  console.error("Unhandled error:", err);
+  logger.error("Unhandled error", {
+    err,
+    "trace.id": req.correlationId,
+    "user.id": req.user?.id,
+    "url.path": req.path,
+    "http.request.method": req.method,
+  });
 
   // Handle multer errors specifically
   if (err.name === "MulterError") {

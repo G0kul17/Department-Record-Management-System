@@ -2,6 +2,7 @@
 import pool from "../config/db.js";
 import path from "path";
 import fs from "fs";
+import logger from "../utils/logger.js";
 
 // ========== CREATE PARTICIPATION ==========
 export const createFacultyParticipation = async (req, res) => {
@@ -158,7 +159,7 @@ export const createFacultyParticipation = async (req, res) => {
       client.release();
     }
   } catch (err) {
-    console.error(err);
+    logger.error("Faculty participation controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 };
@@ -318,7 +319,7 @@ export const updateFacultyParticipation = async (req, res) => {
       client.release();
     }
   } catch (err) {
-    console.error(err);
+    logger.error("Faculty participation controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -343,7 +344,7 @@ export const deleteFacultyParticipation = async (req, res) => {
 
     return res.json({ message: "Deleted successfully" });
   } catch (err) {
-    console.error(err);
+    logger.error("Faculty participation controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -442,7 +443,7 @@ export const listFacultyParticipations = async (req, res) => {
       total: parseInt(countResult.rows[0].count)
     });
   } catch (err) {
-    console.error(err);
+    logger.error("Faculty participation controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -455,7 +456,7 @@ export const getFacultyParticipationsCount = async (req, res) => {
     );
     return res.json({ count: rows[0]?.count ?? 0 });
   } catch (err) {
-    console.error(err);
+    logger.error("Faculty participation controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 };

@@ -1,6 +1,7 @@
 // src/config/db.js
 import pkg from "pg";
 import dotenv from "dotenv";
+import logger from "../utils/logger.js";
 dotenv.config();
 const { Pool } = pkg;
 
@@ -67,15 +68,14 @@ const poolConfig = {
 // Validate pool configuration
 if (poolConfig.max < poolConfig.min) {
   throw new Error(
-    `❌ Invalid pool configuration: max (${poolConfig.max}) must be >= min (${poolConfig.min})`,
+    `Invalid pool configuration: max (${poolConfig.max}) must be >= min (${poolConfig.min})`,
   );
 }
 
 if (poolConfig.max > 100) {
-  console.warn(
-    `⚠️  Large pool size detected (${poolConfig.max}). ` +
-      `Ensure PostgreSQL max_connections is configured appropriately.`,
-  );
+  logger.warn("Large pool size detected — ensure PostgreSQL max_connections is configured appropriately", {
+    "db.pool.max": poolConfig.max,
+  });
 }
 
 // Create connection pool
@@ -92,9 +92,9 @@ let poolStats = {
 // Track new connections
 pool.on("connect", (client) => {
   poolStats.totalConnections++;
-  console.log(
-    `📊 Database connection established (total: ${poolStats.totalConnections})`,
-  );
+  logger.debug("Database connection established", {
+    "db.pool.total_connections": poolStats.totalConnections,
+  });
 
   // Set connection-level parameters
   client.query(`SET statement_timeout = ${poolConfig.statement_timeout}`);
@@ -108,13 +108,6 @@ pool.on("error", (err, client) => {
     timestamp: new Date().toISOString(),
   };
 
-  console.error("❌ Unexpected database client error:", {
-    message: err.message,
-    code: err.code,
-    totalErrors: poolStats.totalErrors,
-  });
-
-  // Critical errors that should alert
   const criticalErrors = [
     "ECONNREFUSED", // Database not running
     "ENOTFOUND", // Invalid host
@@ -122,10 +115,13 @@ pool.on("error", (err, client) => {
     "ECONNRESET", // Connection reset
   ];
 
-  if (criticalErrors.includes(err.code)) {
-    console.error("🚨 CRITICAL: Database connection error detected!");
-    console.error("   Check database availability and network connectivity.");
-  }
+  const level = criticalErrors.includes(err.code) ? "error" : "error";
+  logger[level]("Unexpected database client error", {
+    err,
+    "db.error.code": err.code,
+    "db.pool.total_errors": poolStats.totalErrors,
+    "db.error.critical": criticalErrors.includes(err.code),
+  });
 });
 
 // Track connection acquisition
@@ -135,7 +131,7 @@ pool.on("acquire", (client) => {
 
 // Track connection removal
 pool.on("remove", (client) => {
-  console.log(`🔌 Database connection closed`);
+  logger.debug("Database connection closed");
 });
 
 // ============================================================================
@@ -198,27 +194,21 @@ function getHealthStatus() {
 export function logPoolHealth() {
   const health = getPoolHealth();
   const status = health.health.status;
+  const level = status === "critical" ? "error" : status === "warning" ? "warn" : "info";
 
-  const icon =
-    {
-      healthy: "✅",
-      warning: "⚠️",
-      critical: "🚨",
-    }[status] || "❓";
-
-  console.log(`${icon} Database Pool Health: ${status.toUpperCase()}`);
-  console.log(
-    `   Total: ${health.totalCount} | Idle: ${health.idleCount} | Waiting: ${health.waitingCount}`,
-  );
-  console.log(`   Max: ${health.config.max} | Min: ${health.config.min}`);
-  console.log(
-    `   Connections: ${health.stats.totalConnections} | Errors: ${health.stats.totalErrors}`,
-  );
+  logger[level]("Database pool health", {
+    "db.pool.status": status,
+    "db.pool.total": health.totalCount,
+    "db.pool.idle": health.idleCount,
+    "db.pool.waiting": health.waitingCount,
+    "db.pool.max": health.config.max,
+    "db.pool.min": health.config.min,
+    "db.pool.total_connections": health.stats.totalConnections,
+    "db.pool.total_errors": health.stats.totalErrors,
+  });
 
   if (status === "warning" || status === "critical") {
-    console.warn(
-      `   ⚠️  Consider increasing DB_POOL_MAX or optimizing queries`,
-    );
+    logger.warn("Consider increasing DB_POOL_MAX or optimizing queries");
   }
 }
 
@@ -234,12 +224,12 @@ let isShuttingDown = false;
  */
 export async function closePool() {
   if (isShuttingDown) {
-    console.log("⏳ Pool shutdown already in progress...");
+    logger.info("Pool shutdown already in progress");
     return;
   }
 
   isShuttingDown = true;
-  console.log("🔌 Closing database connection pool...");
+  logger.info("Closing database connection pool");
 
   try {
     // Log final pool stats
@@ -248,35 +238,37 @@ export async function closePool() {
     // Close all connections
     await pool.end();
 
-    console.log("✅ Database pool closed successfully");
+    logger.info("Database pool closed successfully");
   } catch (err) {
-    console.error("❌ Error closing database pool:", err.message);
+    logger.error("Error closing database pool", { err });
     throw err;
   }
 }
 
 // Register shutdown handlers
 process.on("SIGTERM", async () => {
-  console.log("\n📡 Received SIGTERM signal");
+  logger.info("Received SIGTERM signal — shutting down gracefully");
   await closePool();
   process.exit(0);
 });
 
 process.on("SIGINT", async () => {
-  console.log("\n📡 Received SIGINT signal (Ctrl+C)");
+  logger.info("Received SIGINT signal (Ctrl+C) — shutting down gracefully");
   await closePool();
   process.exit(0);
 });
 
 // Handle uncaught exceptions
 process.on("uncaughtException", (err) => {
-  console.error("❌ Uncaught Exception:", err);
+  logger.error("Uncaught Exception", { err });
   process.exit(1);
 });
 
 // Handle unhandled promise rejections
 process.on("unhandledRejection", (reason, promise) => {
-  console.error("❌ Unhandled Rejection at:", promise, "reason:", reason);
+  logger.error("Unhandled Promise Rejection", {
+    err: reason instanceof Error ? reason : new Error(String(reason)),
+  });
   process.exit(1);
 });
 
@@ -284,12 +276,15 @@ process.on("unhandledRejection", (reason, promise) => {
 // EXPORT
 // ============================================================================
 
-console.log("📊 Database Pool Configuration:");
-console.log(`   Environment: ${NODE_ENV}`);
-console.log(`   Host: ${poolConfig.host}:${poolConfig.port}`);
-console.log(`   Database: ${poolConfig.database}`);
-console.log(`   Pool Max: ${poolConfig.max} | Min: ${poolConfig.min}`);
-console.log(`   Idle Timeout: ${poolConfig.idleTimeoutMillis}ms`);
-console.log(`   Connection Timeout: ${poolConfig.connectionTimeoutMillis}ms`);
+logger.info("Database pool configuration loaded", {
+  "db.environment": NODE_ENV,
+  "db.host": poolConfig.host,
+  "db.port": poolConfig.port,
+  "db.name": poolConfig.database,
+  "db.pool.max": poolConfig.max,
+  "db.pool.min": poolConfig.min,
+  "db.pool.idle_timeout_ms": poolConfig.idleTimeoutMillis,
+  "db.pool.connection_timeout_ms": poolConfig.connectionTimeoutMillis,
+});
 
 export default pool;

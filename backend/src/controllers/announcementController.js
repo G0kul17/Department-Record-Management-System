@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import logger from "../utils/logger.js";
 
 function parseRecipientIds(raw) {
   if (!raw) return [];
@@ -95,7 +96,7 @@ export async function createAnnouncement(req, res) {
       .status(201)
       .json({ message: "Announcement sent", id: announcementId });
   } catch (err) {
-    console.error(err);
+    logger.error("Announcement controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -132,7 +133,7 @@ export async function listMyAnnouncements(req, res) {
 
     return res.json({ announcements: rows });
   } catch (err) {
-    console.error(err);
+    logger.error("Announcement controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 }

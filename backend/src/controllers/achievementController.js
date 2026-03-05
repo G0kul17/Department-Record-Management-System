@@ -2,6 +2,7 @@
 import pool from "../config/db.js";
 import path from "path";
 import fs from "fs";
+import logger from "../utils/logger.js";
 
 // create achievement (students)
 export async function createAchievement(req, res) {
@@ -161,7 +162,7 @@ export async function createAchievement(req, res) {
       client.release();
     }
   } catch (err) {
-    console.error(err);
+    logger.error("Achievement controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -333,7 +334,7 @@ export async function listAchievements(req, res) {
     const { rows } = await pool.query(base, params);
     return res.json({ achievements: rows });
   } catch (err) {
-    console.error(err);
+    logger.error("Achievement controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -406,7 +407,7 @@ export async function getAchievementDetails(req, res) {
     if (!rows.length) return res.status(404).json({ message: "Not found" });
     return res.json({ achievement: rows[0] });
   } catch (err) {
-    console.error(err);
+    logger.error("Achievement controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -437,7 +438,7 @@ export async function verifyAchievement(req, res) {
     );
     return res.json({ message: "Achievement approved" });
   } catch (err) {
-    console.error(err);
+    logger.error("Achievement controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -468,7 +469,7 @@ export async function rejectAchievement(req, res) {
     );
     return res.json({ message: "Achievement rejected" });
   } catch (err) {
-    console.error(err);
+    logger.error("Achievement controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -487,7 +488,7 @@ export async function getAchievementsCount(req, res) {
     const { rows } = await pool.query(sql, params);
     return res.json({ count: rows[0]?.count ?? 0 });
   } catch (err) {
-    console.error(err);
+    logger.error("Achievement controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -593,7 +594,7 @@ export async function getAchievementsLeaderboard(req, res) {
 
     return res.json({ leaderboard });
   } catch (err) {
-    console.error(err);
+    logger.error("Achievement controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 }

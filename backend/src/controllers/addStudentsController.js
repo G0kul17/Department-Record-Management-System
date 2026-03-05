@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 import xlsx from "xlsx";
 import csvParser from "csv-parser";
 import { sendMail } from "../config/mailer.js";
+import logger from "../utils/logger.js";
 
 /* ================= HELPERS ================= */
 
@@ -104,8 +105,7 @@ export const uploadStudents = async (req, res) => {
       return res.status(400).json({ message: "Uploaded file is empty" });
     }
 
-    // Debug: log first row to check headers
-    console.log("First row headers:", Object.keys(rows[0] || {}));
+    logger.debug("Student upload: first row headers", { "trace.id": req.correlationId, headers: Object.keys(rows[0] || {}) });
 
     const errors = [];
     const validStudents = [];
@@ -141,8 +141,7 @@ export const uploadStudents = async (req, res) => {
       if (!section) missingFields.push("Section");
 
       if (missingFields.length) {
-        console.log(`Row ${rowNumber} missing fields:`, missingFields);
-        console.log("Extracted fields:", fields);
+        logger.debug("Student upload: row missing fields", { "trace.id": req.correlationId, row: rowNumber, missingFields, fields });
         errors.push({
           row: rowNumber,
           message: "Fill all sections",
@@ -178,7 +177,7 @@ export const uploadStudents = async (req, res) => {
     });
 
     if (errors.length) {
-      console.log("Validation errors:", errors);
+      logger.debug("Student upload: validation errors", { "trace.id": req.correlationId, errorCount: errors.length });
       return res.status(400).json({
         message: `Validation failed for ${errors.length} row(s). Check the details.`,
         errors,
@@ -252,7 +251,7 @@ Department Admin
       skipped,
     });
   } catch (err) {
-    console.error(err);
+    logger.error("Student upload failed", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     res.status(500).json({ message: "Upload failed" });
   } finally {
     if (req.file?.path) fs.unlink(req.file.path, () => {});

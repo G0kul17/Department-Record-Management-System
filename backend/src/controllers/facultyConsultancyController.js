@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import pool from "../config/db.js";
 import { STORAGE_PATH } from "../config/upload.js";
+import logger from "../utils/logger.js";
 
 // ========== CREATE CONSULTANCY ==========
 export const createConsultancy = async (req, res) => {
@@ -71,7 +72,7 @@ export const createConsultancy = async (req, res) => {
       client.release();
     }
   } catch (err) {
-    console.error(err);
+    logger.error("Faculty consultancy controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 };
@@ -166,7 +167,7 @@ export const updateConsultancy = async (req, res) => {
       // Remove old file from disk after the transaction is committed
       if (oldFileFilename) {
         fs.unlink(path.join(STORAGE_PATH, oldFileFilename), (err) => {
-          if (err) console.error("Failed to delete old consultancy proof file:", err.message);
+          if (err) logger.error("Failed to delete old consultancy proof file", { err });
         });
       }
 
@@ -178,7 +179,7 @@ export const updateConsultancy = async (req, res) => {
       client.release();
     }
   } catch (err) {
-    console.error(err);
+    logger.error("Faculty consultancy controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -203,7 +204,7 @@ export const deleteConsultancy = async (req, res) => {
 
     return res.json({ message: "Deleted successfully" });
   } catch (err) {
-    console.error(err);
+    logger.error("Faculty consultancy controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -221,7 +222,7 @@ export const listConsultancy = async (req, res) => {
 
     return res.json({ data: rows });
   } catch (err) {
-    console.error(err);
+    logger.error("Faculty consultancy controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -234,7 +235,7 @@ export const getFacultyConsultancyCount = async (req, res) => {
     );
     return res.json({ count: rows[0]?.count ?? 0 });
   } catch (err) {
-    console.error(err);
+    logger.error("Faculty consultancy controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 };

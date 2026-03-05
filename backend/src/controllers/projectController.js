@@ -4,6 +4,7 @@ import { upload } from "../config/upload.js";
 import path from "path";
 import fs from "fs";
 import logger from "../utils/logger.js";
+import { QueryBuilder } from "../utils/queryBuilder.js";
 
 // Note: 'upload' is multer instance exported above
 // We'll expose middleware usage in routes.
@@ -357,8 +358,9 @@ export async function listProjects(req, res) {
     const requesterId = req.user?.id;
     const requesterRole = req.user?.role;
 
-    // Include uploader info for list items (created_by or first file's uploaded_by)
-    let base =
+    // Fixed JOINs live in the base string; the conditional staff JOIN is added
+    // via qb.addJoin() so QueryBuilder can always emit all JOINs before WHERE.
+    const qb = new QueryBuilder(
       "SELECT p.*, " +
       "COALESCE(u.full_name, up.full_name) AS uploader_full_name, " +
       "COALESCE(u.email, up.email) AS uploader_email, " +
@@ -372,9 +374,8 @@ export async function listProjects(req, res) {
       "  WHERE pf.project_id = p.id AND pf.uploaded_by IS NOT NULL " +
       "  ORDER BY pf.id ASC LIMIT 1" +
       ") up ON true " +
-      "LEFT JOIN users v ON v.id = p.verified_by";
-    const conditions = [];
-    const params = [];
+      "LEFT JOIN users v ON v.id = p.verified_by",
+    );
 
     // Check if viewing verified/approved projects (not in management mode)
     const isViewingVerified =
@@ -383,23 +384,21 @@ export async function listProjects(req, res) {
       req.query.verification_status === "verified";
 
     // If not authenticated, only show verified projects
-    // Also show verified if explicitly requesting verified projects (but not if filtering by verification_status, which has its own logic)
     if (!requesterId && !req.query.verification_status) {
-      conditions.push(`p.verified = true`);
+      qb.addWhere(`p.verified = true`);
     } else if (verified === "true") {
-      // If verified=true is explicitly passed, enforce it
-      conditions.push(`p.verified = true`);
+      qb.addWhere(`p.verified = true`);
     }
 
-    // Staff can only see projects for activity types they coordinate (only in management/verification mode)
-    // If staff is viewing verified/approved projects, no activity_type restriction needed
-    // Only apply filter when looking for unverified/pending projects
+    // Staff can only see projects for activity types they coordinate (only in
+    // management/verification mode — not when browsing verified records).
+    // addParam is called first so the placeholder is known before addJoin uses it.
     if (requesterRole === "staff" && requesterId && !isViewingVerified) {
-      base += ` LEFT JOIN activity_coordinators ac ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = $${
-        params.length + 1
-      }`;
-      params.push(requesterId);
-      conditions.push(`ac.id IS NOT NULL`);
+      const staffRef = qb.addParam(requesterId);
+      qb.addJoin(
+        `LEFT JOIN activity_coordinators ac ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = ${staffRef}`,
+      );
+      qb.addWhere(`ac.id IS NOT NULL`);
     }
 
     if (year) {
@@ -413,51 +412,42 @@ export async function listProjects(req, res) {
       const yearClauses = [];
 
       // Exact match variations for academic_year field
-      params.push(yearRaw);
-      yearClauses.push(`p.academic_year = $${params.length}`);
+      yearClauses.push(`p.academic_year = ${qb.addParam(yearRaw)}`);
 
       if (startYear4) {
         // Match patterns like "2025-2026" or "2025-26"
         const nextYear = String(parseInt(startYear4) + 1);
-        params.push(`${startYear4}-${nextYear}`);
-        yearClauses.push(`p.academic_year = $${params.length}`);
+        yearClauses.push(`p.academic_year = ${qb.addParam(`${startYear4}-${nextYear}`)}`);
 
         if (startYear2 && endYear2) {
-          params.push(`${startYear2}-${endYear2}`);
-          yearClauses.push(`p.academic_year = $${params.length}`);
+          yearClauses.push(`p.academic_year = ${qb.addParam(`${startYear2}-${endYear2}`)}`);
         }
 
         // Only fallback to created_at if academic_year is NULL/empty
-        params.push(startYear4);
         yearClauses.push(
-          `(p.academic_year IS NULL AND to_char(p.created_at, 'YYYY') = $${params.length})`,
+          `(p.academic_year IS NULL AND to_char(p.created_at, 'YYYY') = ${qb.addParam(startYear4)})`,
         );
       }
 
-      conditions.push(`(${yearClauses.join(" OR ")})`);
+      qb.addWhere(`(${yearClauses.join(" OR ")})`);
     }
     if (mentor_name) {
-      params.push(mentor_name);
-      conditions.push(`p.mentor_name = $${params.length}`);
+      qb.addWhere(`p.mentor_name = ${qb.addParam(mentor_name)}`);
     }
     if (status) {
-      params.push(status);
-      conditions.push(`p.status = $${params.length}`);
+      qb.addWhere(`p.status = ${qb.addParam(status)}`);
     }
     if (verified !== undefined) {
-      params.push(verified === "true");
-      conditions.push(`p.verified = $${params.length}`);
+      qb.addWhere(`p.verified = ${qb.addParam(verified === "true")}`);
     }
     // allow filtering by verification_status via query param `verification_status`
     if (req.query.verification_status) {
-      params.push(req.query.verification_status);
-      conditions.push(`p.verification_status = $${params.length}`);
+      qb.addWhere(`p.verification_status = ${qb.addParam(req.query.verification_status)}`);
     }
     if (q) {
-      params.push(`%${q}%`);
-      conditions.push(
-        `(p.title ILIKE $${params.length} OR p.description ILIKE $${params.length})`,
-      );
+      // addParam once; the returned placeholder is reused in both ILIKE arms.
+      const qRef = qb.addParam(`%${q}%`);
+      qb.addWhere(`(p.title ILIKE ${qRef} OR p.description ILIKE ${qRef})`);
     }
     if (mine !== undefined && mine !== "false") {
       if (!requesterId) {
@@ -469,27 +459,23 @@ export async function listProjects(req, res) {
         [requesterId],
       );
       if (userRows.length && userRows[0].full_name) {
-        params.push(requesterId);
-        const createdByParam = params.length;
-        params.push(userRows[0].full_name);
-        const nameParam = params.length;
-        conditions.push(
-          `(p.created_by = $${createdByParam} OR LOWER(p.team_member_names) LIKE LOWER('%' || $${nameParam} || '%'))`,
+        const createdByRef = qb.addParam(requesterId);
+        const nameRef = qb.addParam(userRows[0].full_name);
+        qb.addWhere(
+          `(p.created_by = ${createdByRef} OR LOWER(p.team_member_names) LIKE LOWER('%' || ${nameRef} || '%'))`,
         );
       } else {
-        params.push(requesterId);
-        conditions.push(`p.created_by = $${params.length}`);
+        qb.addWhere(`p.created_by = ${qb.addParam(requesterId)}`);
       }
     }
 
-    if (conditions.length) base += " WHERE " + conditions.join(" AND ");
-    params.push(Number(limit));
-    params.push(Number(offset));
-    base += ` ORDER BY p.created_at DESC LIMIT $${params.length - 1} OFFSET $${
-      params.length
-    }`;
+    const limitRef = qb.addParam(Number(limit));
+    const offsetRef = qb.addParam(Number(offset));
+    const { text, values } = qb.build(
+      `ORDER BY p.created_at DESC LIMIT ${limitRef} OFFSET ${offsetRef}`,
+    );
 
-    const { rows } = await pool.query(base, params);
+    const { rows } = await pool.query(text, values);
     return res.json({ projects: rows });
   } catch (err) {
     logger.error("Project controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });

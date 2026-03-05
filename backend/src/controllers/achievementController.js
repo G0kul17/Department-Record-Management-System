@@ -3,6 +3,7 @@ import pool from "../config/db.js";
 import path from "path";
 import fs from "fs";
 import logger from "../utils/logger.js";
+import { QueryBuilder } from "../utils/queryBuilder.js";
 
 // create achievement (students)
 export async function createAchievement(req, res) {
@@ -181,9 +182,10 @@ export async function listAchievements(req, res) {
     const requesterId = req.user?.id;
     const requesterRole = req.user?.role;
 
-    // Include uploader identity (prefer achievement owner, fallback to proof file uploader)
-    // Also include certificate and event_photos file details
-    let base = `SELECT a.*, COALESCE(u.email, u2.email, ux.email)        AS user_email,
+    // Fixed JOINs live in the base string; the conditional staff JOIN is added
+    // via qb.addJoin() so QueryBuilder can always emit all JOINs before WHERE.
+    const qb = new QueryBuilder(
+      `SELECT a.*, COALESCE(u.email, u2.email, ux.email)        AS user_email,
           COALESCE(u.full_name, u2.full_name, ux.full_name) AS user_fullname,
             pf.original_name                    AS proof_name,
             pf.filename                         AS proof_filename,
@@ -203,9 +205,8 @@ export async function listAchievements(req, res) {
             LEFT JOIN project_files pfe ON a.event_photos_file_id = pfe.id
           LEFT JOIN users u2 ON u2.id = pf.uploaded_by
           LEFT JOIN users ux ON LOWER(ux.full_name) = LOWER(a.name)
-          LEFT JOIN users v ON v.id = a.verified_by`;
-    const cond = [];
-    const params = [];
+          LEFT JOIN users v ON v.id = a.verified_by`,
+    );
 
     // Check if viewing verified/approved achievements (not in management mode)
     const isViewingVerified =
@@ -214,12 +215,10 @@ export async function listAchievements(req, res) {
       req.query.status === "verified";
 
     // If not authenticated, only show verified achievements
-    // Also show verified if explicitly requesting verified achievements (but not if filtering by status, which has its own logic)
     if (!requesterId && !req.query.status) {
-      cond.push(`a.verified = true`);
+      qb.addWhere(`a.verified = true`);
     } else if (verified === "true") {
-      // If verified=true is explicitly passed, enforce it
-      cond.push(`a.verified = true`);
+      qb.addWhere(`a.verified = true`);
     }
 
     // If mine=true, require auth and only return requester's achievements
@@ -228,24 +227,18 @@ export async function listAchievements(req, res) {
       if (!requesterId) {
         return res.status(401).json({ message: "Authentication required" });
       }
-      params.push(requesterId);
-      cond.push(`a.user_id=$${params.length}`);
+      qb.addWhere(`a.user_id = ${qb.addParam(requesterId)}`);
     }
 
-    // Staff can only see achievements for activity types they coordinate (only in management/verification mode)
-    // If staff is viewing verified/approved achievements OR viewing own achievements (mine=true), no activity_type restriction needed
-    // Only apply filter when looking for unverified/pending achievements that aren't their own
-    if (
-      requesterRole === "staff" &&
-      requesterId &&
-      !isViewingVerified &&
-      !isMine
-    ) {
-      base += ` LEFT JOIN activity_coordinators ac ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = $${
-        params.length + 1
-      }`;
-      params.push(requesterId);
-      cond.push(`ac.id IS NOT NULL`);
+    // Staff can only see achievements for activity types they coordinate (only
+    // in management/verification mode — not when browsing verified or own records).
+    // addParam is called first so the placeholder is known before addJoin uses it.
+    if (requesterRole === "staff" && requesterId && !isViewingVerified && !isMine) {
+      const staffRef = qb.addParam(requesterId);
+      qb.addJoin(
+        `LEFT JOIN activity_coordinators ac ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = ${staffRef}`,
+      );
+      qb.addWhere(`ac.id IS NOT NULL`);
     }
 
     if (user_id) {
@@ -253,31 +246,23 @@ export async function listAchievements(req, res) {
       if (!Number.isInteger(requestedUserId)) {
         return res.status(400).json({ message: "Invalid user_id" });
       }
-      if (
-        requesterId &&
-        requesterRole !== "admin" &&
-        requesterRole !== "staff"
-      ) {
+      if (requesterId && requesterRole !== "admin" && requesterRole !== "staff") {
         if (requestedUserId !== requesterId) {
           return res.status(403).json({ message: "Not authorized" });
         }
       }
-      params.push(requestedUserId);
-      cond.push(`a.user_id=$${params.length}`);
+      qb.addWhere(`a.user_id = ${qb.addParam(requestedUserId)}`);
     }
     if (verified !== undefined) {
-      params.push(verified === "true");
-      cond.push(`a.verified=$${params.length}`);
+      qb.addWhere(`a.verified = ${qb.addParam(verified === "true")}`);
     }
     if (req.query.status) {
-      params.push(req.query.status);
-      cond.push(`a.verification_status=$${params.length}`);
+      qb.addWhere(`a.verification_status = ${qb.addParam(req.query.status)}`);
     }
     if (q) {
-      params.push(`%${q}%`);
-      cond.push(
-        `(a.title ILIKE $${params.length} OR a.issuer ILIKE $${params.length})`,
-      );
+      // addParam once; the returned placeholder is reused in both ILIKE arms.
+      const qRef = qb.addParam(`%${q}%`);
+      qb.addWhere(`(a.title ILIKE ${qRef} OR a.issuer ILIKE ${qRef})`);
     }
     if (year) {
       const yearRaw = String(year).trim();
@@ -290,48 +275,39 @@ export async function listAchievements(req, res) {
       const yearClauses = [];
 
       // Exact match variations for academic_year field
-      params.push(yearRaw);
-      yearClauses.push(`a.academic_year = $${params.length}`);
+      yearClauses.push(`a.academic_year = ${qb.addParam(yearRaw)}`);
 
       if (startYear4) {
         // Match patterns like "2025-2026" or "2025-26"
         const nextYear = String(parseInt(startYear4) + 1);
-        params.push(`${startYear4}-${nextYear}`);
-        yearClauses.push(`a.academic_year = $${params.length}`);
+        yearClauses.push(`a.academic_year = ${qb.addParam(`${startYear4}-${nextYear}`)}`);
 
         if (startYear2 && endYear2) {
-          params.push(`${startYear2}-${endYear2}`);
-          yearClauses.push(`a.academic_year = $${params.length}`);
+          yearClauses.push(`a.academic_year = ${qb.addParam(`${startYear2}-${endYear2}`)}`);
         }
 
         // Fallback to date fields only if academic_year is NULL/empty
-        params.push(startYear4);
         yearClauses.push(
-          `(a.academic_year IS NULL AND to_char(a.date_of_award, 'YYYY') = $${params.length})`,
+          `(a.academic_year IS NULL AND to_char(a.date_of_award, 'YYYY') = ${qb.addParam(startYear4)})`,
         );
-
-        params.push(startYear4);
         yearClauses.push(
-          `(a.academic_year IS NULL AND to_char(a.date, 'YYYY') = $${params.length})`,
+          `(a.academic_year IS NULL AND to_char(a.date, 'YYYY') = ${qb.addParam(startYear4)})`,
         );
-
-        params.push(startYear4);
         yearClauses.push(
-          `(a.academic_year IS NULL AND to_char(a.created_at, 'YYYY') = $${params.length})`,
+          `(a.academic_year IS NULL AND to_char(a.created_at, 'YYYY') = ${qb.addParam(startYear4)})`,
         );
       }
 
-      cond.push(`(${yearClauses.join(" OR ")})`);
+      qb.addWhere(`(${yearClauses.join(" OR ")})`);
     }
 
-    if (cond.length) base += " WHERE " + cond.join(" AND ");
-    params.push(Number(limit));
-    params.push(Number(offset));
-    base += ` ORDER BY a.created_at DESC LIMIT $${params.length - 1} OFFSET $${
-      params.length
-    }`;
+    const limitRef = qb.addParam(Number(limit));
+    const offsetRef = qb.addParam(Number(offset));
+    const { text, values } = qb.build(
+      `ORDER BY a.created_at DESC LIMIT ${limitRef} OFFSET ${offsetRef}`,
+    );
 
-    const { rows } = await pool.query(base, params);
+    const { rows } = await pool.query(text, values);
     return res.json({ achievements: rows });
   } catch (err) {
     logger.error("Achievement controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });

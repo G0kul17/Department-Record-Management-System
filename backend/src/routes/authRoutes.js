@@ -10,10 +10,19 @@ import {
   getProfile,
   updateProfile,
   logout,
+  updateProfilePhoto,
 } from "../controllers/authController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 import { upload } from "../config/upload.js";
-import { updateProfilePhoto } from "../controllers/authController.js";
+import { validate } from "../middleware/validate.js";
+import {
+  registerSchema,
+  verifyOtpSchema,
+  loginSchema,
+  forgotSchema,
+  resetPasswordSchema,
+  updateProfileSchema,
+} from "../validators/authSchemas.js";
 
 const router = express.Router();
 
@@ -28,26 +37,25 @@ const router = express.Router();
  * - /logout -> invalidate session
  */
 
-router.post("/register", register);
-router.post("/verify", verifyOTP);
-router.post("/login", login);
-router.post("/login-verify", loginVerifyOTP);
-router.post("/forgot", initiateForgotPassword);
-router.post("/forgot-verify", forgotVerifyOTP);
-router.post("/reset", resetPassword);
+router.post("/register", validate(registerSchema), register);
+router.post("/verify", validate(verifyOtpSchema), verifyOTP);
+router.post("/login", validate(loginSchema), login);
+router.post("/login-verify", validate(verifyOtpSchema), loginVerifyOTP);
+router.post("/forgot", validate(forgotSchema), initiateForgotPassword);
+router.post("/forgot-verify", validate(verifyOtpSchema), forgotVerifyOTP);
+router.post("/reset", validate(resetPasswordSchema), resetPassword);
 router.post("/logout", requireAuth, logout);
 
 // Profile endpoints for logged-in users
 router.get("/profile", requireAuth, getProfile);
-router.put("/profile", requireAuth, updateProfile);
+router.put("/profile", requireAuth, validate(updateProfileSchema), updateProfile);
 
-// Upload profile photo (avatar)
+// Upload profile photo (avatar) — multer runs first, no body fields to validate
 router.post(
   "/profile/photo",
   requireAuth,
   upload.single("avatar"),
-  updateProfilePhoto
+  updateProfilePhoto,
 );
 
 export default router;
-

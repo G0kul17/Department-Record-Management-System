@@ -12,24 +12,26 @@ import {
   getProjectsCount,
 } from "../controllers/projectController.js";
 import { upload } from "../config/upload.js";
+import { validate } from "../middleware/validate.js";
+import { createProjectSchema } from "../validators/projectSchemas.js";
+import { reviewSchema } from "../validators/staffSchemas.js";
 
 const router = express.Router();
 
-// Create project (students or staff) — accepts multiple files under fields: srs, ppt, paper, code, portal
-// Require SRS document on creation: accept 'srs_document' plus optional 'files'
+// Create project — multer first (populates req.body from form fields), then validate
 router.post(
   "/",
   requireAuth,
-  // either student or staff can create a project
   requireRole(["student", "staff", "admin"]),
   upload.fields([
     { name: "srs_document", maxCount: 1 },
     { name: "files", maxCount: 1 },
   ]),
-  createProject
+  validate(createProjectSchema),
+  createProject,
 );
 
-// upload files to existing project (staff/student who belongs to project or admin)
+// Upload files to existing project — no body fields requiring validation
 router.post(
   "/:id/files",
   requireAuth,
@@ -38,31 +40,29 @@ router.post(
     { name: "srs_document", maxCount: 1 },
     { name: "files", maxCount: 1 },
   ]),
-  uploadFilesToProject
+  uploadFilesToProject,
 );
 
-// Public count endpoint for homepage stats (must be BEFORE any ":id" route)
+// Public count endpoint (must be BEFORE any ":id" route)
 router.get("/count", getProjectsCount);
 
-// Public list endpoint (for homepage display)
 router.get("/", optionalAuth, listProjects);
-// Public details endpoint (for viewing project details)
 router.get("/:id", optionalAuth, getProjectDetails);
 
-// Staff verifies project
 router.post(
   "/:id/verify",
   requireAuth,
   requireRole(["staff"]),
-  verifyProject
+  validate(reviewSchema),
+  verifyProject,
 );
 
-// Staff rejects project
 router.post(
   "/:id/reject",
   requireAuth,
   requireRole(["staff"]),
-  rejectProject
+  validate(reviewSchema),
+  rejectProject,
 );
 
 export default router;

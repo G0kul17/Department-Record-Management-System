@@ -16,43 +16,47 @@ import {
   listEvents,
 } from "../controllers/eventController.js";
 import { upload } from "../config/upload.js";
+import { validate } from "../middleware/validate.js";
+import { reviewSchema, createAnnouncementSchema } from "../validators/staffSchemas.js";
+import { createEventSchema, updateEventSchema } from "../validators/eventSchemas.js";
 
 const router = express.Router();
 
 // Staff-only routes
 router.use(requireAuth, requireRole(["staff", "admin"]));
 
-// Dashboard (single page needs)
+// Dashboard
 router.get("/dashboard", staffDashboard);
 
 // Projects approval (staff only — admins may not approve/reject)
-router.post("/projects/:id/approve", requireRole(["staff"]), approveProject);
-router.post("/projects/:id/reject", requireRole(["staff"]), rejectProject);
+router.post("/projects/:id/approve", requireRole(["staff"]), validate(reviewSchema), approveProject);
+router.post("/projects/:id/reject", requireRole(["staff"]), validate(reviewSchema), rejectProject);
 
 // Achievements approval (staff only — admins may not approve/reject)
-router.post("/achievements/:id/approve", requireRole(["staff"]), approveAchievement);
-router.post("/achievements/:id/reject", requireRole(["staff"]), rejectAchievement);
+router.post("/achievements/:id/approve", requireRole(["staff"]), validate(reviewSchema), approveAchievement);
+router.post("/achievements/:id/reject", requireRole(["staff"]), validate(reviewSchema), rejectAchievement);
 
-// Targeted announcements to selected users
+// Targeted announcements — multer first, then validate
 router.post(
   "/announcements",
   upload.fields([{ name: "brochure", maxCount: 1 }]),
-  createAnnouncement
+  validate(createAnnouncementSchema),
+  createAnnouncement,
 );
 
-// Events management (staff can create events)
+// Events management — multer first for create, then validate
 router.post(
   "/events",
   upload.fields([
     { name: "attachments", maxCount: 6 },
     { name: "thumbnail", maxCount: 1 },
   ]),
-  createEvent
+  validate(createEventSchema),
+  createEvent,
 );
-router.put("/events/:id", updateEvent);
+router.put("/events/:id", validate(updateEventSchema), updateEvent);
 router.delete("/events/:id", deleteEvent);
 
-// listing events (also available to students via /api/events)
 router.get("/events", listEvents);
 
 export default router;

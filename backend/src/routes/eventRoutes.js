@@ -7,10 +7,12 @@ import {
   deleteEvent,
 } from "../controllers/eventController.js";
 import { upload } from "../config/upload.js";
+import { validate } from "../middleware/validate.js";
+import { createEventSchema, updateEventSchema } from "../validators/eventSchemas.js";
 
 const router = express.Router();
 
-// Create event (staff/admin), optional attachments under field name 'files'
+// Create event — multer first (populates req.body from form fields), then validate
 router.post(
   "/",
   requireAuth,
@@ -19,16 +21,23 @@ router.post(
     { name: "attachments", maxCount: 10 },
     { name: "thumbnail", maxCount: 1 },
   ]),
-  createEvent
+  validate(createEventSchema),
+  createEvent,
 );
 
-router.put("/:id", requireAuth, requireRole(["staff", "admin"]), updateEvent);
+router.put(
+  "/:id",
+  requireAuth,
+  requireRole(["staff", "admin"]),
+  validate(updateEventSchema),
+  updateEvent,
+);
 
 router.delete(
   "/:id",
   requireAuth,
   requireRole(["staff", "admin"]),
-  deleteEvent
+  deleteEvent,
 );
 
 export default router;

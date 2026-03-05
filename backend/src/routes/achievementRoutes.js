@@ -12,46 +12,45 @@ import {
   getAchievementsLeaderboard,
 } from "../controllers/achievementController.js";
 import { upload } from "../config/upload.js";
+import { validate } from "../middleware/validate.js";
+import { createAchievementSchema } from "../validators/achievementSchemas.js";
+import { reviewSchema } from "../validators/staffSchemas.js";
 
 const router = express.Router();
 
-// Student creates achievement with optional proof file (single file field 'proof')
+// Student creates achievement — multer first (populates req.body), then validate
 router.post(
   "/",
   requireAuth,
-  // Allow admin to create achievements too (auto-approves in controller)
   requireRole(["student", "alumni", "staff", "admin"]),
   upload.fields([
     { name: "proof", maxCount: 1 },
     { name: "certificate", maxCount: 1 },
     { name: "event_photos", maxCount: 1 },
   ]),
-  createAchievement
+  validate(createAchievementSchema),
+  createAchievement,
 );
 
 router.get("/", optionalAuth, listAchievements);
-// Public count endpoint for homepage stats
 router.get("/count", getAchievementsCount);
-// Public leaderboard endpoint
 router.get("/leaderboard", getAchievementsLeaderboard);
-
-// Single achievement details
 router.get("/:id", optionalAuth, getAchievementDetails);
 
-// Staff verifies achievement
 router.post(
   "/:id/verify",
   requireAuth,
   requireRole(["staff"]),
-  verifyAchievement
+  validate(reviewSchema),
+  verifyAchievement,
 );
 
-// Staff rejects achievement
 router.post(
   "/:id/reject",
   requireAuth,
   requireRole(["staff"]),
-  rejectAchievement
+  validate(reviewSchema),
+  rejectAchievement,
 );
 
 export default router;

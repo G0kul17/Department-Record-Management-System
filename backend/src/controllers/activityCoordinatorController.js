@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import logger from "../utils/logger.js";
 
 // List all activity coordinator mappings
 export async function getAllActivityCoordinators(req, res) {
@@ -14,7 +15,7 @@ export async function getAllActivityCoordinators(req, res) {
     );
     return res.json({ mappings: rows });
   } catch (err) {
-    console.error(err);
+    logger.error("Activity coordinator controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -62,7 +63,7 @@ export async function createActivityCoordinator(req, res) {
 
     return res.status(201).json({ mapping: rows[0] });
   } catch (err) {
-    console.error(err);
+    logger.error("Activity coordinator controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -80,7 +81,7 @@ export async function deleteActivityCoordinator(req, res) {
     }
     return res.json({ message: "Mapping deleted", id: mappingId });
   } catch (err) {
-    console.error(err);
+    logger.error("Activity coordinator controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -109,7 +110,7 @@ export async function getActivityTypes(req, res) {
     );
     return res.json({ activityTypes: rows.map((r) => r.activity_type) });
   } catch (err) {
-    console.error(err);
+    logger.error("Activity coordinator controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 }

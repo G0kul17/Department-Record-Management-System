@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import logger from "../utils/logger.js";
 
 // ================= GET STUDENT PROFILE =================
 export const getStudentProfile = async (req, res) => {
@@ -32,11 +33,11 @@ export const getStudentProfile = async (req, res) => {
       return res.status(404).json({ message: "Profile not found" });
     }
 
-    console.log("Student profile data:", rows[0]);
+    logger.debug("Student profile data fetched", { "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.json({ profile: rows[0] });
 
   } catch (err) {
-    console.error(err);
+    logger.error("Student profile controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -91,7 +92,7 @@ export const updateStudentProfile = async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
+    logger.error("Student profile controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     res.status(500).json({ message: "Server error" });
   }
 };

@@ -5,6 +5,7 @@ import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { fileTypeFromFile } from "file-type";
 import dotenv from "dotenv";
+import logger from "../utils/logger.js";
 dotenv.config();
 
 // ============================================================================
@@ -24,20 +25,18 @@ let STORAGE_PATH;
 if (IS_PRODUCTION) {
   if (!process.env.FILE_STORAGE_PATH) {
     throw new Error(
-      "❌ FILE_STORAGE_PATH environment variable is REQUIRED in production. " +
+      "FILE_STORAGE_PATH environment variable is REQUIRED in production. " +
         "Use absolute paths for production deployments (e.g., /var/www/drms/uploads)",
     );
   }
   STORAGE_PATH = process.env.FILE_STORAGE_PATH;
-  console.log(`📁 File storage (production): ${STORAGE_PATH}`);
+  logger.info("File storage configured (production)", { "file.storage.path": STORAGE_PATH });
 } else {
   STORAGE_PATH = process.env.FILE_STORAGE_PATH || "./uploads";
   if (!process.env.FILE_STORAGE_PATH) {
-    console.warn(
-      `⚠️  FILE_STORAGE_PATH not set, using default: ${STORAGE_PATH}`,
-    );
+    logger.warn("FILE_STORAGE_PATH not set, using default", { "file.storage.path": STORAGE_PATH });
   } else {
-    console.log(`📁 File storage (development): ${STORAGE_PATH}`);
+    logger.info("File storage configured (development)", { "file.storage.path": STORAGE_PATH });
   }
 }
 
@@ -72,7 +71,7 @@ export function verifyFileStorage() {
   try {
     // Create directory if it doesn't exist
     if (!fs.existsSync(STORAGE_PATH)) {
-      console.log(`📁 Creating file storage directory: ${STORAGE_PATH}`);
+      logger.info("Creating file storage directory", { "file.storage.path": STORAGE_PATH });
       fs.mkdirSync(STORAGE_PATH, { recursive: true, mode: 0o755 });
     }
 
@@ -109,9 +108,11 @@ export function verifyFileStorage() {
       );
     }
 
-    console.log(`✅ File storage verified: ${STORAGE_PATH}`);
-    console.log(`   Read/Write: OK`);
-    console.log(`   Max file size: ${MAX_MB} MB`);
+    logger.info("File storage verified", {
+      "file.storage.path": STORAGE_PATH,
+      "file.storage.permissions": "read/write OK",
+      "file.storage.max_size_mb": MAX_MB,
+    });
 
     return true;
   } catch (err) {
@@ -120,8 +121,7 @@ export function verifyFileStorage() {
       throw err;
     } else {
       // In development, warn but allow startup
-      console.error(err.message);
-      console.warn("⚠️  File uploads may not work correctly.");
+      logger.error("File storage verification failed — uploads may not work correctly", { err });
       return false;
     }
   }

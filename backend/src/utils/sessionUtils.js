@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import pool from "../config/db.js";
+import logger from "./logger.js";
 
 const SESSION_DURATION_DAYS = 90;
 
@@ -47,7 +48,7 @@ export async function createSession(userId, deviceInfo = null) {
     );
     return rows[0];
   } catch (err) {
-    console.error("Error creating session:", err);
+    logger.error("Error creating session", { err, "user.id": userId });
     throw err;
   }
 }
@@ -71,7 +72,7 @@ export async function verifySession(sessionToken) {
 
     return rows[0];
   } catch (err) {
-    console.error("Error verifying session:", err);
+    logger.error("Error verifying session", { err });
     throw err;
   }
 }
@@ -99,7 +100,7 @@ export async function extendSession(sessionToken) {
 
     return rows[0];
   } catch (err) {
-    console.error("Error extending session:", err);
+    logger.error("Error extending session", { err });
     throw err;
   }
 }
@@ -121,7 +122,7 @@ export async function getUserActiveSessions(userId) {
 
     return rows;
   } catch (err) {
-    console.error("Error fetching user sessions:", err);
+    logger.error("Error fetching user sessions", { err, "user.id": userId });
     throw err;
   }
 }
@@ -142,7 +143,7 @@ export async function hasValidSession(userId) {
 
     return rows.length > 0;
   } catch (err) {
-    console.error("Error checking user session:", err);
+    logger.error("Error checking user session", { err, "user.id": userId });
     throw err;
   }
 }
@@ -163,7 +164,7 @@ export async function invalidateSession(sessionToken) {
 
     return rowCount > 0;
   } catch (err) {
-    console.error("Error invalidating session:", err);
+    logger.error("Error invalidating session", { err });
     throw err;
   }
 }
@@ -184,7 +185,7 @@ export async function invalidateAllUserSessions(userId) {
 
     return rowCount;
   } catch (err) {
-    console.error("Error invalidating all user sessions:", err);
+    logger.error("Error invalidating all user sessions", { err, "user.id": userId });
     throw err;
   }
 }
@@ -200,10 +201,10 @@ export async function cleanupExpiredSessions() {
        WHERE expires_at < CURRENT_TIMESTAMP OR (is_active = false AND created_at < CURRENT_TIMESTAMP - INTERVAL '30 days')`
     );
 
-    console.log(`Cleaned up ${rowCount} expired sessions`);
+    logger.info("Expired sessions cleaned up", { "sessions.deleted": rowCount });
     return rowCount;
   } catch (err) {
-    console.error("Error cleaning up sessions:", err);
+    logger.error("Error cleaning up sessions", { err });
     throw err;
   }
 }

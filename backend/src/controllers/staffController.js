@@ -2,6 +2,7 @@
 import pool from "../config/db.js";
 import { sendMail } from "../config/mailer.js";
 import { getExpiryDate } from "../utils/otpGenerator.js"; // not required but available
+import logger from "../utils/logger.js";
 
 // Approve project
 export async function approveProject(req, res) {
@@ -56,14 +57,14 @@ export async function approveProject(req, res) {
             }`,
           });
         } catch (err) {
-          console.error("Failed to send approval email", err);
+          logger.error("Failed to send project approval email", { err, "trace.id": req.correlationId });
         }
       }
     }
 
     return res.json({ message: "Project approved" });
   } catch (err) {
-    console.error(err);
+    logger.error("Staff controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -121,14 +122,14 @@ export async function rejectProject(req, res) {
             }`,
           });
         } catch (err) {
-          console.error("Failed to send rejection email", err);
+          logger.error("Failed to send project rejection email", { err, "trace.id": req.correlationId });
         }
       }
     }
 
     return res.json({ message: "Project rejected" });
   } catch (err) {
-    console.error(err);
+    logger.error("Staff controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -187,13 +188,13 @@ export async function approveAchievement(req, res) {
           }`,
         });
       } catch (err) {
-        console.error("email failed", err);
+        logger.error("Failed to send achievement notification email", { err, "trace.id": req.correlationId });
       }
     }
 
     return res.json({ message: "Achievement approved" });
   } catch (err) {
-    console.error(err);
+    logger.error("Staff controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -251,13 +252,13 @@ export async function rejectAchievement(req, res) {
           }`,
         });
       } catch (err) {
-        console.error("email failed", err);
+        logger.error("Failed to send achievement notification email", { err, "trace.id": req.correlationId });
       }
     }
 
     return res.json({ message: "Achievement rejected" });
   } catch (err) {
-    console.error(err);
+    logger.error("Staff controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -315,7 +316,7 @@ export async function staffDashboard(req, res) {
       recentFiles: recentUploadsR.rows,
     });
   } catch (err) {
-    console.error(err);
+    logger.error("Staff controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
     return res.status(500).json({ message: "Server error" });
   }
 }

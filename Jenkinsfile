@@ -1,18 +1,16 @@
 pipeline {
-    agent {
-        node { label 'nodejs' }   // change to 'any' if Node.js is on all agents
-    }
+    agent any
 
     environment {
-        // --- Credentials (configure in Manage Jenkins → Credentials) ---
-        JWT_SECRET        = credentials('drms-jwt-secret')   // Secret text, any value for tests
-        DB_USER           = credentials('drms-db-user')
-        DB_PASS           = credentials('drms-db-pass')
-        DB_NAME           = credentials('drms-db-name')
-        DB_HOST           = credentials('drms-db-host')
-        DB_PORT           = '5432'
+        REPO_URL      = "https://github.com/G0kul17/Department-Record-Management-System.git"
+        BRANCH        = "main"
+        BUILD_VERSION = "${env.BUILD_NUMBER}"
+        APP_HOST      = "192.168.122.192"
+        GATEWAY_HOST  = "192.168.122.24"
+        REMOTE_USER   = "deploy"
 
-        // --- Test-only env vars (no real DB/email needed for unit tests) ---
+        // Required by backend unit tests (no real DB/email needed)
+        JWT_SECRET        = credentials('drms-jwt-secret')
         FILE_STORAGE_PATH = '/tmp/jenkins-drms-uploads'
         NODE_ENV          = 'test'
         CI                = 'true'
@@ -31,14 +29,14 @@ pipeline {
         // ----------------------------------------------------------------
         stage('Checkout') {
             steps {
-                checkout scm
+                git branch: "${BRANCH}", url: "${REPO_URL}"
             }
         }
 
         // ----------------------------------------------------------------
         // 2. DEPENDENCIES
         // ----------------------------------------------------------------
-        stage('Install dependencies') {
+        stage('Install Dependencies') {
             parallel {
                 stage('Backend deps') {
                     steps {
@@ -58,40 +56,12 @@ pipeline {
         }
 
         // ----------------------------------------------------------------
-        // 3. SECURITY AUDIT
+        // 3. BACKEND — UNIT TESTS + COVERAGE
+        //    Runs before build/deploy so a failing test aborts the pipeline
+        //    early. JUnit results and the HTML coverage report are always
+        //    published so failures are visible in the Jenkins UI.
         // ----------------------------------------------------------------
-        stage('Security audit') {
-            parallel {
-                stage('Backend audit') {
-                    steps {
-                        dir('backend') {
-                            // --audit-level=high fails only on high/critical
-                            sh 'npm audit --audit-level=high || true'
-                        }
-                    }
-                }
-                stage('Frontend audit') {
-                    steps {
-                        dir('frontend') {
-                            sh 'npm audit --audit-level=high || true'
-                        }
-                    }
-                }
-            }
-        }
-
-        // ----------------------------------------------------------------
-        // 4. BACKEND — UNIT TESTS + COVERAGE
-        // ----------------------------------------------------------------
-        stage('Backend unit tests') {
-            steps {
-                dir('backend') {
-                    sh 'npm test'
-                }
-            }
-        }
-
-        stage('Backend coverage report') {
+        stage('Backend Tests') {
             steps {
                 dir('backend') {
                     sh 'npm run test:coverage'
@@ -99,6 +69,11 @@ pipeline {
             }
             post {
                 always {
+                    // Test result trend graph (requires JUnit plugin)
+                    junit allowEmptyResults: true,
+                          testResults: 'backend/test-results/junit.xml'
+
+                    // HTML coverage report (requires HTML Publisher plugin)
                     publishHTML(target: [
                         allowMissing         : true,
                         alwaysLinkToLastBuild: true,
@@ -112,12 +87,16 @@ pipeline {
         }
 
         // ----------------------------------------------------------------
-        // 5. FRONTEND — PRODUCTION BUILD
+        // 4. FRONTEND — PRODUCTION BUILD
         // ----------------------------------------------------------------
-        stage('Frontend build') {
+        stage('Build Frontend') {
             steps {
                 dir('frontend') {
-                    sh 'npm run build'
+                    sh '''
+                        echo "VITE_API_BASE_URL=/api" > .env.production
+                        npm run build
+                        ls -la dist
+                    '''
                 }
             }
             post {
@@ -128,71 +107,96 @@ pipeline {
         }
 
         // ----------------------------------------------------------------
-        // 6. DATABASE MIGRATIONS  (deploy-time; skip on PR builds)
+        // 5. PACKAGE BACKEND
+        //    Strip dev files before shipping to the server.
         // ----------------------------------------------------------------
-        stage('Database migrations') {
-            when {
-                // Only run on main/master or tagged releases — not on feature branches
-                anyOf {
-                    branch 'main'
-                    branch 'master'
-                    buildingTag()
-                }
-            }
-            environment {
-                PGPASSWORD = "${DB_PASS}"
-            }
+        stage('Prepare Backend Artifact') {
             steps {
                 sh '''
-                    for f in backend/migrations/[0-9]*.sql; do
-                        echo "Applying migration: $f"
-                        psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$f"
-                    done
+                    rm -rf backend_release
+                    mkdir backend_release
+                    cp -r backend/. backend_release/
+                    rm -rf backend_release/node_modules \
+                           backend_release/coverage \
+                           backend_release/test-results
+                    echo "Backend artifact prepared:"
+                    ls -la backend_release
                 '''
             }
         }
 
         // ----------------------------------------------------------------
-        // 7. HEALTH CHECK  (only after a real deployment — main/master)
+        // 6. DEPLOY BACKEND
         // ----------------------------------------------------------------
-        stage('Health check') {
-            when {
-                anyOf {
-                    branch 'main'
-                    branch 'master'
+        stage('Deploy Backend') {
+            steps {
+                sshagent(['drms-ssh']) {
+                    sh """
+                        ssh ${REMOTE_USER}@${APP_HOST} '
+                            set -euxo pipefail
+                            mkdir -p /opt/drms/backend/releases/${BUILD_VERSION}
+                        '
+                        scp -r backend_release/. \
+                            ${REMOTE_USER}@${APP_HOST}:/opt/drms/backend/releases/${BUILD_VERSION}/
+                        ssh ${REMOTE_USER}@${APP_HOST} '
+                            set -euxo pipefail
+                            cd /opt/drms/backend/releases/${BUILD_VERSION}
+                            ln -sfn /opt/drms/backend/.env .env
+                            npm ci --omit=dev
+                            ln -sfn /opt/drms/backend/releases/${BUILD_VERSION} /opt/drms/backend/current
+                            cd /opt/drms/backend/current
+                            pm2 reload drms --update-env
+                            pm2 save
+                            cd /opt/drms/backend/releases
+                            ls -1dt */ | tail -n +6 | xargs -r rm -rf
+                        '
+                    """
                 }
             }
+        }
+
+        // ----------------------------------------------------------------
+        // 7. DEPLOY FRONTEND
+        // ----------------------------------------------------------------
+        stage('Deploy Frontend') {
             steps {
-                // Replace the URL with your actual deployed host
+                sshagent(['drms-ssh']) {
+                    sh """
+                        ssh ${REMOTE_USER}@${GATEWAY_HOST} '
+                            set -euxo pipefail
+                            rm -rf /var/www/drms/*
+                        '
+                        scp -r frontend/dist/. \
+                            ${REMOTE_USER}@${GATEWAY_HOST}:/var/www/drms/
+                    """
+                }
+            }
+        }
+
+        // ----------------------------------------------------------------
+        // 8. SMOKE TEST
+        // ----------------------------------------------------------------
+        stage('Basic Validation') {
+            steps {
                 sh '''
-                    for i in 1 2 3 4 5; do
-                        STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/health)
-                        if [ "$STATUS" = "200" ]; then
-                            echo "Health check passed (HTTP $STATUS)"
-                            exit 0
-                        fi
-                        echo "Attempt $i: HTTP $STATUS — retrying in 5s..."
-                        sleep 5
-                    done
-                    echo "Health check failed after 5 attempts"
-                    exit 1
+                    sleep 5
+                    curl -k -f https://192.168.122.24/ > /dev/null
+                    sleep 5
+                    curl -k -f http://192.168.122.192:5000/health > /dev/null
                 '''
             }
         }
     }
 
-    // --------------------------------------------------------------------
-    // POST
-    // --------------------------------------------------------------------
     post {
         always {
             cleanWs()
         }
         success {
-            echo "Pipeline passed: tests green, frontend built, migrations applied."
+            echo "Deployment successful. Release ${BUILD_VERSION} active."
         }
         failure {
-            echo "Pipeline failed — check the stage logs and Coverage Report above."
+            echo "Deployment failed. Investigate logs immediately."
         }
     }
 }

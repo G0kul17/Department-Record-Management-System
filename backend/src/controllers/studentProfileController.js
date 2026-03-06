@@ -1,5 +1,5 @@
 import pool from "../config/db.js";
-import logger from "../utils/logger.js";
+import logger, { reqContext } from "../utils/logger.js";
 
 // ================= GET STUDENT PROFILE =================
 export const getStudentProfile = async (req, res) => {
@@ -33,11 +33,12 @@ export const getStudentProfile = async (req, res) => {
       return res.status(404).json({ message: "Profile not found" });
     }
 
-    logger.debug("Student profile data fetched", { "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.debug("Student profile data fetched", { ...reqContext(req) });
     return res.json({ profile: rows[0] });
 
   } catch (err) {
-    logger.error("Student profile controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Student profile controller error", { err,
+      ...reqContext(req) });
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -92,7 +93,8 @@ export const updateStudentProfile = async (req, res) => {
     });
 
   } catch (err) {
-    logger.error("Student profile controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Student profile controller error", { err,
+      ...reqContext(req) });
     res.status(500).json({ message: "Server error" });
   }
 };

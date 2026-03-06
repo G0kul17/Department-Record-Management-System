@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import pool from "../config/db.js";
 import { STORAGE_PATH } from "../config/upload.js";
-import logger from "../utils/logger.js";
+import logger, { reqContext } from "../utils/logger.js";
 
 // ========== CREATE CONSULTANCY ==========
 export const createConsultancy = async (req, res) => {
@@ -72,7 +72,8 @@ export const createConsultancy = async (req, res) => {
       client.release();
     }
   } catch (err) {
-    logger.error("Faculty consultancy controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Faculty consultancy controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 };
@@ -179,7 +180,8 @@ export const updateConsultancy = async (req, res) => {
       client.release();
     }
   } catch (err) {
-    logger.error("Faculty consultancy controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Faculty consultancy controller error", { err,
+      ...reqContext(req) });
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -204,7 +206,8 @@ export const deleteConsultancy = async (req, res) => {
 
     return res.json({ message: "Deleted successfully" });
   } catch (err) {
-    logger.error("Faculty consultancy controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Faculty consultancy controller error", { err,
+      ...reqContext(req) });
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -222,7 +225,8 @@ export const listConsultancy = async (req, res) => {
 
     return res.json({ data: rows });
   } catch (err) {
-    logger.error("Faculty consultancy controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Faculty consultancy controller error", { err,
+      ...reqContext(req) });
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -235,7 +239,8 @@ export const getFacultyConsultancyCount = async (req, res) => {
     );
     return res.json({ count: rows[0]?.count ?? 0 });
   } catch (err) {
-    logger.error("Faculty consultancy controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Faculty consultancy controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 };

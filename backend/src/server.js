@@ -24,7 +24,7 @@ import { requireAuth } from "./middleware/authMiddleware.js";
 import { requireRole } from "./middleware/roleAuth.js";
 import { verifyToken } from "./utils/tokenUtils.js";
 import { requestLogger } from "./middleware/requestLogger.js";
-import logger from "./utils/logger.js";
+import logger, { reqContext } from "./utils/logger.js";
 import fs from "fs";
 import path from "path";
 dotenv.config();
@@ -266,10 +266,9 @@ startApplication();
 app.use((err, req, res, next) => {
   logger.error("Unhandled error", {
     err,
-    "trace.id": req.correlationId,
-    "user.id": req.user?.id,
     "url.path": req.path,
     "http.request.method": req.method,
+    ...reqContext(req),
   });
 
   // Handle multer errors specifically

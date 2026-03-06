@@ -70,7 +70,7 @@ export async function reviewProject(projectId, staffId, action, comment, correla
           text: `Your project has been ${approved ? "approved" : "rejected"} by staff. Comment: ${comment || "No comment"}`,
         });
       } catch (err) {
-        logger.error("Failed to send project review email", { err, "trace.id": correlationId });
+        logger.error("Failed to send project review email", { err, trace: { id: correlationId } });
       }
     }
   }
@@ -135,7 +135,7 @@ export async function reviewAchievement(achievementId, staffId, action, comment,
         text: `Your achievement has been ${approved ? "approved" : "rejected"} by staff. Comment: ${comment || "No comment"}`,
       });
     } catch (err) {
-      logger.error("Failed to send achievement review email", { err, "trace.id": correlationId });
+      logger.error("Failed to send achievement review email", { err, trace: { id: correlationId } });
     }
   }
 

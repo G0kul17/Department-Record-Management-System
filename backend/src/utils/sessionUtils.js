@@ -48,7 +48,7 @@ export async function createSession(userId, deviceInfo = null) {
     );
     return rows[0];
   } catch (err) {
-    logger.error("Error creating session", { err, "user.id": userId });
+    logger.error("Error creating session", { err, user: { id: userId } });
     throw err;
   }
 }
@@ -122,7 +122,7 @@ export async function getUserActiveSessions(userId) {
 
     return rows;
   } catch (err) {
-    logger.error("Error fetching user sessions", { err, "user.id": userId });
+    logger.error("Error fetching user sessions", { err, user: { id: userId } });
     throw err;
   }
 }
@@ -143,7 +143,7 @@ export async function hasValidSession(userId) {
 
     return rows.length > 0;
   } catch (err) {
-    logger.error("Error checking user session", { err, "user.id": userId });
+    logger.error("Error checking user session", { err, user: { id: userId } });
     throw err;
   }
 }
@@ -185,7 +185,7 @@ export async function invalidateAllUserSessions(userId) {
 
     return rowCount;
   } catch (err) {
-    logger.error("Error invalidating all user sessions", { err, "user.id": userId });
+    logger.error("Error invalidating all user sessions", { err, user: { id: userId } });
     throw err;
   }
 }

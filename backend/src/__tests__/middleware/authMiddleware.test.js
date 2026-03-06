@@ -15,10 +15,6 @@ vi.mock("../../config/db.js", () => ({
   default: { query: vi.fn() },
 }));
 
-vi.mock("../../utils/logger.js", () => ({
-  default: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
-}));
-
 import { verifyToken } from "../../utils/tokenUtils.js";
 import { verifySession, extendSession } from "../../utils/sessionUtils.js";
 import pool from "../../config/db.js";

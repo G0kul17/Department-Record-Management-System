@@ -30,7 +30,6 @@
     "vite": "^4.5.14"
   },
   "description": "Requirements:\r - Node.js 18+ (npm)\r - Backend running at http://localhost:5000/api (or set VITE_API_BASE)",
-  "main": "vite.config.js",
   "keywords": [],
   "author": "",
   "license": "ISC"

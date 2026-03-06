@@ -119,9 +119,13 @@ export async function reviewAchievement(achievementId, staffId, action, comment,
     throw new ReviewError(404, "Achievement not found");
   }
 
+  const userId = rows[0].user_id;
+  if (!userId) {
+    return { message: `Achievement ${approved ? "approved" : "rejected"}` };
+  }
   const { rows: userRows } = await pool.query(
     "SELECT email FROM users WHERE id = $1",
-    [rows[0].user_id],
+    [userId],
   );
   if (userRows[0]) {
     try {

@@ -115,7 +115,7 @@ pool.on("error", (err, client) => {
     "ECONNRESET", // Connection reset
   ];
 
-  const level = criticalErrors.includes(err.code) ? "error" : "error";
+  const level = criticalErrors.includes(err.code) ? "error" : "warn";
   logger[level]("Unexpected database client error", {
     err,
     "db.error.code": err.code,

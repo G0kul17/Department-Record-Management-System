@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import pool from "../config/db.js";
 import { STORAGE_PATH } from "../config/upload.js";
-import logger from "../utils/logger.js";
+import logger, { reqContext } from "../utils/logger.js";
 
 // ========== CREATE RESEARCH ==========
 export const createResearch = async (req, res) => {
@@ -85,7 +85,8 @@ export const createResearch = async (req, res) => {
       client.release();
     }
   } catch (err) {
-    logger.error("Faculty research controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Faculty research controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 };
@@ -207,7 +208,8 @@ export const updateResearch = async (req, res) => {
       client.release();
     }
   } catch (err) {
-    logger.error("Faculty research controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Faculty research controller error", { err,
+      ...reqContext(req) });
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -232,7 +234,8 @@ export const deleteResearch = async (req, res) => {
 
     return res.json({ message: "Deleted successfully" });
   } catch (err) {
-    logger.error("Faculty research controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Faculty research controller error", { err,
+      ...reqContext(req) });
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -250,7 +253,8 @@ export const listResearch = async (req, res) => {
 
     return res.json({ data: rows });
   } catch (err) {
-    logger.error("Faculty research controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Faculty research controller error", { err,
+      ...reqContext(req) });
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -263,7 +267,8 @@ export const getFacultyResearchCount = async (req, res) => {
     );
     return res.json({ count: rows[0]?.count ?? 0 });
   } catch (err) {
-    logger.error("Faculty research controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Faculty research controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 };

@@ -1,5 +1,5 @@
 import pool from "../config/db.js";
-import logger from "../utils/logger.js";
+import logger, { reqContext } from "../utils/logger.js";
 
 // GET /api/admin/stats
 // Returns total counts for admin dashboard usages
@@ -17,7 +17,8 @@ export async function getAdminStats(req, res) {
       events: eventsR.rows[0]?.c ?? 0,
     });
   } catch (err) {
-    logger.error("Admin controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Admin controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -50,7 +51,8 @@ export async function listUsers(req, res) {
       offset,
     });
   } catch (err) {
-    logger.error("Admin controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Admin controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -82,7 +84,8 @@ export async function updateUserRole(req, res) {
       return res.status(404).json({ message: "User not found" });
     return res.json({ user: rows[0] });
   } catch (err) {
-    logger.error("Admin controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Admin controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -104,7 +107,8 @@ export async function deleteUser(req, res) {
       return res.status(404).json({ message: "User not found" });
     return res.json({ message: "Deleted", id });
   } catch (err) {
-    logger.error("Admin controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Admin controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }

@@ -1,6 +1,6 @@
 import ExcelJS from "exceljs";
 import pool from "../config/db.js";
-import logger from "../utils/logger.js";
+import logger, { reqContext } from "../utils/logger.js";
 
 /* =====================================================
    Bulk Data Export Controller
@@ -215,12 +215,13 @@ export const bulkDataExport = async (req, res) => {
       }
       await staffUploadsSheet.commit();
     } catch {
-      logger.debug("staff_uploads table not found, skipping", { "trace.id": req.correlationId });
+      logger.debug("staff_uploads table not found, skipping", { ...reqContext(req) });
     }
 
     await workbook.commit();
   } catch (error) {
-    logger.error("Bulk export failed", { err: error, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Bulk export failed", { err: error,
+      ...reqContext(req) });
     // Headers already sent via stream — can't send a JSON error response
     if (!res.headersSent) {
       res.status(500).json({ message: "Bulk export failed" });

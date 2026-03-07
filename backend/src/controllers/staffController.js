@@ -1,6 +1,6 @@
 // staffController.js
 import pool from "../config/db.js";
-import logger from "../utils/logger.js";
+import logger, { reqContext } from "../utils/logger.js";
 import { reviewProject, reviewAchievement, ReviewError } from "../services/reviewService.js";
 
 // Approve project
@@ -16,7 +16,8 @@ export async function approveProject(req, res) {
     return res.json(result);
   } catch (err) {
     if (err instanceof ReviewError) return res.status(err.status).json({ message: err.message });
-    logger.error("Staff controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Staff controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -34,7 +35,8 @@ export async function rejectProject(req, res) {
     return res.json(result);
   } catch (err) {
     if (err instanceof ReviewError) return res.status(err.status).json({ message: err.message });
-    logger.error("Staff controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Staff controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -52,7 +54,8 @@ export async function approveAchievement(req, res) {
     return res.json(result);
   } catch (err) {
     if (err instanceof ReviewError) return res.status(err.status).json({ message: err.message });
-    logger.error("Staff controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Staff controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -70,7 +73,8 @@ export async function rejectAchievement(req, res) {
     return res.json(result);
   } catch (err) {
     if (err instanceof ReviewError) return res.status(err.status).json({ message: err.message });
-    logger.error("Staff controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Staff controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -128,7 +132,8 @@ export async function staffDashboard(req, res) {
       recentFiles: recentUploadsR.rows,
     });
   } catch (err) {
-    logger.error("Staff controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Staff controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }

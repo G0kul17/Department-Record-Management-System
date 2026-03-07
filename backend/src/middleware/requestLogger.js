@@ -41,6 +41,22 @@ function sanitizeReq(req) {
 }
 
 /**
+ * Return a sanitized shim for the Express response suitable for the ECS formatter.
+ *
+ * Express attaches res.req = req (the original request). The ECS formatter uses
+ * res.req when building the Combined Log Format message string, bypassing the
+ * sanitized req copy we pass as info.req. This shim replaces res.req with the
+ * already-sanitized request object so the token cannot leak through that path.
+ */
+function sanitizeRes(res, sanitizedReq) {
+  return {
+    statusCode: res.statusCode,
+    getHeaders: () => res.getHeaders(),
+    req: sanitizedReq,
+  };
+}
+
+/**
  * Request logging middleware.
  *
  * 1. Assigns a correlation ID to every incoming request.
@@ -91,9 +107,10 @@ export function requestLogger(req, res, next) {
     const level =
       res.statusCode >= 500 ? "error" : res.statusCode >= 400 ? "warn" : "info";
 
+    const sanitizedReq = sanitizeReq(req);
     logger[isHealthProbe ? "debug" : level]("HTTP response sent", {
-      req: sanitizeReq(req),
-      res,
+      req: sanitizedReq,
+      res: sanitizeRes(res, sanitizedReq),
       "event.duration": Number(durationNs),
       ...reqContext(req),
     });

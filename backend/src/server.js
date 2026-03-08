@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import morgan from "morgan";
+import { ecsFormat } from "@elastic/ecs-morgan-format";
 import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
@@ -24,7 +26,7 @@ import { requireAuth } from "./middleware/authMiddleware.js";
 import { requireRole } from "./middleware/roleAuth.js";
 import { verifyToken } from "./utils/tokenUtils.js";
 import { requestLogger } from "./middleware/requestLogger.js";
-import logger from "./utils/logger.js";
+import logger, { reqContext } from "./utils/logger.js";
 import fs from "fs";
 import path from "path";
 dotenv.config();
@@ -33,8 +35,19 @@ const app = express();
 app.use(helmet());
 app.use(express.json());
 
-// Attach correlation ID and emit ECS-structured HTTP log events for every request
-app.use(requestLogger);
+// ECS-formatted JSON access logs for Elastic ingestion.
+// The Authorization header is redacted to prevent JWT tokens appearing in logs.
+app.use(
+  morgan(
+    ecsFormat({
+      reqSerializer(req) {
+        const headers = { ...req.headers };
+        if (headers.authorization) headers.authorization = "[REDACTED]";
+        return { method: req.method, url: req.url, headers };
+      },
+    }),
+  ),
+);
 
 // ============================================================================
 // CORS CONFIGURATION - Environment-Based Strategy
@@ -266,10 +279,9 @@ startApplication();
 app.use((err, req, res, next) => {
   logger.error("Unhandled error", {
     err,
-    "trace.id": req.correlationId,
-    "user.id": req.user?.id,
     "url.path": req.path,
     "http.request.method": req.method,
+    ...reqContext(req),
   });
 
   // Handle multer errors specifically

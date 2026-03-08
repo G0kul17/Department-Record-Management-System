@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 import xlsx from "xlsx";
 import csvParser from "csv-parser";
 import { sendMail } from "../config/mailer.js";
-import logger from "../utils/logger.js";
+import logger, { reqContext } from "../utils/logger.js";
 
 /* ================= HELPERS ================= */
 
@@ -105,7 +105,7 @@ export const uploadStudents = async (req, res) => {
       return res.status(400).json({ message: "Uploaded file is empty" });
     }
 
-    logger.debug("Student upload: first row headers", { "trace.id": req.correlationId, headers: Object.keys(rows[0] || {}) });
+    logger.debug("Student upload: first row headers", { ...reqContext(req), headers: Object.keys(rows[0] || {}) });
 
     const errors = [];
     const validStudents = [];
@@ -141,7 +141,7 @@ export const uploadStudents = async (req, res) => {
       if (!section) missingFields.push("Section");
 
       if (missingFields.length) {
-        logger.debug("Student upload: row missing fields", { "trace.id": req.correlationId, row: rowNumber, missingFields, fields });
+        logger.debug("Student upload: row missing fields", { ...reqContext(req), row: rowNumber, missingFields, fields });
         errors.push({
           row: rowNumber,
           message: "Fill all sections",
@@ -177,7 +177,7 @@ export const uploadStudents = async (req, res) => {
     });
 
     if (errors.length) {
-      logger.debug("Student upload: validation errors", { "trace.id": req.correlationId, errorCount: errors.length });
+      logger.debug("Student upload: validation errors", { ...reqContext(req), errorCount: errors.length });
       return res.status(400).json({
         message: `Validation failed for ${errors.length} row(s). Check the details.`,
         errors,
@@ -251,7 +251,8 @@ Department Admin
       skipped,
     });
   } catch (err) {
-    logger.error("Student upload failed", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Student upload failed", { err,
+      ...reqContext(req) });
     res.status(500).json({ message: "Upload failed" });
   } finally {
     if (req.file?.path) fs.unlink(req.file.path, () => {});

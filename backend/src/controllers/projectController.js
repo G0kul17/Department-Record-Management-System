@@ -3,7 +3,7 @@ import pool from "../config/db.js";
 import { upload } from "../config/upload.js";
 import path from "path";
 import fs from "fs";
-import logger from "../utils/logger.js";
+import logger, { reqContext } from "../utils/logger.js";
 import { QueryBuilder } from "../utils/queryBuilder.js";
 import { reviewProject, ReviewError } from "../services/reviewService.js";
 
@@ -225,7 +225,8 @@ export async function createProject(req, res) {
       client.release();
     }
   } catch (err) {
-    logger.error("Project controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Project controller error", { err,
+      ...reqContext(req) });
     return res
       .status(500)
       .json({ message: "Server error", ...(process.env.NODE_ENV !== "production" && { error: err.message }) });
@@ -338,7 +339,8 @@ export async function uploadFilesToProject(req, res) {
       client.release();
     }
   } catch (err) {
-    logger.error("Project controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Project controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -479,7 +481,8 @@ export async function listProjects(req, res) {
     const { rows } = await pool.query(text, values);
     return res.json({ projects: rows });
   } catch (err) {
-    logger.error("Project controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Project controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -559,7 +562,8 @@ export async function getProjectDetails(req, res) {
     project.user_fullname = project.uploader_full_name || null;
     return res.json({ project });
   } catch (err) {
-    logger.error("Project controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Project controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -573,7 +577,8 @@ export async function verifyProject(req, res) {
     return res.json(result);
   } catch (err) {
     if (err instanceof ReviewError) return res.status(err.status).json({ message: err.message });
-    logger.error("Project controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Project controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -587,7 +592,8 @@ export async function rejectProject(req, res) {
     return res.json(result);
   } catch (err) {
     if (err instanceof ReviewError) return res.status(err.status).json({ message: err.message });
-    logger.error("Project controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Project controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -623,7 +629,8 @@ export async function getProjectsCount(req, res) {
     );
     return res.json({ count: rows[0]?.count ?? 0 });
   } catch (err) {
-    logger.error("Project controller error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Project controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }

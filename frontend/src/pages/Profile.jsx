@@ -182,7 +182,7 @@ const Profile = () => {
               className="bg-gray-100 dark:bg-slate-700 cursor-not-allowed"
             />
 
-            <div className="mb-4 grid grid-cols-3 gap-4">
+            <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
               <InputField
                 label="Course"
                 type="text"
@@ -293,7 +293,7 @@ const Profile = () => {
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 w-full rounded-lg bg-[#87CEEB] px-4 py-2 font-medium text-white hover:opacity-90 disabled:opacity-50"
+              className="mt-2 w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
               {loading ? "Saving..." : "Save Changes"}
             </button>

@@ -1,6 +1,6 @@
 // src/middleware/requestLogger.js
 import { v4 as uuidv4 } from "uuid";
-import logger from "../utils/logger.js";
+import logger, { reqContext } from "../utils/logger.js";
 
 // Routes polled by load balancers / uptime monitors — log at debug to avoid noise.
 const HEALTH_PROBE_PATHS = new Set(["/", "/health", "/favicon.ico"]);
@@ -16,6 +16,47 @@ const SLOW_THRESHOLD_NS = BigInt(
 );
 
 /**
+ * Return a sanitized copy of the Express request suitable for the ECS formatter.
+ *
+ * Redacts:
+ *  - Authorization header  → "[REDACTED]"  (prevents JWT tokens in logs)
+ *  - ?token= query param   → "[REDACTED]"  (prevents file-download tokens in url.full)
+ */
+function sanitizeReq(req) {
+  const headers = req.headers.authorization
+    ? { ...req.headers, authorization: "[REDACTED]" }
+    : req.headers;
+
+  // Redact ?token= in the raw URL string so ECS url.full / url.query don't leak it.
+  const url = req.url?.replace(/([?&]token=)[^&]*/g, "$1[REDACTED]") ?? req.url;
+
+  // Return a plain object with the properties the ECS formatter reads from a request.
+  return {
+    method: req.method,
+    url,
+    headers,
+    socket: req.socket,
+    httpVersion: req.httpVersion,
+  };
+}
+
+/**
+ * Return a sanitized shim for the Express response suitable for the ECS formatter.
+ *
+ * Express attaches res.req = req (the original request). The ECS formatter uses
+ * res.req when building the Combined Log Format message string, bypassing the
+ * sanitized req copy we pass as info.req. This shim replaces res.req with the
+ * already-sanitized request object so the token cannot leak through that path.
+ */
+function sanitizeRes(res, sanitizedReq) {
+  return {
+    statusCode: res.statusCode,
+    getHeaders: () => res.getHeaders(),
+    req: sanitizedReq,
+  };
+}
+
+/**
  * Request logging middleware.
  *
  * 1. Assigns a correlation ID to every incoming request.
@@ -24,16 +65,19 @@ const SLOW_THRESHOLD_NS = BigInt(
  *    - Falls back to a new UUID v4 when the header is absent or invalid.
  *
  * 2. Attaches the ID to req.correlationId so controllers and downstream
- *    middleware can include it in their own log entries via { "trace.id": req.correlationId }.
+ *    middleware can include it in their own log entries via reqContext(req).
  *
  * 3. Echoes the ID back in the X-Correlation-ID response header so clients
  *    and API gateways can correlate responses to requests.
  *
  * 4. Emits ECS-structured log events per request:
- *    - "HTTP request received"  — on incoming request (skipped for health probes)
- *    - "HTTP response sent"     — after the response is flushed (finish event)
- *    - "HTTP request aborted"   — when the client disconnects before a response
- *    - "Slow request detected"  — extra warn when duration > SLOW_REQUEST_THRESHOLD_MS
+ *    - "HTTP request received"  — on incoming request (skipped for health probes).
+ *                                 user.id is intentionally absent here because auth
+ *                                 middleware has not yet run.
+ *    - "HTTP response sent"     — after the response is flushed (finish event).
+ *                                 user.id is present for authenticated routes.
+ *    - "HTTP request aborted"   — when the client disconnects before a response.
+ *    - "Slow request detected"  — extra warn when duration > SLOW_REQUEST_THRESHOLD_MS.
  *    All events carry the correlation ID in the ECS trace.id field, making
  *    them linkable inside Kibana without any additional processing.
  */
@@ -49,10 +93,9 @@ export function requestLogger(req, res, next) {
   const startTime = process.hrtime.bigint();
   const isHealthProbe = HEALTH_PROBE_PATHS.has(req.path);
 
-  // Log at debug for health probes so they don't flood info-level streams.
-  // user.id is intentionally absent here — auth middleware has not run yet.
+  // "HTTP request received" — auth has not run yet so user.id is intentionally omitted.
   logger[isHealthProbe ? "debug" : "info"]("HTTP request received", {
-    req,
+    req: sanitizeReq(req),
     trace: { id: correlationId },
   });
 
@@ -64,50 +107,35 @@ export function requestLogger(req, res, next) {
     const level =
       res.statusCode >= 500 ? "error" : res.statusCode >= 400 ? "warn" : "info";
 
-    // By the time "finish" fires, auth middleware has populated req.user (if the
-    // request was authenticated). Use nested ECS object notation so the fields are
-    // preserved when passed alongside req/res to the ECS Winston formatter.
-    const finishMeta = {
-      req,
-      res,
-      trace: { id: correlationId },
-      event: { duration: Number(durationNs) },
-    };
-    if (req.user?.id != null) {
-      finishMeta.user = { id: String(req.user.id) };
-    }
-
-    logger[isHealthProbe ? "debug" : level]("HTTP response sent", finishMeta);
+    const sanitizedReq = sanitizeReq(req);
+    logger[isHealthProbe ? "debug" : level]("HTTP response sent", {
+      req: sanitizedReq,
+      res: sanitizeRes(res, sanitizedReq),
+      "event.duration": Number(durationNs),
+      ...reqContext(req),
+    });
 
     // Emit an extra warning when a request takes longer than the threshold.
     if (!isHealthProbe && durationNs > SLOW_THRESHOLD_NS) {
-      const slowMeta = {
-        trace: { id: correlationId },
-        url: { path: req.path },
-        http: { request: { method: req.method } },
-        event: { duration: Number(durationNs) },
-        slow_threshold_ms: Number(process.env.SLOW_REQUEST_THRESHOLD_MS) || 1000,
-      };
-      if (req.user?.id != null) {
-        slowMeta.user = { id: String(req.user.id) };
-      }
-      logger.warn("Slow request detected", slowMeta);
+      logger.warn("Slow request detected", {
+        "url.path": req.path,
+        "http.request.method": req.method,
+        "event.duration": Number(durationNs),
+        "slow_threshold_ms": Number(process.env.SLOW_REQUEST_THRESHOLD_MS) || 1000,
+        ...reqContext(req),
+      });
     }
   });
 
   // Detect client disconnects that happen before the response is sent.
   res.on("close", () => {
     if (!responded) {
-      const abortMeta = {
-        trace: { id: correlationId },
-        url: { path: req.path },
-        http: { request: { method: req.method } },
-        event: { duration: Number(process.hrtime.bigint() - startTime) },
-      };
-      if (req.user?.id != null) {
-        abortMeta.user = { id: String(req.user.id) };
-      }
-      logger.warn("HTTP request aborted", abortMeta);
+      logger.warn("HTTP request aborted", {
+        "url.path": req.path,
+        "http.request.method": req.method,
+        "event.duration": Number(process.hrtime.bigint() - startTime),
+        ...reqContext(req),
+      });
     }
   });
 

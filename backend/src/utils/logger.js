@@ -31,3 +31,21 @@ const logger = createLogger({
 });
 
 export default logger;
+
+/**
+ * Build a structured ECS log context object from an Express request.
+ *
+ * Returns nested ECS fields so Elasticsearch/Kibana map them correctly:
+ *   trace.id → { trace: { id: "..." } }   (not the flat "trace.id" string key)
+ *   user.id  → { user:  { id: "..." } }   (not the flat "user.id"  string key)
+ *
+ * user.id is omitted when req.user is not yet set (e.g. unauthenticated routes).
+ *
+ * Usage:
+ *   logger.error("Something failed", { err, ...reqContext(req) });
+ */
+export function reqContext(req) {
+  const ctx = { trace: { id: req.correlationId } };
+  if (req.user?.id !== undefined) ctx.user = { id: req.user.id };
+  return ctx;
+}

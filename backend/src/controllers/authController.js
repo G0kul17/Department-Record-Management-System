@@ -10,7 +10,7 @@ import {
   getUserActiveSessions,
   invalidateAllUserSessions,
 } from "../utils/sessionUtils.js";
-import logger from "../utils/logger.js";
+import logger, { reqContext } from "../utils/logger.js";
 dotenv.config();
 
 const OTP_EXPIRY_MIN = Number(process.env.OTP_EXPIRY_MIN || 5);
@@ -132,7 +132,8 @@ export async function register(req, res) {
       role,
     });
   } catch (err) {
-    logger.error("Auth register error", { err, "trace.id": req.correlationId });
+    logger.error("Auth register error", { err,
+      ...reqContext(req) });
     const payload =
       process.env.NODE_ENV !== "production"
         ? { message: "Server error", error: String(err.message || err) }
@@ -218,7 +219,8 @@ export async function verifyOTP(req, res) {
       photoUrl,
     });
   } catch (err) {
-    logger.error("Auth verifyOTP error", { err, "trace.id": req.correlationId });
+    logger.error("Auth verifyOTP error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -331,7 +333,8 @@ export async function login(req, res) {
 
     return res.json({ message: "Login OTP sent to email" });
   } catch (err) {
-    logger.error("Auth login error", { err, "trace.id": req.correlationId });
+    logger.error("Auth login error", { err,
+      ...reqContext(req) });
     const payload =
       process.env.NODE_ENV !== "production"
         ? { message: "Server error", error: String(err.message || err) }
@@ -427,7 +430,8 @@ export async function loginVerifyOTP(req, res) {
       ...studentProfile,
     });
   } catch (err) {
-    logger.error("Auth loginVerifyOTP error", { err, "trace.id": req.correlationId });
+    logger.error("Auth loginVerifyOTP error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -476,7 +480,8 @@ export async function forgotVerifyOTP(req, res) {
     // OTP is valid — leave the row in DB so /auth/reset can consume it
     return res.json({ message: "OTP verified" });
   } catch (err) {
-    logger.error("Auth forgot-verify error", { err, "trace.id": req.correlationId });
+    logger.error("Auth forgot-verify error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -520,7 +525,8 @@ export async function initiateForgotPassword(req, res) {
 
     return res.json(genericResponse);
   } catch (err) {
-    logger.error("Auth forgot-password error", { err, "trace.id": req.correlationId });
+    logger.error("Auth forgot-password error", { err,
+      ...reqContext(req) });
     const payload =
       process.env.NODE_ENV !== "production"
         ? { message: "Server error", error: String(err.message || err) }
@@ -589,7 +595,8 @@ export async function resetPassword(req, res) {
     await invalidateAllUserSessions(updated[0].id);
     return res.json({ message: "Password updated" });
   } catch (err) {
-    logger.error("Auth resetPassword error", { err, "trace.id": req.correlationId });
+    logger.error("Auth resetPassword error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -625,7 +632,8 @@ export async function getProfile(req, res) {
       photoUrl,
     });
   } catch (err) {
-    logger.error("Auth getProfile error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Auth getProfile error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -679,7 +687,8 @@ export async function updateProfile(req, res) {
       profile: updatedProfile,
     });
   } catch (err) {
-    logger.error("Auth updateProfile error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Auth updateProfile error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -723,7 +732,8 @@ export async function updateProfilePhoto(req, res) {
 
     return res.json({ message: "Photo updated", photoUrl });
   } catch (err) {
-    logger.error("Auth updateProfilePhoto error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Auth updateProfilePhoto error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -736,7 +746,8 @@ export async function logout(req, res) {
     await invalidateAllUserSessions(req.user.id);
     return res.json({ message: "Logged out successfully" });
   } catch (err) {
-    logger.error("Auth logout error", { err, "trace.id": req.correlationId, "user.id": req.user?.id });
+    logger.error("Auth logout error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }

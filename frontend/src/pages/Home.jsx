@@ -526,7 +526,7 @@ export default function Home({ hideAtAGlance = false }) {
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 z-50 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
+          className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 z-50 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 sm:p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
           aria-label="Scroll to top"
         >
           <svg
@@ -635,8 +635,8 @@ function DonutChart({ title, data }) {
       <h3 className="text-lg sm:text-xl font-bold text-slate-800 mb-4">
         {title}
       </h3>
-      <div className="flex items-center justify-center gap-6">
-        <svg width="110" height="110" viewBox="0 0 110 110">
+      <div className="flex flex-wrap items-center justify-center gap-6">
+        <svg width="110" height="110" viewBox="0 0 110 110" className="flex-shrink-0">
           {total > 0 ? (
             data.map((item, idx) => {
               const percent = (item.value / total) * 100;
@@ -781,8 +781,8 @@ function PieChart({ title, data }) {
       <h3 className="text-lg sm:text-xl font-bold text-slate-800 mb-5">
         {title}
       </h3>
-      <div className="flex items-center justify-center gap-8">
-        <svg width="140" height="140" viewBox="0 0 140 140">
+      <div className="flex flex-wrap items-center justify-center gap-8">
+        <svg width="140" height="140" viewBox="0 0 140 140" className="flex-shrink-0">
           {total > 0 ? (
             data.map((item, idx) => {
               const percent = (item.value / total) * 100;

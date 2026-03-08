@@ -294,7 +294,7 @@ export default function StudentDashboard() {
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 z-50 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
+          className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 z-50 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 sm:p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
           aria-label="Scroll to top"
         >
           <svg

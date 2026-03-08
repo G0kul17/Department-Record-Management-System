@@ -65,24 +65,32 @@ const Navbar = () => {
             { label: "Events", section: "events", path: "/admin" },
             { label: "Projects", section: "projects", path: "/admin" },
             { label: "Achievements", section: "achievements", path: "/admin" },
-            { label: "Visualization", section: "visualization", path: "/admin" },
+            {
+              label: "Visualization",
+              section: "visualization",
+              path: "/admin",
+            },
             { label: "Notifications", section: null, path: "/notifications" },
           ]
         : user.role === "student"
-        ? [
-            { label: "Events", section: "events", path: "/" },
-            { label: "Projects", section: "projects", path: "/" },
-            { label: "Achievements", section: "achievements", path: "/" },
-            { label: "Notifications", section: null, path: "/notifications" },
-          ]
-        : user.role === "staff"
-        ? [
-            { label: "Events", section: "events", path: "/" },
-            { label: "Projects", section: "projects", path: "/" },
-            { label: "Achievements", section: "achievements", path: "/" },
-            { label: "Notifications", section: null, path: "/notifications" },
-          ]
-        : []
+          ? [
+              { label: "Events", section: "events", path: "/" },
+              { label: "Projects", section: "projects", path: "/" },
+              { label: "Achievements", section: "achievements", path: "/" },
+              { label: "Notifications", section: null, path: "/notifications" },
+            ]
+          : user.role === "staff"
+            ? [
+                { label: "Events", section: "events", path: "/" },
+                { label: "Projects", section: "projects", path: "/" },
+                { label: "Achievements", section: "achievements", path: "/" },
+                {
+                  label: "Notifications",
+                  section: null,
+                  path: "/notifications",
+                },
+              ]
+            : []
       : [];
 
   function handleNavLinkClick(link) {
@@ -99,7 +107,7 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="bg-slate-900 text-white shadow-md relative">
+    <nav className="bg-slate-900 text-white shadow-md sticky top-0 z-50">
       <div className="w-full px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -176,12 +184,34 @@ const Navbar = () => {
                     aria-label="Toggle menu"
                   >
                     {mobileMenuOpen ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                     ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M4 6h16M4 12h16M4 18h16"
+                        />
                       </svg>
                     )}
                   </button>
@@ -221,19 +251,20 @@ const Navbar = () => {
 
       {/* Mobile nav dropdown (only when logged in) */}
       {mobileMenuOpen && navLinks.length > 0 && (
-        <div className="md:hidden border-t border-white/10 bg-slate-900 px-2 pb-3">
+        <div className="md:hidden border-t border-white/10 bg-slate-900 px-2 pt-2 pb-3">
           {navLinks.map((link) => (
             <button
               key={link.label}
               onClick={() => handleNavLinkClick(link)}
-              className="flex w-full items-center px-3 py-3 text-sm font-medium text-slate-200 hover:bg-white/10 rounded-lg transition"
+              className="flex w-full items-center px-3 py-3 text-sm font-medium text-slate-200 hover:bg-white/10 rounded-lg transition text-left"
             >
               {link.label}
             </button>
           ))}
           {user && (
-            <div className="mt-1 px-3 py-2 text-sm text-slate-400 border-t border-white/10">
-              Signed in as <span className="text-slate-200 font-medium">{displayName}</span>
+            <div className="mt-2 pt-2 px-3 py-2 text-sm text-slate-400 border-t border-white/10">
+              Signed in as{" "}
+              <span className="text-slate-200 font-medium">{displayName}</span>
             </div>
           )}
         </div>
@@ -248,8 +279,8 @@ const Navbar = () => {
               onClick={() => setSidebarOpen(false)}
             />
             <div className="fixed right-4 top-16 z-[9999] w-72 max-w-[calc(100vw-2rem)] max-h-[80vh] overflow-auto rounded-xl border border-slate-200 bg-white shadow-xl">
-              <div className="flex items-center gap-3 border-b border-slate-200 p-4">
-                <Avatar className="h-10 w-10 bg-slate-100">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 border-b border-slate-200 p-3 sm:p-4">
+                <Avatar className="h-10 w-10 bg-slate-100 flex-shrink-0">
                   {photoUrl ? (
                     <AvatarImage
                       src={photoUrl}
@@ -258,17 +289,19 @@ const Navbar = () => {
                   ) : null}
                   <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
                 </Avatar>
-                <div className="flex flex-col min-w-0">
+                <div className="flex flex-col min-w-0 flex-1">
                   <span className="text-sm font-medium text-slate-900 truncate">
                     {displayName}
                   </span>
                   {user?.role && (
-                    <span className="text-xs text-slate-500 capitalize">{user.role}</span>
+                    <span className="text-xs text-slate-500 capitalize">
+                      {user.role}
+                    </span>
                   )}
                 </div>
-                <div className="ml-auto flex-shrink-0">
+                <div className="flex-shrink-0 w-full sm:w-auto sm:ml-auto">
                   <button
-                    className="px-3 py-1 rounded-md text-xs bg-slate-100 hover:bg-slate-200"
+                    className="w-full sm:w-auto px-3 py-1 rounded-md text-xs bg-slate-100 hover:bg-slate-200"
                     onClick={() => setAvatarModalOpen(true)}
                   >
                     Change Photo

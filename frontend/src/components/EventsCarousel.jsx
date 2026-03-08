@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from "react";
-import apiClient from "../api/axiosClient";
 import { getFileUrl } from "../utils/fileUrl";
 
 export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
@@ -7,18 +6,32 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
   const timerRef = useRef(null);
   const length = events.length;
 
-  useEffect(() => {
+  function resetTimer() {
+    if (timerRef.current) clearInterval(timerRef.current);
     if (!length) return;
     timerRef.current = setInterval(() => {
       setIndex((i) => (i + 1) % length);
     }, intervalMs);
+  }
+
+  useEffect(() => {
+    resetTimer();
     return () => clearInterval(timerRef.current);
   }, [length, intervalMs]);
 
   useEffect(() => {
-    // Reset index if events change
     setIndex(0);
   }, [events]);
+
+  function prev() {
+    setIndex((i) => (i - 1 + length) % length);
+    resetTimer();
+  }
+
+  function next() {
+    setIndex((i) => (i + 1) % length);
+    resetTimer();
+  }
 
   if (!length) return null;
 
@@ -73,18 +86,46 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
             );
           })}
         </div>
-        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-2">
-          {events.map((_, i) => (
+
+        {/* Prev / Next arrows */}
+        {length > 1 && (
+          <>
             <button
-              key={i}
-              onClick={() => setIndex(i)}
-              className={`w-2 h-2 rounded-full ${
-                i === index ? "bg-blue-600" : "bg-slate-300"
-              }`}
-              aria-label={`Show event ${i + 1}`}
-            />
-          ))}
-        </div>
+              onClick={prev}
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow hover:bg-white transition"
+              aria-label="Previous event"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={next}
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow hover:bg-white transition"
+              aria-label="Next event"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </>
+        )}
+
+        {/* Dot indicators */}
+        {length > 1 && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+            {events.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => { setIndex(i); resetTimer(); }}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  i === index ? "bg-blue-600 scale-125" : "bg-slate-300"
+                }`}
+                aria-label={`Show event ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

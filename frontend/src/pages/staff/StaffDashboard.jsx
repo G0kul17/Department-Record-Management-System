@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Routes, Route, Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import ProjectsManagement from "./ProjectsManagement";
@@ -9,7 +9,6 @@ import FacultyParticipation from "./FacultyParticipation";
 import FacultyConsultancy from "./FacultyConsultancy";
 import QuickActions from "../QuickActions";
 import apiClient from "../../api/axiosClient";
-import { useEffect, useState } from "react";
 import { formatDisplayName } from "../../utils/displayName";
 import EventsCarousel from "../../components/EventsCarousel";
 import AchievementsRecentGrid from "../../components/AchievementsRecentGrid";

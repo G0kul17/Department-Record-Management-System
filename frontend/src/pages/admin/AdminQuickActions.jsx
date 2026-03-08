@@ -29,8 +29,8 @@ export default function AdminQuickActions() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-white">
-      <div className="mx-auto max-w-6xl px-6 py-12">
+    <div className="min-h-[calc(100vh-4rem)] bg-slate-50">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-12">
         <BackButton />
         <PageHeader
           title="Quick Actions"
@@ -128,7 +128,6 @@ function IconCheck() {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      className="text-white"
     >
       <path d="M20 6l-11 11-5-5" strokeWidth="2" strokeLinecap="round" />
     </svg>
@@ -142,7 +141,6 @@ function IconWindow() {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      className="text-white"
     >
       <rect x="3" y="4" width="18" height="14" rx="2" strokeWidth="2" />
       <path d="M3 10h18" strokeWidth="2" />
@@ -157,7 +155,6 @@ function IconList() {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      className="text-white"
     >
       <path d="M4 6h16M4 12h10M4 18h8" strokeWidth="2" strokeLinecap="round" />
     </svg>
@@ -171,7 +168,6 @@ function IconChat() {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      className="text-white"
     >
       <path
         d="M21 15a4 4 0 01-4 4H8l-5 3V7a4 4 0 014-4h10a4 4 0 014 4v8z"
@@ -189,7 +185,6 @@ function IconCalendar() {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      className="text-white"
     >
       <rect x="3" y="4" width="18" height="18" rx="2" strokeWidth="2" />
       <path d="M16 2v4M8 2v4M3 10h18" strokeWidth="2" strokeLinecap="round" />
@@ -204,7 +199,6 @@ function IconUpload() {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      className="text-white"
     >
       <path
         d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
@@ -239,7 +233,6 @@ function IconDownload() {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      className="text-white"
     >
       <path
         d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
@@ -274,7 +267,6 @@ function IconUsers() {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      className="text-white"
     >
       <path
         d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"
@@ -302,12 +294,14 @@ function IconUsers() {
 // Small helper to render tile content consistently inside Card
 function Tile({ icon, title, desc, color }) {
   const colorMap = {
-    blue: "bg-primary/10 text-primary",
+    blue: "bg-blue-100 text-blue-600",
     sky: "bg-sky-100 text-sky-600",
     green: "bg-green-100 text-green-600",
     teal: "bg-teal-100 text-teal-600",
     emerald: "bg-emerald-100 text-emerald-600",
     violet: "bg-violet-100 text-violet-600",
+    fuchsia: "bg-fuchsia-100 text-fuchsia-600",
+    purple: "bg-purple-100 text-purple-600",
     orange: "bg-orange-100 text-orange-600",
     indigo: "bg-indigo-100 text-indigo-600",
     cyan: "bg-cyan-100 text-cyan-600",

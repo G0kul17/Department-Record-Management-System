@@ -50,10 +50,10 @@ export function requestLogger(req, res, next) {
   const isHealthProbe = HEALTH_PROBE_PATHS.has(req.path);
 
   // Log at debug for health probes so they don't flood info-level streams.
+  // user.id is intentionally absent here — auth middleware has not run yet.
   logger[isHealthProbe ? "debug" : "info"]("HTTP request received", {
     req,
-    "trace.id": correlationId,
-    "user.id": req.user?.id,
+    trace: { id: correlationId },
   });
 
   let responded = false;
@@ -64,37 +64,50 @@ export function requestLogger(req, res, next) {
     const level =
       res.statusCode >= 500 ? "error" : res.statusCode >= 400 ? "warn" : "info";
 
-    logger[isHealthProbe ? "debug" : level]("HTTP response sent", {
+    // By the time "finish" fires, auth middleware has populated req.user (if the
+    // request was authenticated). Use nested ECS object notation so the fields are
+    // preserved when passed alongside req/res to the ECS Winston formatter.
+    const finishMeta = {
       req,
       res,
-      "trace.id": correlationId,
-      "user.id": req.user?.id,
-      "event.duration": Number(durationNs),
-    });
+      trace: { id: correlationId },
+      event: { duration: Number(durationNs) },
+    };
+    if (req.user?.id != null) {
+      finishMeta.user = { id: String(req.user.id) };
+    }
+
+    logger[isHealthProbe ? "debug" : level]("HTTP response sent", finishMeta);
 
     // Emit an extra warning when a request takes longer than the threshold.
     if (!isHealthProbe && durationNs > SLOW_THRESHOLD_NS) {
-      logger.warn("Slow request detected", {
-        "trace.id": correlationId,
-        "user.id": req.user?.id,
-        "url.path": req.path,
-        "http.request.method": req.method,
-        "event.duration": Number(durationNs),
-        "slow_threshold_ms": Number(process.env.SLOW_REQUEST_THRESHOLD_MS) || 1000,
-      });
+      const slowMeta = {
+        trace: { id: correlationId },
+        url: { path: req.path },
+        http: { request: { method: req.method } },
+        event: { duration: Number(durationNs) },
+        slow_threshold_ms: Number(process.env.SLOW_REQUEST_THRESHOLD_MS) || 1000,
+      };
+      if (req.user?.id != null) {
+        slowMeta.user = { id: String(req.user.id) };
+      }
+      logger.warn("Slow request detected", slowMeta);
     }
   });
 
   // Detect client disconnects that happen before the response is sent.
   res.on("close", () => {
     if (!responded) {
-      logger.warn("HTTP request aborted", {
-        "trace.id": correlationId,
-        "user.id": req.user?.id,
-        "url.path": req.path,
-        "http.request.method": req.method,
-        "event.duration": Number(process.hrtime.bigint() - startTime),
-      });
+      const abortMeta = {
+        trace: { id: correlationId },
+        url: { path: req.path },
+        http: { request: { method: req.method } },
+        event: { duration: Number(process.hrtime.bigint() - startTime) },
+      };
+      if (req.user?.id != null) {
+        abortMeta.user = { id: String(req.user.id) };
+      }
+      logger.warn("HTTP request aborted", abortMeta);
     }
   });
 

@@ -15,45 +15,58 @@ const SLOW_THRESHOLD_NS = BigInt(
   (Number(process.env.SLOW_REQUEST_THRESHOLD_MS) || 1000) * 1_000_000,
 );
 
-/**
- * Return a sanitized copy of the Express request suitable for the ECS formatter.
- *
- * Redacts:
- *  - Authorization header  → "[REDACTED]"  (prevents JWT tokens in logs)
- *  - ?token= query param   → "[REDACTED]"  (prevents file-download tokens in url.full)
- */
-function sanitizeReq(req) {
-  const headers = req.headers.authorization
-    ? { ...req.headers, authorization: "[REDACTED]" }
-    : req.headers;
-
-  // Redact ?token= in the raw URL string so ECS url.full / url.query don't leak it.
-  const url = req.url?.replace(/([?&]token=)[^&]*/g, "$1[REDACTED]") ?? req.url;
-
-  // Return a plain object with the properties the ECS formatter reads from a request.
+// Build ECS-compatible fields from an incoming Express request.
+// Raw req/res objects are intentionally NOT passed to Winston — doing so with
+// convertReqRes: true triggers the ECS formatter's internal Morgan serialiser,
+// which overwrites our custom message with an apache combined-log string.
+// Extracting fields manually also prevents sensitive headers (e.g. Authorization)
+// from appearing in logs.
+function reqFields(req, correlationId) {
   return {
-    method: req.method,
-    url,
-    headers,
-    socket: req.socket,
-    httpVersion: req.httpVersion,
+    trace: { id: correlationId },
+    http: {
+      version: req.httpVersion,
+      request: { method: req.method },
+    },
+    url: {
+      path: req.path,
+      domain: req.hostname,
+    },
+    client: {
+      ip: req.ip,
+      address: req.ip,
+    },
+    user_agent: { original: req.headers["user-agent"] },
   };
 }
 
-/**
- * Return a sanitized shim for the Express response suitable for the ECS formatter.
- *
- * Express attaches res.req = req (the original request). The ECS formatter uses
- * res.req when building the Combined Log Format message string, bypassing the
- * sanitized req copy we pass as info.req. This shim replaces res.req with the
- * already-sanitized request object so the token cannot leak through that path.
- */
-function sanitizeRes(res, sanitizedReq) {
-  return {
-    statusCode: res.statusCode,
-    getHeaders: () => res.getHeaders(),
-    req: sanitizedReq,
+function resFields(req, res, correlationId, durationNs) {
+  const contentLength = parseInt(res.getHeader("content-length"), 10);
+  const meta = {
+    trace: { id: correlationId },
+    http: {
+      version: req.httpVersion,
+      request: { method: req.method },
+      response: {
+        status_code: res.statusCode,
+        ...(Number.isFinite(contentLength) && { body: { bytes: contentLength } }),
+      },
+    },
+    url: {
+      path: req.path,
+      domain: req.hostname,
+    },
+    client: {
+      ip: req.ip,
+      address: req.ip,
+    },
+    user_agent: { original: req.headers["user-agent"] },
+    event: { duration: Number(durationNs) },
   };
+  if (req.user?.id != null) {
+    meta.user = { id: String(req.user.id) };
+  }
+  return meta;
 }
 
 /**
@@ -94,10 +107,10 @@ export function requestLogger(req, res, next) {
   const isHealthProbe = HEALTH_PROBE_PATHS.has(req.path);
 
   // "HTTP request received" — auth has not run yet so user.id is intentionally omitted.
-  logger[isHealthProbe ? "debug" : "info"]("HTTP request received", {
-    req: sanitizeReq(req),
-    trace: { id: correlationId },
-  });
+  logger[isHealthProbe ? "debug" : "info"](
+    "HTTP request received",
+    reqFields(req, correlationId),
+  );
 
   let responded = false;
 
@@ -107,13 +120,10 @@ export function requestLogger(req, res, next) {
     const level =
       res.statusCode >= 500 ? "error" : res.statusCode >= 400 ? "warn" : "info";
 
-    const sanitizedReq = sanitizeReq(req);
-    logger[isHealthProbe ? "debug" : level]("HTTP response sent", {
-      req: sanitizedReq,
-      res: sanitizeRes(res, sanitizedReq),
-      "event.duration": Number(durationNs),
-      ...reqContext(req),
-    });
+    logger[isHealthProbe ? "debug" : level](
+      "HTTP response sent",
+      resFields(req, res, correlationId, durationNs),
+    );
 
     // Emit an extra warning when a request takes longer than the threshold.
     if (!isHealthProbe && durationNs > SLOW_THRESHOLD_NS) {

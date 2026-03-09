@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import apiClient from "../api/axiosClient";
 import InputField from "../components/InputField";
 import { useAuth } from "../hooks/useAuth";
+import LayoutContainer from "../components/ui/LayoutContainer";
 
 const Profile = () => {
   const { user, updateUser, login, refreshUserProfile } = useAuth();
@@ -115,7 +116,7 @@ const Profile = () => {
         if (data?.token) {
           login(
             { email: data.email, role: data.role, fullName: data.fullName },
-            data.token
+            data.token,
           );
         } else {
           updateUser({ fullName: data.fullName, email: data.email });
@@ -130,10 +131,10 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-slate-900">
-      <div className="container mx-auto px-4 py-8">
-        <div className="glitter-card mx-auto max-w-xl rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-          <h2 className="mb-4 text-2xl font-bold text-slate-900 dark:text-slate-100">
+    <LayoutContainer maxWidth="md" padding="md" background="white">
+      <div className="mx-auto max-w-2xl">
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+          <h2 className="mb-6 text-2xl font-bold text-slate-900 dark:text-slate-100">
             Edit Profile
           </h2>
           {error && (
@@ -363,7 +364,7 @@ const Profile = () => {
           )}
         </div>
       </div>
-    </div>
+    </LayoutContainer>
   );
 };
 

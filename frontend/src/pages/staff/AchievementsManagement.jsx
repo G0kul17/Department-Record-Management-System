@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import apiClient from "../../api/axiosClient";
 import { getFileUrl } from "../../utils/fileUrl";
+import DataTableContainer from "../../components/ui/DataTableContainer";
+import StatusBadge from "../../components/ui/StatusBadge";
+import DataRow from "../../components/ui/DataRow";
 
 export default function AchievementsManagement() {
   const [items, setItems] = useState([]);
@@ -98,105 +101,102 @@ export default function AchievementsManagement() {
   };
 
   return (
-    <div className="glitter-card rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-            Achievements
-          </h2>
-          <div className="mt-1 flex items-center gap-2">
-            <button
-              onClick={async () => {
-                setView("pending");
-                await load();
-              }}
-              className={`btn btn-xs ${
-                view === "pending"
-                  ? "btn-primary"
-                  : "btn-ghost"
-              }`}
-            >
-              Pending
-            </button>
-            <button
-              onClick={async () => {
-                setView("rejected");
-                await showRejected();
-              }}
-              className={`text-xs rounded-md px-2 py-0.5 font-semibold ${
-                view === "rejected"
-                  ? "bg-red-600 text-white"
-                  : "bg-slate-100 text-slate-800"
-              }`}
-            >
-              Rejected
-            </button>
-          </div>
+    <DataTableContainer
+      title="Achievements"
+      filters={
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={async () => {
+              setView("pending");
+              await load();
+            }}
+            className={`rounded-md px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
+              view === "pending"
+                ? "bg-blue-600 text-white"
+                : "bg-white text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            }`}
+          >
+            Pending
+          </button>
+          <button
+            onClick={async () => {
+              setView("rejected");
+              await showRejected();
+            }}
+            className={`rounded-md px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
+              view === "rejected"
+                ? "bg-red-600 text-white"
+                : "bg-white text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            }`}
+          >
+            Rejected
+          </button>
         </div>
-
+      }
+      actions={
         <button
           onClick={() => (view === "pending" ? load() : showRejected())}
           disabled={loading}
-          className="btn btn-primary btn-sm"
+          className="rounded-md bg-blue-600 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
         >
           {loading ? "Refreshing..." : "Refresh"}
         </button>
-      </div>
-      <div className="mt-4 space-y-3">
+      }
+    >
+      <div className="space-y-3">
         {items.length === 0 && !loading && (
           <div className="text-slate-600 dark:text-slate-300">
+            No achievements found.
+          </div>py-8 text-center text-sm text-slate-600 dark:text-slate-300">
             No achievements found.
           </div>
         )}
         {items.map((a) => (
-          <div
+          <DataRow
             key={a.id}
-            className="rounded-lg border border-slate-200 p-4 dark:border-slate-700"
-          >
-            <div className="flex items-center justify-between">
+            expanded={expandedId === a.id}
+            onToggle={() => toggleView(a.id)}
+            header={
               <div>
                 <div className="font-semibold text-slate-800 dark:text-slate-100">
                   {a.title}
                 </div>
-                <div className="text-sm text-slate-600 dark:text-slate-300">
+                <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                   {a.issuer || ""}
                 </div>
               </div>
-              {a.verification_status === "approved" ? (
-                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-300">
-                  Verified
-                </span>
+            }
+            actions={
+              a.verification_status === "approved" ? (
+                <StatusBadge status="approved" label="Verified" />
               ) : a.verification_status === "rejected" ? (
-                <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700 dark:bg-red-900/40 dark:text-red-300">
-                  Rejected
-                </span>
+                <StatusBadge status="rejected" />
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <button
                     onClick={() => openModal(a)}
-                    className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100"
+                    className="rounded-md bg-slate-200 px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-medium text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600 whitespace-nowrap"
                   >
                     View
                   </button>
                   <button
                     onClick={() => reject(a.id)}
                     disabled={busyId === a.id}
-                    className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white shadow hover:bg-red-700 disabled:opacity-50"
+                    className="rounded-md bg-red-600 px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                   >
                     {busyId === a.id ? "Processing..." : "Reject"}
                   </button>
                   <button
                     onClick={() => approve(a.id)}
                     disabled={busyId === a.id}
-                    className="btn btn-primary btn-xs"
+                    className="rounded-md bg-blue-600 px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-medium text-white shadow-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                   >
                     {busyId === a.id ? "Processing..." : "Approve"}
                   </button>
                 </div>
-              )}
-            </div>
-            {expandedId === a.id && (
-              <div className="mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-200">
+              )
+            }
+              <div className="space-y-2">
                 <div>
                   <span className="font-semibold">Issuer:</span>{" "}
                   {a.issuer || "—"}
@@ -234,7 +234,7 @@ export default function AchievementsManagement() {
                         href={getFileUrl(a.proof_filename)}
                         target="_blank"
                         rel="noreferrer"
-                        className="link link-primary"
+                        className="text-blue-600 hover:underline dark:text-blue-400"
                       >
                         {a.proof_name || "Download proof"}
                       </a>
@@ -256,7 +256,7 @@ export default function AchievementsManagement() {
                         href={getFileUrl(a.certificate_filename)}
                         target="_blank"
                         rel="noreferrer"
-                        className="link link-primary"
+                        className="text-blue-600 hover:underline dark:text-blue-400"
                       >
                         {a.certificate_name || "Download certificate"}
                       </a>
@@ -278,7 +278,7 @@ export default function AchievementsManagement() {
                         href={getFileUrl(a.event_photos_filename)}
                         target="_blank"
                         rel="noreferrer"
-                        className="link link-primary"
+                        className="text-blue-600 hover:underline dark:text-blue-400"
                       >
                         {a.event_photos_name || "Download photos"}
                       </a>
@@ -286,31 +286,31 @@ export default function AchievementsManagement() {
                   </div>
                 )}
               </div>
-            )}
-          </div>
+            }
+          />
         ))}
       </div>
       {modal.open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4 overflow-y-auto"
           onClick={closeModal}
         >
           <div
-            className="max-w-2xl w-full rounded-xl bg-white p-6 shadow-xl dark:bg-slate-900 my-8"
+            className="w-full max-w-2xl rounded-xl bg-white p-4 sm:p-6 shadow-xl dark:bg-slate-900 my-8"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+              <h3 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-slate-100">
                 Achievement Details
               </h3>
               <button
-                className="rounded-md bg-slate-200 px-3 py-1 text-sm dark:bg-slate-800"
+                className="rounded-md bg-slate-200 px-3 py-1.5 text-xs sm:text-sm font-medium dark:bg-slate-800 self-start sm:self-auto"
                 onClick={closeModal}
               >
                 Close
               </button>
             </div>
-            <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300 max-h-96 overflow-y-auto">
+            <div className="space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300 max-h-[50vh] sm:max-h-96 overflow-y-auto">
               <div>
                 <span className="font-semibold">Title:</span>{" "}
                 {modal.item?.title}
@@ -358,7 +358,7 @@ export default function AchievementsManagement() {
                     href={getFileUrl(modal.item?.proof_filename)}
                     target="_blank"
                     rel="noreferrer"
-                    className="link link-primary ml-2"
+                    className="text-blue-600 hover:underline dark:text-blue-400 ml-2"
                   >
                     Download proof
                   </a>
@@ -383,7 +383,7 @@ export default function AchievementsManagement() {
                       href={getFileUrl(modal.item?.certificate_filename)}
                       target="_blank"
                       rel="noreferrer"
-                      className="link link-primary ml-2"
+                      className="text-blue-600 hover:underline dark:text-blue-400 ml-2"
                     >
                       Download certificate
                     </a>
@@ -407,7 +407,7 @@ export default function AchievementsManagement() {
                       href={getFileUrl(modal.item?.event_photos_filename)}
                       target="_blank"
                       rel="noreferrer"
-                      className="link link-primary ml-2"
+                      className="text-blue-600 hover:underline dark:text-blue-400 ml-2"
                     >
                       Download photos
                     </a>
@@ -416,7 +416,7 @@ export default function AchievementsManagement() {
               )}
             </div>
             <div className="mt-4">
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <label className="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
                 Suggestion to student (optional)
               </label>
               <textarea
@@ -424,21 +424,21 @@ export default function AchievementsManagement() {
                 onChange={(e) => setSuggestion(e.target.value)}
                 rows={3}
                 placeholder="Add a suggestion the student will see in notifications"
-                className="mt-2 w-full rounded-md border border-slate-300 bg-white p-2 text-sm text-slate-800 focus:border-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                className="w-full rounded-md border border-slate-300 bg-white p-2 text-xs sm:text-sm text-slate-800 focus:border-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               />
             </div>
-            <div className="mt-4 flex items-center justify-end gap-2">
+            <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
               <button
                 onClick={rejectFromModal}
                 disabled={busyId === modal.item?.id}
-                className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white shadow hover:bg-red-700 disabled:opacity-50"
+                className="rounded-md bg-red-600 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {busyId === modal.item?.id ? "Processing..." : "Reject"}
               </button>
               <button
                 onClick={approveFromModal}
                 disabled={busyId === modal.item?.id}
-                className="btn btn-primary btn-xs"
+                className="rounded-md bg-blue-600 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {busyId === modal.item?.id ? "Processing..." : "Approve"}
               </button>
@@ -446,6 +446,6 @@ export default function AchievementsManagement() {
           </div>
         </div>
       )}
-    </div>
+    </DataTableContainer>
   );
 }

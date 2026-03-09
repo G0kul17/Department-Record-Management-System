@@ -21,7 +21,7 @@ const SLOW_THRESHOLD_NS = BigInt(
 // which overwrites our custom message with an apache combined-log string.
 // Extracting fields manually also prevents sensitive headers (e.g. Authorization)
 // from appearing in logs.
-function reqFields(req, correlationId) {
+function reqFields(req, correlationId, urlPath) {
   return {
     trace: { id: correlationId },
     http: {
@@ -29,7 +29,7 @@ function reqFields(req, correlationId) {
       request: { method: req.method },
     },
     url: {
-      path: req.path,
+      path: urlPath,
       domain: req.hostname,
     },
     client: {
@@ -40,7 +40,7 @@ function reqFields(req, correlationId) {
   };
 }
 
-function resFields(req, res, correlationId, durationNs) {
+function resFields(req, res, correlationId, durationNs, urlPath) {
   const contentLength = parseInt(res.getHeader("content-length"), 10);
   const meta = {
     trace: { id: correlationId },
@@ -53,7 +53,7 @@ function resFields(req, res, correlationId, durationNs) {
       },
     },
     url: {
-      path: req.path,
+      path: urlPath,
       domain: req.hostname,
     },
     client: {
@@ -103,13 +103,17 @@ export function requestLogger(req, res, next) {
   req.correlationId = correlationId;
   res.setHeader("X-Correlation-ID", correlationId);
 
+  // Capture the full path now, before Express routing rewrites req.url/req.path
+  // relative to the matched router's mount point.
+  const urlPath = (req.originalUrl || req.path).split("?")[0];
+
   const startTime = process.hrtime.bigint();
-  const isHealthProbe = HEALTH_PROBE_PATHS.has(req.path);
+  const isHealthProbe = HEALTH_PROBE_PATHS.has(urlPath);
 
   // "HTTP request received" — auth has not run yet so user.id is intentionally omitted.
   logger[isHealthProbe ? "debug" : "info"](
     "HTTP request received",
-    reqFields(req, correlationId),
+    reqFields(req, correlationId, urlPath),
   );
 
   let responded = false;
@@ -122,13 +126,13 @@ export function requestLogger(req, res, next) {
 
     logger[isHealthProbe ? "debug" : level](
       "HTTP response sent",
-      resFields(req, res, correlationId, durationNs),
+      resFields(req, res, correlationId, durationNs, urlPath),
     );
 
     // Emit an extra warning when a request takes longer than the threshold.
     if (!isHealthProbe && durationNs > SLOW_THRESHOLD_NS) {
       logger.warn("Slow request detected", {
-        "url.path": req.path,
+        "url.path": urlPath,
         "http.request.method": req.method,
         "event.duration": Number(durationNs),
         "slow_threshold_ms": Number(process.env.SLOW_REQUEST_THRESHOLD_MS) || 1000,
@@ -141,7 +145,7 @@ export function requestLogger(req, res, next) {
   res.on("close", () => {
     if (!responded) {
       logger.warn("HTTP request aborted", {
-        "url.path": req.path,
+        "url.path": urlPath,
         "http.request.method": req.method,
         "event.duration": Number(process.hrtime.bigint() - startTime),
         ...reqContext(req),

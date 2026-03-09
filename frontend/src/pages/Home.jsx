@@ -219,19 +219,19 @@ export default function Home({ hideAtAGlance = false }) {
             {/* At a Glance Card */}
             {user && (
               <div className="md:col-span-1">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6 shadow-xl h-full backdrop-blur-sm">
-                  <h2 className="text-sm sm:text-base font-bold text-slate-100 mb-3 sm:mb-4">
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl h-full backdrop-blur-sm">
+                  <h2 className="text-base font-bold text-slate-100 mb-4">
                     At a Glance
                   </h2>
-                  <div className="grid grid-cols-2 gap-2 sm:gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => nav("/projects/approved")}
-                      className="rounded-xl p-3 sm:p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
+                      className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
                     >
-                      <div className="text-[9px] sm:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                      <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                         Projects
                       </div>
-                      <div className="mt-1 text-base sm:text-lg font-extrabold text-slate-100">
+                      <div className="mt-1 text-lg font-extrabold text-slate-100">
                         {user?.role === "staff"
                           ? staffProjCount === null
                             ? "—"
@@ -243,12 +243,12 @@ export default function Home({ hideAtAGlance = false }) {
                     </button>
                     <button
                       onClick={() => nav("/achievements/approved")}
-                      className="rounded-xl p-3 sm:p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
+                      className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
                     >
-                      <div className="text-[9px] sm:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                      <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                         Achievements
                       </div>
-                      <div className="mt-1 text-base sm:text-lg font-extrabold text-slate-100">
+                      <div className="mt-1 text-lg font-extrabold text-slate-100">
                         {achCount === null ? "—" : achCount}
                       </div>
                     </button>
@@ -256,34 +256,34 @@ export default function Home({ hideAtAGlance = false }) {
                       <>
                         <button
                           onClick={() => nav("/faculty-participation-approved")}
-                          className="rounded-xl p-3 sm:p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
+                          className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
                         >
-                          <div className="text-[9px] sm:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                          <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                             Participation
                           </div>
-                          <div className="mt-1 text-base sm:text-lg font-extrabold text-slate-100">
+                          <div className="mt-1 text-lg font-extrabold text-slate-100">
                             {staffPartCount === null ? "—" : staffPartCount}
                           </div>
                         </button>
                         <button
                           onClick={() => nav("/faculty-research-approved")}
-                          className="rounded-xl p-3 sm:p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
+                          className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
                         >
-                          <div className="text-[9px] sm:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                          <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                             Research
                           </div>
-                          <div className="mt-1 text-base sm:text-lg font-extrabold text-slate-100">
+                          <div className="mt-1 text-lg font-extrabold text-slate-100">
                             {staffResCount === null ? "—" : staffResCount}
                           </div>
                         </button>
                         <button
                           onClick={() => nav("/faculty-consultancy-approved")}
-                          className="rounded-xl p-3 sm:p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
+                          className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
                         >
-                          <div className="text-[9px] sm:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                          <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                             Consultancy
                           </div>
-                          <div className="mt-1 text-base sm:text-lg font-extrabold text-slate-100">
+                          <div className="mt-1 text-lg font-extrabold text-slate-100">
                             {staffConsCount === null ? "—" : staffConsCount}
                           </div>
                         </button>
@@ -302,12 +302,8 @@ export default function Home({ hideAtAGlance = false }) {
           className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pt-8 sm:pt-12 md:pt-16 pb-8 sm:pb-10"
         >
           <div className="mb-5 sm:mb-6">
-            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">
-              Latest
-            </p>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
-              Events
-            </h2>
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Latest</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Events</h2>
           </div>
           <div className="grid gap-6 sm:gap-8 md:grid-cols-2">
             <div className="md:col-span-1">
@@ -325,12 +321,8 @@ export default function Home({ hideAtAGlance = false }) {
           className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-8 sm:pb-10"
         >
           <div className="mb-5 sm:mb-6">
-            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">
-              Recent
-            </p>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
-              Projects
-            </h2>
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Recent</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Projects</h2>
           </div>
           <ProjectsRecentGrid limit={6} />
         </div>
@@ -341,12 +333,8 @@ export default function Home({ hideAtAGlance = false }) {
           className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-8 sm:pb-10"
         >
           <div className="mb-5 sm:mb-6">
-            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">
-              Recent
-            </p>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
-              Achievements
-            </h2>
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Recent</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Achievements</h2>
           </div>
           <AchievementsRecentGrid limit={6} />
         </div>
@@ -359,9 +347,7 @@ export default function Home({ hideAtAGlance = false }) {
           >
             <div className="py-8 sm:py-12 md:py-16">
               <div className="mb-8">
-                <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">
-                  Admin
-                </p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Admin</p>
                 <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">
                   Analytics & Visualization
                 </h1>
@@ -650,12 +636,7 @@ function DonutChart({ title, data }) {
         {title}
       </h3>
       <div className="flex flex-wrap items-center justify-center gap-6">
-        <svg
-          width="110"
-          height="110"
-          viewBox="0 0 110 110"
-          className="flex-shrink-0"
-        >
+        <svg width="110" height="110" viewBox="0 0 110 110" className="flex-shrink-0">
           {total > 0 ? (
             data.map((item, idx) => {
               const percent = (item.value / total) * 100;
@@ -801,12 +782,7 @@ function PieChart({ title, data }) {
         {title}
       </h3>
       <div className="flex flex-wrap items-center justify-center gap-8">
-        <svg
-          width="140"
-          height="140"
-          viewBox="0 0 140 140"
-          className="flex-shrink-0"
-        >
+        <svg width="140" height="140" viewBox="0 0 140 140" className="flex-shrink-0">
           {total > 0 ? (
             data.map((item, idx) => {
               const percent = (item.value / total) * 100;

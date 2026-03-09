@@ -155,7 +155,7 @@ export default function ProjectUpload() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950">
-      <div className="mx-auto max-w-6xl px-3 sm:px-6 py-6 sm:py-10">
+      <div className="mx-auto max-w-6xl px-6 py-10">
         <SuccessModal
           open={showSuccess}
           title="Saved successfully"
@@ -464,10 +464,12 @@ export default function ProjectUpload() {
               {pagedProjects.map((p) => (
                 <div
                   key={p.id}
-                  className="rounded-lg border border-slate-200 p-3 sm:p-4 dark:border-slate-700"
+                  className="rounded-lg border border-slate-200 p-4 dark:border-slate-700"
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex-1 min-w-0">{p.title}
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="font-semibold text-slate-800 dark:text-slate-100">
+                        {p.title}
                       </div>
                       <div className="text-sm text-slate-600 dark:text-slate-300">
                         {p.mentor_name || ""}{" "}
@@ -477,7 +479,7 @@ export default function ProjectUpload() {
                         Status: {p.status || "ongoing"}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => setPreviewModal({ open: true, item: p })}

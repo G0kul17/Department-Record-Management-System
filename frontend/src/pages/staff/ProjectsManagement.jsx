@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from "react";
 import apiClient from "../../api/axiosClient";
 import { getFileUrl } from "../../utils/fileUrl";
-import DataTableContainer from "../../components/ui/DataTableContainer";
-import StatusBadge from "../../components/ui/StatusBadge";
-import DataRow from "../../components/ui/DataRow";
 
 export default function ProjectsManagement() {
   const [items, setItems] = useState([]);
@@ -21,7 +18,7 @@ export default function ProjectsManagement() {
       const data = await apiClient.get("/projects?verified=false&limit=50");
       // Exclude rejected items from the pending view
       const list = (data.projects || []).filter(
-        (p) => (p.verification_status || "").toLowerCase() !== "rejected",
+        (p) => (p.verification_status || "").toLowerCase() !== "rejected"
       );
       setItems(list);
     } catch (e) {
@@ -78,7 +75,7 @@ export default function ProjectsManagement() {
     try {
       // Filter by verification_status for rejected items
       const data = await apiClient.get(
-        "/projects?verification_status=rejected&limit=200",
+        "/projects?verification_status=rejected&limit=200"
       );
       setItems(data.projects || []);
     } catch (e) {
@@ -111,104 +108,108 @@ export default function ProjectsManagement() {
   };
 
   return (
-    <DataTableContainer
-      title="Projects"
-      filters={
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={async () => {
-              setView("pending");
-              await load();
-            }}
-            className={`rounded-md px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
-              view === "pending"
-                ? "bg-blue-600 text-white"
-                : "bg-white text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-            }`}
-          >
-            Pending
-          </button>
-          <button
-            onClick={async () => {
-              setView("rejected");
-              await showRejected();
-            }}
-            className={`rounded-md px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
-              view === "rejected"
-                ? "bg-red-600 text-white"
-                : "bg-white text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-            }`}
-          >
-            Rejected
-          </button>
+    <div className="glitter-card rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+            Projects
+          </h2>
+          <div className="mt-1 flex items-center gap-2">
+            <button
+              onClick={async () => {
+                setView("pending");
+                await load();
+              }}
+              className={`btn btn-xs ${
+                view === "pending"
+                  ? "btn-primary"
+                  : "btn-ghost"
+              }`}
+            >
+              Pending
+            </button>
+            <button
+              onClick={async () => {
+                setView("rejected");
+                await showRejected();
+              }}
+              className={`text-xs rounded-md px-2 py-0.5 font-semibold ${
+                view === "rejected"
+                  ? "bg-red-600 text-white"
+                  : "bg-slate-100 text-slate-800"
+              }`}
+            >
+              Rejected
+            </button>
+          </div>
         </div>
-      }
-      actions={
+
         <button
           onClick={() => (view === "pending" ? load() : showRejected())}
           disabled={loading}
-          className="rounded-md bg-blue-600 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+          className="btn btn-primary btn-sm"
         >
           {loading ? "Refreshing..." : "Refresh"}
         </button>
-      }
-    >
-      <div className="space-y-3">
+      </div>
+      <div className="mt-4 space-y-3">
         {items.length === 0 && !loading && (
-          <div className="py-8 text-center text-sm text-slate-600 dark:text-slate-300">
+          <div className="text-slate-600 dark:text-slate-300">
             {view === "pending"
               ? "No projects pending verification."
               : "No rejected projects found."}
           </div>
         )}
         {items.map((p) => (
-          <DataRow
+          <div
             key={p.id}
-            expanded={expandedId === p.id}
-            onToggle={() => toggleView(p.id)}
-            header={
+            className="rounded-lg border border-slate-200 p-4 dark:border-slate-700"
+          >
+            <div className="flex items-center justify-between">
               <div>
                 <div className="font-semibold text-slate-800 dark:text-slate-100">
                   {p.title}
                 </div>
-                <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                <div className="text-sm text-slate-600 dark:text-slate-300">
                   {p.mentor_name || ""}{" "}
                   {p.academic_year && `• ${p.academic_year}`}
                 </div>
               </div>
-            }
-            actions={
-              p.verification_status === "approved" ? (
-                <StatusBadge status="approved" label="Verified" />
+              {p.verification_status === "approved" ? (
+                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-300">
+                  Verified
+                </span>
               ) : p.verification_status === "rejected" ? (
-                <StatusBadge status="rejected" />
+                <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                  Rejected
+                </span>
               ) : (
-                <div className="flex items-center gap-1.5 flex-wrap">
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => openModal(p)}
-                    className="rounded-md bg-slate-200 px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-medium text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600 whitespace-nowrap"
+                    className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100"
                   >
                     View
                   </button>
                   <button
                     onClick={() => reject(p.id)}
                     disabled={busyId === p.id}
-                    className="rounded-md bg-red-600 px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                    className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white shadow hover:bg-red-700 disabled:opacity-50"
                   >
                     {busyId === p.id ? "Processing..." : "Reject"}
                   </button>
                   <button
                     onClick={() => approve(p.id)}
                     disabled={busyId === p.id}
-                    className="rounded-md bg-blue-600 px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-medium text-white shadow-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                    className="btn btn-primary btn-xs"
                   >
                     {busyId === p.id ? "Processing..." : "Approve"}
                   </button>
                 </div>
-              )
-            }
-            details={
-              <div className="space-y-2">
+              )}
+            </div>
+            {expandedId === p.id && (
+              <div className="mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-200">
                 {p.description && (
                   <div>
                     <span className="font-semibold">Description:</span>{" "}
@@ -230,7 +231,7 @@ export default function ProjectsManagement() {
                       href={p.github_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-blue-600 hover:underline dark:text-blue-400"
+                      className="link link-primary"
                     >
                       {p.github_url}
                     </a>
@@ -248,7 +249,7 @@ export default function ProjectsManagement() {
                             href={getFileUrl(f.filename)}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-blue-600 hover:underline dark:text-blue-400"
+                            className="link link-primary"
                           >
                             {f.original_name || f.filename}
                           </a>
@@ -259,31 +260,31 @@ export default function ProjectsManagement() {
                   </div>
                 )}
               </div>
-            }
-          />
+            )}
+          </div>
         ))}
       </div>
       {modal.open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
           onClick={closeModal}
         >
           <div
-            className="w-full max-w-2xl rounded-xl bg-white p-4 sm:p-6 shadow-xl dark:bg-slate-900 max-h-[90vh] overflow-y-auto"
+            className="max-w-2xl w-full rounded-xl bg-white p-6 shadow-xl dark:bg-slate-900"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-              <h3 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-slate-100">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
                 Project Details
               </h3>
               <button
-                className="rounded-md bg-slate-200 px-3 py-1.5 text-xs sm:text-sm font-medium dark:bg-slate-800 self-start sm:self-auto"
+                className="rounded-md bg-slate-200 px-3 py-1 text-sm dark:bg-slate-800"
                 onClick={closeModal}
               >
                 Close
               </button>
             </div>
-            <div className="space-y-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+            <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
               <div>
                 <span className="font-semibold">Title:</span>{" "}
                 {modal.item?.title}
@@ -309,7 +310,7 @@ export default function ProjectsManagement() {
                     href={modal.item.github_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-blue-600 hover:underline dark:text-blue-400"
+                    className="link link-primary"
                   >
                     {modal.item.github_url}
                   </a>
@@ -337,7 +338,7 @@ export default function ProjectsManagement() {
                               href={getFileUrl(f.filename)}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-blue-600 hover:underline dark:text-blue-400"
+                              className="link link-primary"
                             >
                               {f.original_name || f.filename}
                             </a>
@@ -350,7 +351,7 @@ export default function ProjectsManagement() {
                 )}
             </div>
             <div className="mt-4">
-              <label className="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
                 Suggestion to student (optional)
               </label>
               <textarea
@@ -358,21 +359,21 @@ export default function ProjectsManagement() {
                 onChange={(e) => setSuggestion(e.target.value)}
                 rows={3}
                 placeholder="Add a suggestion the student will see in notifications"
-                className="w-full rounded-md border border-slate-300 bg-white p-2 text-xs sm:text-sm text-slate-800 focus:border-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                className="mt-2 w-full rounded-md border border-slate-300 bg-white p-2 text-sm text-slate-800 focus:border-slate-400 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               />
             </div>
-            <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
+            <div className="mt-4 flex items-center justify-end gap-2">
               <button
                 onClick={rejectFromModal}
                 disabled={busyId === modal.item?.id}
-                className="rounded-md bg-red-600 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white shadow hover:bg-red-700 disabled:opacity-50"
               >
                 {busyId === modal.item?.id ? "Processing..." : "Reject"}
               </button>
               <button
                 onClick={approveFromModal}
                 disabled={busyId === modal.item?.id}
-                className="rounded-md bg-blue-600 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn btn-primary btn-xs"
               >
                 {busyId === modal.item?.id ? "Processing..." : "Approve"}
               </button>
@@ -380,6 +381,6 @@ export default function ProjectsManagement() {
           </div>
         </div>
       )}
-    </DataTableContainer>
+    </div>
   );
 }

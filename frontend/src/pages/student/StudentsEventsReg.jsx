@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import EventCard from "../../components/EventCard";
 import apiClient from "../../api/axiosClient";
 import { generateAcademicYears } from "../../utils/academicYears";
+import { getFileUrl } from "../../utils/fileUrl";
 
 function GrantBox({ grant }) {
   if (!grant) return null;
@@ -71,7 +72,7 @@ export default function Events() {
             attachments: Array.isArray(attachments) ? attachments : [],
             // Build a usable thumbnail URL if present
             thumbnail: e.thumbnail_filename
-              ? `/uploads/${encodeURIComponent(e.thumbnail_filename)}`
+              ? getFileUrl(e.thumbnail_filename)
               : null,
           };
         });
@@ -146,7 +147,7 @@ export default function Events() {
     }
 
     return (
-      <div className="mx-auto max-w-4xl p-8">
+      <div className="mx-auto max-w-4xl px-3 sm:px-8 py-6 sm:py-8">
         <button
           onClick={() => nav(-1)}
           className="mb-6 text-sm text-slate-600 underline"
@@ -229,22 +230,24 @@ export default function Events() {
 
   const q = query.trim().toLowerCase();
   const filtered = events.filter((e) => {
-    const matchesSearch = !q
-      || [e.title, e.venue, e.description]
+    const matchesSearch =
+      !q ||
+      [e.title, e.venue, e.description]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(q));
 
     const eventYear = e.academic_year || e.start_date?.substring(0, 4);
-    const matchesYear = !academicYear
-      || (eventYear && eventYear.includes(academicYear.substring(0, 4)));
+    const matchesYear =
+      !academicYear ||
+      (eventYear && eventYear.includes(academicYear.substring(0, 4)));
 
     return matchesSearch && matchesYear;
   });
 
   return (
-    <div className="mx-auto max-w-6xl p-6">
+    <div className="mx-auto max-w-6xl px-3 sm:px-6 py-4 sm:py-6">
       <h1 className="text-2xl font-bold mb-4">Events</h1>
-      
+
       {/* Search and Filter Bar */}
       <div className="mb-6">
         <div className="glitter-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -298,7 +301,7 @@ export default function Events() {
                 className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
               >
                 <option value="">All Years</option>
-                {academicYearOptions.map(year => (
+                {academicYearOptions.map((year) => (
                   <option key={year.value} value={year.value}>
                     {year.label}
                   </option>
@@ -308,7 +311,7 @@ export default function Events() {
           </div>
         </div>
       </div>
-      
+
       <div className="flex items-center justify-between mt-4 mb-2">
         <p className="text-sm text-slate-600 dark:text-slate-300">
           Filter by title, venue, or description.

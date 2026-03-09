@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import logger from "../utils/logger.js";
 
 // Read the SQL from the backup file at runtime so the SQL isn't embedded in a JS
 // template literal (that can trigger SQL language-server parsing and red marks).
@@ -11,7 +12,7 @@ let sql = "";
 try {
   sql = fs.readFileSync(sqlPath, "utf8");
 } catch (err) {
-  console.error(`Failed to read SQL file at ${sqlPath}:`, err);
+  logger.error("Failed to read SQL file", { err, "db.sql_path": sqlPath });
 }
 
 export default sql;

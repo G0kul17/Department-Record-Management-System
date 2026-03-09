@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Routes, Route, Link } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import ProjectsManagement from "./ProjectsManagement";
@@ -9,7 +9,6 @@ import FacultyParticipation from "./FacultyParticipation";
 import FacultyConsultancy from "./FacultyConsultancy";
 import QuickActions from "../QuickActions";
 import apiClient from "../../api/axiosClient";
-import { useEffect, useState } from "react";
 import { formatDisplayName } from "../../utils/displayName";
 import EventsCarousel from "../../components/EventsCarousel";
 import AchievementsRecentGrid from "../../components/AchievementsRecentGrid";
@@ -19,70 +18,109 @@ import AchievementsLeaderboard from "../../components/AchievementsLeaderboard";
 const StaffDashboard = () => {
   const { user } = useAuth();
   const displayName = formatDisplayName(user);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const navLinks = [
+    { label: "📊 Overview", to: "/staff" },
+    { label: "📁 Projects", to: "/staff/projects" },
+    { label: "⭐ Achievements", to: "/staff/achievements" },
+    { label: "📅 Events", to: "/staff/events" },
+    { label: "📥 Bulk Export", to: "/staff/bulk-export" },
+  ];
+
+  function SidebarContent() {
+    return (
+      <>
+        <div className="mb-6 pb-6 border-b border-slate-200 dark:border-slate-700">
+          <div className="text-base font-bold text-slate-800 dark:text-slate-100">
+            {displayName || "Staff"}
+          </div>
+          <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Staff Portal
+          </div>
+        </div>
+        <nav className="space-y-1">
+          {navLinks.map((link, i) => (
+            <React.Fragment key={link.to}>
+              {i === 4 && (
+                <div className="my-4 border-t border-slate-200 dark:border-slate-700" />
+              )}
+              <Link
+                className="block rounded-lg px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                to={link.to}
+                onClick={() => setSidebarOpen(false)}
+              >
+                {link.label}
+              </Link>
+            </React.Fragment>
+          ))}
+        </nav>
+      </>
+    );
+  }
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+      {/* Mobile sidebar backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+        {/* Mobile top bar with sidebar toggle */}
+        <div className="flex items-center gap-3 mb-4 lg:hidden">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            Menu
+          </button>
+          <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Staff Portal</span>
+        </div>
+
         <div className="flex items-start gap-8">
-          <aside className="w-72 flex-shrink-0 rounded-2xl border border-slate-200 bg-white p-6 shadow-lg dark:border-slate-800 dark:bg-slate-900 sticky top-20 max-h-[calc(100vh-10rem)] overflow-y-auto">
-            <div className="mb-6 pb-6 border-b border-slate-200 dark:border-slate-700">
-              <div className="text-base font-bold text-slate-800 dark:text-slate-100">
-                {displayName || "Staff"}
-              </div>
-              <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Staff Portal
-              </div>
-            </div>
-            <nav className="space-y-1">
-              <Link
-                className="block rounded-lg px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-                to="/staff"
-              >
-                📊 Overview
-              </Link>
-              <Link
-                className="block rounded-lg px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-                to="/staff/projects"
-              >
-                📁 Projects
-              </Link>
-              <Link
-                className="block rounded-lg px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-                to="/staff/achievements"
-              >
-                ⭐ Achievements
-              </Link>
-              <Link
-                className="block rounded-lg px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-                to="/staff/events"
-              >
-                📅 Events
-              </Link>
-              <div className="my-4 border-t border-slate-200 dark:border-slate-700"></div>
-              <Link
-                className="block rounded-lg px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-                to="/staff/bulk-export"
-              >
-                📥 Bulk Export
-              </Link>
-            </nav>
+          {/* Desktop sidebar */}
+          <aside className="hidden lg:block w-72 flex-shrink-0 rounded-2xl border border-slate-200 bg-white p-6 shadow-lg dark:border-slate-800 dark:bg-slate-900 sticky top-20 max-h-[calc(100vh-10rem)] overflow-y-auto">
+            <SidebarContent />
           </aside>
 
-          <main className="flex-1 min-w-0">
-            <div className="">
-              <Routes>
-                <Route index element={<OverviewPanel user={user} />} />
-                <Route path="projects" element={<ProjectsManagement />} />
-                <Route
-                  path="achievements"
-                  element={<AchievementsManagement />}
-                />
-                <Route path="events" element={<EventsManagement />} />
-                <Route path="faculty-research" element={<FacultyResearch />} />
-                <Route path="faculty-participation" element={<FacultyParticipation />} />
-                <Route path="faculty-consultancy" element={<FacultyConsultancy />} />
-              </Routes>
+          {/* Mobile sidebar drawer */}
+          {sidebarOpen && (
+            <div className="fixed left-0 top-0 z-50 h-full w-72 max-w-[85vw] rounded-r-2xl border-r border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900 overflow-y-auto lg:hidden">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Staff Portal</span>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="rounded-lg p-1 hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <SidebarContent />
             </div>
+          )}
+
+          <main className="flex-1 min-w-0">
+            <Routes>
+              <Route index element={<OverviewPanel user={user} />} />
+              <Route path="projects" element={<ProjectsManagement />} />
+              <Route
+                path="achievements"
+                element={<AchievementsManagement />}
+              />
+              <Route path="events" element={<EventsManagement />} />
+              <Route path="faculty-research" element={<FacultyResearch />} />
+              <Route path="faculty-participation" element={<FacultyParticipation />} />
+              <Route path="faculty-consultancy" element={<FacultyConsultancy />} />
+            </Routes>
           </main>
         </div>
       </div>
@@ -153,7 +191,7 @@ function OverviewPanel({ user }) {
           <p className="text-slate-600 dark:text-slate-400 mt-3 text-base leading-relaxed">
             Use the side menu to manage projects, achievements and events.
           </p>
-          <div className="mt-4 h-1 w-20 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full"></div>
+          <div className="mt-4 h-px w-16 bg-zinc-200 dark:bg-zinc-700 rounded-full"></div>
         </div>
 
         <div className="lg:col-span-1">
@@ -164,9 +202,9 @@ function OverviewPanel({ user }) {
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => (window.location.href = "/projects/approved")}
-                className="rounded-xl p-3 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-cyan-500 hover:border-cyan-400 hover:shadow-lg"
+                className="rounded-xl p-3 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
               >
-                <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Projects
                 </div>
                 <div className="mt-1 text-2xl font-extrabold text-slate-100">
@@ -175,9 +213,9 @@ function OverviewPanel({ user }) {
               </button>
               <button
                 onClick={() => (window.location.href = "/achievements/approved")}
-                className="rounded-xl p-3 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-fuchsia-500 hover:border-fuchsia-400 hover:shadow-lg"
+                className="rounded-xl p-3 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
               >
-                <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Achievements
                 </div>
                 <div className="mt-1 text-2xl font-extrabold text-slate-100">
@@ -186,9 +224,9 @@ function OverviewPanel({ user }) {
               </button>
               <button
                 onClick={() => (window.location.href = "/staff/faculty-participation")}
-                className="rounded-xl p-3 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-emerald-500 hover:border-emerald-400 hover:shadow-lg"
+                className="rounded-xl p-3 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
               >
-                <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Participation
                 </div>
                 <div className="mt-1 text-2xl font-extrabold text-slate-100">
@@ -197,9 +235,9 @@ function OverviewPanel({ user }) {
               </button>
               <button
                 onClick={() => (window.location.href = "/staff/faculty-research")}
-                className="rounded-xl p-3 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-green-500 hover:border-green-400 hover:shadow-lg"
+                className="rounded-xl p-3 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
               >
-                <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Research
                 </div>
                 <div className="mt-1 text-2xl font-extrabold text-slate-100">
@@ -208,9 +246,9 @@ function OverviewPanel({ user }) {
               </button>
               <button
                 onClick={() => (window.location.href = "/staff/faculty-consultancy")}
-                className="rounded-xl p-3 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-amber-500 hover:border-amber-400 hover:shadow-lg"
+                className="rounded-xl p-3 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
               >
-                <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Consultancy
                 </div>
                 <div className="mt-1 text-2xl font-extrabold text-slate-100">
@@ -226,10 +264,8 @@ function OverviewPanel({ user }) {
 
       <div>
         <div className="mb-5">
-          <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-            Latest Events
-          </h3>
-          <div className="h-1 w-16 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full mt-3"></div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Latest</p>
+          <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Events</h3>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           <div className="lg:col-span-2">
@@ -250,10 +286,8 @@ function OverviewPanel({ user }) {
       {/* Recent Projects grid (latest 6) for staff */}
       <div>
         <div className="mb-5">
-          <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-            Recent Projects
-          </h3>
-          <div className="h-1 w-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full mt-3"></div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Recent</p>
+          <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Projects</h3>
         </div>
         <ProjectsRecentGrid limit={6} />
       </div>
@@ -261,10 +295,8 @@ function OverviewPanel({ user }) {
       {/* Recent Achievements grid (latest 6) for staff */}
       <div className="pb-8">
         <div className="mb-5">
-          <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-            Recent Achievements
-          </h3>
-          <div className="h-1 w-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mt-3"></div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Recent</p>
+          <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Achievements</h3>
         </div>
         <AchievementsRecentGrid limit={6} />
       </div>

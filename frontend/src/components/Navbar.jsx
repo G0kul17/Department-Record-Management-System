@@ -6,6 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { formatDisplayName, getInitials } from "../utils/displayName";
 import AvatarPicker from "./ui/AvatarPicker";
 import NotificationsBell from "./NotificationsBell";
+import apiClient from "../api/axiosClient";
 
 const Navbar = () => {
   const { user, token, logout } = useAuth();
@@ -13,6 +14,7 @@ const Navbar = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const displayName = formatDisplayName(user);
   const photoUrl =
     (user &&
@@ -20,7 +22,6 @@ const Navbar = () => {
     null;
   const completion = (() => {
     if (user?.role === "student") {
-      // For students, check register_number, contact_number, leetcode_url, hackerrank_url, codechef_url, github_url
       const fields = [
         user?.register_number,
         user?.contact_number,
@@ -33,7 +34,6 @@ const Navbar = () => {
       ).length;
       return Math.round((filled / fields.length) * 100);
     }
-    // For staff/admin, use existing logic
     const fields = [user?.fullName, user?.email, user?.phone, user?.rollNumber];
     const filled = fields.filter(
       (v) => typeof v === "string" && v.trim(),
@@ -41,27 +41,77 @@ const Navbar = () => {
     return Math.round((filled / fields.length) * 100);
   })();
 
-  // Professional dashboard style: light theme only
-
-  function handleLogout() {
+  async function handleLogout() {
+    try {
+      await apiClient.post("/auth/logout");
+    } catch (_) {
+      // proceed with local logout even if backend call fails
+    }
     logout();
     nav("/login");
   }
 
   function goToDashboard() {
     if (user.role === "admin") nav("/admin");
-    else if (user.role === "staff")
-      nav("/"); // Staff should see Home
-    else if (user.role === "student") nav("/student"); // Students go to Student Dashboard
+    else if (user.role === "staff") nav("/");
+    else if (user.role === "student") nav("/student");
+  }
+
+  // Navigation links per role
+  const navLinks =
+    token && user
+      ? user.role === "admin"
+        ? [
+            { label: "Events", section: "events", path: "/admin" },
+            { label: "Projects", section: "projects", path: "/admin" },
+            { label: "Achievements", section: "achievements", path: "/admin" },
+            {
+              label: "Visualization",
+              section: "visualization",
+              path: "/admin",
+            },
+            { label: "Notifications", section: null, path: "/notifications" },
+          ]
+        : user.role === "student"
+          ? [
+              { label: "Events", section: "events", path: "/" },
+              { label: "Projects", section: "projects", path: "/" },
+              { label: "Achievements", section: "achievements", path: "/" },
+              { label: "Notifications", section: null, path: "/notifications" },
+            ]
+          : user.role === "staff"
+            ? [
+                { label: "Events", section: "events", path: "/" },
+                { label: "Projects", section: "projects", path: "/" },
+                { label: "Achievements", section: "achievements", path: "/" },
+                {
+                  label: "Notifications",
+                  section: null,
+                  path: "/notifications",
+                },
+              ]
+            : []
+      : [];
+
+  function handleNavLinkClick(link) {
+    setMobileMenuOpen(false);
+    if (link.section) {
+      nav(link.path);
+      setTimeout(() => {
+        const element = document.getElementById(link.section);
+        element?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    } else {
+      nav(link.path);
+    }
   }
 
   return (
-    <nav className="bg-[#87CEEB] text-white shadow-sm">
-      {/* Full-width wrapper so right controls align flush right */}
+    <nav className="bg-slate-900 text-white shadow-md sticky top-0 z-50">
       <div className="w-full px-4">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2">
-            {/* Inline SVG Logo */}
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2 flex-shrink-0">
             <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-white">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -85,204 +135,35 @@ const Navbar = () => {
             </span>
           </Link>
 
-          {/* Admin Navigation Links */}
-          {token && user?.role === "admin" && (
-            <div className="hidden md:flex items-center gap-6">
-              <button
-                onClick={() => {
-                  nav("/admin");
-                  setTimeout(() => {
-                    const element = document.getElementById("events");
-                    element?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "start",
-                    });
-                  }, 100);
-                }}
-                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
-              >
-                Events
-              </button>
-              <button
-                onClick={() => {
-                  nav("/admin");
-                  setTimeout(() => {
-                    const element = document.getElementById("projects");
-                    element?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "start",
-                    });
-                  }, 100);
-                }}
-                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
-              >
-                Projects
-              </button>
-              <button
-                onClick={() => {
-                  nav("/admin");
-                  setTimeout(() => {
-                    const element = document.getElementById("achievements");
-                    element?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "start",
-                    });
-                  }, 100);
-                }}
-                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
-              >
-                Achievements
-              </button>
-              <button
-                onClick={() => {
-                  nav("/admin");
-                  setTimeout(() => {
-                    const element = document.getElementById("visualization");
-                    element?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "start",
-                    });
-                  }, 100);
-                }}
-                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
-              >
-                Visualization
-              </button>
-              <button
-                onClick={() => nav("/notifications")}
-                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
-              >
-                Notifications
-              </button>
+          {/* Desktop Navigation Links */}
+          {navLinks.length > 0 && (
+            <div className="hidden md:flex items-center gap-1">
+              {navLinks.map((link) => (
+                <button
+                  key={link.label}
+                  onClick={() => handleNavLinkClick(link)}
+                  className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
+                >
+                  {link.label}
+                </button>
+              ))}
             </div>
           )}
 
-          {/* Student Navigation Links */}
-          {token && user?.role === "student" && (
-            <div className="hidden md:flex items-center gap-6">
-              <button
-                onClick={() => {
-                  nav("/");
-                  setTimeout(() => {
-                    const element = document.getElementById("events");
-                    element?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "start",
-                    });
-                  }, 100);
-                }}
-                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
-              >
-                Events
-              </button>
-              <button
-                onClick={() => {
-                  nav("/");
-                  setTimeout(() => {
-                    const element = document.getElementById("projects");
-                    element?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "start",
-                    });
-                  }, 100);
-                }}
-                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
-              >
-                Projects
-              </button>
-              <button
-                onClick={() => {
-                  nav("/");
-                  setTimeout(() => {
-                    const element = document.getElementById("achievements");
-                    element?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "start",
-                    });
-                  }, 100);
-                }}
-                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
-              >
-                Achievements
-              </button>
-              <button
-                onClick={() => nav("/notifications")}
-                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
-              >
-                Notifications
-              </button>
-            </div>
-          )}
-
-          {/* Staff Navigation Links */}
-          {token && user?.role === "staff" && (
-            <div className="hidden md:flex items-center gap-6">
-              <button
-                onClick={() => {
-                  nav("/");
-                  setTimeout(() => {
-                    const element = document.getElementById("events");
-                    element?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "start",
-                    });
-                  }, 100);
-                }}
-                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
-              >
-                Events
-              </button>
-              <button
-                onClick={() => {
-                  nav("/");
-                  setTimeout(() => {
-                    const element = document.getElementById("projects");
-                    element?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "start",
-                    });
-                  }, 100);
-                }}
-                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
-              >
-                Projects
-              </button>
-              <button
-                onClick={() => {
-                  nav("/");
-                  setTimeout(() => {
-                    const element = document.getElementById("achievements");
-                    element?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "start",
-                    });
-                  }, 100);
-                }}
-                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
-              >
-                Achievements
-              </button>
-              <button
-                onClick={() => nav("/notifications")}
-                className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
-              >
-                Notifications
-              </button>
-            </div>
-          )}
-
-          <div className="flex items-center gap-4">
+          {/* Right side: controls */}
+          <div className="flex items-center gap-2 sm:gap-4">
             {token ? (
               <>
                 <NotificationsBell />
+                {/* Show name only on sm+ */}
                 {user && (
-                  <span className="text-sm rounded-full bg-white/20 px-3 py-1">
+                  <span className="hidden sm:inline-block text-sm rounded-full bg-white/20 px-3 py-1 max-w-[140px] truncate">
                     {displayName}
                   </span>
                 )}
                 <div className="relative flex items-center">
                   <Avatar
-                    className="relative h-9 w-9 bg-white/20 text-white border border-white/30 cursor-pointer"
+                    className="relative h-9 w-9 bg-white/20 text-white border border-white/30 cursor-pointer flex-shrink-0"
                     title={displayName || "Profile"}
                     onClick={() => setSidebarOpen(true)}
                   >
@@ -295,28 +176,68 @@ const Navbar = () => {
                     <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
                   </Avatar>
                 </div>
+                {/* Hamburger for mobile - only when logged in */}
+                {navLinks.length > 0 && (
+                  <button
+                    className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg hover:bg-white/20 transition"
+                    onClick={() => setMobileMenuOpen((v) => !v)}
+                    aria-label="Toggle menu"
+                  >
+                    {mobileMenuOpen ? (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M4 6h16M4 12h16M4 18h16"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                )}
               </>
             ) : (
-              <div className="flex gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 {location.pathname !== "/login" &&
                   location.pathname !== "/register-student" &&
                   location.pathname !== "/register-staff" && (
                     <>
                       <Link
                         to="/login"
-                        className="px-4 py-2 rounded-lg transition font-medium bg-white/20 hover:bg-white/25"
+                        className="px-3 py-2 rounded-lg transition font-medium bg-white/20 hover:bg-white/25 text-sm whitespace-nowrap"
                       >
                         Login
                       </Link>
                       <Link
                         to="/register-student"
-                        className="px-3 py-2 bg-white/20 hover:bg-white/25 rounded-lg transition font-medium text-sm"
+                        className="hidden sm:inline-block px-3 py-2 bg-white/20 hover:bg-white/25 rounded-lg transition font-medium text-sm whitespace-nowrap"
                       >
                         Register Student
                       </Link>
                       <Link
                         to="/register-staff"
-                        className="px-3 py-2 bg-white/20 hover:bg-white/25 rounded-lg transition font-medium text-sm"
+                        className="hidden sm:inline-block px-3 py-2 bg-white/20 hover:bg-white/25 rounded-lg transition font-medium text-sm whitespace-nowrap"
                       >
                         Register Staff
                       </Link>
@@ -328,6 +249,27 @@ const Navbar = () => {
         </div>
       </div>
 
+      {/* Mobile nav dropdown (only when logged in) */}
+      {mobileMenuOpen && navLinks.length > 0 && (
+        <div className="md:hidden border-t border-white/10 bg-slate-900 px-2 pt-2 pb-3">
+          {navLinks.map((link) => (
+            <button
+              key={link.label}
+              onClick={() => handleNavLinkClick(link)}
+              className="flex w-full items-center px-3 py-3 text-sm font-medium text-slate-200 hover:bg-white/10 rounded-lg transition text-left"
+            >
+              {link.label}
+            </button>
+          ))}
+          {user && (
+            <div className="mt-2 pt-2 px-3 py-2 text-sm text-slate-400 border-t border-white/10">
+              Signed in as{" "}
+              <span className="text-slate-200 font-medium">{displayName}</span>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Sidebar overlay and panel rendered via portal at document.body */}
       {sidebarOpen &&
         createPortal(
@@ -336,9 +278,9 @@ const Navbar = () => {
               className="fixed inset-0 z-[9998] bg-black/30 backdrop-blur-sm"
               onClick={() => setSidebarOpen(false)}
             />
-            <div className="fixed right-4 top-16 z-[9999] w-72 max-h-[80vh] overflow-auto rounded-xl border border-slate-200 bg-white shadow-xl">
-              <div className="flex items-center gap-3 border-b border-slate-200 p-4">
-                <Avatar className="h-10 w-10 bg-slate-100">
+            <div className="fixed right-4 top-16 z-[9999] w-72 max-w-[calc(100vw-2rem)] max-h-[80vh] overflow-auto rounded-xl border border-slate-200 bg-white shadow-xl">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 border-b border-slate-200 p-3 sm:p-4">
+                <Avatar className="h-10 w-10 bg-slate-100 flex-shrink-0">
                   {photoUrl ? (
                     <AvatarImage
                       src={photoUrl}
@@ -347,17 +289,19 @@ const Navbar = () => {
                   ) : null}
                   <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
                 </Avatar>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-slate-900">
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="text-sm font-medium text-slate-900 truncate">
                     {displayName}
                   </span>
                   {user?.role && (
-                    <span className="text-xs text-slate-500">{user.role}</span>
+                    <span className="text-xs text-slate-500 capitalize">
+                      {user.role}
+                    </span>
                   )}
                 </div>
-                <div className="ml-auto">
+                <div className="flex-shrink-0 w-full sm:w-auto sm:ml-auto">
                   <button
-                    className="px-3 py-1 rounded-md text-xs bg-slate-100 hover:bg-slate-200"
+                    className="w-full sm:w-auto px-3 py-1 rounded-md text-xs bg-slate-100 hover:bg-slate-200"
                     onClick={() => setAvatarModalOpen(true)}
                   >
                     Change Photo

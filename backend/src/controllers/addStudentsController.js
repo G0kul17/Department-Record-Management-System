@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 import xlsx from "xlsx";
 import csvParser from "csv-parser";
 import { sendMail } from "../config/mailer.js";
+import logger, { reqContext } from "../utils/logger.js";
 
 /* ================= HELPERS ================= */
 
@@ -23,9 +24,6 @@ const parseExcel = (filePath) => {
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   return xlsx.utils.sheet_to_json(sheet, { raw: false, defval: "" });
 };
-
-const studentEmailRegex = /^[a-z]+[0-9]{2}[a-z]+@sonatech\.ac\.in$/i;
-const contactRegex = /^[0-9]{10}$/;
 
 // Helper to normalize header keys
 const normalizeKey = (key) => {
@@ -107,8 +105,7 @@ export const uploadStudents = async (req, res) => {
       return res.status(400).json({ message: "Uploaded file is empty" });
     }
 
-    // Debug: log first row to check headers
-    console.log("First row headers:", Object.keys(rows[0] || {}));
+    logger.debug("Student upload: first row headers", { ...reqContext(req), headers: Object.keys(rows[0] || {}) });
 
     const errors = [];
     const validStudents = [];
@@ -144,8 +141,7 @@ export const uploadStudents = async (req, res) => {
       if (!section) missingFields.push("Section");
 
       if (missingFields.length) {
-        console.log(`Row ${rowNumber} missing fields:`, missingFields);
-        console.log("Extracted fields:", fields);
+        logger.debug("Student upload: row missing fields", { ...reqContext(req), row: rowNumber, missingFields, fields });
         errors.push({
           row: rowNumber,
           message: "Fill all sections",
@@ -181,7 +177,7 @@ export const uploadStudents = async (req, res) => {
     });
 
     if (errors.length) {
-      console.log("Validation errors:", errors);
+      logger.debug("Student upload: validation errors", { ...reqContext(req), errorCount: errors.length });
       return res.status(400).json({
         message: `Validation failed for ${errors.length} row(s). Check the details.`,
         errors,
@@ -192,7 +188,7 @@ export const uploadStudents = async (req, res) => {
     const skipped = [];
 
     for (const s of validStudents) {
-      const exists = await pool.query("SELECT id FROM users WHERE email = $1", [
+      const exists = await pool.query("SELECT id FROM users WHERE LOWER(email) = LOWER($1)", [
         s.email,
       ]);
 
@@ -255,7 +251,10 @@ Department Admin
       skipped,
     });
   } catch (err) {
-    console.error(err);
+    logger.error("Student upload failed", { err,
+      ...reqContext(req) });
     res.status(500).json({ message: "Upload failed" });
+  } finally {
+    if (req.file?.path) fs.unlink(req.file.path, () => {});
   }
 };

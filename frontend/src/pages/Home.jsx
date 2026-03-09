@@ -165,22 +165,30 @@ export default function Home({ hideAtAGlance = false }) {
     <>
       <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-white to-slate-50">
         {/* Hero Section */}
-        <div className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pt-8 sm:pt-12 md:pt-20 pb-12 sm:pb-16 md:pb-20 bg-gradient-to-br from-blue-50 via-white to-cyan-50">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-stretch">
-            <div className="md:col-span-2 text-center md:text-left space-y-4">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 leading-tight whitespace-nowrap">
+        <div className="relative w-full overflow-hidden bg-slate-900 px-3 sm:px-4 md:px-6 lg:px-12 pt-12 sm:pt-16 md:pt-24 pb-16 sm:pb-20 md:pb-24">
+          {/* Ambient glow */}
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute -top-32 right-0 h-[520px] w-[520px] rounded-full bg-blue-600/10 blur-3xl" />
+            <div className="absolute -bottom-24 -left-24 h-[400px] w-[400px] rounded-full bg-indigo-600/10 blur-3xl" />
+          </div>
+          <div className="relative grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-stretch">
+            <div className="md:col-span-2 text-center md:text-left space-y-5">
+              <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-600/10 px-3 py-1 text-xs font-semibold text-blue-300 tracking-wide">
+                Department Records Management System
+              </div>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white leading-tight">
                 <BlurText text="Sona College of Technology" />
               </h1>
 
-              <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto md:mx-0">
+              <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto md:mx-0">
                 Your central hub for achievements, projects, and community
                 engagement.
               </p>
 
-              <div className="pt-4 flex justify-center md:justify-start">
+              <div className="pt-2 flex justify-center md:justify-start">
                 <Button
                   onClick={goToQuickActions}
-                  className="btn btn-primary px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   <svg
                     width="18"
@@ -211,19 +219,19 @@ export default function Home({ hideAtAGlance = false }) {
             {/* At a Glance Card */}
             {user && (
               <div className="md:col-span-1">
-                <div className="rounded-2xl border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 p-6 shadow-xl h-full">
-                  <h2 className="text-base font-bold text-slate-100 mb-4">
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6 shadow-xl h-full backdrop-blur-sm">
+                  <h2 className="text-sm sm:text-base font-bold text-slate-100 mb-3 sm:mb-4">
                     At a Glance
                   </h2>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-2">
                     <button
                       onClick={() => nav("/projects/approved")}
-                      className="rounded-xl p-2 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-cyan-500 hover:border-cyan-400 hover:shadow-lg"
+                      className="rounded-xl p-3 sm:p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
                     >
-                      <div className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">
+                      <div className="text-[9px] sm:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                         Projects
                       </div>
-                      <div className="mt-1 text-lg font-extrabold text-slate-100">
+                      <div className="mt-1 text-base sm:text-lg font-extrabold text-slate-100">
                         {user?.role === "staff"
                           ? staffProjCount === null
                             ? "—"
@@ -235,12 +243,12 @@ export default function Home({ hideAtAGlance = false }) {
                     </button>
                     <button
                       onClick={() => nav("/achievements/approved")}
-                      className="rounded-xl p-2 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-fuchsia-500 hover:border-fuchsia-400 hover:shadow-lg"
+                      className="rounded-xl p-3 sm:p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
                     >
-                      <div className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">
+                      <div className="text-[9px] sm:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                         Achievements
                       </div>
-                      <div className="mt-1 text-lg font-extrabold text-slate-100">
+                      <div className="mt-1 text-base sm:text-lg font-extrabold text-slate-100">
                         {achCount === null ? "—" : achCount}
                       </div>
                     </button>
@@ -248,34 +256,34 @@ export default function Home({ hideAtAGlance = false }) {
                       <>
                         <button
                           onClick={() => nav("/faculty-participation-approved")}
-                          className="rounded-xl p-2 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-emerald-500 hover:border-emerald-400 hover:shadow-lg"
+                          className="rounded-xl p-3 sm:p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
                         >
-                          <div className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">
+                          <div className="text-[9px] sm:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                             Participation
                           </div>
-                          <div className="mt-1 text-lg font-extrabold text-slate-100">
+                          <div className="mt-1 text-base sm:text-lg font-extrabold text-slate-100">
                             {staffPartCount === null ? "—" : staffPartCount}
                           </div>
                         </button>
                         <button
                           onClick={() => nav("/faculty-research-approved")}
-                          className="rounded-xl p-2 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-green-500 hover:border-green-400 hover:shadow-lg"
+                          className="rounded-xl p-3 sm:p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
                         >
-                          <div className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">
+                          <div className="text-[9px] sm:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                             Research
                           </div>
-                          <div className="mt-1 text-lg font-extrabold text-slate-100">
+                          <div className="mt-1 text-base sm:text-lg font-extrabold text-slate-100">
                             {staffResCount === null ? "—" : staffResCount}
                           </div>
                         </button>
                         <button
                           onClick={() => nav("/faculty-consultancy-approved")}
-                          className="rounded-xl p-2 bg-slate-700/50 hover:bg-slate-700 transition-all duration-200 text-left border-2 border-amber-500 hover:border-amber-400 hover:shadow-lg"
+                          className="rounded-xl p-3 sm:p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
                         >
-                          <div className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">
+                          <div className="text-[9px] sm:text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                             Consultancy
                           </div>
-                          <div className="mt-1 text-lg font-extrabold text-slate-100">
+                          <div className="mt-1 text-base sm:text-lg font-extrabold text-slate-100">
                             {staffConsCount === null ? "—" : staffConsCount}
                           </div>
                         </button>
@@ -285,8 +293,6 @@ export default function Home({ hideAtAGlance = false }) {
                 </div>
               </div>
             )}
-
-            {/* Top Achievers removed from hero - will be displayed with events */}
           </div>
         </div>
 
@@ -296,10 +302,12 @@ export default function Home({ hideAtAGlance = false }) {
           className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pt-8 sm:pt-12 md:pt-16 pb-8 sm:pb-10"
         >
           <div className="mb-5 sm:mb-6">
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">
-              Latest Events
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">
+              Latest
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+              Events
             </h2>
-            <div className="h-1 w-16 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full mt-3"></div>
           </div>
           <div className="grid gap-6 sm:gap-8 md:grid-cols-2">
             <div className="md:col-span-1">
@@ -317,10 +325,12 @@ export default function Home({ hideAtAGlance = false }) {
           className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-8 sm:pb-10"
         >
           <div className="mb-5 sm:mb-6">
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">
-              Recent Projects
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">
+              Recent
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+              Projects
             </h2>
-            <div className="h-1 w-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full mt-3"></div>
           </div>
           <ProjectsRecentGrid limit={6} />
         </div>
@@ -331,10 +341,12 @@ export default function Home({ hideAtAGlance = false }) {
           className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-8 sm:pb-10"
         >
           <div className="mb-5 sm:mb-6">
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">
-              Recent Achievements
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">
+              Recent
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+              Achievements
             </h2>
-            <div className="h-1 w-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mt-3"></div>
           </div>
           <AchievementsRecentGrid limit={6} />
         </div>
@@ -346,15 +358,17 @@ export default function Home({ hideAtAGlance = false }) {
             className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-12 sm:pb-16 bg-gradient-to-br from-slate-50 via-white to-slate-50"
           >
             <div className="py-8 sm:py-12 md:py-16">
-              <div className="mb-2">
-                <h1 className="text-3xl sm:text-4xl font-bold text-slate-800">
+              <div className="mb-8">
+                <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">
+                  Admin
+                </p>
+                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">
                   Analytics & Visualization
                 </h1>
-                <p className="mt-2 text-slate-600 text-base">
+                <p className="mt-2 text-slate-500 text-base">
                   Visual overview of activities and trends
                 </p>
               </div>
-              <div className="mb-8 h-1 w-24 bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 rounded-full"></div>
 
               {/* Key Statistics Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6 mb-10">
@@ -526,7 +540,7 @@ export default function Home({ hideAtAGlance = false }) {
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 z-50 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
+          className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 z-50 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 sm:p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
           aria-label="Scroll to top"
         >
           <svg
@@ -551,7 +565,7 @@ export default function Home({ hideAtAGlance = false }) {
 
 function StatCard({ label, value, icon, color, onClick }) {
   const colorClasses = {
-    blue: "bg-primary/10 text-primary",
+    blue: "bg-blue-100 text-blue-600",
     green: "bg-green-100 text-green-600",
     purple: "bg-purple-100 text-purple-600",
     orange: "bg-orange-100 text-orange-600",
@@ -575,7 +589,7 @@ function StatCard({ label, value, icon, color, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="rounded-xl border border-slate-200 p-5 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer text-left"
+      className="rounded-xl border border-slate-200 bg-white p-5 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer text-left"
     >
       <div className="flex items-center justify-between">
         <div>
@@ -635,8 +649,13 @@ function DonutChart({ title, data }) {
       <h3 className="text-lg sm:text-xl font-bold text-slate-800 mb-4">
         {title}
       </h3>
-      <div className="flex items-center justify-center gap-6">
-        <svg width="110" height="110" viewBox="0 0 110 110">
+      <div className="flex flex-wrap items-center justify-center gap-6">
+        <svg
+          width="110"
+          height="110"
+          viewBox="0 0 110 110"
+          className="flex-shrink-0"
+        >
           {total > 0 ? (
             data.map((item, idx) => {
               const percent = (item.value / total) * 100;
@@ -781,8 +800,13 @@ function PieChart({ title, data }) {
       <h3 className="text-lg sm:text-xl font-bold text-slate-800 mb-5">
         {title}
       </h3>
-      <div className="flex items-center justify-center gap-8">
-        <svg width="140" height="140" viewBox="0 0 140 140">
+      <div className="flex flex-wrap items-center justify-center gap-8">
+        <svg
+          width="140"
+          height="140"
+          viewBox="0 0 140 140"
+          className="flex-shrink-0"
+        >
           {total > 0 ? (
             data.map((item, idx) => {
               const percent = (item.value / total) * 100;

@@ -75,7 +75,8 @@ const VerifyOtp = () => {
         }
         navigate("/");
       } else if (type === "forgot") {
-        // Do not verify OTP here; reset endpoint will validate
+        // Validate the OTP now so errors surface here, not on the reset screen
+        await apiClient.post("/auth/forgot-verify", { email, otp: otp.trim() });
         navigate("/reset", { state: { email, otp: otp.trim() } });
       } else {
         // registration verification -> backend returns token + role

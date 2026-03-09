@@ -35,8 +35,8 @@ export default function QuickActions() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-white">
-      <div className="mx-auto max-w-7xl w-full px-6 py-12">
+    <div className="min-h-[calc(100vh-4rem)] bg-slate-50">
+      <div className="mx-auto max-w-7xl w-full px-4 sm:px-6 py-8 sm:py-12">
         <PageHeader
           title="Quick Actions"
           subtitle="Get started with your most common tasks."
@@ -49,7 +49,7 @@ export default function QuickActions() {
             className="p-6 glitter-card bulge-card"
           >
             <div className="flex items-center gap-3">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                 <svg
                   width="20"
                   height="20"
@@ -77,7 +77,7 @@ export default function QuickActions() {
             className="p-6 glitter-card bulge-card"
           >
             <div className="flex items-center gap-3">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-green-100 text-green-600">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                 <svg
                   width="20"
                   height="20"
@@ -113,7 +113,7 @@ export default function QuickActions() {
                 className="p-6 glitter-card bulge-card"
               >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-fuchsia-100 text-fuchsia-600">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                     <svg
                       width="20"
                       height="20"
@@ -141,7 +141,7 @@ export default function QuickActions() {
                 className="p-6 glitter-card bulge-card"
               >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-sky-100 text-sky-600">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                     <svg
                       width="20"
                       height="20"
@@ -169,7 +169,7 @@ export default function QuickActions() {
                 className="p-6 glitter-card bulge-card"
               >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-sky-100 text-sky-600">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                     <svg
                       width="20"
                       height="20"
@@ -204,7 +204,7 @@ export default function QuickActions() {
                 className="p-6 glitter-card bulge-card"
               >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-teal-100 text-teal-600">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                     <svg
                       width="20"
                       height="20"
@@ -228,7 +228,7 @@ export default function QuickActions() {
                 className="p-6 glitter-card bulge-card"
               >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-emerald-100 text-emerald-600">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                     <svg
                       width="20"
                       height="20"
@@ -253,7 +253,7 @@ export default function QuickActions() {
                 className="p-6 glitter-card bulge-card"
               >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-violet-100 text-violet-600">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                     <svg
                       width="20"
                       height="20"
@@ -281,7 +281,7 @@ export default function QuickActions() {
                 className="p-6 glitter-card bulge-card"
               >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-orange-100 text-orange-600">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                     <svg
                       width="20"
                       height="20"
@@ -309,7 +309,7 @@ export default function QuickActions() {
                 className="p-6 glitter-card bulge-card"
               >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-indigo-100 text-indigo-600">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                     <svg
                       width="20"
                       height="20"
@@ -345,7 +345,7 @@ export default function QuickActions() {
                 className="p-6 glitter-card bulge-card"
               >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-yellow-100 text-yellow-600">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                     <svg
                       width="20"
                       height="20"
@@ -374,7 +374,7 @@ export default function QuickActions() {
                 className="p-6 glitter-card bulge-card"
               >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-cyan-100 text-cyan-600">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                     <svg
                       width="20"
                       height="20"
@@ -418,7 +418,7 @@ export default function QuickActions() {
                 className="p-6 glitter-card bulge-card"
               >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                     <svg
                       width="20"
                       height="20"
@@ -450,7 +450,7 @@ export default function QuickActions() {
                 className="p-6 glitter-card bulge-card"
               >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-violet-100 text-violet-600">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                     <svg
                       width="20"
                       height="20"
@@ -478,7 +478,7 @@ export default function QuickActions() {
                 className="p-6 glitter-card bulge-card"
               >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-orange-100 text-orange-600">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                     <svg
                       width="20"
                       height="20"
@@ -506,7 +506,7 @@ export default function QuickActions() {
                 className="p-6 glitter-card bulge-card"
               >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-indigo-100 text-indigo-600">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                     <svg
                       width="20"
                       height="20"
@@ -546,7 +546,7 @@ export default function QuickActions() {
             className="p-6 glitter-card bulge-card"
           >
             <div className="flex items-center gap-3">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-pink-100 text-pink-600">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                 <svg
                   width="20"
                   height="20"

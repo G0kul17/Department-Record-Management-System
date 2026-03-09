@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import * as XLSX from "xlsx";
 import csvParser from "csv-parser";
+import logger, { reqContext } from "../utils/logger.js";
 
 // Utility: Parse CSV
 const parseCSV = (filePath) =>
@@ -132,7 +133,8 @@ export const uploadDataFile = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error(err);
+    logger.error("Data upload controller error", { err,
+      ...reqContext(req) });
     res.status(500).json({ message: "Preview failed" });
   }
 };
@@ -251,7 +253,8 @@ export const saveUploadedData = async (req, res) => {
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (err) {
-    console.error(err);
+    logger.error("Data upload controller error", { err,
+      ...reqContext(req) });
     res.status(500).json({ message: "Save failed", error: err.message });
   }
 };
@@ -470,7 +473,8 @@ export const listUploadedData = async (req, res) => {
     const { rows } = await pool.query(q);
     res.json({ data: rows });
   } catch (err) {
-    console.error(err);
+    logger.error("Data upload controller error", { err,
+      ...reqContext(req) });
     res.status(500).json({ message: "Fetch failed" });
   }
 };
@@ -490,7 +494,8 @@ export const viewUploadedData = async (req, res) => {
 
     res.json({ data: rows[0] });
   } catch (err) {
-    console.error(err);
+    logger.error("Data upload controller error", { err,
+      ...reqContext(req) });
     res.status(500).json({ message: "Fetch failed" });
   }
 };

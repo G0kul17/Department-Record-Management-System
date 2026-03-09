@@ -1,5 +1,9 @@
 // facultyConsultancyController.js
+import fs from "fs";
+import path from "path";
 import pool from "../config/db.js";
+import { STORAGE_PATH } from "../config/upload.js";
+import logger, { reqContext } from "../utils/logger.js";
 
 // ========== CREATE CONSULTANCY ==========
 export const createConsultancy = async (req, res) => {
@@ -20,53 +24,56 @@ export const createConsultancy = async (req, res) => {
       return res.status(400).json({ message: "Agency is required" });
     }
 
-    let proofFileId = null;
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
 
-    // Save file into project_files
-    if (req.file) {
-      const file = req.file;
+      let proofFileId = null;
+      if (req.file) {
+        const file = req.file;
+        const qFile = `
+          INSERT INTO project_files (project_id, filename, original_name, mime_type, size, file_type, uploaded_by)
+          VALUES (NULL, $1, $2, $3, $4, 'faculty_consultancy_proof', $5)
+          RETURNING id`;
+        const fileR = await client.query(qFile, [
+          file.filename, file.originalname, file.mimetype, file.size, staffId,
+        ]);
+        proofFileId = fileR.rows[0].id;
+      }
 
-      const qFile = `
-        INSERT INTO project_files (project_id, filename, original_name, mime_type, size, file_type, uploaded_by)
-        VALUES (NULL, $1, $2, $3, $4, 'faculty_consultancy_proof', $5)
-        RETURNING id`;
+      const q = `
+        INSERT INTO faculty_consultancy
+        (faculty_name, team_members, agency, amount, duration, start_date, end_date, proof_file_id, created_by)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+        RETURNING *`;
 
-      const fileR = await pool.query(qFile, [
-        file.filename,
-        file.originalname,
-        file.mimetype,
-        file.size,
+      const values = [
+        faculty_name || null,
+        team_members || null,
+        agency,
+        amount || null,
+        duration || null,
+        start_date || null,
+        end_date || null,
+        proofFileId,
         staffId,
-      ]);
+      ];
 
-      proofFileId = fileR.rows[0].id;
+      const { rows } = await client.query(q, values);
+
+      await client.query("COMMIT");
+      return res
+        .status(201)
+        .json({ message: "Faculty consultancy added", data: rows[0] });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
     }
-
-    const q = `
-      INSERT INTO faculty_consultancy
-      (faculty_name, team_members, agency, amount, duration, start_date, end_date, proof_file_id, created_by)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-      RETURNING *`;
-
-    const values = [
-      faculty_name || null,
-      team_members || null,
-      agency,
-      amount || null,
-      duration || null,
-      start_date || null,
-      end_date || null,
-      proofFileId,
-      staffId,
-    ];
-
-    const { rows } = await pool.query(q, values);
-
-    return res
-      .status(201)
-      .json({ message: "Faculty consultancy added", data: rows[0] });
   } catch (err) {
-    console.error(err);
+    logger.error("Faculty consultancy controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 };
@@ -86,59 +93,95 @@ export const updateConsultancy = async (req, res) => {
       end_date,
     } = req.body;
 
-    let proofFileId = null;
+    const client = await pool.connect();
+    let oldFileFilename = null;
+    let oldFileId = null;
+    try {
+      await client.query("BEGIN");
 
-    if (req.file) {
-      const file = req.file;
+      // Fetch the existing proof file before any changes
+      if (req.file) {
+        const { rows: existing } = await client.query(
+          `SELECT fc.proof_file_id, pf.filename
+             FROM faculty_consultancy fc
+             LEFT JOIN project_files pf ON pf.id = fc.proof_file_id
+            WHERE fc.id = $1`,
+          [id]
+        );
+        if (existing.length) {
+          oldFileId = existing[0].proof_file_id;
+          oldFileFilename = existing[0].filename;
+        }
+      }
 
-      const qFile = `
-        INSERT INTO project_files (project_id, filename, original_name, mime_type, size, file_type, uploaded_by)
-        VALUES (NULL, $1, $2, $3, $4, 'faculty_consultancy_proof', $5)
-        RETURNING id`;
+      let proofFileId = null;
+      if (req.file) {
+        const file = req.file;
+        const qFile = `
+          INSERT INTO project_files (project_id, filename, original_name, mime_type, size, file_type, uploaded_by)
+          VALUES (NULL, $1, $2, $3, $4, 'faculty_consultancy_proof', $5)
+          RETURNING id`;
+        const fileR = await client.query(qFile, [
+          file.filename, file.originalname, file.mimetype, file.size, req.user.id,
+        ]);
+        proofFileId = fileR.rows[0].id;
+      }
 
-      const fileR = await pool.query(qFile, [
-        file.filename,
-        file.originalname,
-        file.mimetype,
-        file.size,
-        req.user.id,
+      const q = `
+        UPDATE faculty_consultancy
+        SET faculty_name = COALESCE($1, faculty_name),
+            team_members = COALESCE($2, team_members),
+            agency = COALESCE($3, agency),
+            amount = COALESCE($4, amount),
+            duration = COALESCE($5, duration),
+            start_date = COALESCE($6, start_date),
+            end_date = COALESCE($7, end_date),
+            proof_file_id = COALESCE($8, proof_file_id),
+            updated_at = NOW()
+        WHERE id=$9
+        RETURNING *`;
+
+      const { rows } = await client.query(q, [
+        faculty_name,
+        team_members,
+        agency,
+        amount,
+        duration,
+        start_date,
+        end_date,
+        proofFileId,
+        id,
       ]);
 
-      proofFileId = fileR.rows[0].id;
+      if (!rows.length) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ message: "Consultancy record not found" });
+      }
+
+      // Delete the old project_files row inside the transaction while we still can roll back
+      if (oldFileId) {
+        await client.query("DELETE FROM project_files WHERE id = $1", [oldFileId]);
+      }
+
+      await client.query("COMMIT");
+
+      // Remove old file from disk after the transaction is committed
+      if (oldFileFilename) {
+        fs.unlink(path.join(STORAGE_PATH, oldFileFilename), (err) => {
+          if (err) logger.error("Failed to delete old consultancy proof file", { err });
+        });
+      }
+
+      return res.json({ message: "Updated successfully", data: rows[0] });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
     }
-
-    const q = `
-      UPDATE faculty_consultancy
-      SET faculty_name = COALESCE($1, faculty_name),
-          team_members = COALESCE($2, team_members),
-          agency = COALESCE($3, agency),
-          amount = COALESCE($4, amount),
-          duration = COALESCE($5, duration),
-          start_date = COALESCE($6, start_date),
-          end_date = COALESCE($7, end_date),
-          proof_file_id = COALESCE($8, proof_file_id),
-          updated_at = NOW()
-      WHERE id=$9
-      RETURNING *`;
-
-    const { rows } = await pool.query(q, [
-      faculty_name,
-      team_members,
-      agency,
-      amount,
-      duration,
-      start_date,
-      end_date,
-      proofFileId,
-      id,
-    ]);
-
-    if (!rows.length)
-      return res.status(404).json({ message: "Consultancy record not found" });
-
-    return res.json({ message: "Updated successfully", data: rows[0] });
   } catch (err) {
-    console.error(err);
+    logger.error("Faculty consultancy controller error", { err,
+      ...reqContext(req) });
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -147,12 +190,24 @@ export const updateConsultancy = async (req, res) => {
 export const deleteConsultancy = async (req, res) => {
   try {
     const id = Number(req.params.id);
+    const userId = req.user?.id;
+    const userRole = req.user?.role;
 
-    await pool.query("DELETE FROM faculty_consultancy WHERE id=$1", [id]);
+    const { rowCount } = await pool.query(
+      "DELETE FROM faculty_consultancy WHERE id=$1 AND (created_by=$2 OR $3='admin')",
+      [id, userId, userRole],
+    );
+
+    if (rowCount === 0) {
+      const { rows } = await pool.query("SELECT id FROM faculty_consultancy WHERE id=$1", [id]);
+      if (!rows.length) return res.status(404).json({ message: "Consultancy record not found" });
+      return res.status(403).json({ message: "Forbidden: you do not own this record" });
+    }
 
     return res.json({ message: "Deleted successfully" });
   } catch (err) {
-    console.error(err);
+    logger.error("Faculty consultancy controller error", { err,
+      ...reqContext(req) });
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -170,7 +225,8 @@ export const listConsultancy = async (req, res) => {
 
     return res.json({ data: rows });
   } catch (err) {
-    console.error(err);
+    logger.error("Faculty consultancy controller error", { err,
+      ...reqContext(req) });
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -183,7 +239,8 @@ export const getFacultyConsultancyCount = async (req, res) => {
     );
     return res.json({ count: rows[0]?.count ?? 0 });
   } catch (err) {
-    console.error(err);
+    logger.error("Faculty consultancy controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 };

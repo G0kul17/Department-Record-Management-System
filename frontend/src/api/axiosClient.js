@@ -50,7 +50,7 @@ class ApiClient {
         localStorage.removeItem("user");
         // Use pathname so BrowserRouter picks up the change correctly
         try {
-          window.location.pathname = "/login";
+          window.location.href = "/login";
         } catch (e) {
           // fallback to assign
           window.location.assign("/login");
@@ -123,7 +123,7 @@ class ApiClient {
       try {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        window.location.pathname = "/login";
+        window.location.href = "/login";
       } catch (_) {
         try {
           window.location.assign("/login");

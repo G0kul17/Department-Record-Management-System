@@ -1,5 +1,8 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import morgan from "morgan";
+import { ecsFormat } from "@elastic/ecs-morgan-format";
 import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
@@ -19,12 +22,32 @@ import activityCoordinatorRoutes from "./routes/activityCoordinatorRoutes.js";
 import announcementRoutes from "./routes/announcementRoutes.js";
 import pool, { logPoolHealth, getPoolHealth } from "./config/db.js";
 import { verifyFileStorage } from "./config/upload.js";
+import { requireAuth } from "./middleware/authMiddleware.js";
+import { requireRole } from "./middleware/roleAuth.js";
+import { verifyToken } from "./utils/tokenUtils.js";
+import { requestLogger } from "./middleware/requestLogger.js";
+import logger, { reqContext } from "./utils/logger.js";
 import fs from "fs";
 import path from "path";
 dotenv.config();
 
 const app = express();
+app.use(helmet());
 app.use(express.json());
+
+// ECS-formatted JSON access logs for Elastic ingestion.
+// The Authorization header is redacted to prevent JWT tokens appearing in logs.
+app.use(
+  morgan(
+    ecsFormat({
+      reqSerializer(req) {
+        const headers = { ...req.headers };
+        if (headers.authorization) headers.authorization = "[REDACTED]";
+        return { method: req.method, url: req.url, headers };
+      },
+    }),
+  ),
+);
 
 // ============================================================================
 // CORS CONFIGURATION - Environment-Based Strategy
@@ -58,11 +81,11 @@ if (ENABLE_CORS) {
     }),
   );
 
-  console.log(`🔓 CORS enabled for origins: ${corsOrigins.join(", ")}`);
+  logger.info("CORS enabled", { "cors.origins": corsOrigins });
 } else {
   // CORS disabled - expecting Nginx or reverse proxy to handle cross-origin requests
-  console.log(
-    "🔒 CORS disabled - expecting reverse proxy (Nginx/Apache) to handle /api routing",
+  logger.info(
+    "CORS disabled - expecting reverse proxy (Nginx/Apache) to handle /api routing",
   );
 }
 
@@ -107,8 +130,8 @@ app.get("/health", async (req, res) => {
   }
 });
 
-// Detailed pool stats endpoint (admin only - add auth in production)
-app.get("/pool-stats", (req, res) => {
+// Detailed pool stats endpoint (admin only)
+app.get("/pool-stats", requireAuth, requireRole(["admin"]), (req, res) => {
   const poolHealth = getPoolHealth();
   res.json(poolHealth);
 });
@@ -121,13 +144,32 @@ app.use("/api/achievements", achievementRoutes);
 app.use("/api/data-uploads", dataUploadRoutes);
 app.use("/api/announcements", announcementRoutes);
 
-// Serve uploaded files statically
-// Use explicit FILE_STORAGE_PATH (no fallback in production)
 const FILE_STORAGE_PATH = process.env.FILE_STORAGE_PATH || "./uploads";
-app.use("/uploads", express.static(path.resolve(FILE_STORAGE_PATH)));
 
-// Serve exported files statically for easy download by staff/admin
-app.use("/exports", express.static(path.resolve("./exports")));
+// Authenticated file serving — replaces the public /uploads static route.
+// Accepts Bearer token in Authorization header OR ?token= query param
+// (query param is needed for <img src> / <a href> browser-native requests).
+app.get("/api/files/:filename", (req, res) => {
+  const headerToken = req.headers.authorization?.split(" ")[1];
+  const queryToken = req.query.token;
+  const rawToken = headerToken || queryToken;
+  if (!rawToken) return res.status(401).json({ message: "No token" });
+  try {
+    verifyToken(rawToken);
+  } catch (err) {
+    const msg = err.name === "TokenExpiredError" ? "Token expired" : "Invalid token";
+    return res.status(401).json({ message: msg });
+  }
+  const uploadsDir = path.resolve(FILE_STORAGE_PATH);
+  const filePath = path.resolve(path.join(uploadsDir, req.params.filename));
+  if (!filePath.startsWith(uploadsDir + path.sep)) {
+    return res.status(400).json({ message: "Invalid file path" });
+  }
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ message: "File not found" });
+  }
+  res.sendFile(filePath);
+});
 
 // after app.use('/api/auth', authRoutes);
 app.use("/api/staff", staffRoutes);
@@ -158,8 +200,7 @@ async function verifyDatabaseConnection() {
       "SELECT NOW() as current_time, current_database() as database",
     );
     const { current_time, database } = result.rows[0];
-    console.log(`✅ Database connected: ${database}`);
-    console.log(`   Server time: ${current_time}`);
+    logger.info("Database connected", { "db.name": database, "db.server_time": current_time });
 
     // Optional: Check if schema_version table exists to verify migrations were run
     try {
@@ -168,28 +209,24 @@ async function verifyDatabaseConnection() {
       );
       if (versionResult.rows.length > 0) {
         const { version, description, applied_at } = versionResult.rows[0];
-        console.log(`   Schema version: ${version} (${description})`);
-        console.log(`   Applied at: ${applied_at}`);
+        logger.info("Schema version verified", { "db.schema.version": version, "db.schema.description": description, "db.schema.applied_at": applied_at });
       } else {
-        console.log("   ⚠️  No schema version found. Please run migrations.");
+        logger.warn("No schema version found — please run migrations");
       }
     } catch (e) {
-      console.warn(
-        "⚠️  Schema version table not found. Please run migrations:",
-      );
-      console.warn(
-        "   psql -U <user> -d <database> -f backend/migrations/001_initial_schema.sql",
-      );
+      logger.warn("Schema version table not found — please run migrations", {
+        hint: "psql -U <user> -d <database> -f backend/migrations/001_initial_schema.sql",
+      });
     }
 
     // Log pool health after successful connection
     logPoolHealth();
   } catch (err) {
-    console.error("❌ Database connection failed:", err.message);
-    console.error("   Error code:", err.code);
-    console.error(
-      "   Ensure PostgreSQL is running and credentials are correct",
-    );
+    logger.error("Database connection failed", {
+      err,
+      "db.error.code": err.code,
+      hint: "Ensure PostgreSQL is running and credentials are correct",
+    });
     throw err;
   }
 }
@@ -217,20 +254,19 @@ async function startApplication() {
       if (process.env.NODE_ENV === "production") {
         throw new Error(`File storage verification failed: ${err.message}`);
       }
-      console.warn(
-        "⚠️  File storage verification failed (non-fatal in development)",
-      );
+      logger.warn("File storage verification failed (non-fatal in development)", { err });
     }
 
     // Step 3: Start server
-    app.listen(PORT, () => {
-      console.log(`🚀 Server listening on port ${PORT}`);
-      console.log(`   Environment: ${process.env.NODE_ENV || "development"}`);
-      console.log(`   API Base: http://localhost:${PORT}/api`);
+    app.listen(PORT, "0.0.0.0", () => {
+      logger.info("Server started", {
+        "server.port": PORT,
+        "server.environment": process.env.NODE_ENV || "development",
+        "server.api_base": `http://localhost:${PORT}/api`,
+      });
     });
   } catch (err) {
-    console.error("❌ Startup failed:", err.message);
-    console.error("   Fix the error and restart the server");
+    logger.error("Startup failed — fix the error and restart", { err });
     process.exit(1);
   }
 }
@@ -241,7 +277,12 @@ startApplication();
 // Keep this AFTER routes and server start to catch async route errors via next(err)
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  console.error("Unhandled error:", err);
+  logger.error("Unhandled error", {
+    err,
+    "url.path": req.path,
+    "http.request.method": req.method,
+    ...reqContext(req),
+  });
 
   // Handle multer errors specifically
   if (err.name === "MulterError") {

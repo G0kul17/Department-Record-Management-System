@@ -3,6 +3,7 @@ import apiClient from "../api/axiosClient";
 import { Link } from "react-router-dom";
 import AttachmentPreview from "../components/AttachmentPreview";
 import { generateAcademicYears } from "../utils/academicYears";
+import { getFileUrl } from "../utils/fileUrl";
 
 export default function AchievementsApproved() {
   const [items, setItems] = useState([]);
@@ -319,14 +320,7 @@ export default function AchievementsApproved() {
                       <div className="mt-2 flex flex-col gap-2">
                         {attachments.map((f, i) => {
                           const filename = f.filename || f.name;
-                          const downloadUrl = `${
-                            apiClient && apiClient.baseURL
-                              ? String(apiClient.baseURL).replace(
-                                  /\/?api\/?$/,
-                                  ""
-                                )
-                              : window.location.origin
-                          }/uploads/${filename}`;
+                          const downloadUrl = getFileUrl(filename);
                           return (
                             <div
                               key={i}

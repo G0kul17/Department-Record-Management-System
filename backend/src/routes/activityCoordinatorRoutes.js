@@ -7,6 +7,8 @@ import {
   deleteActivityCoordinator,
   getActivityTypes,
 } from "../controllers/activityCoordinatorController.js";
+import { validate } from "../middleware/validate.js";
+import { createActivityCoordinatorSchema } from "../validators/activityCoordinatorSchemas.js";
 
 const router = express.Router();
 
@@ -17,7 +19,7 @@ router.get("/types", requireAuth, getActivityTypes);
 router.use(requireAuth, requireRole(["admin"]));
 
 router.get("/", getAllActivityCoordinators);
-router.post("/", createActivityCoordinator);
+router.post("/", validate(createActivityCoordinatorSchema), createActivityCoordinator);
 router.delete("/:mappingId", deleteActivityCoordinator);
 
 export default router;

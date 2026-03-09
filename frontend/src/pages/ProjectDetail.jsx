@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import apiClient from "../api/axiosClient";
+import { getFileUrl } from "../utils/fileUrl";
 
 export default function ProjectDetail() {
   const { id } = useParams();
@@ -55,11 +56,6 @@ export default function ProjectDetail() {
       return Array.isArray(f) ? f : [f];
     }
   })();
-  const base =
-    apiClient && apiClient.baseURL
-      ? String(apiClient.baseURL).replace(/\/api$/, "")
-      : window.location.origin;
-
   return (
     <div className="mx-auto max-w-4xl p-6">
       <div className="glitter-card rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -127,7 +123,7 @@ export default function ProjectDetail() {
                   (original?.toLowerCase().endsWith(".pdf")
                     ? "application/pdf"
                     : "");
-                const url = `${base}/uploads/${filename}`;
+                const url = getFileUrl(filename);
                 const isImage =
                   mime?.startsWith("image/") ||
                   (filename && /\.(png|jpe?g|gif|webp)$/i.test(filename));

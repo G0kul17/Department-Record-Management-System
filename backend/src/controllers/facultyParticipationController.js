@@ -2,6 +2,7 @@
 import pool from "../config/db.js";
 import path from "path";
 import fs from "fs";
+import logger, { reqContext } from "../utils/logger.js";
 
 // ========== CREATE PARTICIPATION ==========
 export const createFacultyParticipation = async (req, res) => {
@@ -63,27 +64,25 @@ export const createFacultyParticipation = async (req, res) => {
         });
     }
 
-    // Save proof file via project_files table
-    let proofFileId = null;
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
 
-    if (req.file) {
-      const file = req.file;
-      const insertFileQ = `
-        INSERT INTO project_files (project_id, filename, original_name, mime_type, size, file_type, uploaded_by)
-        VALUES (NULL, $1, $2, $3, $4, 'faculty_proof', $5)
-        RETURNING id`;
-      const fileR = await pool.query(insertFileQ, [
-        file.filename,
-        file.originalname,
-        file.mimetype,
-        file.size,
-        staffId,
-      ]);
-      proofFileId = fileR.rows[0].id;
-    }
+      let proofFileId = null;
+      if (req.file) {
+        const file = req.file;
+        const insertFileQ = `
+          INSERT INTO project_files (project_id, filename, original_name, mime_type, size, file_type, uploaded_by)
+          VALUES (NULL, $1, $2, $3, $4, 'faculty_proof', $5)
+          RETURNING id`;
+        const fileR = await client.query(insertFileQ, [
+          file.filename, file.originalname, file.mimetype, file.size, staffId,
+        ]);
+        proofFileId = fileR.rows[0].id;
+      }
 
-    const q = `
-      INSERT INTO faculty_participations
+      const q = `
+        INSERT INTO faculty_participations
       (faculty_name, department, type_of_event, publications_type, mode_of_training,
        title, start_date, end_date, conducted_by, details,
        claiming_faculty_name, publication_indexing, authors_list, paper_title, journal_name,
@@ -147,12 +146,21 @@ export const createFacultyParticipation = async (req, res) => {
       staffId,
     ];
 
-    const { rows } = await pool.query(q, values);
-    return res
-      .status(201)
-      .json({ message: "Faculty participation added", data: rows[0] });
+      const { rows } = await client.query(q, values);
+
+      await client.query("COMMIT");
+      return res
+        .status(201)
+        .json({ message: "Faculty participation added", data: rows[0] });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
   } catch (err) {
-    console.error(err);
+    logger.error("Faculty participation controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 };
@@ -197,28 +205,25 @@ export const updateFacultyParticipation = async (req, res) => {
       coauthors_students,
     } = req.body;
 
-    let proofFileId = null;
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
 
-    if (req.file) {
-      const file = req.file;
+      let proofFileId = null;
+      if (req.file) {
+        const file = req.file;
+        const qFile = `
+          INSERT INTO project_files (project_id, filename, original_name, mime_type, size, file_type, uploaded_by)
+          VALUES (NULL, $1, $2, $3, $4, 'faculty_proof', $5)
+          RETURNING id`;
+        const { rows: fileRows } = await client.query(qFile, [
+          file.filename, file.originalname, file.mimetype, file.size, req.user.id,
+        ]);
+        proofFileId = fileRows[0].id;
+      }
 
-      const qFile = `
-        INSERT INTO project_files (project_id, filename, original_name, mime_type, size, file_type, uploaded_by)
-        VALUES (NULL, $1, $2, $3, $4, 'faculty_proof', $5)
-        RETURNING id`;
-      const { rows: fileRows } = await pool.query(qFile, [
-        file.filename,
-        file.originalname,
-        file.mimetype,
-        file.size,
-        req.user.id,
-      ]);
-
-      proofFileId = fileRows[0].id;
-    }
-
-    const q = `
-      UPDATE faculty_participations
+      const q = `
+        UPDATE faculty_participations
       SET faculty_name = COALESCE($1, faculty_name),
           department = COALESCE($2, department),
           type_of_event = COALESCE($3, type_of_event),
@@ -256,57 +261,67 @@ export const updateFacultyParticipation = async (req, res) => {
       WHERE id=$34
       RETURNING *`;
 
-    const { rows } = await pool.query(q, [
-      faculty_name,
-      department,
-      type_of_event,
-      publications_type,
-      mode_of_training,
-      title,
-      start_date,
-      end_date,
-      conducted_by,
-      details,
-      claiming_faculty_name,
-      publication_indexing,
-      authors_list,
-      paper_title,
-      journal_name,
-      volume_no,
-      issue_no,
-      page_or_doi,
-      issn_or_isbn,
-      pub_month_year,
-      citations_count !== undefined &&
-      citations_count !== null &&
-      citations_count !== ""
-        ? Number(citations_count)
-        : null,
-      paper_url,
-      journal_home_url,
-      publisher,
-      impact_factor !== undefined &&
-      impact_factor !== null &&
-      impact_factor !== ""
-        ? Number(impact_factor)
-        : null,
-      indexed_in_db,
-      full_paper_drive_link,
-      first_page_drive_link,
-      sdg_mapping,
-      joint_publication_with,
-      publication_domain,
-      coauthors_students,
-      proofFileId,
-      id,
-    ]);
+      const { rows } = await client.query(q, [
+        faculty_name,
+        department,
+        type_of_event,
+        publications_type,
+        mode_of_training,
+        title,
+        start_date,
+        end_date,
+        conducted_by,
+        details,
+        claiming_faculty_name,
+        publication_indexing,
+        authors_list,
+        paper_title,
+        journal_name,
+        volume_no,
+        issue_no,
+        page_or_doi,
+        issn_or_isbn,
+        pub_month_year,
+        citations_count !== undefined &&
+        citations_count !== null &&
+        citations_count !== ""
+          ? Number(citations_count)
+          : null,
+        paper_url,
+        journal_home_url,
+        publisher,
+        impact_factor !== undefined &&
+        impact_factor !== null &&
+        impact_factor !== ""
+          ? Number(impact_factor)
+          : null,
+        indexed_in_db,
+        full_paper_drive_link,
+        first_page_drive_link,
+        sdg_mapping,
+        joint_publication_with,
+        publication_domain,
+        coauthors_students,
+        proofFileId,
+        id,
+      ]);
 
-    if (!rows.length)
-      return res.status(404).json({ message: "Participation not found" });
+      if (!rows.length) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ message: "Participation not found" });
+      }
 
-    return res.json({ message: "Updated successfully", data: rows[0] });
+      await client.query("COMMIT");
+      return res.json({ message: "Updated successfully", data: rows[0] });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
   } catch (err) {
-    console.error(err);
+    logger.error("Faculty participation controller error", { err,
+      ...reqContext(req) });
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -315,11 +330,24 @@ export const updateFacultyParticipation = async (req, res) => {
 export const deleteFacultyParticipation = async (req, res) => {
   try {
     const id = Number(req.params.id);
+    const userId = req.user?.id;
+    const userRole = req.user?.role;
 
-    await pool.query("DELETE FROM faculty_participations WHERE id=$1", [id]);
+    const { rowCount } = await pool.query(
+      "DELETE FROM faculty_participations WHERE id=$1 AND (created_by=$2 OR $3='admin')",
+      [id, userId, userRole],
+    );
+
+    if (rowCount === 0) {
+      const { rows } = await pool.query("SELECT id FROM faculty_participations WHERE id=$1", [id]);
+      if (!rows.length) return res.status(404).json({ message: "Participation not found" });
+      return res.status(403).json({ message: "Forbidden: you do not own this record" });
+    }
+
     return res.json({ message: "Deleted successfully" });
   } catch (err) {
-    console.error(err);
+    logger.error("Faculty participation controller error", { err,
+      ...reqContext(req) });
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -418,7 +446,8 @@ export const listFacultyParticipations = async (req, res) => {
       total: parseInt(countResult.rows[0].count)
     });
   } catch (err) {
-    console.error(err);
+    logger.error("Faculty participation controller error", { err,
+      ...reqContext(req) });
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -431,7 +460,8 @@ export const getFacultyParticipationsCount = async (req, res) => {
     );
     return res.json({ count: rows[0]?.count ?? 0 });
   } catch (err) {
-    console.error(err);
+    logger.error("Faculty participation controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 };

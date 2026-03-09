@@ -17,14 +17,10 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      const resp = await apiClient.post("/auth/forgot", { email });
+      await apiClient.post("/auth/forgot", { email });
       setSuccess("OTP sent to your email!");
-      // If running in dev, we may have a devOtp from backend to auto-fill
       setTimeout(
-        () =>
-          navigate("/verify-otp", {
-            state: { email, type: "forgot", devOtp: resp?.devOtp },
-          }),
+        () => navigate("/verify-otp", { state: { email, type: "forgot" } }),
         1200
       );
     } catch (err) {

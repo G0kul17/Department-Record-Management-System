@@ -3,6 +3,7 @@ import apiClient from "../api/axiosClient";
 import { useAuth } from "../hooks/useAuth";
 import { formatDisplayName } from "../utils/displayName";
 import Toast from "./Toast";
+import { getFileUrl } from "../utils/fileUrl";
 
 export default function NotificationsBell() {
   const { user } = useAuth();
@@ -68,8 +69,8 @@ export default function NotificationsBell() {
 
         let maxTs = 0;
         let announcements = [];
-        if (role === "staff" || role === "admin") {
-          // For staff/admin, new submissions awaiting approval
+        if (role === "staff") {
+          // For staff, new submissions awaiting approval
           const [pendingProj, pendingAch] = await Promise.all([
             apiClient.get(`/projects?verified=false&limit=20`),
             apiClient.get(
@@ -205,7 +206,11 @@ export default function NotificationsBell() {
             }))
             .filter((a) => !isNaN(a.ts))
             .sort((a, b) => b.ts - a.ts)[0];
-          if (latestAnn && latestAnn.ts > lastAnnToast && latestAnn.ts >= weekAgo) {
+          if (
+            latestAnn &&
+            latestAnn.ts > lastAnnToast &&
+            latestAnn.ts >= weekAgo
+          ) {
             const sender =
               formatDisplayName({
                 fullName: latestAnn.created_by_name,
@@ -214,7 +219,10 @@ export default function NotificationsBell() {
             const header = `Announcement from ${sender}: ${latestAnn.title}`;
             const msg = `${header}\n${latestAnn.message || ""}`;
             showToast(msg, "info");
-            localStorage.setItem(lastAnnouncementToastKey, String(latestAnn.ts));
+            localStorage.setItem(
+              lastAnnouncementToastKey,
+              String(latestAnn.ts),
+            );
           }
         }
 
@@ -263,8 +271,8 @@ export default function NotificationsBell() {
       };
       const items = [];
 
-      if (role === "staff" || role === "admin") {
-        // Pending approvals summary for staff/admin
+      if (role === "staff") {
+        // Pending approvals summary for staff
         const [pendingProj, pendingAch] = await Promise.all([
           apiClient.get(`/projects?verified=false&limit=50`),
           apiClient.get(
@@ -377,7 +385,6 @@ export default function NotificationsBell() {
 
       try {
         const ann = await apiClient.get(`/announcements/mine?limit=50`);
-        const baseUrl = apiClient.baseURL.replace(/\/api$/, "");
         for (const a of ann.announcements || []) {
           const ts = normalizeDate(a.delivered_at || a.created_at);
           if (ts >= weekAgo) {
@@ -387,7 +394,7 @@ export default function NotificationsBell() {
                 email: a.created_by_email,
               }) || "Staff";
             const brochureHref = a.brochure_filename
-              ? `${baseUrl}/uploads/${a.brochure_filename}`
+              ? getFileUrl(a.brochure_filename)
               : "";
             items.push({
               type: "announcement",
@@ -452,91 +459,107 @@ export default function NotificationsBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-10 mt-2 w-80 rounded-xl border-2 border-[#87CEEB] bg-white shadow">
-          <div className="border-b border-[#87CEEB]/40 p-3 text-sm font-semibold text-black">
-            Notifications
-          </div>
-          <div className="p-2 space-y-1">
-            {loading ? (
-              <div className="text-sm text-slate-600 p-3">Loading...</div>
-            ) : items.length === 0 ? (
-              <div className="text-sm text-slate-600 p-3">No notifications</div>
-            ) : (
-              items.map((n, idx) => {
-                const Wrapper = n.href ? "a" : "div";
-                const wrapperProps = n.href ? { href: n.href } : {};
-                return (
-                  <Wrapper
-                    key={idx}
-                    {...wrapperProps}
-                    className="block rounded-md px-3 py-2 hover:bg-slate-100"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="text-sm text-slate-800 pr-3">
-                        {n.type === "event" ? (
-                          <span>
-                            Event:{" "}
+        <>
+          {/* Mobile overlay backdrop */}
+          <div
+            className="fixed inset-0 bg-black/20 z-40 sm:hidden"
+            onClick={toggleOpen}
+          />
+
+          {/* Notification dropdown - fixed on mobile, absolute on desktop */}
+          <div className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-16 sm:top-auto z-50 sm:z-10 sm:mt-2 w-auto sm:w-80 rounded-xl border-2 border-[#87CEEB] bg-white shadow-lg max-h-[calc(100vh-5rem)] sm:max-h-[70vh] overflow-y-auto">
+            <div className="border-b border-[#87CEEB]/40 p-3 text-sm font-semibold text-black sticky top-0 bg-white z-10">
+              Notifications
+            </div>
+            <div className="p-2 space-y-1">
+              {loading ? (
+                <div className="text-xs sm:text-sm text-slate-600 p-3 text-center">
+                  Loading...
+                </div>
+              ) : items.length === 0 ? (
+                <div className="text-xs sm:text-sm text-slate-600 p-3 text-center">
+                  No notifications
+                </div>
+              ) : (
+                items.map((n, idx) => {
+                  const Wrapper = n.href ? "a" : "div";
+                  const wrapperProps = n.href ? { href: n.href } : {};
+                  return (
+                    <Wrapper
+                      key={idx}
+                      {...wrapperProps}
+                      className="block rounded-md px-2 sm:px-3 py-2 hover:bg-slate-100"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-2">
+                        <div className="text-xs sm:text-sm text-slate-800 flex-1 min-w-0 break-words">
+                          {n.type === "event" ? (
+                            <span>
+                              Event:{" "}
+                              <span className="font-medium">{n.title}</span>
+                            </span>
+                          ) : n.type === "project" ? (
+                            <span>
+                              Project:{" "}
+                              <span className="font-medium">{n.title}</span>
+                            </span>
+                          ) : n.type === "achievement" ? (
+                            <span>
+                              Achievement:{" "}
+                              <span className="font-medium">{n.title}</span>
+                            </span>
+                          ) : n.type === "pending" ? (
+                            <span>
+                              <span className="font-medium">{n.title}</span>
+                            </span>
+                          ) : n.type === "approval" ||
+                            n.type === "rejection" ? (
+                            <span>
+                              <span className="font-medium">{n.title}</span>
+                            </span>
+                          ) : n.type === "announcement" ? (
+                            <span>
+                              Announcement:{" "}
+                              <span className="font-medium">{n.title}</span>
+                            </span>
+                          ) : (
                             <span className="font-medium">{n.title}</span>
-                          </span>
-                        ) : n.type === "project" ? (
-                          <span>
-                            Project:{" "}
-                            <span className="font-medium">{n.title}</span>
-                          </span>
-                        ) : n.type === "achievement" ? (
-                          <span>
-                            Achievement:{" "}
-                            <span className="font-medium">{n.title}</span>
-                          </span>
-                        ) : n.type === "pending" ? (
-                          <span>
-                            <span className="font-medium">{n.title}</span>
-                          </span>
-                        ) : n.type === "approval" || n.type === "rejection" ? (
-                          <span>
-                            <span className="font-medium">{n.title}</span>
-                          </span>
-                        ) : n.type === "announcement" ? (
-                          <span>
-                            Announcement:{" "}
-                            <span className="font-medium">{n.title}</span>
-                          </span>
-                        ) : (
-                          <span className="font-medium">{n.title}</span>
-                        )}
-                        <div className="text-xs text-slate-500">{n.by || ""}</div>
-                        {n.description && n.type === "announcement" && (
-                          <div className="mt-1 text-xs text-slate-600">
-                            {n.description}
+                          )}
+                          <div className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
+                            {n.by || ""}
                           </div>
-                        )}
-                        {n.message && n.type === "announcement" && (
-                          <div className="mt-1 text-xs text-slate-600">
-                            {n.message}
-                          </div>
-                        )}
-                        {n.comment && (
-                          <div className="mt-1 text-xs text-slate-600">
-                            Suggestion: {n.comment}
-                          </div>
-                        )}
-                        {n.type === "announcement" && n.href && (
-                          <div className="mt-1 text-xs text-blue-600">
-                            {n.brochure_name ? "Brochure: " : "Brochure"}
-                            {n.brochure_name || "Download"}
-                          </div>
-                        )}
+                          {n.description && n.type === "announcement" && (
+                            <div className="mt-1 text-[11px] sm:text-xs text-slate-600 break-words">
+                              {n.description}
+                            </div>
+                          )}
+                          {n.message && n.type === "announcement" && (
+                            <div className="mt-1 text-[11px] sm:text-xs text-slate-600 break-words">
+                              {n.message}
+                            </div>
+                          )}
+                          {n.comment && (
+                            <div className="mt-1 text-[11px] sm:text-xs text-slate-600 break-words">
+                              Suggestion: {n.comment}
+                            </div>
+                          )}
+                          {n.type === "announcement" && n.href && (
+                            <div className="mt-1 text-[11px] sm:text-xs text-blue-600 break-words">
+                              {n.brochure_name ? "Brochure: " : "Brochure"}
+                              {n.brochure_name || "Download"}
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-[10px] sm:text-xs text-slate-500 whitespace-nowrap flex-shrink-0">
+                          {timeAgo(n.created_at_ts)}
+                        </div>
                       </div>
-                      <div className="text-xs text-slate-500 whitespace-nowrap">
-                        {timeAgo(n.created_at_ts)}
-                      </div>
-                    </div>
-                  </Wrapper>
-                );
-              })
-            )}
+                    </Wrapper>
+                  );
+                })
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
       <Toast
         message={toastMessage}

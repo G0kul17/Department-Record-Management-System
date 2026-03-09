@@ -289,8 +289,8 @@ textarea::placeholder {
   /* Neutral card style: sheen and sparkles removed */
   position: relative;
   border-width: 2px;
-  border-color: #bde3f7; /* light sky outline */
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  border-color: #bfdbfe; /* blue-200 */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
 }
 .glitter-card::before,
 .glitter-card::after {
@@ -299,8 +299,7 @@ textarea::placeholder {
   display: none !important;
 }
 .glitter-card:hover {
-  /* Keep hover subtle; no extra glow */
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* Portrait media frame for achievement feed */
@@ -366,15 +365,11 @@ a[role="button"]:not([class*="border"]) {
   border-style: none;
 }
 
-/* Remove focus outlines/rings on buttons (requested globally) */
-button:focus,
-button:focus-visible,
-button:active,
-a[role="button"]:focus,
-a[role="button"]:focus-visible,
-a[role="button"]:active {
-  outline: none !important;
-  box-shadow: none !important;
+/* Suppress focus rings on mouse-click only; keep keyboard focus rings for accessibility */
+button:focus:not(:focus-visible),
+a[role="button"]:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
 }
 
 /* Improve touch aesthetics */

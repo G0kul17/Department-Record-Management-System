@@ -3,6 +3,7 @@ import apiClient from "../../api/axiosClient";
 import { useAuth } from "../../hooks/useAuth";
 import SuccessModal from "../../components/ui/SuccessModal";
 import UploadDropzone from "../../components/ui/UploadDropzone";
+import { getFileUrl } from "../../utils/fileUrl";
 
 export default function Achievements() {
   const { user } = useAuth();
@@ -32,7 +33,7 @@ export default function Achievements() {
     setLoadingMine(true);
     try {
       // Use mine=true to get only my achievements
-      const data = await apiClient.get('/achievements?mine=true&limit=100');
+      const data = await apiClient.get("/achievements?mine=true&limit=100");
       setList(data.achievements || []);
     } catch (e) {
       console.error(e);
@@ -65,7 +66,9 @@ export default function Achievements() {
       // Allow all file types - no validation
 
       if (!certificate || !eventPhotos || !proof) {
-        throw new Error("Please upload certificate, event photos, and other proofs.");
+        throw new Error(
+          "Please upload certificate, event photos, and other proofs.",
+        );
       }
 
       const fd = new FormData();
@@ -116,7 +119,7 @@ export default function Achievements() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950">
-      <div className="mx-auto max-w-6xl px-6 py-10">
+      <div className="mx-auto max-w-6xl px-3 sm:px-6 py-6 sm:py-10">
         <SuccessModal
           open={showSuccess}
           title="Saved successfully"
@@ -280,7 +283,9 @@ export default function Achievements() {
                 <span className="text-slate-500 font-normal">(optional)</span>
               </label>
               <div className="mt-1 flex items-center">
-                <span className="text-slate-700 dark:text-slate-200 mr-2">₹</span>
+                <span className="text-slate-700 dark:text-slate-200 mr-2">
+                  ₹
+                </span>
                 <input
                   type="number"
                   step="0.01"
@@ -382,10 +387,10 @@ export default function Achievements() {
                 return (
                   <div
                     key={a.id}
-                    className="rounded-lg border border-slate-200 p-4 dark:border-slate-700"
+                    className="rounded-lg border border-slate-200 p-3 sm:p-4 dark:border-slate-700"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex-1 min-w-0">
                         <div className="font-semibold text-slate-800 dark:text-slate-100">
                           {a.title}
                         </div>
@@ -396,7 +401,9 @@ export default function Achievements() {
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => setPreviewModal({ open: true, item: a })}
+                          onClick={() =>
+                            setPreviewModal({ open: true, item: a })
+                          }
                           className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100"
                         >
                           View
@@ -487,7 +494,9 @@ export default function Achievements() {
                 <div>
                   <span className="font-semibold">Award Date:</span>{" "}
                   {previewModal.item?.date_of_award
-                    ? new Date(previewModal.item.date_of_award).toLocaleDateString()
+                    ? new Date(
+                        previewModal.item.date_of_award,
+                      ).toLocaleDateString()
                     : "-"}
                 </div>
                 <div>
@@ -518,8 +527,8 @@ export default function Achievements() {
                   previewModal.item?.verified
                     ? "Approved"
                     : previewModal.item?.verification_status === "rejected"
-                    ? "Rejected"
-                    : "Pending"}
+                      ? "Rejected"
+                      : "Pending"}
                 </div>
               </div>
 
@@ -530,16 +539,12 @@ export default function Achievements() {
                   {previewModal.item?.proof_mime?.startsWith("image/") ? (
                     <img
                       alt={previewModal.item?.proof_name || "proof"}
-                      src={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
-                        previewModal.item?.proof_filename
-                      }`}
+                      src={getFileUrl(previewModal.item?.proof_filename)}
                       className="max-h-80 rounded border"
                     />
                   ) : (
                     <a
-                      href={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
-                        previewModal.item?.proof_filename
-                      }`}
+                      href={getFileUrl(previewModal.item?.proof_filename)}
                       target="_blank"
                       rel="noreferrer"
                       className="text-blue-600 hover:underline dark:text-blue-400"
@@ -557,21 +562,18 @@ export default function Achievements() {
                   {previewModal.item?.certificate_mime?.startsWith("image/") ? (
                     <img
                       alt={previewModal.item?.certificate_name || "certificate"}
-                      src={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
-                        previewModal.item?.certificate_filename
-                      }`}
+                      src={getFileUrl(previewModal.item?.certificate_filename)}
                       className="max-h-80 rounded border"
                     />
                   ) : (
                     <a
-                      href={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
-                        previewModal.item?.certificate_filename
-                      }`}
+                      href={getFileUrl(previewModal.item?.certificate_filename)}
                       target="_blank"
                       rel="noreferrer"
                       className="text-blue-600 hover:underline dark:text-blue-400"
                     >
-                      {previewModal.item?.certificate_name || "Download certificate"}
+                      {previewModal.item?.certificate_name ||
+                        "Download certificate"}
                     </a>
                   )}
                 </div>
@@ -581,24 +583,27 @@ export default function Achievements() {
               {previewModal.item?.event_photos_filename && (
                 <div className="mt-4">
                   <div className="font-semibold mb-2">Event Photos:</div>
-                  {previewModal.item?.event_photos_mime?.startsWith("image/") ? (
+                  {previewModal.item?.event_photos_mime?.startsWith(
+                    "image/",
+                  ) ? (
                     <img
-                      alt={previewModal.item?.event_photos_name || "event photos"}
-                      src={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
-                        previewModal.item?.event_photos_filename
-                      }`}
+                      alt={
+                        previewModal.item?.event_photos_name || "event photos"
+                      }
+                      src={getFileUrl(previewModal.item?.event_photos_filename)}
                       className="max-h-80 rounded border"
                     />
                   ) : (
                     <a
-                      href={`${apiClient.baseURL?.replace(/\/api$/, "") || ""}/uploads/${
-                        previewModal.item?.event_photos_filename
-                      }`}
+                      href={getFileUrl(
+                        previewModal.item?.event_photos_filename,
+                      )}
                       target="_blank"
                       rel="noreferrer"
                       className="text-blue-600 hover:underline dark:text-blue-400"
                     >
-                      {previewModal.item?.event_photos_name || "Download photos"}
+                      {previewModal.item?.event_photos_name ||
+                        "Download photos"}
                     </a>
                   )}
                 </div>

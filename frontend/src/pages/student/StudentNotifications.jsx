@@ -2,14 +2,7 @@ import React, { useEffect, useState } from "react";
 import apiClient from "../../api/axiosClient";
 import PageHeader from "../../components/ui/PageHeader";
 import { useAuth } from "../../hooks/useAuth";
-
-// Get the base server URL (remove /api from API_BASE_URL)
-const API_BASE_URL =
-  (typeof import.meta !== "undefined" &&
-    import.meta.env &&
-    import.meta.env.VITE_API_BASE_URL) ||
-  "http://localhost:5000/api";
-const SERVER_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, "");
+import { getFileUrl } from "../../utils/fileUrl";
 
 export default function StudentNotifications() {
   const { user } = useAuth();
@@ -188,7 +181,7 @@ export default function StudentNotifications() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-white">
-      <div className="mx-auto max-w-5xl w-full px-6 py-10">
+      <div className="mx-auto max-w-5xl w-full px-3 sm:px-6 py-6 sm:py-10">
         <div className="flex items-center justify-between mb-8">
           <div>
             <PageHeader
@@ -233,7 +226,7 @@ export default function StudentNotifications() {
                     const isCleared_ = isCleared(notifId);
                     const hasFile = ann.brochure_filename;
                     const fileUrl = hasFile
-                      ? `${SERVER_BASE_URL}/uploads/${ann.brochure_filename}`
+                      ? getFileUrl(ann.brochure_filename)
                       : null;
 
                     if (isCleared_) return null;

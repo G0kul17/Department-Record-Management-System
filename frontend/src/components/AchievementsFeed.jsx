@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import apiClient from "../api/axiosClient";
+import { getFileUrl } from "../utils/fileUrl";
 
 // Swipeable achievements feed showing one portrait post at a time
 // Renders below Events on dashboards for admin, staff, and student
@@ -16,11 +17,6 @@ export default function AchievementsFeed({
   const touchDeltaX = useRef(0);
   const timerRef = useRef(null);
 
-  const uploadsBase = useMemo(
-    () => apiClient.baseURL.replace(/\/api$/, "") + "/uploads/",
-    []
-  );
-
   useEffect(() => {
     let mounted = true;
     setLoading(true);
@@ -31,11 +27,7 @@ export default function AchievementsFeed({
           `/achievements?verified=true&limit=${limit}`
         );
         if (!mounted) return;
-        const rows = (data?.achievements || []).filter((a) => {
-          const mime = (a.proof_mime || "").toLowerCase();
-          return a.proof_filename && mime.startsWith("image/");
-        });
-        setItems(rows);
+        setItems(data?.achievements || []);
         setIndex(0);
       } catch (e) {
         if (!mounted) return;
@@ -102,7 +94,7 @@ export default function AchievementsFeed({
         <div className="text-sm text-rose-600 p-4">{error}</div>
       ) : items.length === 0 ? (
         <div className="text-sm text-slate-600 p-4">
-          No achievements with images yet.
+          No achievements yet.
         </div>
       ) : (
         <>
@@ -115,11 +107,15 @@ export default function AchievementsFeed({
               onTouchEnd={onTouchEnd}
             >
               {items.map((a) => {
-                const imgUrl =
-                  uploadsBase + encodeURIComponent(a.proof_filename);
                 const href = `/achievements/${a.id}`;
                 const caption = a.title || a.name || "Achievement";
                 const author = a.user_fullname || a.user_email || a.name || "";
+                const imageFilename = [
+                  a.proof_mime?.startsWith("image/") ? a.proof_filename : null,
+                  a.certificate_mime?.startsWith("image/") ? a.certificate_filename : null,
+                  a.event_photos_mime?.startsWith("image/") ? a.event_photos_filename : null,
+                ].find(Boolean);
+                const imgUrl = imageFilename ? getFileUrl(imageFilename) : null;
                 return (
                   <div key={a.id} className="flex-shrink-0 w-full p-4">
                     <a
@@ -127,12 +123,20 @@ export default function AchievementsFeed({
                       className="block glitter-card bulge-card rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900"
                     >
                       <div className="relative overflow-hidden rounded-lg">
-                        <img
-                          src={imgUrl}
-                          alt={caption}
-                          className="portrait-media w-full"
-                          loading="lazy"
-                        />
+                        {imgUrl ? (
+                          <img
+                            src={imgUrl}
+                            alt={caption}
+                            className="portrait-media w-full"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="portrait-media w-full bg-gradient-to-br from-yellow-50 to-amber-100 flex items-center justify-center">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden className="text-amber-400">
+                              <path d="M8 21h8M12 17v4M5 3H3v5c0 2.21 1.79 4 4 4h10c2.21 0 4-1.79 4-4V3h-2M5 3h14M5 3v5M19 3v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                        )}
                       </div>
                       <div className="mt-3 px-1">
                         <div className="text-base font-semibold text-slate-800 dark:text-slate-100 line-clamp-2">

@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import logger, { reqContext } from "../utils/logger.js";
 
 // GET /api/admin/stats
 // Returns total counts for admin dashboard usages
@@ -16,21 +17,42 @@ export async function getAdminStats(req, res) {
       events: eventsR.rows[0]?.c ?? 0,
     });
   } catch (err) {
-    console.error(err);
+    logger.error("Admin controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
 
-// GET /api/admin/users
-// Returns list of users for management
+// GET /api/admin/users?limit=50&offset=0
+// Returns a page of users and the total count for pagination controls.
+// limit is capped at 100 to prevent accidental full-table fetches.
 export async function listUsers(req, res) {
+  const limit = Math.min(Math.max(1, Number(req.query.limit) || 50), 100);
+  const offset = Math.max(0, Number(req.query.offset) || 0);
+
+  const USER_COLS =
+    "id, email, role, " +
+    "COALESCE(NULLIF(full_name, ''), NULLIF(profile_details->>'full_name', ''), NULLIF(TRIM((profile_details->>'first_name') || ' ' || (profile_details->>'last_name')), '')) AS full_name, " +
+    "is_verified, created_at";
+
   try {
-    const { rows } = await pool.query(
-      "SELECT id, email, role, COALESCE(NULLIF(full_name, ''), NULLIF(profile_details->>'full_name', ''), NULLIF(TRIM((profile_details->>'first_name') || ' ' || (profile_details->>'last_name')), '')) AS full_name, is_verified, created_at FROM users ORDER BY created_at DESC LIMIT 500"
-    );
-    return res.json({ users: rows });
+    const [countResult, pageResult] = await Promise.all([
+      pool.query("SELECT COUNT(*)::int AS total FROM users"),
+      pool.query(
+        `SELECT ${USER_COLS} FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
+        [limit, offset],
+      ),
+    ]);
+
+    return res.json({
+      users: pageResult.rows,
+      total: countResult.rows[0].total,
+      limit,
+      offset,
+    });
   } catch (err) {
-    console.error(err);
+    logger.error("Admin controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -62,7 +84,8 @@ export async function updateUserRole(req, res) {
       return res.status(404).json({ message: "User not found" });
     return res.json({ user: rows[0] });
   } catch (err) {
-    console.error(err);
+    logger.error("Admin controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -84,7 +107,8 @@ export async function deleteUser(req, res) {
       return res.status(404).json({ message: "User not found" });
     return res.json({ message: "Deleted", id });
   } catch (err) {
-    console.error(err);
+    logger.error("Admin controller error", { err,
+      ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }

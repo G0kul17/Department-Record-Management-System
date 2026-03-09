@@ -33,22 +33,38 @@ export async function requireAuth(req, res, next) {
 
   try {
     const decoded = verifyToken(token);
-    req.user = decoded;
 
-    // Check and extend session if sessionToken is provided
-    const sessionToken = req.headers["x-session-token"];
-    if (sessionToken) {
-      const session = await verifySession(sessionToken);
-      if (session) {
-        // Session is valid, extend it for continued activity
-        await extendSession(sessionToken);
-        req.session = session;
+    if (decoded.sid) {
+      // JWT is anchored to a session — verify it is still active.
+      // This makes logout immediately effective: invalidating the session
+      // in the DB revokes all JWTs whose sid points to it.
+      const anchoredSession = await verifySession(decoded.sid);
+      if (!anchoredSession) {
+        return res.status(401).json({ message: "Session revoked" });
+      }
+      await extendSession(decoded.sid);
+      req.session = anchoredSession;
+    } else {
+      // Backward-compat path: tokens without sid (issued before this change)
+      // are accepted until their natural expiry. Remove this branch once all
+      // old tokens have drained (at most 6 hours after deploy).
+      const sessionToken = req.headers["x-session-token"];
+      if (sessionToken) {
+        const session = await verifySession(sessionToken);
+        if (session) {
+          await extendSession(sessionToken);
+          req.session = session;
+        }
       }
     }
 
+    req.user = decoded;
     return next();
   } catch (err) {
-    return res.status(401).json({ message: "Token invalid or expired" });
+    if (err.name === "TokenExpiredError") {
+      return res.status(401).json({ message: "Token expired" });
+    }
+    return res.status(401).json({ message: "Invalid token" });
   }
 }
 
@@ -84,18 +100,30 @@ export async function optionalAuth(req, res, next) {
 
   try {
     const decoded = verifyToken(token);
-    req.user = decoded;
 
-    if (sessionToken) {
-      const session = await verifySession(sessionToken);
-      if (session) {
-        await extendSession(sessionToken);
-        req.session = session;
+    if (decoded.sid) {
+      const anchoredSession = await verifySession(decoded.sid);
+      if (!anchoredSession) {
+        return res.status(401).json({ message: "Session revoked" });
+      }
+      await extendSession(decoded.sid);
+      req.session = anchoredSession;
+    } else {
+      if (sessionToken) {
+        const session = await verifySession(sessionToken);
+        if (session) {
+          await extendSession(sessionToken);
+          req.session = session;
+        }
       }
     }
 
+    req.user = decoded;
     return next();
   } catch (err) {
-    return res.status(401).json({ message: "Token invalid or expired" });
+    if (err.name === "TokenExpiredError") {
+      return res.status(401).json({ message: "Token expired" });
+    }
+    return res.status(401).json({ message: "Invalid token" });
   }
 }

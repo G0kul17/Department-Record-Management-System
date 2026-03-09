@@ -3,6 +3,7 @@ import Particles from "react-tsparticles";
 import { loadSlim } from "tsparticles-slim";
 import { useAuth } from "../../hooks/useAuth";
 import apiClient from "../../api/axiosClient";
+import { getFileUrl } from "../../utils/fileUrl";
 import { useNavigate } from "react-router-dom";
 import EventsCarousel from "../../components/EventsCarousel";
 import AchievementsRecentGrid from "../../components/AchievementsRecentGrid";
@@ -68,15 +69,13 @@ export default function StudentDashboard() {
           } catch (_) {
             attachments = [];
           }
-          const uploadsBase =
-            apiClient.baseURL.replace(/\/api$/, "") + "/uploads/";
           return {
             ...e,
             description: e.description || e.summary || "",
             event_url: e.event_url || e.eventUrl || null,
             attachments: Array.isArray(attachments) ? attachments : [],
             thumbnail: e.thumbnail_filename
-              ? uploadsBase + encodeURIComponent(e.thumbnail_filename)
+              ? getFileUrl(e.thumbnail_filename)
               : null,
           };
         });
@@ -168,7 +167,7 @@ export default function StudentDashboard() {
             <div className="pt-2 flex justify-center md:justify-start">
               <button
                 onClick={goToQuickActions}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#87CEEB] px-6 sm:px-8 py-3 sm:py-4 text-white text-sm sm:text-base font-semibold shadow-lg hover:bg-[#78C5E6] hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-[#87CEEB]/40 transition-all duration-200"
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 sm:px-8 py-3 sm:py-4 text-white text-sm sm:text-base font-semibold shadow-lg hover:bg-blue-700 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-600/30 transition-all duration-200"
               >
                 <svg
                   width="18"
@@ -295,7 +294,7 @@ export default function StudentDashboard() {
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 z-50 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
+          className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 z-50 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 sm:p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
           aria-label="Scroll to top"
         >
           <svg

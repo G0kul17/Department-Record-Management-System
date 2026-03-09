@@ -1,28 +1,37 @@
-import React, { useEffect, useState, useRef, useMemo } from "react";
-import apiClient from "../api/axiosClient";
+import React, { useEffect, useState, useRef } from "react";
+import { getFileUrl } from "../utils/fileUrl";
 
 export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
   const [index, setIndex] = useState(0);
   const timerRef = useRef(null);
   const length = events.length;
 
-  const uploadsBase = useMemo(
-    () => apiClient.baseURL.replace(/\/api$/, "") + "/uploads/",
-    []
-  );
-
-  useEffect(() => {
+  function resetTimer() {
+    if (timerRef.current) clearInterval(timerRef.current);
     if (!length) return;
     timerRef.current = setInterval(() => {
       setIndex((i) => (i + 1) % length);
     }, intervalMs);
+  }
+
+  useEffect(() => {
+    resetTimer();
     return () => clearInterval(timerRef.current);
   }, [length, intervalMs]);
 
   useEffect(() => {
-    // Reset index if events change
     setIndex(0);
   }, [events]);
+
+  function prev() {
+    setIndex((i) => (i - 1 + length) % length);
+    resetTimer();
+  }
+
+  function next() {
+    setIndex((i) => (i + 1) % length);
+    resetTimer();
+  }
 
   if (!length) return null;
 
@@ -38,57 +47,110 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
               if (!u) return null;
               if (/^https?:\/\//i.test(u)) return u;
               if (u.startsWith("/uploads/"))
-                return uploadsBase + u.split("/uploads/")[1];
+                return getFileUrl(u.split("/uploads/")[1]);
               return u;
             };
             const thumb =
               makeAbsolute(ev.image) ||
               makeAbsolute(ev.thumbnail) ||
               (ev.thumbnail_filename
-                ? uploadsBase + encodeURIComponent(ev.thumbnail_filename)
+                ? getFileUrl(ev.thumbnail_filename)
                 : null);
             const href = ev.event_url ? ev.event_url : `/events/${ev.id}`;
             const external = Boolean(ev.event_url);
             return (
-              <div key={ev.id} className="flex-shrink-0 w-full p-4">
+              <div key={ev.id} className="flex-shrink-0 w-full p-1 sm:p-3">
                 <a
                   href={href}
                   target={external ? "_blank" : undefined}
                   rel={external ? "noreferrer" : undefined}
-                  className="block rounded-xl border border-sky-200 bg-white p-4 md:p-6 shadow-sm hover:shadow-md transition"
+                  className="block rounded-xl border border-slate-200 bg-white p-3 sm:p-4 md:p-6 shadow-sm hover:shadow-md transition"
                 >
-                  <h3 className="text-lg md:text-xl font-bold text-slate-900 line-clamp-2">
+                  <h3 className="text-sm sm:text-base md:text-lg font-bold text-slate-900 line-clamp-2">
                     {ev.title}
                   </h3>
                   {thumb ? (
-                    <div className="mt-3 overflow-hidden rounded-lg bg-white">
+                    <div className="mt-2 sm:mt-3 overflow-hidden rounded-lg bg-white">
                       <img
                         src={thumb}
                         alt={ev.title}
-                        className="w-full h-auto max-h-[420px] md:max-h-[520px] object-contain"
+                        className="w-full h-auto max-h-[200px] sm:max-h-[280px] md:max-h-[380px] object-contain"
                         loading="lazy"
                       />
                     </div>
                   ) : (
-                    <div className="mt-3 h-40 md:h-56 rounded-lg bg-gradient-to-r from-sky-100 to-indigo-100" />
+                    <div className="mt-2 sm:mt-3 h-32 sm:h-40 md:h-56 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-100" />
                   )}
                 </a>
               </div>
             );
           })}
         </div>
-        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-2">
-          {events.map((_, i) => (
+
+        {/* Prev / Next arrows */}
+        {length > 1 && (
+          <>
             <button
-              key={i}
-              onClick={() => setIndex(i)}
-              className={`w-2 h-2 rounded-full ${
-                i === index ? "bg-sky-500" : "bg-gray-300"
-              }`}
-              aria-label={`Show event ${i + 1}`}
-            />
-          ))}
-        </div>
+              onClick={prev}
+              className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-10 flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-white/80 shadow hover:bg-white transition"
+              aria-label="Previous event"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-700"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
+            <button
+              onClick={next}
+              className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-10 flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-white/80 shadow hover:bg-white transition"
+              aria-label="Next event"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-700"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+          </>
+        )}
+
+        {/* Dot indicators */}
+        {length > 1 && (
+          <div className="absolute bottom-1.5 sm:bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2 z-10">
+            {events.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  setIndex(i);
+                  resetTimer();
+                }}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  i === index ? "bg-blue-600 scale-125" : "bg-slate-300"
+                }`}
+                aria-label={`Show event ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

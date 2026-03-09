@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { getFileUrl } from "../utils/fileUrl";
 
 const COLORS = [
   "#3b82f6",
@@ -156,7 +157,7 @@ export default function EventCard({
                 {attachments.slice(0, 3).map((a, i) => (
                   <div key={i} className="truncate">
                     <a
-                      href={a.url || `/uploads/${a.filename}`}
+                      href={a.url || getFileUrl(a.filename)}
                       target="_blank"
                       rel="noreferrer"
                       className="underline text-sky-700 hover:text-sky-600"

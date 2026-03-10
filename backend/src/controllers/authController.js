@@ -11,6 +11,7 @@ import {
   invalidateAllUserSessions,
 } from "../utils/sessionUtils.js";
 import logger, { reqContext } from "../utils/logger.js";
+import { tracedQuery } from "../utils/tracing.js";
 dotenv.config();
 
 const OTP_EXPIRY_MIN = Number(process.env.OTP_EXPIRY_MIN || 5);
@@ -72,7 +73,8 @@ export async function register(req, res) {
         .json({ message: "Invalid email format or unauthorized domain" });
 
     // check duplicate
-    const { rows: existing } = await pool.query(
+    const { rows: existing } = await tracedQuery(
+      pool,
       "SELECT id, is_verified FROM users WHERE email=$1",
       [emailLower],
     );
@@ -232,7 +234,7 @@ export async function login(req, res) {
 
   const emailLower = email.toLowerCase();
   try {
-    const { rows } = await pool.query("SELECT * FROM users WHERE email=$1", [
+    const { rows } = await tracedQuery(pool, "SELECT * FROM users WHERE email=$1", [
       emailLower,
     ]);
     if (!rows.length)

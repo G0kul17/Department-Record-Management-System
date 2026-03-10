@@ -467,8 +467,8 @@ export default function ProjectUpload() {
                   className="rounded-lg border border-slate-200 p-3 sm:p-4 dark:border-slate-700"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex-1 min-w-0">{p.title}
-                      </div>
+                    <div className="flex-1 min-w-0">
+                      <div>{p.title}</div>
                       <div className="text-sm text-slate-600 dark:text-slate-300">
                         {p.mentor_name || ""}{" "}
                         {p.academic_year && `• ${p.academic_year}`}

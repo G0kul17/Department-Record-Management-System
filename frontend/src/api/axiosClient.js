@@ -61,7 +61,11 @@ class ApiClient {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Request failed");
+        const err = new Error(data.message || "Request failed");
+        // Carry the trace_id from the backend so UI components can show a
+        // reference code to the user (Cloudflare Ray-ID pattern).
+        if (data.trace_id) err.traceId = data.trace_id;
+        throw err;
       }
 
       return data;
@@ -151,20 +155,20 @@ class ApiClient {
       const msg = (data && data.message) || "Upload failed";
       // Friendly mapping for common upload errors
       const isDataUpload = endpoint.includes("/data-uploads");
+      let finalMsg = msg;
       if (
         /file type not allowed/i.test(msg) ||
         /invalid data file type/i.test(msg)
       ) {
-        throw new Error(
-          isDataUpload
-            ? "Please upload CSV or Excel"
-            : "Please upload PDF or image",
-        );
+        finalMsg = isDataUpload
+          ? "Please upload CSV or Excel"
+          : "Please upload PDF or image";
+      } else if (/only csv and excel allowed/i.test(msg)) {
+        finalMsg = "Please upload CSV or Excel";
       }
-      if (/only csv and excel allowed/i.test(msg)) {
-        throw new Error("Please upload CSV or Excel");
-      }
-      throw new Error(msg);
+      const err = new Error(finalMsg);
+      if (data && data.trace_id) err.traceId = data.trace_id;
+      throw err;
     }
 
     return data;

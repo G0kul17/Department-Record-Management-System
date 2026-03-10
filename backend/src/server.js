@@ -32,6 +32,9 @@ import path from "path";
 dotenv.config();
 
 const app = express();
+// Trust the first proxy (Nginx) so req.ip returns the real client IP
+// from the X-Forwarded-For header instead of the internal proxy address.
+app.set("trust proxy", 1);
 app.use(helmet());
 app.use(express.json());
 

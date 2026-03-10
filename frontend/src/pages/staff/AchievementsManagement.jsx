@@ -145,9 +145,7 @@ export default function AchievementsManagement() {
     >
       <div className="space-y-3">
         {items.length === 0 && !loading && (
-          <div className="text-slate-600 dark:text-slate-300">
-            No achievements found.
-          </div>py-8 text-center text-sm text-slate-600 dark:text-slate-300">
+          <div className="py-8 text-center text-sm text-slate-600 dark:text-slate-300">
             No achievements found.
           </div>
         )}
@@ -196,6 +194,7 @@ export default function AchievementsManagement() {
                 </div>
               )
             }
+            details={
               <div className="space-y-2">
                 <div>
                   <span className="font-semibold">Issuer:</span>{" "}

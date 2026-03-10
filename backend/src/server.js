@@ -20,6 +20,7 @@ import addStudentsRoutes from "./routes/addStudentsRoutes.js";
 import bulkExportRoutes from "./routes/bulkExportRoutes.js";
 import activityCoordinatorRoutes from "./routes/activityCoordinatorRoutes.js";
 import announcementRoutes from "./routes/announcementRoutes.js";
+import hackathonRoutes from "./routes/hackathonRoutes.js";
 import pool, { logPoolHealth, getPoolHealth } from "./config/db.js";
 import { verifyFileStorage } from "./config/upload.js";
 import { requireAuth } from "./middleware/authMiddleware.js";
@@ -64,13 +65,13 @@ if (ENABLE_CORS) {
   const corsOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(",").map((origin) => origin.trim())
     : [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:4173",
-        "http://127.0.0.1:4173",
-      ];
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "http://localhost:4173",
+      "http://127.0.0.1:4173",
+    ];
 
   app.use(
     cors({
@@ -141,6 +142,7 @@ app.use("/api/students", addStudentsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/achievements", achievementRoutes);
+app.use("/api/hackathons", hackathonRoutes);
 app.use("/api/data-uploads", dataUploadRoutes);
 app.use("/api/announcements", announcementRoutes);
 
@@ -150,6 +152,11 @@ const FILE_STORAGE_PATH = process.env.FILE_STORAGE_PATH || "./uploads";
 // Accepts Bearer token in Authorization header OR ?token= query param
 // (query param is needed for <img src> / <a href> browser-native requests).
 app.get("/api/files/:filename", (req, res) => {
+  // Allow browser-native cross-origin rendering for authenticated file URLs.
+  // Without this, Helmet's default CORP same-origin policy blocks <img src>
+  // from a different frontend origin (e.g., localhost:5173 -> localhost:5000).
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+
   const headerToken = req.headers.authorization?.split(" ")[1];
   const queryToken = req.query.token;
   const rawToken = headerToken || queryToken;

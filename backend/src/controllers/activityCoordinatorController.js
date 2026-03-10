@@ -106,6 +106,8 @@ export async function getActivityTypes(req, res) {
          SELECT 'achievement' AS label
          UNION
          SELECT 'project' AS label
+         UNION
+         SELECT 'Hackathon Entry Progress' AS label
        ), cleaned AS (
          SELECT DISTINCT label FROM candidates WHERE label IS NOT NULL AND label <> ''
        )

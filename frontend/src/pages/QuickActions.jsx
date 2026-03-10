@@ -11,10 +11,12 @@ export default function QuickActions() {
     // Common routes
     if (key === "achievements") return nav("/achievements");
     if (key === "projects") return nav("/projects/upload");
+    if (key === "hackathons") return nav("/hackathons");
 
     // Staff-only standalone pages without dashboard UI
     if (key === "verifyAchievements") return nav("/verify-achievements");
     if (key === "verifyProjects") return nav("/verify-projects");
+    if (key === "verifyHackathonProgress") return nav("/verify-hackathon-progress");
     if (key === "staffEvents") return nav("/upload-events");
     if (key === "facultyParticipation") return nav("/faculty-participation");
     if (key === "facultyResearch") return nav("/faculty-research");
@@ -102,6 +104,34 @@ export default function QuickActions() {
             </div>
             <p className="mt-2 text-slate-600">
               Share your latest projects with the department.
+            </p>
+          </Card>
+          <Card
+            onClick={goTo("hackathons")}
+            className="p-6 glitter-card bulge-card"
+          >
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                >
+                  <path
+                    d="M20 6l-11 11-5-5"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
+              <h3 className="text-lg font-semibold text-slate-800">
+                Hackathon Entry and Progress
+              </h3>
+            </div>
+            <p className="mt-2 text-slate-600">
+              Upload your Hackathon participation and Track your progress
             </p>
           </Card>
 
@@ -302,6 +332,34 @@ export default function QuickActions() {
                 </div>
                 <p className="mt-2 text-slate-600">
                   Approve or reject submitted projects.
+                </p>
+              </Card>
+              <Card
+                onClick={goTo("verifyHackathonProgress")}
+                className="p-6 glitter-card bulge-card"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <path
+                        d="M4 6h16M4 12h16M4 18h10"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>
+                  <h3 className="text-lg font-semibold text-slate-800">
+                    Verify Hackathon Progress
+                  </h3>
+                </div>
+                <p className="mt-2 text-slate-600">
+                  Review mapped hackathons and update rounds, progress, prize, and duration.
                 </p>
               </Card>
               <Card

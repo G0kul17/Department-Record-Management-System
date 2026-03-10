@@ -1,5 +1,7 @@
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+import logger from "../utils/logger.js";
+import { getTraceCtx } from "../utils/traceStore.js";
 dotenv.config();
 
 // If mail env is not configured, fall back to a no-op sender for local dev
@@ -41,12 +43,39 @@ export async function sendMail({ to, subject, text, html }) {
         "Set the required environment variables to enable OTP delivery."
     );
   }
-  const info = await transporter.sendMail({
-    from: `"No Reply" <${process.env.EMAIL_USER}>`,
-    to,
-    subject,
-    text,
-    html,
-  });
-  return info;
+
+  const ctx = getTraceCtx();
+  const meta = { "email.to": to, "email.subject": subject };
+  const startNs = process.hrtime.bigint();
+
+  logger.debug("mail.send.start", { ...meta, ...ctx });
+
+  try {
+    const info = await transporter.sendMail({
+      from: `"No Reply" <${process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      text,
+      html,
+    });
+
+    const durationMs = Math.round(Number(process.hrtime.bigint() - startNs) / 1_000_000 * 100) / 100;
+    logger.info("mail.send.complete", {
+      ...meta,
+      "event.duration_ms": durationMs,
+      "email.message_id": info.messageId,
+      ...ctx,
+    });
+
+    return info;
+  } catch (err) {
+    const durationMs = Math.round(Number(process.hrtime.bigint() - startNs) / 1_000_000 * 100) / 100;
+    logger.error("mail.send.error", {
+      err,
+      ...meta,
+      "event.duration_ms": durationMs,
+      ...ctx,
+    });
+    throw err;
+  }
 }

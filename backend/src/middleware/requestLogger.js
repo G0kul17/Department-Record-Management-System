@@ -1,6 +1,7 @@
 // src/middleware/requestLogger.js
 import { v4 as uuidv4 } from "uuid";
 import logger, { reqContext } from "../utils/logger.js";
+import { traceStore } from "../utils/traceStore.js";
 
 // Routes polled by load balancers / uptime monitors — log at debug to avoid noise.
 const HEALTH_PROBE_PATHS = new Set(["/", "/health", "/favicon.ico"]);
@@ -42,6 +43,7 @@ function reqFields(req, correlationId, urlPath) {
 
 function resFields(req, res, correlationId, durationNs, urlPath) {
   const contentLength = parseInt(res.getHeader("content-length"), 10);
+  const durationMs = Math.round(Number(durationNs) / 1_000_000 * 100) / 100;
   const meta = {
     trace: { id: correlationId },
     http: {
@@ -61,7 +63,9 @@ function resFields(req, res, correlationId, durationNs, urlPath) {
       address: req.ip,
     },
     user_agent: { original: req.headers["user-agent"] },
+    // Include both ECS event.duration (nanoseconds) and a human-readable ms field
     event: { duration: Number(durationNs) },
+    "event.duration_ms": durationMs,
   };
   if (req.user?.id != null) {
     meta.user = { id: String(req.user.id) };
@@ -72,22 +76,28 @@ function resFields(req, res, correlationId, durationNs, urlPath) {
 /**
  * Request logging middleware.
  *
- * 1. Assigns a correlation ID to every incoming request.
+ * 1. Assigns a unique trace_id (correlation ID) to every incoming request.
  *    - Validates the client-supplied X-Correlation-ID header against a safe
  *      pattern before reusing it (prevents header-injection log pollution).
  *    - Falls back to a new UUID v4 when the header is absent or invalid.
  *
- * 2. Attaches the ID to req.correlationId so controllers and downstream
+ * 2. Seeds AsyncLocalStorage with the per-request trace context so that ALL
+ *    Winston log entries — even from utility modules and config helpers that
+ *    never receive `req` — automatically include:
+ *      trace.id, url.path, http.request.method  (and user.id once auth runs)
+ *
+ * 3. Attaches the ID to req.correlationId so controllers and downstream
  *    middleware can include it in their own log entries via reqContext(req).
  *
- * 3. Echoes the ID back in the X-Correlation-ID response header so clients
+ * 4. Echoes the ID back in the X-Correlation-ID response header so clients
  *    and API gateways can correlate responses to requests.
  *
- * 4. Emits ECS-structured log events per request:
+ * 5. Emits ECS-structured log events per request:
  *    - "HTTP request received"  — on incoming request (skipped for health probes).
  *                                 user.id is intentionally absent here because auth
  *                                 middleware has not yet run.
  *    - "HTTP response sent"     — after the response is flushed (finish event).
+ *                                 Includes execution duration in ms and nanoseconds.
  *                                 user.id is present for authenticated routes.
  *    - "HTTP request aborted"   — when the client disconnects before a response.
  *    - "Slow request detected"  — extra warn when duration > SLOW_REQUEST_THRESHOLD_MS.
@@ -110,48 +120,66 @@ export function requestLogger(req, res, next) {
   const startTime = process.hrtime.bigint();
   const isHealthProbe = HEALTH_PROBE_PATHS.has(urlPath);
 
-  // "HTTP request received" — auth has not run yet so user.id is intentionally omitted.
-  logger[isHealthProbe ? "debug" : "info"](
-    "HTTP request received",
-    reqFields(req, correlationId, urlPath),
-  );
+  // Build the mutable trace context object that lives in AsyncLocalStorage for
+  // the entire request lifecycle.  authMiddleware.js will add user.id in-place
+  // once authentication completes, so every subsequent log picks it up too.
+  const traceCtx = {
+    trace: { id: correlationId },
+    url: { path: urlPath },
+    http: { request: { method: req.method } },
+    // user is intentionally absent here; authMiddleware adds it
+  };
 
-  let responded = false;
-
-  res.on("finish", () => {
-    responded = true;
-    const durationNs = process.hrtime.bigint() - startTime;
-    const level =
-      res.statusCode >= 500 ? "error" : res.statusCode >= 400 ? "warn" : "info";
-
-    logger[isHealthProbe ? "debug" : level](
-      "HTTP response sent",
-      resFields(req, res, correlationId, durationNs, urlPath),
+  // Run the rest of the middleware chain inside the trace context store so
+  // every Winston log call within this request automatically includes trace.id,
+  // url.path, and http.method without needing explicit reqContext(req) calls.
+  traceStore.run(traceCtx, () => {
+    // "HTTP request received" — auth has not run yet so user.id is intentionally omitted.
+    logger[isHealthProbe ? "debug" : "info"](
+      "HTTP request received",
+      reqFields(req, correlationId, urlPath),
     );
 
-    // Emit an extra warning when a request takes longer than the threshold.
-    if (!isHealthProbe && durationNs > SLOW_THRESHOLD_NS) {
-      logger.warn("Slow request detected", {
-        "url.path": urlPath,
-        "http.request.method": req.method,
-        "event.duration": Number(durationNs),
-        "slow_threshold_ms": Number(process.env.SLOW_REQUEST_THRESHOLD_MS) || 1000,
-        ...reqContext(req),
-      });
-    }
-  });
+    let responded = false;
 
-  // Detect client disconnects that happen before the response is sent.
-  res.on("close", () => {
-    if (!responded) {
-      logger.warn("HTTP request aborted", {
-        "url.path": urlPath,
-        "http.request.method": req.method,
-        "event.duration": Number(process.hrtime.bigint() - startTime),
-        ...reqContext(req),
-      });
-    }
-  });
+    res.on("finish", () => {
+      responded = true;
+      const durationNs = process.hrtime.bigint() - startTime;
+      const level =
+        res.statusCode >= 500 ? "error" : res.statusCode >= 400 ? "warn" : "info";
 
-  next();
+      logger[isHealthProbe ? "debug" : level](
+        "HTTP response sent",
+        resFields(req, res, correlationId, durationNs, urlPath),
+      );
+
+      // Emit an extra warning when a request takes longer than the threshold.
+      if (!isHealthProbe && durationNs > SLOW_THRESHOLD_NS) {
+        logger.warn("Slow request detected", {
+          "url.path": urlPath,
+          "http.request.method": req.method,
+          "event.duration": Number(durationNs),
+          "event.duration_ms": Math.round(Number(durationNs) / 1_000_000 * 100) / 100,
+          "slow_threshold_ms": Number(process.env.SLOW_REQUEST_THRESHOLD_MS) || 1000,
+          ...reqContext(req),
+        });
+      }
+    });
+
+    // Detect client disconnects that happen before the response is sent.
+    res.on("close", () => {
+      if (!responded) {
+        const durationNs = process.hrtime.bigint() - startTime;
+        logger.warn("HTTP request aborted", {
+          "url.path": urlPath,
+          "http.request.method": req.method,
+          "event.duration": Number(durationNs),
+          "event.duration_ms": Math.round(Number(durationNs) / 1_000_000 * 100) / 100,
+          ...reqContext(req),
+        });
+      }
+    });
+
+    next();
+  });
 }

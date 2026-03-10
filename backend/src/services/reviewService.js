@@ -7,6 +7,8 @@
 import pool from "../config/db.js";
 import { sendMail } from "../config/mailer.js";
 import logger from "../utils/logger.js";
+import { tracedQuery } from "../utils/tracing.js";
+import { getTraceCtx } from "../utils/traceStore.js";
 
 export class ReviewError extends Error {
   constructor(status, message) {
@@ -27,9 +29,19 @@ export class ReviewError extends Error {
  */
 export async function reviewProject(projectId, staffId, action, comment, correlationId) {
   const approved = action === "approve";
+  const ctx = getTraceCtx();
+  const startNs = process.hrtime.bigint();
+
+  logger.info("project.review.start", {
+    "project.id": projectId,
+    "review.action": action,
+    "review.staff_id": staffId,
+    ...ctx,
+  });
 
   // Staff must coordinate the project's activity_type
-  const { rows: authRows } = await pool.query(
+  const { rows: authRows } = await tracedQuery(
+    pool,
     `SELECT 1
        FROM projects p
        JOIN activity_coordinators ac
@@ -41,7 +53,8 @@ export async function reviewProject(projectId, staffId, action, comment, correla
     throw new ReviewError(403, `Not authorized to ${action} this project`);
   }
 
-  const { rows } = await pool.query(
+  const { rows } = await tracedQuery(
+    pool,
     `UPDATE projects
         SET verification_status = $1,
             verification_comment = $2,
@@ -58,7 +71,8 @@ export async function reviewProject(projectId, staffId, action, comment, correla
 
   const creatorId = rows[0].created_by;
   if (creatorId) {
-    const { rows: userRows } = await pool.query(
+    const { rows: userRows } = await tracedQuery(
+      pool,
       "SELECT email FROM users WHERE id = $1",
       [creatorId],
     );
@@ -70,10 +84,20 @@ export async function reviewProject(projectId, staffId, action, comment, correla
           text: `Your project has been ${approved ? "approved" : "rejected"} by staff. Comment: ${comment || "No comment"}`,
         });
       } catch (err) {
-        logger.error("Failed to send project review email", { err, trace: { id: correlationId } });
+        logger.error("Failed to send project review email", { err, trace: { id: correlationId }, ...ctx });
       }
     }
   }
+
+  const durationMs = Math.round(Number(process.hrtime.bigint() - startNs) / 1_000_000 * 100) / 100;
+  logger.info("project.review.complete", {
+    "project.id": projectId,
+    "project.title": rows[0].title,
+    "review.action": action,
+    "review.approved": approved,
+    "event.duration_ms": durationMs,
+    ...ctx,
+  });
 
   return { message: `Project ${approved ? "approved" : "rejected"}` };
 }
@@ -90,9 +114,19 @@ export async function reviewProject(projectId, staffId, action, comment, correla
  */
 export async function reviewAchievement(achievementId, staffId, action, comment, correlationId) {
   const approved = action === "approve";
+  const ctx = getTraceCtx();
+  const startNs = process.hrtime.bigint();
+
+  logger.info("achievement.review.start", {
+    "achievement.id": achievementId,
+    "review.action": action,
+    "review.staff_id": staffId,
+    ...ctx,
+  });
 
   // Staff must coordinate the achievement's activity_type
-  const { rows: authRows } = await pool.query(
+  const { rows: authRows } = await tracedQuery(
+    pool,
     `SELECT 1
        FROM achievements a
        JOIN activity_coordinators ac
@@ -104,7 +138,8 @@ export async function reviewAchievement(achievementId, staffId, action, comment,
     throw new ReviewError(403, `Not authorized to ${action} this achievement`);
   }
 
-  const { rows } = await pool.query(
+  const { rows } = await tracedQuery(
+    pool,
     `UPDATE achievements
         SET verification_status = $1,
             verification_comment = $2,
@@ -123,7 +158,8 @@ export async function reviewAchievement(achievementId, staffId, action, comment,
   if (!userId) {
     return { message: `Achievement ${approved ? "approved" : "rejected"}` };
   }
-  const { rows: userRows } = await pool.query(
+  const { rows: userRows } = await tracedQuery(
+    pool,
     "SELECT email FROM users WHERE id = $1",
     [userId],
   );
@@ -135,9 +171,19 @@ export async function reviewAchievement(achievementId, staffId, action, comment,
         text: `Your achievement has been ${approved ? "approved" : "rejected"} by staff. Comment: ${comment || "No comment"}`,
       });
     } catch (err) {
-      logger.error("Failed to send achievement review email", { err, trace: { id: correlationId } });
+      logger.error("Failed to send achievement review email", { err, trace: { id: correlationId }, ...ctx });
     }
   }
+
+  const durationMs = Math.round(Number(process.hrtime.bigint() - startNs) / 1_000_000 * 100) / 100;
+  logger.info("achievement.review.complete", {
+    "achievement.id": achievementId,
+    "achievement.title": rows[0].title,
+    "review.action": action,
+    "review.approved": approved,
+    "event.duration_ms": durationMs,
+    ...ctx,
+  });
 
   return { message: `Achievement ${approved ? "approved" : "rejected"}` };
 }

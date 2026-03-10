@@ -6,6 +6,7 @@ import fs from "fs";
 import logger, { reqContext } from "../utils/logger.js";
 import { QueryBuilder } from "../utils/queryBuilder.js";
 import { reviewProject, ReviewError } from "../services/reviewService.js";
+import { tracedQuery } from "../utils/tracing.js";
 
 // Note: 'upload' is multer instance exported above
 // We'll expose middleware usage in routes.
@@ -121,7 +122,8 @@ export async function createProject(req, res) {
 
     // Check if GitHub URL already exists (prevent duplicate team submissions) — before any DB writes
     if (gh) {
-      const { rows: githubDup } = await pool.query(
+      const { rows: githubDup } = await tracedQuery(
+        pool,
         "SELECT id, title, team_member_names, created_by FROM projects WHERE LOWER(TRIM(github_url)) = LOWER(TRIM($1))",
         [gh],
       );
@@ -143,7 +145,8 @@ export async function createProject(req, res) {
     }
 
     // duplicate check (title + mentor_name + year) — before any DB writes
-    const { rows: dup } = await pool.query(
+    const { rows: dup } = await tracedQuery(
+      pool,
       "SELECT id FROM projects WHERE title=$1 AND mentor_name=$2 AND academic_year=$3",
       [title.trim(), mentor_name.trim(), academic_year || null],
     );
@@ -188,16 +191,23 @@ export async function createProject(req, res) {
       ];
     }
     const client = await pool.connect();
+    const txStartNs = process.hrtime.bigint();
+    logger.info("project.create.start", {
+      "project.title": title.trim(),
+      "project.file_count": files.length,
+      ...reqContext(req),
+    });
     try {
       await client.query("BEGIN");
 
-      const { rows } = await client.query(insertSql, insertParams);
+      const { rows } = await tracedQuery(client, insertSql, insertParams);
       const project = rows[0];
 
       // handle uploaded files if any
       for (const f of files) {
         const fileType = detectFileTypeByField(f.fieldname);
-        await client.query(
+        await tracedQuery(
+          client,
           `INSERT INTO project_files (project_id, filename, original_name, mime_type, size, file_type, uploaded_by)
            VALUES ($1,$2,$3,$4,$5,$6,$7)`,
           [project.id, f.filename, f.originalname, f.mimetype, f.size, fileType, created_by || null],
@@ -205,16 +215,25 @@ export async function createProject(req, res) {
       }
 
       // Persist a summary of files into projects.files JSONB for easy viewing
-      const { rows: pf } = await client.query(
+      const { rows: pf } = await tracedQuery(
+        client,
         "SELECT id, filename, original_name, mime_type, size, file_type, uploaded_at FROM project_files WHERE project_id=$1 ORDER BY id ASC",
         [project.id],
       );
-      await client.query("UPDATE projects SET files = $2 WHERE id = $1", [
+      await tracedQuery(client, "UPDATE projects SET files = $2 WHERE id = $1", [
         project.id,
         JSON.stringify(pf),
       ]);
 
       await client.query("COMMIT");
+      const durationMs = Math.round(Number(process.hrtime.bigint() - txStartNs) / 1_000_000 * 100) / 100;
+      logger.info("project.create.complete", {
+        "project.id": project.id,
+        "project.title": project.title,
+        "project.file_count": pf.length,
+        "event.duration_ms": durationMs,
+        ...reqContext(req),
+      });
       return res
         .status(201)
         .json({ message: "Project created", project: { ...project, files: pf } });

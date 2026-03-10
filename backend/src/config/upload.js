@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import { fileTypeFromFile } from "file-type";
 import dotenv from "dotenv";
 import logger from "../utils/logger.js";
+import { getTraceCtx } from "../utils/traceStore.js";
 dotenv.config();
 
 // ============================================================================
@@ -211,13 +212,50 @@ class SafeDiskStorage {
   }
 
   _handleFile(req, file, cb) {
+    const ctx = getTraceCtx();
+    const uploadMeta = {
+      "file.name": file.originalname,
+      "file.field": file.fieldname,
+      "file.mime_type": file.mimetype,
+    };
+    const startNs = process.hrtime.bigint();
+
+    logger.debug("file.upload.start", { ...uploadMeta, ...ctx });
+
     this._inner._handleFile(req, file, async (err, info) => {
-      if (err) return cb(err);
+      if (err) {
+        const durationMs = Math.round(Number(process.hrtime.bigint() - startNs) / 1_000_000 * 100) / 100;
+        logger.error("file.upload.error", {
+          err,
+          ...uploadMeta,
+          "event.duration_ms": durationMs,
+          ...ctx,
+        });
+        return cb(err);
+      }
+
       const safe = await isFileSafe(info.path, file.originalname).catch(() => false);
       if (!safe) {
+        const durationMs = Math.round(Number(process.hrtime.bigint() - startNs) / 1_000_000 * 100) / 100;
         fs.unlink(info.path, () => {});
+        logger.warn("file.upload.rejected", {
+          ...uploadMeta,
+          "event.duration_ms": durationMs,
+          "file.rejection_reason": "unsafe_content",
+          ...ctx,
+        });
         return cb(new Error("File type not allowed"));
       }
+
+      const durationMs = Math.round(Number(process.hrtime.bigint() - startNs) / 1_000_000 * 100) / 100;
+      logger.info("file.upload.complete", {
+        ...uploadMeta,
+        "event.duration_ms": durationMs,
+        "file.size": info.size,
+        "file.stored_name": info.filename,
+        ...ctx,
+      });
+
       cb(null, info);
     });
   }

@@ -6,7 +6,7 @@ import xlsx from "xlsx";
 import csvParser from "csv-parser";
 import { sendMail } from "../config/mailer.js";
 import logger, { reqContext } from "../utils/logger.js";
-import { tracedQuery } from "../utils/tracing.js";
+import { tracedQuery, tracedExternalCall } from "../utils/tracing.js";
 
 /* ================= HELPERS ================= */
 
@@ -225,10 +225,11 @@ export const uploadStudents = async (req, res) => {
         ]
       );
 
-      await sendMail({
-        to: s.email,
-        subject: "Student Account Created",
-        text: `
+      await tracedExternalCall("mail.send", { "email.to": s.email, "email.subject": "Student Account Created" }, () =>
+        sendMail({
+          to: s.email,
+          subject: "Student Account Created",
+          text: `
 Hello ${s.full_name || s.first_name},
 
 Your student account has been created. And you are added in the Community of DRMS.
@@ -240,8 +241,9 @@ Please change your password using the "Forgot Password" option.
 
 Regards,
 Department Admin
-        `,
-      });
+          `,
+        })
+      );
 
       created++;
     }

@@ -1,15 +1,19 @@
 // src/utils/logger.js
 import { createLogger, transports, format } from "winston";
 import { ecsFormat } from "@elastic/ecs-winston-format";
+import { createRequire } from "module";
 import { getTraceCtx } from "./traceStore.js";
 
 const NODE_ENV = process.env.NODE_ENV || "development";
 
-// Prefer the version npm injects at startup; fall back to the env var or a
-// sentinel so it's obvious when neither is set rather than silently logging "1.0.0".
+// Read version from package.json directly so it works regardless of how the
+// process was started (npm start, node server.js, PM2, Docker CMD, etc.).
+// npm_package_version is only set when the process is launched via an npm script,
+// so it silently falls back to "unknown" in most production setups.
+const _require = createRequire(import.meta.url);
 const SERVICE_VERSION =
-  process.env.npm_package_version ||
   process.env.SERVICE_VERSION ||
+  _require("../../package.json").version ||
   "unknown";
 
 // ─── Custom format: auto-inject trace context ────────────────────────────────

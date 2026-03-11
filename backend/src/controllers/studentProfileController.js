@@ -1,5 +1,6 @@
 import pool from "../config/db.js";
 import logger, { reqContext } from "../utils/logger.js";
+import { tracedQuery } from "../utils/tracing.js";
 
 // ================= GET STUDENT PROFILE =================
 export const getStudentProfile = async (req, res) => {
@@ -27,7 +28,7 @@ export const getStudentProfile = async (req, res) => {
       WHERE u.id = $1 AND u.role = 'student'
     `;
 
-    const { rows } = await pool.query(q, [userId]);
+    const { rows } = await tracedQuery(pool, q, [userId]);
 
     if (!rows.length) {
       return res.status(404).json({ message: "Profile not found" });
@@ -85,7 +86,7 @@ export const updateStudentProfile = async (req, res) => {
       github_url || null
     ];
 
-    const { rows } = await pool.query(q, values);
+    const { rows } = await tracedQuery(pool, q, values);
 
     return res.json({
       message: "Profile updated successfully",

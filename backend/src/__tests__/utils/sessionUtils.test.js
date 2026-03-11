@@ -5,7 +5,7 @@ vi.mock("../../config/db.js", () => ({
 }));
 
 vi.mock("../../utils/logger.js", () => ({
-  default: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
+  default: { debug: vi.fn(), info: vi.fn(), error: vi.fn(), warn: vi.fn() },
 }));
 
 import pool from "../../config/db.js";

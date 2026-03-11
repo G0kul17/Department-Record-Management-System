@@ -11,7 +11,7 @@ import {
   invalidateAllUserSessions,
 } from "../utils/sessionUtils.js";
 import logger, { reqContext } from "../utils/logger.js";
-import { tracedQuery } from "../utils/tracing.js";
+import { tracedQuery, tracedExternalCall } from "../utils/tracing.js";
 dotenv.config();
 
 const OTP_EXPIRY_MIN = Number(process.env.OTP_EXPIRY_MIN || 5);
@@ -84,7 +84,7 @@ export async function register(req, res) {
       if (!userRow.is_verified) {
         const hashed = await bcrypt.hash(password, 10);
         // Also update role in case ADMIN_EMAILS was changed or this email should be admin
-        await pool.query(
+        await tracedQuery(pool, 
           "UPDATE users SET password_hash=$1, role=$2, profile_details=$3, full_name=$4 WHERE email=$5",
           [hashed, role, JSON.stringify(profileDetails), fullName, emailLower],
         );
@@ -98,7 +98,7 @@ export async function register(req, res) {
     if (!existing.length) {
       const hashed = await bcrypt.hash(password, 10);
       try {
-        await pool.query(
+        await tracedQuery(pool, 
           "INSERT INTO users (email, password_hash, role, profile_details, full_name) VALUES ($1, $2, $3, $4, $5)",
           [emailLower, hashed, role, JSON.stringify(profileDetails), fullName],
         );
@@ -114,20 +114,22 @@ export async function register(req, res) {
     // generate OTP and save (clear any existing OTPs for this email first)
     const otp = generateOTP();
     const expiresAt = getExpiryDate(OTP_EXPIRY_MIN);
-    await pool.query("DELETE FROM otp_verifications WHERE email=$1", [
+    await tracedQuery(pool, "DELETE FROM otp_verifications WHERE email=$1", [
       emailLower,
     ]);
-    await pool.query(
+    await tracedQuery(pool, 
       "INSERT INTO otp_verifications (email, otp_code, expires_at) VALUES ($1, $2, $3)",
       [emailLower, otp, expiresAt],
     );
 
     // send email
-    await sendMail({
-      to: emailLower,
-      subject: "Your verification OTP",
-      text: `Your OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
-    });
+    await tracedExternalCall("mail.send", { "email.to": emailLower, "email.subject": "Your verification OTP" }, () =>
+      sendMail({
+        to: emailLower,
+        subject: "Your verification OTP",
+        text: `Your OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
+      })
+    );
 
     return res.json({
       message: `OTP sent to ${emailLower}`,
@@ -151,7 +153,7 @@ export async function verifyOTP(req, res) {
   const emailLower = String(email).trim().toLowerCase();
   const otpClean = String(otp).trim();
   try {
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       "SELECT * FROM otp_verifications WHERE email=$1",
       [emailLower],
     );
@@ -160,7 +162,7 @@ export async function verifyOTP(req, res) {
     const otpRow = rows[0];
 
     if (otpRow.attempts >= 5) {
-      await pool.query("DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
       return res.status(429).json({ message: "Too many failed attempts. Please request a new OTP." });
     }
 
@@ -168,30 +170,30 @@ export async function verifyOTP(req, res) {
     // brute-forced: a wrong code would otherwise leave the row alive past
     // its expiry window with unlimited retry time.
     if (new Date() > otpRow.expires_at) {
-      await pool.query("DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
       return res.status(400).json({ message: "OTP expired" });
     }
 
     if (otpRow.otp_code.trim() !== otpClean) {
-      await pool.query("UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1", [otpRow.id]);
+      await tracedQuery(pool, "UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1", [otpRow.id]);
       return res.status(400).json({ message: "Invalid OTP" });
     }
 
     // mark verified and remove otp
-    await pool.query("UPDATE users SET is_verified=true WHERE email=$1", [
+    await tracedQuery(pool, "UPDATE users SET is_verified=true WHERE email=$1", [
       emailLower,
     ]);
-    await pool.query("DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+    await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
 
     // return jwt
-    const { rows: users } = await pool.query(
+    const { rows: users } = await tracedQuery(pool, 
       "SELECT id, email, role, profile_details FROM users WHERE email=$1",
       [emailLower],
     );
     const user = users[0];
     // If this email is listed in ADMIN_EMAILS, ensure role is admin both in DB and token
     if (ADMIN_EMAILS.includes(emailLower) && user.role !== "admin") {
-      await pool.query("UPDATE users SET role='admin' WHERE email=$1", [
+      await tracedQuery(pool, "UPDATE users SET role='admin' WHERE email=$1", [
         emailLower,
       ]);
       user.role = "admin";
@@ -246,19 +248,21 @@ export async function login(req, res) {
       // User hasn't verified account yet: generate a fresh verification OTP and return it
       const otp = generateOTP();
       const expiresAt = getExpiryDate(OTP_EXPIRY_MIN);
-      await pool.query("DELETE FROM otp_verifications WHERE email=$1", [
+      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE email=$1", [
         emailLower,
       ]);
-      await pool.query(
+      await tracedQuery(pool, 
         "INSERT INTO otp_verifications (email, otp_code, expires_at) VALUES ($1, $2, $3)",
         [emailLower, otp, expiresAt],
       );
 
-      await sendMail({
-        to: emailLower,
-        subject: "Account Verification OTP",
-        text: `Your verification OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
-      });
+      await tracedExternalCall("mail.send", { "email.to": emailLower, "email.subject": "Account Verification OTP" }, () =>
+        sendMail({
+          to: emailLower,
+          subject: "Account Verification OTP",
+          text: `Your verification OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
+        })
+      );
 
       return res.json({
         message: "Please verify your account via OTP",
@@ -273,7 +277,7 @@ export async function login(req, res) {
       const latestSession = activeSessions[0]; // ordered by last_accessed_at DESC
       // If this email is listed in ADMIN_EMAILS, ensure role is admin both in DB and token
       if (ADMIN_EMAILS.includes(emailLower) && user.role !== "admin") {
-        await pool.query("UPDATE users SET role='admin' WHERE email=$1", [
+        await tracedQuery(pool, "UPDATE users SET role='admin' WHERE email=$1", [
           emailLower,
         ]);
         user.role = "admin";
@@ -293,7 +297,7 @@ export async function login(req, res) {
       // Fetch student profile data if role is student
       let studentProfile = {};
       if (user.role === "student") {
-        const { rows: profileRows } = await pool.query(
+        const { rows: profileRows } = await tracedQuery(pool, 
           "SELECT register_number, contact_number, leetcode_url, hackerrank_url, codechef_url, github_url FROM student_profiles WHERE user_id=$1",
           [user.id],
         );
@@ -317,19 +321,21 @@ export async function login(req, res) {
     // No valid session, generate OTP for login (two-step)
     const otp = generateOTP();
     const expiresAt = getExpiryDate(OTP_EXPIRY_MIN);
-    await pool.query("DELETE FROM otp_verifications WHERE email=$1", [
+    await tracedQuery(pool, "DELETE FROM otp_verifications WHERE email=$1", [
       emailLower,
     ]);
-    await pool.query(
+    await tracedQuery(pool, 
       "INSERT INTO otp_verifications (email, otp_code, expires_at) VALUES ($1, $2, $3)",
       [emailLower, otp, expiresAt],
     );
 
-    await sendMail({
-      to: emailLower,
-      subject: "Login OTP",
-      text: `Your login OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
-    });
+    await tracedExternalCall("mail.send", { "email.to": emailLower, "email.subject": "Login OTP" }, () =>
+      sendMail({
+        to: emailLower,
+        subject: "Login OTP",
+        text: `Your login OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
+      })
+    );
 
     return res.json({ message: "Login OTP sent to email" });
   } catch (err) {
@@ -350,7 +356,7 @@ export async function loginVerifyOTP(req, res) {
   const emailLower = String(email).trim().toLowerCase();
   const otpClean = String(otp).trim();
   try {
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       "SELECT * FROM otp_verifications WHERE email=$1",
       [emailLower],
     );
@@ -359,31 +365,31 @@ export async function loginVerifyOTP(req, res) {
     const otpRow = rows[0];
 
     if (otpRow.attempts >= 5) {
-      await pool.query("DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
       return res.status(429).json({ message: "Too many failed attempts. Please request a new OTP." });
     }
 
     if (new Date() > otpRow.expires_at) {
-      await pool.query("DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
       return res.status(400).json({ message: "OTP expired" });
     }
 
     if (otpRow.otp_code.trim() !== otpClean) {
-      await pool.query("UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1", [otpRow.id]);
+      await tracedQuery(pool, "UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1", [otpRow.id]);
       return res.status(400).json({ message: "Invalid OTP" });
     }
 
-    await pool.query("DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+    await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
 
     // issue token
-    const { rows: users } = await pool.query(
+    const { rows: users } = await tracedQuery(pool, 
       "SELECT id, email, role, profile_details FROM users WHERE email=$1",
       [emailLower],
     );
     const user = users[0];
     // If this email is listed in ADMIN_EMAILS, ensure role is admin both in DB and token
     if (ADMIN_EMAILS.includes(emailLower) && user.role !== "admin") {
-      await pool.query("UPDATE users SET role='admin' WHERE email=$1", [
+      await tracedQuery(pool, "UPDATE users SET role='admin' WHERE email=$1", [
         emailLower,
       ]);
       user.role = "admin";
@@ -399,7 +405,7 @@ export async function loginVerifyOTP(req, res) {
     // Fetch student profile data if role is student
     let studentProfile = {};
     if (user.role === "student") {
-      const { rows: profileRows } = await pool.query(
+      const { rows: profileRows } = await tracedQuery(pool, 
         "SELECT register_number, contact_number, leetcode_url, hackerrank_url, codechef_url, github_url FROM student_profiles WHERE user_id=$1",
         [user.id],
       );
@@ -448,7 +454,7 @@ export async function forgotVerifyOTP(req, res) {
   const emailLower = String(email).trim().toLowerCase();
   const otpClean = String(otp).trim();
   try {
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       "SELECT * FROM otp_verifications WHERE email=$1",
       [emailLower]
     );
@@ -457,18 +463,18 @@ export async function forgotVerifyOTP(req, res) {
     const otpRow = rows[0];
 
     if (otpRow.attempts >= 5) {
-      await pool.query("DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
       return res.status(429).json({ message: "Too many failed attempts. Please request a new OTP." });
     }
 
     // Expiry before code — expired rows must not be brute-forced
     if (new Date() > otpRow.expires_at) {
-      await pool.query("DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
       return res.status(400).json({ message: "OTP expired" });
     }
 
     if (otpRow.otp_code.trim() !== otpClean) {
-      await pool.query(
+      await tracedQuery(pool, 
         "UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1",
         [otpRow.id]
       );
@@ -492,7 +498,7 @@ export async function initiateForgotPassword(req, res) {
     // Only allow verified accounts to reset their password.
     // Unverified accounts were never proven to own the email address, so
     // issuing a reset OTP for them would be a bypass of email verification.
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       "SELECT id FROM users WHERE email=$1 AND is_verified=true",
       [emailLower],
     );
@@ -504,19 +510,21 @@ export async function initiateForgotPassword(req, res) {
     if (rows.length) {
       const otp = generateOTP();
       const expiresAt = getExpiryDate(OTP_EXPIRY_MIN);
-      await pool.query("DELETE FROM otp_verifications WHERE email=$1", [
+      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE email=$1", [
         emailLower,
       ]);
-      await pool.query(
+      await tracedQuery(pool, 
         "INSERT INTO otp_verifications (email, otp_code, expires_at) VALUES ($1, $2, $3)",
         [emailLower, otp, expiresAt]
       );
 
-      await sendMail({
-        to: emailLower,
-        subject: "Password Reset OTP",
-        text: `Your password reset OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
-      });
+      await tracedExternalCall("mail.send", { "email.to": emailLower, "email.subject": "Password Reset OTP" }, () =>
+        sendMail({
+          to: emailLower,
+          subject: "Password Reset OTP",
+          text: `Your password reset OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
+        })
+      );
 
     }
 
@@ -550,7 +558,7 @@ export async function resetPassword(req, res) {
   const emailLower = String(email).trim().toLowerCase();
   const otpClean = String(otp).trim();
   try {
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       "SELECT * FROM otp_verifications WHERE email=$1",
       [emailLower],
     );
@@ -559,30 +567,30 @@ export async function resetPassword(req, res) {
     const otpRow = rows[0];
 
     if (otpRow.attempts >= 5) {
-      await pool.query("DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
       return res.status(429).json({ message: "Too many failed attempts. Please request a new OTP." });
     }
 
     if (new Date() > otpRow.expires_at) {
-      await pool.query("DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
       return res.status(400).json({ message: "OTP expired" });
     }
 
     if (otpRow.otp_code.trim() !== otpClean) {
-      await pool.query("UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1", [otpRow.id]);
+      await tracedQuery(pool, "UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1", [otpRow.id]);
       return res.status(400).json({ message: "Invalid OTP" });
     }
 
     const hashed = await bcrypt.hash(newPassword, 10);
     // Only reset password for verified accounts — unverified users must go
     // through the registration + email-verification flow instead.
-    const { rows: updated } = await pool.query(
+    const { rows: updated } = await tracedQuery(pool, 
       "UPDATE users SET password_hash=$1 WHERE email=$2 AND is_verified=true RETURNING id",
       [hashed, emailLower],
     );
 
     // Consume the OTP regardless of outcome to prevent replay
-    await pool.query("DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+    await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
 
     if (!updated.length) {
       return res.status(400).json({ message: "Invalid OTP" });
@@ -602,7 +610,7 @@ export async function getProfile(req, res) {
     const emailLower = (req.user?.email || "").toLowerCase();
     if (!emailLower) return res.status(401).json({ message: "Unauthorized" });
 
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       "SELECT id, email, role, profile_details FROM users WHERE email=$1",
       [emailLower],
     );
@@ -642,7 +650,7 @@ export async function updateProfile(req, res) {
     const nameValue = name || fullName;
 
     // Get current profile_details
-    const { rows: current } = await pool.query(
+    const { rows: current } = await tracedQuery(pool, 
       "SELECT profile_details FROM users WHERE email=$1",
       [emailLower],
     );
@@ -665,12 +673,12 @@ export async function updateProfile(req, res) {
     const updatedProfile = { ...existingProfile, ...updates };
 
     if (nameValue !== undefined) {
-      await pool.query(
+      await tracedQuery(pool, 
         "UPDATE users SET profile_details=$1, full_name=$2 WHERE email=$3",
         [JSON.stringify(updatedProfile), nameValue || null, emailLower],
       );
     } else {
-      await pool.query("UPDATE users SET profile_details=$1 WHERE email=$2", [
+      await tracedQuery(pool, "UPDATE users SET profile_details=$1 WHERE email=$2", [
         JSON.stringify(updatedProfile),
         emailLower,
       ]);
@@ -701,7 +709,7 @@ export async function updateProfilePhoto(req, res) {
     const photoUrl = `${absBase}/uploads/${filename}`;
 
     // Get current profile_details
-    const { rows: current } = await pool.query(
+    const { rows: current } = await tracedQuery(pool, 
       "SELECT profile_details FROM users WHERE email=$1",
       [emailLower],
     );
@@ -718,7 +726,7 @@ export async function updateProfilePhoto(req, res) {
       profile_pic: photoUrl,
     };
 
-    await pool.query("UPDATE users SET profile_details=$1 WHERE email=$2", [
+    await tracedQuery(pool, "UPDATE users SET profile_details=$1 WHERE email=$2", [
       JSON.stringify(updatedProfile),
       emailLower,
     ]);

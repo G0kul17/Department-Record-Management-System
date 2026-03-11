@@ -1,5 +1,6 @@
 import pool from "../config/db.js";
 import logger, { reqContext } from "../utils/logger.js";
+import { tracedQuery } from "../utils/tracing.js";
 
 function parseRecipientIds(raw) {
   if (!raw) return [];
@@ -52,7 +53,7 @@ export async function createAnnouncement(req, res) {
     let brochureFileId = null;
     const brochureFile = req.files?.brochure?.[0];
     if (brochureFile) {
-      const { rows: fileRows } = await pool.query(
+      const { rows: fileRows } = await tracedQuery(pool, 
         "INSERT INTO project_files (project_id, filename, original_name, mime_type, size, file_type, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id",
         [
           null,
@@ -67,7 +68,7 @@ export async function createAnnouncement(req, res) {
       brochureFileId = fileRows[0]?.id || null;
     }
 
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       "INSERT INTO staff_announcements (title, description, message, brochure_file_id, created_by) VALUES ($1,$2,$3,$4,$5) RETURNING id",
       [
         title.trim(),
@@ -85,7 +86,7 @@ export async function createAnnouncement(req, res) {
 
     const uniqueIds = Array.from(new Set(recipientIds));
     const valuesSql = uniqueIds.map((_, idx) => `($1,$${idx + 2})`).join(",");
-    await pool.query(
+    await tracedQuery(pool, 
       `INSERT INTO staff_announcement_recipients (announcement_id, user_id)
        VALUES ${valuesSql}
        ON CONFLICT (announcement_id, user_id) DO NOTHING`,
@@ -109,7 +110,7 @@ export async function listMyAnnouncements(req, res) {
 
     const limit = Number(req.query.limit) || 50;
 
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       `SELECT a.id,
               a.title,
               a.description,

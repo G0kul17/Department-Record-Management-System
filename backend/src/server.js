@@ -296,15 +296,21 @@ app.use((err, req, res, next) => {
       .json({ message: err.message || "File upload error", trace_id: traceId });
   }
 
-  const status = err.status || 400; // default to 400 for validation-like issues
-  const message = err.message || "Server error";
+  // Use err.status when it's an intentional HTTP status (ReviewError 403/404,
+  // explicitly-tagged validation errors, etc.).  Fall back to 500 for anything
+  // else — unhandled crashes (TypeError, DB errors, ...) are server faults, not
+  // client errors, so 400 would be misleading to callers and monitoring tools.
+  const status = err.status && err.status >= 400 && err.status < 600 ? err.status : 500;
+  // For 500s expose a generic message to clients; for intentional 4xx/5xx keep
+  // the original message since it's already user-facing (e.g. ReviewError).
+  const message = status >= 500 ? "Server error" : (err.message || "Request failed");
 
   // Always include trace_id in error responses so users/frontend can surface a
   // reference code to support — the same pattern Cloudflare uses with Ray IDs.
-  // In development also surface the error detail; never in production.
+  // In development also surface the real error detail; never in production.
   const body =
     process.env.NODE_ENV !== "production"
-      ? { message, trace_id: traceId, error: String(err.message || err) }
+      ? { message, trace_id: traceId, error: String(err) }
       : { message, trace_id: traceId };
 
   res.status(status).json(body);

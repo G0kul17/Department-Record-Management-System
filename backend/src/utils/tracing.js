@@ -37,7 +37,8 @@ export async function tracedQuery(client, sql, params) {
     const result = await client.query(sql, params);
     const durationMs = Number(process.hrtime.bigint() - startNs) / 1_000_000;
 
-    logger.debug("db.query.complete", {
+    // info so timing is visible in production (level=info); start is debug-only
+    logger.info("db.query.complete", {
       "db.statement": statement,
       "event.duration_ms": Math.round(durationMs * 100) / 100,
       "db.rows_affected": result.rowCount,

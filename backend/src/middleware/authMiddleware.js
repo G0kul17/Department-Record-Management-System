@@ -1,6 +1,7 @@
 import { verifyToken } from "../utils/tokenUtils.js";
 import { verifySession, extendSession } from "../utils/sessionUtils.js";
 import pool from "../config/db.js";
+import { tracedQuery } from "../utils/tracing.js";
 import { traceStore } from "../utils/traceStore.js";
 
 // Enrich the AsyncLocalStorage trace context with the authenticated user's ID
@@ -23,7 +24,7 @@ export async function requireAuth(req, res, next) {
       const session = await verifySession(sessionToken);
       if (!session) return res.status(401).json({ message: "Invalid session" });
       // Fetch minimal user info for role-based checks
-      const { rows } = await pool.query(
+      const { rows } = await tracedQuery(pool, 
         "SELECT id, role FROM users WHERE id = $1",
         [session.user_id]
       );
@@ -93,7 +94,7 @@ export async function optionalAuth(req, res, next) {
     try {
       const session = await verifySession(sessionToken);
       if (!session) return res.status(401).json({ message: "Invalid session" });
-      const { rows } = await pool.query(
+      const { rows } = await tracedQuery(pool, 
         "SELECT id, role FROM users WHERE id = $1",
         [session.user_id]
       );

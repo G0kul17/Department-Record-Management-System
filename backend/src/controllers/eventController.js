@@ -2,6 +2,7 @@
 import pool from "../config/db.js";
 import { upload } from "../config/upload.js";
 import logger, { reqContext } from "../utils/logger.js";
+import { tracedQuery } from "../utils/tracing.js";
 
 // Create event (staff/admin)
 export async function createEvent(req, res) {
@@ -113,7 +114,7 @@ export async function createEvent(req, res) {
       thumb?.mime || null,
       thumb?.size || null,
     ];
-    const { rows } = await pool.query(q, values);
+    const { rows } = await tracedQuery(pool, q, values);
 
     return res.status(201).json({ message: "Event created", event: rows[0] });
   } catch (err) {
@@ -140,7 +141,7 @@ export async function updateEvent(req, res) {
                    event_url = COALESCE($6, event_url),
                    updated_at = NOW()
                WHERE id=$7 AND (organizer_id=$8 OR $9='admin') RETURNING *`;
-    const { rows } = await pool.query(q, [
+    const { rows } = await tracedQuery(pool, q, [
       title,
       description,
       venue,
@@ -152,7 +153,7 @@ export async function updateEvent(req, res) {
       userRole,
     ]);
     if (!rows.length) {
-      const { rows: exists } = await pool.query(
+      const { rows: exists } = await tracedQuery(pool, 
         "SELECT id FROM events WHERE id=$1",
         [id]
       );
@@ -175,13 +176,13 @@ export async function deleteEvent(req, res) {
     const userId = req.user?.id;
     const userRole = req.user?.role;
 
-    const { rowCount } = await pool.query(
+    const { rowCount } = await tracedQuery(pool, 
       "DELETE FROM events WHERE id=$1 AND (organizer_id=$2 OR $3='admin')",
       [id, userId, userRole],
     );
 
     if (rowCount === 0) {
-      const { rows } = await pool.query("SELECT id FROM events WHERE id=$1", [id]);
+      const { rows } = await tracedQuery(pool, "SELECT id FROM events WHERE id=$1", [id]);
       if (!rows.length) return res.status(404).json({ message: "Event not found" });
       return res.status(403).json({ message: "Forbidden: you do not own this event" });
     }
@@ -216,7 +217,7 @@ export async function listEvents(req, res) {
       q += ` LIMIT ${n}`;
     }
 
-    const { rows } = await pool.query(q);
+    const { rows } = await tracedQuery(pool, q);
     return res.json({ events: rows });
   } catch (err) {
     logger.error("Event controller error", { err,

@@ -3,6 +3,7 @@ import pool from "../config/db.js";
 import path from "path";
 import fs from "fs";
 import logger, { reqContext } from "../utils/logger.js";
+import { tracedQuery } from "../utils/tracing.js";
 
 // ========== CREATE PARTICIPATION ==========
 export const createFacultyParticipation = async (req, res) => {
@@ -75,7 +76,7 @@ export const createFacultyParticipation = async (req, res) => {
           INSERT INTO project_files (project_id, filename, original_name, mime_type, size, file_type, uploaded_by)
           VALUES (NULL, $1, $2, $3, $4, 'faculty_proof', $5)
           RETURNING id`;
-        const fileR = await client.query(insertFileQ, [
+        const fileR = await tracedQuery(client, insertFileQ, [
           file.filename, file.originalname, file.mimetype, file.size, staffId,
         ]);
         proofFileId = fileR.rows[0].id;
@@ -146,7 +147,7 @@ export const createFacultyParticipation = async (req, res) => {
       staffId,
     ];
 
-      const { rows } = await client.query(q, values);
+      const { rows } = await tracedQuery(client, q, values);
 
       await client.query("COMMIT");
       return res
@@ -216,7 +217,7 @@ export const updateFacultyParticipation = async (req, res) => {
           INSERT INTO project_files (project_id, filename, original_name, mime_type, size, file_type, uploaded_by)
           VALUES (NULL, $1, $2, $3, $4, 'faculty_proof', $5)
           RETURNING id`;
-        const { rows: fileRows } = await client.query(qFile, [
+        const { rows: fileRows } = await tracedQuery(client, qFile, [
           file.filename, file.originalname, file.mimetype, file.size, req.user.id,
         ]);
         proofFileId = fileRows[0].id;
@@ -261,7 +262,7 @@ export const updateFacultyParticipation = async (req, res) => {
       WHERE id=$34
       RETURNING *`;
 
-      const { rows } = await client.query(q, [
+      const { rows } = await tracedQuery(client, q, [
         faculty_name,
         department,
         type_of_event,
@@ -333,13 +334,13 @@ export const deleteFacultyParticipation = async (req, res) => {
     const userId = req.user?.id;
     const userRole = req.user?.role;
 
-    const { rowCount } = await pool.query(
+    const { rowCount } = await tracedQuery(pool, 
       "DELETE FROM faculty_participations WHERE id=$1 AND (created_by=$2 OR $3='admin')",
       [id, userId, userRole],
     );
 
     if (rowCount === 0) {
-      const { rows } = await pool.query("SELECT id FROM faculty_participations WHERE id=$1", [id]);
+      const { rows } = await tracedQuery(pool, "SELECT id FROM faculty_participations WHERE id=$1", [id]);
       if (!rows.length) return res.status(404).json({ message: "Participation not found" });
       return res.status(403).json({ message: "Forbidden: you do not own this record" });
     }
@@ -437,8 +438,8 @@ export const listFacultyParticipations = async (req, res) => {
     params.push(Number(limit), Number(offset));
 
     const [dataResult, countResult] = await Promise.all([
-      pool.query(query, params),
-      pool.query(countQuery, countParams)
+      tracedQuery(pool, query, params),
+      tracedQuery(pool, countQuery, countParams)
     ]);
 
     return res.json({ 
@@ -455,7 +456,7 @@ export const listFacultyParticipations = async (req, res) => {
 // ========== COUNT PARTICIPATIONS ==========
 export const getFacultyParticipationsCount = async (req, res) => {
   try {
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       "SELECT COUNT(*)::int AS count FROM faculty_participations"
     );
     return res.json({ count: rows[0]?.count ?? 0 });

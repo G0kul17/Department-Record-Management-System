@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
 import pool from "../config/db.js";
 import logger, { reqContext } from "../utils/logger.js";
+import { tracedQuery } from "../utils/tracing.js";
 
 /* =====================================================
    Bulk Data Export Controller
@@ -21,7 +22,7 @@ const BATCH = 1000;
 async function streamRows(sql, params, onRow) {
   let offset = 0;
   while (true) {
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       `${sql} LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
       [...params, BATCH, offset],
     );
@@ -190,7 +191,7 @@ export const bulkDataExport = async (req, res) => {
     try {
       const staffUploadsSheet = workbook.addWorksheet("Staff_Uploads");
       // Fetch one row to discover the column list; avoids SELECT * in the hot path
-      const { rows: sample } = await pool.query(
+      const { rows: sample } = await tracedQuery(pool, 
         `SELECT * FROM staff_uploads LIMIT 1`,
       );
       if (sample.length > 0) {

@@ -4,6 +4,7 @@ import path from "path";
 import pool from "../config/db.js";
 import { STORAGE_PATH } from "../config/upload.js";
 import logger, { reqContext } from "../utils/logger.js";
+import { tracedQuery } from "../utils/tracing.js";
 
 // ========== CREATE CONSULTANCY ==========
 export const createConsultancy = async (req, res) => {
@@ -35,7 +36,7 @@ export const createConsultancy = async (req, res) => {
           INSERT INTO project_files (project_id, filename, original_name, mime_type, size, file_type, uploaded_by)
           VALUES (NULL, $1, $2, $3, $4, 'faculty_consultancy_proof', $5)
           RETURNING id`;
-        const fileR = await client.query(qFile, [
+        const fileR = await tracedQuery(client, qFile, [
           file.filename, file.originalname, file.mimetype, file.size, staffId,
         ]);
         proofFileId = fileR.rows[0].id;
@@ -59,7 +60,7 @@ export const createConsultancy = async (req, res) => {
         staffId,
       ];
 
-      const { rows } = await client.query(q, values);
+      const { rows } = await tracedQuery(client, q, values);
 
       await client.query("COMMIT");
       return res
@@ -101,7 +102,7 @@ export const updateConsultancy = async (req, res) => {
 
       // Fetch the existing proof file before any changes
       if (req.file) {
-        const { rows: existing } = await client.query(
+        const { rows: existing } = await tracedQuery(client, 
           `SELECT fc.proof_file_id, pf.filename
              FROM faculty_consultancy fc
              LEFT JOIN project_files pf ON pf.id = fc.proof_file_id
@@ -121,7 +122,7 @@ export const updateConsultancy = async (req, res) => {
           INSERT INTO project_files (project_id, filename, original_name, mime_type, size, file_type, uploaded_by)
           VALUES (NULL, $1, $2, $3, $4, 'faculty_consultancy_proof', $5)
           RETURNING id`;
-        const fileR = await client.query(qFile, [
+        const fileR = await tracedQuery(client, qFile, [
           file.filename, file.originalname, file.mimetype, file.size, req.user.id,
         ]);
         proofFileId = fileR.rows[0].id;
@@ -141,7 +142,7 @@ export const updateConsultancy = async (req, res) => {
         WHERE id=$9
         RETURNING *`;
 
-      const { rows } = await client.query(q, [
+      const { rows } = await tracedQuery(client, q, [
         faculty_name,
         team_members,
         agency,
@@ -160,7 +161,7 @@ export const updateConsultancy = async (req, res) => {
 
       // Delete the old project_files row inside the transaction while we still can roll back
       if (oldFileId) {
-        await client.query("DELETE FROM project_files WHERE id = $1", [oldFileId]);
+        await tracedQuery(client, "DELETE FROM project_files WHERE id = $1", [oldFileId]);
       }
 
       await client.query("COMMIT");
@@ -193,13 +194,13 @@ export const deleteConsultancy = async (req, res) => {
     const userId = req.user?.id;
     const userRole = req.user?.role;
 
-    const { rowCount } = await pool.query(
+    const { rowCount } = await tracedQuery(pool, 
       "DELETE FROM faculty_consultancy WHERE id=$1 AND (created_by=$2 OR $3='admin')",
       [id, userId, userRole],
     );
 
     if (rowCount === 0) {
-      const { rows } = await pool.query("SELECT id FROM faculty_consultancy WHERE id=$1", [id]);
+      const { rows } = await tracedQuery(pool, "SELECT id FROM faculty_consultancy WHERE id=$1", [id]);
       if (!rows.length) return res.status(404).json({ message: "Consultancy record not found" });
       return res.status(403).json({ message: "Forbidden: you do not own this record" });
     }
@@ -221,7 +222,7 @@ export const listConsultancy = async (req, res) => {
       LEFT JOIN project_files pf ON fc.proof_file_id = pf.id
       ORDER BY fc.created_at DESC`;
 
-    const { rows } = await pool.query(q);
+    const { rows } = await tracedQuery(pool, q);
 
     return res.json({ data: rows });
   } catch (err) {
@@ -234,7 +235,7 @@ export const listConsultancy = async (req, res) => {
 // ========== COUNT CONSULTANCY ==========
 export const getFacultyConsultancyCount = async (req, res) => {
   try {
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       "SELECT COUNT(*)::int AS count FROM faculty_consultancy"
     );
     return res.json({ count: rows[0]?.count ?? 0 });

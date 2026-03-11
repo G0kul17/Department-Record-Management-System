@@ -1,14 +1,15 @@
 import pool from "../config/db.js";
 import logger, { reqContext } from "../utils/logger.js";
+import { tracedQuery } from "../utils/tracing.js";
 
 // GET /api/admin/stats
 // Returns total counts for admin dashboard usages
 export async function getAdminStats(req, res) {
   try {
     const [studentsR, staffR, eventsR] = await Promise.all([
-      pool.query("SELECT COUNT(*)::int AS c FROM users WHERE role = 'student'"),
-      pool.query("SELECT COUNT(*)::int AS c FROM users WHERE role = 'staff'"),
-      pool.query("SELECT COUNT(*)::int AS c FROM events"),
+      tracedQuery(pool, "SELECT COUNT(*)::int AS c FROM users WHERE role = 'student'"),
+      tracedQuery(pool, "SELECT COUNT(*)::int AS c FROM users WHERE role = 'staff'"),
+      tracedQuery(pool, "SELECT COUNT(*)::int AS c FROM events"),
     ]);
 
     return res.json({
@@ -37,8 +38,8 @@ export async function listUsers(req, res) {
 
   try {
     const [countResult, pageResult] = await Promise.all([
-      pool.query("SELECT COUNT(*)::int AS total FROM users"),
-      pool.query(
+      tracedQuery(pool, "SELECT COUNT(*)::int AS total FROM users"),
+      tracedQuery(pool, 
         `SELECT ${USER_COLS} FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
         [limit, offset],
       ),
@@ -76,7 +77,7 @@ export async function updateUserRole(req, res) {
         .status(400)
         .json({ message: "Cannot change your own admin role" });
     }
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       "UPDATE users SET role=$1 WHERE id=$2 RETURNING id, email, role, COALESCE(NULLIF(full_name, ''), NULLIF(profile_details->>'full_name', ''), NULLIF(TRIM((profile_details->>'first_name') || ' ' || (profile_details->>'last_name')), '')) AS full_name, is_verified, created_at",
       [role, id]
     );
@@ -99,7 +100,7 @@ export async function deleteUser(req, res) {
         .status(400)
         .json({ message: "Cannot delete your own account" });
     }
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       "DELETE FROM users WHERE id=$1 RETURNING id",
       [id]
     );

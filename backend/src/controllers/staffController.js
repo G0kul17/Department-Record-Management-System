@@ -1,6 +1,7 @@
 // staffController.js
 import pool from "../config/db.js";
 import logger, { reqContext } from "../utils/logger.js";
+import { tracedQuery } from "../utils/tracing.js";
 import { reviewProject, reviewAchievement, ReviewError } from "../services/reviewService.js";
 
 // Approve project
@@ -89,11 +90,11 @@ export async function staffDashboard(req, res) {
       await Promise.all([
         // Admins see all pending; staff see only those for their mapped activity types
         requesterRole === "admin"
-          ? pool.query(`SELECT p.id, p.title, p.academic_year, p.created_by, p.created_at, u.email as created_by_email
+          ? tracedQuery(pool, `SELECT p.id, p.title, p.academic_year, p.created_by, p.created_at, u.email as created_by_email
                       FROM projects p LEFT JOIN users u ON p.created_by = u.id
                       WHERE p.verification_status = 'pending'
                       ORDER BY p.created_at DESC LIMIT 50`)
-          : pool.query(
+          : tracedQuery(pool, 
               `SELECT p.id, p.title, p.academic_year, p.created_by, p.created_at, u.email as created_by_email
                         FROM projects p
                         LEFT JOIN users u ON p.created_by = u.id
@@ -103,11 +104,11 @@ export async function staffDashboard(req, res) {
               [staffId]
             ),
         requesterRole === "admin"
-          ? pool.query(`SELECT a.id, a.title, a.user_id, a.date_of_award, a.created_at, u.email as user_email
+          ? tracedQuery(pool, `SELECT a.id, a.title, a.user_id, a.date_of_award, a.created_at, u.email as user_email
                       FROM achievements a LEFT JOIN users u ON a.user_id = u.id
                       WHERE a.verification_status = 'pending'
                       ORDER BY a.created_at DESC LIMIT 50`)
-          : pool.query(
+          : tracedQuery(pool, 
               `SELECT a.id, a.title, a.user_id, a.date_of_award, a.created_at, u.email as user_email
                         FROM achievements a
                         LEFT JOIN users u ON a.user_id = u.id
@@ -116,11 +117,11 @@ export async function staffDashboard(req, res) {
                        ORDER BY a.created_at DESC LIMIT 50`,
               [staffId]
             ),
-        pool.query(
+        tracedQuery(pool, 
           `SELECT id, title, start_date, end_date, venue FROM events ORDER BY start_date ASC LIMIT 50`
         ),
         // recent uploads from project_files
-        pool.query(`SELECT pf.id, pf.project_id, pf.original_name, pf.file_type, pf.uploaded_by, pf.uploaded_at, u.email as uploaded_by_email
+        tracedQuery(pool, `SELECT pf.id, pf.project_id, pf.original_name, pf.file_type, pf.uploaded_by, pf.uploaded_at, u.email as uploaded_by_email
                   FROM project_files pf LEFT JOIN users u ON pf.uploaded_by = u.id
                   ORDER BY pf.uploaded_at DESC LIMIT 50`),
       ]);

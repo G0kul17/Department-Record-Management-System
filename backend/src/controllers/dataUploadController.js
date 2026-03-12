@@ -4,6 +4,7 @@ import path from "path";
 import * as XLSX from "xlsx";
 import csvParser from "csv-parser";
 import logger, { reqContext } from "../utils/logger.js";
+import { tracedQuery } from "../utils/tracing.js";
 
 // Utility: Parse CSV
 const parseCSV = (filePath) =>
@@ -199,7 +200,7 @@ export const saveUploadedData = async (req, res) => {
         documents,
       ];
 
-      const { rows: result } = await pool.query(q, values);
+      const { rows: result } = await tracedQuery(pool, q, values);
       return res.status(201).json({
         message: "Data saved to general storage",
         data: result[0],
@@ -271,7 +272,7 @@ async function saveAchievement(normalized, user, rowNum) {
     throw new Error("Required fields missing: user_email, title");
   }
 
-  const userResult = await pool.query("SELECT id FROM users WHERE email = $1", [
+  const userResult = await tracedQuery(pool, "SELECT id FROM users WHERE email = $1", [
     user_email,
   ]);
   if (!userResult.rows.length) {
@@ -279,7 +280,7 @@ async function saveAchievement(normalized, user, rowNum) {
   }
 
   const user_id = userResult.rows[0].id;
-  await pool.query(
+  await tracedQuery(pool, 
     `INSERT INTO achievements (user_id, title, date, issuer, name, verified, verification_status)
      VALUES ($1, $2, $3, $4, $5, false, 'pending')`,
     [user_id, title, date || null, issuer || null, name || null]
@@ -315,7 +316,7 @@ async function saveProject(normalized, user, rowNum) {
     throw new Error("Required fields missing: title");
   }
 
-  await pool.query(
+  await tracedQuery(pool, 
     `INSERT INTO projects (title, description, mentor_name, academic_year, status, github_url, team_member_names, created_by, verification_status)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending')`,
     [
@@ -344,7 +345,7 @@ async function saveFacultyConsultancy(normalized, user, rowNum) {
     throw new Error("Required fields missing: agency");
   }
 
-  await pool.query(
+  await tracedQuery(pool, 
     `INSERT INTO faculty_consultancy (faculty_name, team_members, agency, amount, duration, start_date, end_date, created_by)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
     [
@@ -387,7 +388,7 @@ async function saveFacultyResearch(normalized, user, rowNum) {
     );
   }
 
-  await pool.query(
+  await tracedQuery(pool, 
     `INSERT INTO faculty_research (faculty_name, funded_type, principal_investigator, team_members, title, agency, current_status, duration, start_date, end_date, amount, created_by)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
     [
@@ -443,7 +444,7 @@ async function saveFacultyParticipation(normalized, user, rowNum) {
     );
   }
 
-  await pool.query(
+  await tracedQuery(pool, 
     `INSERT INTO faculty_participations (faculty_name, department, type_of_event, mode_of_training, title, start_date, end_date, conducted_by, details, created_by)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
     [
@@ -470,7 +471,7 @@ export const listUploadedData = async (req, res) => {
       FROM staff_uploads_with_document
       ORDER BY created_at DESC`;
 
-    const { rows } = await pool.query(q);
+    const { rows } = await tracedQuery(pool, q);
     res.json({ data: rows });
   } catch (err) {
     logger.error("Data upload controller error", { err,
@@ -484,7 +485,7 @@ export const viewUploadedData = async (req, res) => {
   try {
     const id = Number(req.params.id);
 
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       "SELECT * FROM staff_uploads_with_document WHERE id=$1",
       [id]
     );

@@ -3,6 +3,7 @@ import pool from "../config/db.js";
 import path from "path";
 import fs from "fs";
 import logger, { reqContext } from "../utils/logger.js";
+import { tracedQuery } from "../utils/tracing.js";
 import { QueryBuilder } from "../utils/queryBuilder.js";
 import { reviewAchievement, ReviewError } from "../services/reviewService.js";
 
@@ -50,7 +51,7 @@ export async function createAchievement(req, res) {
     // Accept all file types - no validation
 
     // duplicate check for same user — must run before any file writes
-    const dup = await pool.query(
+    const dup = await tracedQuery(pool, 
       "SELECT id FROM achievements WHERE user_id=$1 AND title=$2 AND date_of_award=$3",
       [userId, title.trim(), date_of_award || null],
     );
@@ -87,7 +88,7 @@ export async function createAchievement(req, res) {
       await client.query("BEGIN");
 
       const insertFileRecord = async (file, fileType) => {
-        const ins = await client.query(
+        const ins = await tracedQuery(client, 
           "INSERT INTO project_files (filename, original_name, mime_type, size, file_type, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id",
           [file.filename, file.originalname, file.mimetype, file.size, fileType, userId],
         );
@@ -146,7 +147,7 @@ export async function createAchievement(req, res) {
         ];
       }
 
-      const result = await client.query(insertSql, params);
+      const result = await tracedQuery(client, insertSql, params);
 
       // optional: auto-post to community if requested (left as TODO; integrate with posts endpoint)
       if (post_to_community === "true") {
@@ -309,7 +310,7 @@ export async function listAchievements(req, res) {
       `ORDER BY a.created_at DESC LIMIT ${limitRef} OFFSET ${offsetRef}`,
     );
 
-    const { rows } = await pool.query(text, values);
+    const { rows } = await tracedQuery(pool, text, values);
     return res.json({ achievements: rows });
   } catch (err) {
     logger.error("Achievement controller error", { err,
@@ -334,7 +335,7 @@ export async function getAchievementDetails(req, res) {
     if (!requesterId) {
       whereClause += " AND a.verified = true";
     } else if (requesterRole === "staff" && requesterId) {
-      const { rows: statusRows } = await pool.query(
+      const { rows: statusRows } = await tracedQuery(pool, 
         "SELECT verified, verification_status FROM achievements WHERE id = $1",
         [id],
       );
@@ -345,7 +346,7 @@ export async function getAchievementDetails(req, res) {
         statusRows[0].verified === true ||
         statusRows[0].verification_status === "approved";
       if (!isApproved) {
-        const { rows: auth } = await pool.query(
+        const { rows: auth } = await tracedQuery(pool, 
           `SELECT 1 FROM achievements a
              JOIN activity_coordinators ac
                ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = $1
@@ -360,7 +361,7 @@ export async function getAchievementDetails(req, res) {
       }
     }
 
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       `SELECT a.*,
               COALESCE(u.email, u2.email, ux.email)        AS user_email,
               COALESCE(u.full_name, u2.full_name, ux.full_name) AS user_fullname,
@@ -439,7 +440,7 @@ export async function getAchievementsCount(req, res) {
       sql += ` WHERE verified = $1`;
     }
 
-    const { rows } = await pool.query(sql, params);
+    const { rows } = await tracedQuery(pool, sql, params);
     return res.json({ count: rows[0]?.count ?? 0 });
   } catch (err) {
     logger.error("Achievement controller error", { err,
@@ -537,7 +538,7 @@ export async function getAchievementsLeaderboard(req, res) {
 
     const key = queries[type] ? type : "achievements";
     const { sql, params } = queries[key];
-    const { rows } = await pool.query(sql, params);
+    const { rows } = await tracedQuery(pool, sql, params);
 
     // Normalize field name for the frontend
     const leaderboard = rows.map((row) => ({

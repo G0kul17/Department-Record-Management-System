@@ -1,8 +1,6 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import morgan from "morgan";
-import { ecsFormat } from "@elastic/ecs-morgan-format";
 import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
@@ -33,22 +31,14 @@ import path from "path";
 dotenv.config();
 
 const app = express();
+// Trust the first proxy (Nginx) so req.ip returns the real client IP
+// from the X-Forwarded-For header instead of the internal proxy address.
+app.set("trust proxy", 1);
 app.use(helmet());
 app.use(express.json());
 
-// ECS-formatted JSON access logs for Elastic ingestion.
-// The Authorization header is redacted to prevent JWT tokens appearing in logs.
-app.use(
-  morgan(
-    ecsFormat({
-      reqSerializer(req) {
-        const headers = { ...req.headers };
-        if (headers.authorization) headers.authorization = "[REDACTED]";
-        return { method: req.method, url: req.url, headers };
-      },
-    }),
-  ),
-);
+// Attach correlation ID and emit ECS-structured HTTP log events for every request.
+app.use(requestLogger);
 
 // ============================================================================
 // CORS CONFIGURATION - Environment-Based Strategy
@@ -284,6 +274,9 @@ startApplication();
 // Keep this AFTER routes and server start to catch async route errors via next(err)
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
+  // trace_id is always available from requestLogger middleware
+  const traceId = req.correlationId;
+
   logger.error("Unhandled error", {
     err,
     "url.path": req.path,
@@ -296,19 +289,30 @@ app.use((err, req, res, next) => {
     if (err.code === "LIMIT_FILE_SIZE") {
       return res.status(400).json({
         message: `File too large. Maximum size is ${Math.floor(process.env.FILE_SIZE_LIMIT_MB || 50)} MB`,
+        trace_id: traceId,
       });
     }
     if (err.code === "LIMIT_UNEXPECTED_FILE") {
       return res.status(400).json({
         message: "Unexpected file field",
+        trace_id: traceId,
       });
     }
     return res
       .status(400)
-      .json({ message: err.message || "File upload error" });
+      .json({ message: err.message || "File upload error", trace_id: traceId });
   }
 
   const status = err.status || 400; // default to 400 for validation-like issues
   const message = err.message || "Server error";
-  res.status(status).json({ message });
+
+  // Always include trace_id in error responses so users/frontend can surface a
+  // reference code to support — the same pattern Cloudflare uses with Ray IDs.
+  // In development also surface the error detail; never in production.
+  const body =
+    process.env.NODE_ENV !== "production"
+      ? { message, trace_id: traceId, error: String(err.message || err) }
+      : { message, trace_id: traceId };
+
+  res.status(status).json(body);
 });

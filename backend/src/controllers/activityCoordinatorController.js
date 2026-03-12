@@ -1,10 +1,12 @@
 import pool from "../config/db.js";
 import logger, { reqContext } from "../utils/logger.js";
+import { tracedQuery } from "../utils/tracing.js";
 
 // List all activity coordinator mappings
 export async function getAllActivityCoordinators(req, res) {
   try {
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(
+      pool,
       `SELECT ac.id, ac.activity_type, ac.staff_id,
               u.email AS staff_email,
               u.profile_details->>'full_name' AS staff_name,
@@ -34,7 +36,8 @@ export async function createActivityCoordinator(req, res) {
   const type = activityType.trim().toLowerCase();
 
   try {
-    const staffCheck = await pool.query(
+    const staffCheck = await tracedQuery(
+      pool,
       "SELECT id, role FROM users WHERE id = $1",
       [staffId]
     );
@@ -47,7 +50,8 @@ export async function createActivityCoordinator(req, res) {
     }
 
     // Check if mapping already exists (case-insensitive)
-    const existingCheck = await pool.query(
+    const existingCheck = await tracedQuery(
+      pool,
       "SELECT id FROM activity_coordinators WHERE LOWER(activity_type) = $1 AND staff_id = $2",
       [type, staffId]
     );
@@ -55,7 +59,8 @@ export async function createActivityCoordinator(req, res) {
       return res.status(409).json({ message: "Mapping already exists" });
     }
 
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(
+      pool,
       `INSERT INTO activity_coordinators (activity_type, staff_id)
          VALUES ($1, $2)
          RETURNING id, activity_type, staff_id, created_at`,
@@ -74,7 +79,8 @@ export async function createActivityCoordinator(req, res) {
 export async function deleteActivityCoordinator(req, res) {
   const { mappingId } = req.params;
   try {
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(
+      pool,
       "DELETE FROM activity_coordinators WHERE id = $1 RETURNING id",
       [mappingId]
     );
@@ -92,7 +98,8 @@ export async function deleteActivityCoordinator(req, res) {
 // Distinct list of activity types from mappings and existing records (achievements/projects)
 export async function getActivityTypes(req, res) {
   try {
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(
+      pool,
       `WITH candidates AS (
          -- Explicit activity types already stored
          SELECT TRIM(activity_type) AS label FROM activity_coordinators WHERE activity_type IS NOT NULL AND activity_type <> ''

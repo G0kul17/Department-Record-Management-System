@@ -1,6 +1,18 @@
 import { verifyToken } from "../utils/tokenUtils.js";
 import { verifySession, extendSession } from "../utils/sessionUtils.js";
 import pool from "../config/db.js";
+import { tracedQuery } from "../utils/tracing.js";
+import { traceStore } from "../utils/traceStore.js";
+
+// Enrich the AsyncLocalStorage trace context with the authenticated user's ID
+// so that every subsequent log entry in this request automatically carries user.id
+// without needing explicit reqContext(req) calls.
+function enrichTraceWithUser(userId) {
+  const ctx = traceStore.getStore();
+  if (ctx && userId != null) {
+    ctx.user = { id: String(userId) };
+  }
+}
 
 export async function requireAuth(req, res, next) {
   const auth = req.headers.authorization;
@@ -12,13 +24,14 @@ export async function requireAuth(req, res, next) {
       const session = await verifySession(sessionToken);
       if (!session) return res.status(401).json({ message: "Invalid session" });
       // Fetch minimal user info for role-based checks
-      const { rows } = await pool.query(
+      const { rows } = await tracedQuery(pool, 
         "SELECT id, role FROM users WHERE id = $1",
         [session.user_id]
       );
       if (!rows.length)
         return res.status(401).json({ message: "User not found" });
       req.user = { id: rows[0].id, role: rows[0].role };
+      enrichTraceWithUser(rows[0].id);
       // Extend session on activity
       await extendSession(sessionToken);
       req.session = session;
@@ -59,6 +72,7 @@ export async function requireAuth(req, res, next) {
     }
 
     req.user = decoded;
+    enrichTraceWithUser(decoded.id);
     return next();
   } catch (err) {
     if (err.name === "TokenExpiredError") {
@@ -80,13 +94,14 @@ export async function optionalAuth(req, res, next) {
     try {
       const session = await verifySession(sessionToken);
       if (!session) return res.status(401).json({ message: "Invalid session" });
-      const { rows } = await pool.query(
+      const { rows } = await tracedQuery(pool, 
         "SELECT id, role FROM users WHERE id = $1",
         [session.user_id]
       );
       if (!rows.length)
         return res.status(401).json({ message: "User not found" });
       req.user = { id: rows[0].id, role: rows[0].role };
+      enrichTraceWithUser(rows[0].id);
       await extendSession(sessionToken);
       req.session = session;
       return next();
@@ -119,6 +134,7 @@ export async function optionalAuth(req, res, next) {
     }
 
     req.user = decoded;
+    enrichTraceWithUser(decoded.id);
     return next();
   } catch (err) {
     if (err.name === "TokenExpiredError") {

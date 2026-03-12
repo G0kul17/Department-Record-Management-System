@@ -4,6 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import InputField from "../components/InputField";
 import BlurText from "../components/ui/BlurText";
 import apiClient from "../api/axiosClient";
+import ErrorMessage from "../components/ErrorMessage";
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -81,7 +82,7 @@ const Login = () => {
       setOtpSent(true);
       setOtpExpiresAt(Date.now() + 5 * 60 * 1000);
     } catch (err) {
-      setError(err.message || "Failed to send OTP");
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -122,7 +123,7 @@ const Login = () => {
         navigate("/");
       }
     } catch (err) {
-      setError(err.message || "Login failed");
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -171,11 +172,7 @@ const Login = () => {
             Login
           </h2>
 
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-              {error}
-            </div>
-          )}
+          <ErrorMessage error={error} className="mb-4" />
 
           {!otpSent ? (
             <form onSubmit={handleSendOtp}>

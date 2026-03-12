@@ -6,6 +6,7 @@ import xlsx from "xlsx";
 import csvParser from "csv-parser";
 import { sendMail } from "../config/mailer.js";
 import logger, { reqContext } from "../utils/logger.js";
+import { tracedQuery, tracedExternalCall } from "../utils/tracing.js";
 
 /* ================= HELPERS ================= */
 
@@ -188,7 +189,7 @@ export const uploadStudents = async (req, res) => {
     const skipped = [];
 
     for (const s of validStudents) {
-      const exists = await pool.query("SELECT id FROM users WHERE LOWER(email) = LOWER($1)", [
+      const exists = await tracedQuery(pool, "SELECT id FROM users WHERE LOWER(email) = LOWER($1)", [
         s.email,
       ]);
 
@@ -200,7 +201,7 @@ export const uploadStudents = async (req, res) => {
       const defaultPassword = Math.random().toString(36).slice(-8);
       const hash = await bcrypt.hash(defaultPassword, 10);
 
-      await pool.query(
+      await tracedQuery(pool, 
         `
         INSERT INTO users
         (email, password_hash, role, is_verified, profile_details, full_name)
@@ -224,10 +225,11 @@ export const uploadStudents = async (req, res) => {
         ]
       );
 
-      await sendMail({
-        to: s.email,
-        subject: "Student Account Created",
-        text: `
+      await tracedExternalCall("mail.send", { "email.to": s.email, "email.subject": "Student Account Created" }, () =>
+        sendMail({
+          to: s.email,
+          subject: "Student Account Created",
+          text: `
 Hello ${s.full_name || s.first_name},
 
 Your student account has been created. And you are added in the Community of DRMS.
@@ -239,8 +241,9 @@ Please change your password using the "Forgot Password" option.
 
 Regards,
 Department Admin
-        `,
-      });
+          `,
+        })
+      );
 
       created++;
     }

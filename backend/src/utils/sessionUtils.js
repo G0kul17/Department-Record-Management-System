@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import pool from "../config/db.js";
 import logger from "./logger.js";
+import { tracedQuery } from "./tracing.js";
 
 const SESSION_DURATION_DAYS = 90;
 
@@ -32,7 +33,7 @@ export async function createSession(userId, deviceInfo = null) {
   const createdAt = new Date();
 
   try {
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       `INSERT INTO user_sessions (user_id, session_token, expires_at, created_at, last_accessed_at, device_info, is_active)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, user_id, session_token, created_at, expires_at, last_accessed_at, is_active`,
@@ -60,7 +61,7 @@ export async function createSession(userId, deviceInfo = null) {
  */
 export async function verifySession(sessionToken) {
   try {
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       `SELECT * FROM user_sessions 
        WHERE session_token = $1 AND is_active = true AND expires_at > CURRENT_TIMESTAMP`,
       [sessionToken]
@@ -85,7 +86,7 @@ export async function verifySession(sessionToken) {
  */
 export async function extendSession(sessionToken) {
   try {
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       `UPDATE user_sessions
        SET last_accessed_at = CURRENT_TIMESTAMP,
            expires_at = CURRENT_TIMESTAMP + INTERVAL '90 days'
@@ -112,7 +113,7 @@ export async function extendSession(sessionToken) {
  */
 export async function getUserActiveSessions(userId) {
   try {
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       `SELECT id, user_id, session_token, created_at, expires_at, last_accessed_at, device_info, is_active
        FROM user_sessions 
        WHERE user_id = $1 AND is_active = true AND expires_at > CURRENT_TIMESTAMP
@@ -134,7 +135,7 @@ export async function getUserActiveSessions(userId) {
  */
 export async function hasValidSession(userId) {
   try {
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       `SELECT id FROM user_sessions 
        WHERE user_id = $1 AND is_active = true AND expires_at > CURRENT_TIMESTAMP
        LIMIT 1`,
@@ -155,7 +156,7 @@ export async function hasValidSession(userId) {
  */
 export async function invalidateSession(sessionToken) {
   try {
-    const { rowCount } = await pool.query(
+    const { rowCount } = await tracedQuery(pool, 
       `UPDATE user_sessions 
        SET is_active = false 
        WHERE session_token = $1`,
@@ -176,7 +177,7 @@ export async function invalidateSession(sessionToken) {
  */
 export async function invalidateAllUserSessions(userId) {
   try {
-    const { rowCount } = await pool.query(
+    const { rowCount } = await tracedQuery(pool, 
       `UPDATE user_sessions 
        SET is_active = false 
        WHERE user_id = $1`,
@@ -196,7 +197,7 @@ export async function invalidateAllUserSessions(userId) {
  */
 export async function cleanupExpiredSessions() {
   try {
-    const { rowCount } = await pool.query(
+    const { rowCount } = await tracedQuery(pool, 
       `DELETE FROM user_sessions 
        WHERE expires_at < CURRENT_TIMESTAMP OR (is_active = false AND created_at < CURRENT_TIMESTAMP - INTERVAL '30 days')`
     );

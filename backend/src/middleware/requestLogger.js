@@ -1,6 +1,7 @@
 // src/middleware/requestLogger.js
 import { v4 as uuidv4 } from "uuid";
 import logger, { reqContext } from "../utils/logger.js";
+import { traceStore } from "../utils/traceStore.js";
 
 // Routes polled by load balancers / uptime monitors — log at debug to avoid noise.
 const HEALTH_PROBE_PATHS = new Set(["/", "/health", "/favicon.ico"]);
@@ -15,66 +16,88 @@ const SLOW_THRESHOLD_NS = BigInt(
   (Number(process.env.SLOW_REQUEST_THRESHOLD_MS) || 1000) * 1_000_000,
 );
 
-/**
- * Return a sanitized copy of the Express request suitable for the ECS formatter.
- *
- * Redacts:
- *  - Authorization header  → "[REDACTED]"  (prevents JWT tokens in logs)
- *  - ?token= query param   → "[REDACTED]"  (prevents file-download tokens in url.full)
- */
-function sanitizeReq(req) {
-  const headers = req.headers.authorization
-    ? { ...req.headers, authorization: "[REDACTED]" }
-    : req.headers;
-
-  // Redact ?token= in the raw URL string so ECS url.full / url.query don't leak it.
-  const url = req.url?.replace(/([?&]token=)[^&]*/g, "$1[REDACTED]") ?? req.url;
-
-  // Return a plain object with the properties the ECS formatter reads from a request.
+// Build ECS-compatible fields from an incoming Express request.
+// Raw req/res objects are intentionally NOT passed to Winston — doing so with
+// convertReqRes: true triggers the ECS formatter's internal Morgan serialiser,
+// which overwrites our custom message with an apache combined-log string.
+// Extracting fields manually also prevents sensitive headers (e.g. Authorization)
+// from appearing in logs.
+function reqFields(req, correlationId, urlPath) {
   return {
-    method: req.method,
-    url,
-    headers,
-    socket: req.socket,
-    httpVersion: req.httpVersion,
+    trace: { id: correlationId },
+    http: {
+      version: req.httpVersion,
+      request: { method: req.method },
+    },
+    url: {
+      path: urlPath,
+      domain: req.hostname,
+    },
+    client: {
+      ip: req.ip,
+      address: req.ip,
+    },
+    user_agent: { original: req.headers["user-agent"] },
   };
 }
 
-/**
- * Return a sanitized shim for the Express response suitable for the ECS formatter.
- *
- * Express attaches res.req = req (the original request). The ECS formatter uses
- * res.req when building the Combined Log Format message string, bypassing the
- * sanitized req copy we pass as info.req. This shim replaces res.req with the
- * already-sanitized request object so the token cannot leak through that path.
- */
-function sanitizeRes(res, sanitizedReq) {
-  return {
-    statusCode: res.statusCode,
-    getHeaders: () => res.getHeaders(),
-    req: sanitizedReq,
+function resFields(req, res, correlationId, durationNs, urlPath) {
+  const contentLength = parseInt(res.getHeader("content-length"), 10);
+  const durationMs = Math.round(Number(durationNs) / 1_000_000 * 100) / 100;
+  const meta = {
+    trace: { id: correlationId },
+    http: {
+      version: req.httpVersion,
+      request: { method: req.method },
+      response: {
+        status_code: res.statusCode,
+        ...(Number.isFinite(contentLength) && { body: { bytes: contentLength } }),
+      },
+    },
+    url: {
+      path: urlPath,
+      domain: req.hostname,
+    },
+    client: {
+      ip: req.ip,
+      address: req.ip,
+    },
+    user_agent: { original: req.headers["user-agent"] },
+    // Include both ECS event.duration (nanoseconds) and a human-readable ms field
+    event: { duration: Number(durationNs) },
+    "event.duration_ms": durationMs,
   };
+  if (req.user?.id != null) {
+    meta.user = { id: String(req.user.id) };
+  }
+  return meta;
 }
 
 /**
  * Request logging middleware.
  *
- * 1. Assigns a correlation ID to every incoming request.
+ * 1. Assigns a unique trace_id (correlation ID) to every incoming request.
  *    - Validates the client-supplied X-Correlation-ID header against a safe
  *      pattern before reusing it (prevents header-injection log pollution).
  *    - Falls back to a new UUID v4 when the header is absent or invalid.
  *
- * 2. Attaches the ID to req.correlationId so controllers and downstream
+ * 2. Seeds AsyncLocalStorage with the per-request trace context so that ALL
+ *    Winston log entries — even from utility modules and config helpers that
+ *    never receive `req` — automatically include:
+ *      trace.id, url.path, http.request.method  (and user.id once auth runs)
+ *
+ * 3. Attaches the ID to req.correlationId so controllers and downstream
  *    middleware can include it in their own log entries via reqContext(req).
  *
- * 3. Echoes the ID back in the X-Correlation-ID response header so clients
+ * 4. Echoes the ID back in the X-Correlation-ID response header so clients
  *    and API gateways can correlate responses to requests.
  *
- * 4. Emits ECS-structured log events per request:
+ * 5. Emits ECS-structured log events per request:
  *    - "HTTP request received"  — on incoming request (skipped for health probes).
  *                                 user.id is intentionally absent here because auth
  *                                 middleware has not yet run.
  *    - "HTTP response sent"     — after the response is flushed (finish event).
+ *                                 Includes execution duration in ms and nanoseconds.
  *                                 user.id is present for authenticated routes.
  *    - "HTTP request aborted"   — when the client disconnects before a response.
  *    - "Slow request detected"  — extra warn when duration > SLOW_REQUEST_THRESHOLD_MS.
@@ -90,54 +113,73 @@ export function requestLogger(req, res, next) {
   req.correlationId = correlationId;
   res.setHeader("X-Correlation-ID", correlationId);
 
+  // Capture the full path now, before Express routing rewrites req.url/req.path
+  // relative to the matched router's mount point.
+  const urlPath = (req.originalUrl || req.path).split("?")[0];
+
   const startTime = process.hrtime.bigint();
-  const isHealthProbe = HEALTH_PROBE_PATHS.has(req.path);
+  const isHealthProbe = HEALTH_PROBE_PATHS.has(urlPath);
 
-  // "HTTP request received" — auth has not run yet so user.id is intentionally omitted.
-  logger[isHealthProbe ? "debug" : "info"]("HTTP request received", {
-    req: sanitizeReq(req),
+  // Build the mutable trace context object that lives in AsyncLocalStorage for
+  // the entire request lifecycle.  authMiddleware.js will add user.id in-place
+  // once authentication completes, so every subsequent log picks it up too.
+  const traceCtx = {
     trace: { id: correlationId },
-  });
+    url: { path: urlPath },
+    http: { request: { method: req.method } },
+    // user is intentionally absent here; authMiddleware adds it
+  };
 
-  let responded = false;
+  // Run the rest of the middleware chain inside the trace context store so
+  // every Winston log call within this request automatically includes trace.id,
+  // url.path, and http.method without needing explicit reqContext(req) calls.
+  traceStore.run(traceCtx, () => {
+    // "HTTP request received" — auth has not run yet so user.id is intentionally omitted.
+    logger[isHealthProbe ? "debug" : "info"](
+      "HTTP request received",
+      reqFields(req, correlationId, urlPath),
+    );
 
-  res.on("finish", () => {
-    responded = true;
-    const durationNs = process.hrtime.bigint() - startTime;
-    const level =
-      res.statusCode >= 500 ? "error" : res.statusCode >= 400 ? "warn" : "info";
+    let responded = false;
 
-    const sanitizedReq = sanitizeReq(req);
-    logger[isHealthProbe ? "debug" : level]("HTTP response sent", {
-      req: sanitizedReq,
-      res: sanitizeRes(res, sanitizedReq),
-      "event.duration": Number(durationNs),
-      ...reqContext(req),
+    res.on("finish", () => {
+      responded = true;
+      const durationNs = process.hrtime.bigint() - startTime;
+      const level =
+        res.statusCode >= 500 ? "error" : res.statusCode >= 400 ? "warn" : "info";
+
+      logger[isHealthProbe ? "debug" : level](
+        "HTTP response sent",
+        resFields(req, res, correlationId, durationNs, urlPath),
+      );
+
+      // Emit an extra warning when a request takes longer than the threshold.
+      if (!isHealthProbe && durationNs > SLOW_THRESHOLD_NS) {
+        logger.warn("Slow request detected", {
+          "url.path": urlPath,
+          "http.request.method": req.method,
+          "event.duration": Number(durationNs),
+          "event.duration_ms": Math.round(Number(durationNs) / 1_000_000 * 100) / 100,
+          "slow_threshold_ms": Number(process.env.SLOW_REQUEST_THRESHOLD_MS) || 1000,
+          ...reqContext(req),
+        });
+      }
     });
 
-    // Emit an extra warning when a request takes longer than the threshold.
-    if (!isHealthProbe && durationNs > SLOW_THRESHOLD_NS) {
-      logger.warn("Slow request detected", {
-        "url.path": req.path,
-        "http.request.method": req.method,
-        "event.duration": Number(durationNs),
-        "slow_threshold_ms": Number(process.env.SLOW_REQUEST_THRESHOLD_MS) || 1000,
-        ...reqContext(req),
-      });
-    }
-  });
+    // Detect client disconnects that happen before the response is sent.
+    res.on("close", () => {
+      if (!responded) {
+        const durationNs = process.hrtime.bigint() - startTime;
+        logger.warn("HTTP request aborted", {
+          "url.path": urlPath,
+          "http.request.method": req.method,
+          "event.duration": Number(durationNs),
+          "event.duration_ms": Math.round(Number(durationNs) / 1_000_000 * 100) / 100,
+          ...reqContext(req),
+        });
+      }
+    });
 
-  // Detect client disconnects that happen before the response is sent.
-  res.on("close", () => {
-    if (!responded) {
-      logger.warn("HTTP request aborted", {
-        "url.path": req.path,
-        "http.request.method": req.method,
-        "event.duration": Number(process.hrtime.bigint() - startTime),
-        ...reqContext(req),
-      });
-    }
+    next();
   });
-
-  next();
 }

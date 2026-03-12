@@ -6,6 +6,7 @@ import fs from "fs";
 import logger, { reqContext } from "../utils/logger.js";
 import { QueryBuilder } from "../utils/queryBuilder.js";
 import { reviewProject, ReviewError } from "../services/reviewService.js";
+import { tracedQuery } from "../utils/tracing.js";
 
 // Note: 'upload' is multer instance exported above
 // We'll expose middleware usage in routes.
@@ -121,7 +122,8 @@ export async function createProject(req, res) {
 
     // Check if GitHub URL already exists (prevent duplicate team submissions) — before any DB writes
     if (gh) {
-      const { rows: githubDup } = await pool.query(
+      const { rows: githubDup } = await tracedQuery(
+        pool,
         "SELECT id, title, team_member_names, created_by FROM projects WHERE LOWER(TRIM(github_url)) = LOWER(TRIM($1))",
         [gh],
       );
@@ -143,7 +145,8 @@ export async function createProject(req, res) {
     }
 
     // duplicate check (title + mentor_name + year) — before any DB writes
-    const { rows: dup } = await pool.query(
+    const { rows: dup } = await tracedQuery(
+      pool,
       "SELECT id FROM projects WHERE title=$1 AND mentor_name=$2 AND academic_year=$3",
       [title.trim(), mentor_name.trim(), academic_year || null],
     );
@@ -188,16 +191,23 @@ export async function createProject(req, res) {
       ];
     }
     const client = await pool.connect();
+    const txStartNs = process.hrtime.bigint();
+    logger.info("project.create.start", {
+      "project.title": title.trim(),
+      "project.file_count": files.length,
+      ...reqContext(req),
+    });
     try {
       await client.query("BEGIN");
 
-      const { rows } = await client.query(insertSql, insertParams);
+      const { rows } = await tracedQuery(client, insertSql, insertParams);
       const project = rows[0];
 
       // handle uploaded files if any
       for (const f of files) {
         const fileType = detectFileTypeByField(f.fieldname);
-        await client.query(
+        await tracedQuery(
+          client,
           `INSERT INTO project_files (project_id, filename, original_name, mime_type, size, file_type, uploaded_by)
            VALUES ($1,$2,$3,$4,$5,$6,$7)`,
           [project.id, f.filename, f.originalname, f.mimetype, f.size, fileType, created_by || null],
@@ -205,16 +215,25 @@ export async function createProject(req, res) {
       }
 
       // Persist a summary of files into projects.files JSONB for easy viewing
-      const { rows: pf } = await client.query(
+      const { rows: pf } = await tracedQuery(
+        client,
         "SELECT id, filename, original_name, mime_type, size, file_type, uploaded_at FROM project_files WHERE project_id=$1 ORDER BY id ASC",
         [project.id],
       );
-      await client.query("UPDATE projects SET files = $2 WHERE id = $1", [
+      await tracedQuery(client, "UPDATE projects SET files = $2 WHERE id = $1", [
         project.id,
         JSON.stringify(pf),
       ]);
 
       await client.query("COMMIT");
+      const durationMs = Math.round(Number(process.hrtime.bigint() - txStartNs) / 1_000_000 * 100) / 100;
+      logger.info("project.create.complete", {
+        "project.id": project.id,
+        "project.title": project.title,
+        "project.file_count": pf.length,
+        "event.duration_ms": durationMs,
+        ...reqContext(req),
+      });
       return res
         .status(201)
         .json({ message: "Project created", project: { ...project, files: pf } });
@@ -240,7 +259,7 @@ export async function uploadFilesToProject(req, res) {
     if (!Number.isInteger(projectId) || Number.isNaN(projectId)) {
       return res.status(400).json({ message: "Invalid project id" });
     }
-    const projectQ = await pool.query("SELECT id FROM projects WHERE id=$1", [
+    const projectQ = await tracedQuery(pool, "SELECT id FROM projects WHERE id=$1", [
       projectId,
     ]);
     if (!projectQ.rows.length)
@@ -309,7 +328,7 @@ export async function uploadFilesToProject(req, res) {
 
       for (const f of files) {
         const fileType = detectFileTypeByField(f.fieldname);
-        await client.query(
+        await tracedQuery(client, 
           `INSERT INTO project_files (project_id, filename, original_name, mime_type, size, file_type, uploaded_by)
            VALUES ($1,$2,$3,$4,$5,$6,$7)`,
           [projectId, f.filename, f.originalname, f.mimetype, f.size, fileType, req.user?.id || null],
@@ -317,11 +336,11 @@ export async function uploadFilesToProject(req, res) {
       }
 
       // Update projects.files JSONB summary
-      const { rows: pf } = await client.query(
+      const { rows: pf } = await tracedQuery(client, 
         "SELECT id, filename, original_name, mime_type, size, file_type, uploaded_at FROM project_files WHERE project_id=$1 ORDER BY id ASC",
         [projectId],
       );
-      await client.query("UPDATE projects SET files = $2 WHERE id = $1", [
+      await tracedQuery(client, "UPDATE projects SET files = $2 WHERE id = $1", [
         projectId,
         JSON.stringify(pf),
       ]);
@@ -457,7 +476,7 @@ export async function listProjects(req, res) {
         return res.status(401).json({ message: "Authentication required" });
       }
       // Get user's full name for matching in team_member_names
-      const { rows: userRows } = await pool.query(
+      const { rows: userRows } = await tracedQuery(pool, 
         "SELECT full_name FROM users WHERE id = $1",
         [requesterId],
       );
@@ -478,7 +497,7 @@ export async function listProjects(req, res) {
       `ORDER BY p.created_at DESC LIMIT ${limitRef} OFFSET ${offsetRef}`,
     );
 
-    const { rows } = await pool.query(text, values);
+    const { rows } = await tracedQuery(pool, text, values);
     return res.json({ projects: rows });
   } catch (err) {
     logger.error("Project controller error", { err,
@@ -506,7 +525,7 @@ export async function getProjectDetails(req, res) {
       // 1. Projects they coordinate (activity type match)
       // 2. Any verified projects (for public viewing)
       // 3. Projects they created
-      const { rows: auth } = await pool.query(
+      const { rows: auth } = await tracedQuery(pool, 
         `SELECT 1 FROM projects p
          WHERE p.id = $1 AND (
            p.verified = true 
@@ -526,7 +545,7 @@ export async function getProjectDetails(req, res) {
       }
     }
 
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       `SELECT p.*, u.email AS uploader_email, u.full_name AS uploader_full_name
          FROM projects p
          LEFT JOIN users u ON u.id = p.created_by
@@ -535,7 +554,7 @@ export async function getProjectDetails(req, res) {
     );
     if (!rows.length) return res.status(404).json({ message: "Not found" });
     const project = rows[0];
-    const { rows: files } = await pool.query(
+    const { rows: files } = await tracedQuery(pool, 
       "SELECT * FROM project_files WHERE project_id=$1 ORDER BY id ASC",
       [id],
     );
@@ -543,7 +562,7 @@ export async function getProjectDetails(req, res) {
     project.files = files;
     // Fallback uploader from first file if project.created_by is null
     if (!project.uploader_email || !project.uploader_full_name) {
-      const { rows: up } = await pool.query(
+      const { rows: up } = await tracedQuery(pool, 
         `SELECT u.email AS uploader_email, u.full_name AS uploader_full_name
            FROM project_files pf
            LEFT JOIN users u ON u.id = pf.uploaded_by
@@ -618,13 +637,13 @@ export async function getProjectsCount(req, res) {
     const { verified } = req.query;
     if (verified !== undefined) {
       const val = verified === "true";
-      const { rows } = await pool.query(
+      const { rows } = await tracedQuery(pool, 
         "SELECT COUNT(*)::int AS count FROM projects WHERE verified = $1",
         [val],
       );
       return res.json({ count: rows[0]?.count ?? 0 });
     }
-    const { rows } = await pool.query(
+    const { rows } = await tracedQuery(pool, 
       "SELECT COUNT(*)::int AS count FROM projects WHERE verified = true OR verification_status = 'approved'",
     );
     return res.json({ count: rows[0]?.count ?? 0 });

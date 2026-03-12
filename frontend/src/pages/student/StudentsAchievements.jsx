@@ -322,7 +322,7 @@ export default function Achievements() {
 
             <div className="mt-4">
               <UploadDropzone
-                label="Upload Other Proofs"
+                label="Thumbnail"
                 subtitle="Any file format - Mandatory"
                 accept="*"
                 maxSizeMB={25}

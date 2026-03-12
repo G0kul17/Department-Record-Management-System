@@ -6,6 +6,7 @@ import fs from "fs";
 import logger, { reqContext } from "../utils/logger.js";
 import { QueryBuilder } from "../utils/queryBuilder.js";
 import { reviewProject, ReviewError } from "../services/reviewService.js";
+import { tracedQuery } from "../utils/tracing.js";
 import {
   ActivityTypeValidationError,
   requireActivityTypeByName,

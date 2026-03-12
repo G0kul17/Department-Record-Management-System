@@ -5,8 +5,8 @@ pipeline {
         REPO_URL      = "https://github.com/G0kul17/Department-Record-Management-System.git"
         BRANCH        = "main"
         BUILD_VERSION = "${env.BUILD_NUMBER}"
-        APP_HOST      = "192.168.122.192"
-        GATEWAY_HOST  = "192.168.122.24"
+        APP_HOST      = "drms-app-01"
+        GATEWAY_HOST  = "prod-gateway-01"
         REMOTE_USER   = "deploy"
 
         // Required by backend unit tests (no real DB/email needed)

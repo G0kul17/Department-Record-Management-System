@@ -180,9 +180,9 @@ pipeline {
             steps {
                 sh '''
                     sleep 5
-                    curl -k -f https://192.168.122.24/ > /dev/null
+                    curl -k -f https://prod-gateway-01/ > /dev/null
                     sleep 5
-                    curl -k -f http://192.168.122.192:5000/health > /dev/null
+                    curl -k -f http://drms-app-01:5000/health > /dev/null
                 '''
             }
         }

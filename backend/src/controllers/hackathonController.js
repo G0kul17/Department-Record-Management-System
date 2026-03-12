@@ -47,10 +47,11 @@ async function hasHackathonCoordinatorMapping(staffId, db = pool) {
   const { rows } = await db.query(
     `SELECT 1
        FROM activity_coordinators ac
+       JOIN activity_types at ON at.id = ac.activity_type_id
       WHERE ac.staff_id = $1
         AND (
-          LOWER(TRIM(ac.activity_type)) = ANY($2::text[])
-          OR LOWER(TRIM(ac.activity_type)) LIKE '%hackathon%'
+          LOWER(TRIM(at.name)) = ANY($2::text[])
+          OR LOWER(TRIM(at.name)) LIKE '%hackathon%'
         )
       LIMIT 1`,
     [staffId, COORDINATOR_ACTIVITY_TYPES],

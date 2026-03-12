@@ -11,4 +11,5 @@ export const createProjectSchema = Joi.object({
   team_member_names: Joi.string().max(1000).trim(),
   // URI validation; the controller additionally enforces the github.com domain
   github_url: Joi.string().uri().max(500).trim().required(),
+  activity_type: Joi.string().max(100).trim(),
 });

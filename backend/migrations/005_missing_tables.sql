@@ -8,16 +8,29 @@
 -- ----------------------------------------------------------------------------
 -- activity_coordinators
 -- ----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS activity_coordinators (
+CREATE TABLE IF NOT EXISTS activity_types (
   id SERIAL PRIMARY KEY,
-  activity_type VARCHAR(100) NOT NULL,
-  staff_id INTEGER NOT NULL REFERENCES users(id),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(activity_type, staff_id)
+  name VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS activity_coordinators_type_staff_unique
-  ON activity_coordinators (LOWER(activity_type), staff_id);
+CREATE UNIQUE INDEX IF NOT EXISTS activity_types_name_unique_ci
+  ON activity_types (LOWER(TRIM(name)));
+
+INSERT INTO activity_types (id, name) VALUES (1, 'project') ON CONFLICT (id) DO NOTHING;
+INSERT INTO activity_types (id, name) VALUES (2, 'achievement') ON CONFLICT (id) DO NOTHING;
+INSERT INTO activity_types (id, name) VALUES (3, 'hackathon entry progress') ON CONFLICT (id) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS activity_coordinators (
+  id SERIAL PRIMARY KEY,
+  activity_type_id INTEGER NOT NULL REFERENCES activity_types(id),
+  staff_id INTEGER NOT NULL REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(activity_type_id, staff_id)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS activity_coordinators_type_id_staff_unique
+  ON activity_coordinators (activity_type_id, staff_id);
 
 -- ----------------------------------------------------------------------------
 -- staff_announcements

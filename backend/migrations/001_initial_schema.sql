@@ -76,6 +76,25 @@ CREATE TABLE IF NOT EXISTS project_files (
 -- PROJECTS TABLE
 -- ============================================================================
 
+CREATE TABLE IF NOT EXISTS activity_types (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS activity_types_name_unique_ci
+  ON activity_types (LOWER(TRIM(name)));
+
+INSERT INTO activity_types (id, name) VALUES (1, 'project') ON CONFLICT (id) DO NOTHING;
+INSERT INTO activity_types (id, name) VALUES (2, 'achievement') ON CONFLICT (id) DO NOTHING;
+INSERT INTO activity_types (id, name) VALUES (3, 'hackathon entry progress') ON CONFLICT (id) DO NOTHING;
+
+SELECT setval(
+  pg_get_serial_sequence('activity_types', 'id'),
+  GREATEST((SELECT COALESCE(MAX(id), 1) FROM activity_types), 1),
+  true
+);
+
 CREATE TABLE IF NOT EXISTS projects (
   id SERIAL PRIMARY KEY,
   title VARCHAR(500) NOT NULL,
@@ -86,7 +105,7 @@ CREATE TABLE IF NOT EXISTS projects (
   github_url TEXT,
   mentor_name VARCHAR(255),
   academic_year VARCHAR(10),
-  activity_type VARCHAR(100) DEFAULT 'project',
+  activity_type_id INTEGER NOT NULL DEFAULT 1 REFERENCES activity_types(id),
   status VARCHAR(20) DEFAULT 'ongoing',
   files JSONB,
   verified BOOLEAN DEFAULT FALSE,
@@ -152,7 +171,7 @@ CREATE TABLE IF NOT EXISTS achievements (
   date DATE,
   date_of_award DATE,
   event_name VARCHAR(255),
-  activity_type VARCHAR(100),
+  activity_type_id INTEGER NOT NULL DEFAULT 2 REFERENCES activity_types(id),
   issuer VARCHAR(255),
   position VARCHAR(50),
   prize_amount DECIMAL(10, 2),
@@ -187,15 +206,14 @@ END $$;
 
 CREATE TABLE IF NOT EXISTS activity_coordinators (
   id SERIAL PRIMARY KEY,
-  activity_type VARCHAR(100) NOT NULL,
+  activity_type_id INTEGER NOT NULL REFERENCES activity_types(id),
   staff_id INTEGER NOT NULL REFERENCES users(id),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(activity_type, staff_id)
+  UNIQUE(activity_type_id, staff_id)
 );
 
--- Case-insensitive unique index
-CREATE UNIQUE INDEX IF NOT EXISTS activity_coordinators_type_staff_unique 
-  ON activity_coordinators (LOWER(activity_type), staff_id);
+CREATE UNIQUE INDEX IF NOT EXISTS activity_coordinators_type_id_staff_unique
+  ON activity_coordinators (activity_type_id, staff_id);
 
 -- ============================================================================
 -- STAFF ANNOUNCEMENTS TABLES

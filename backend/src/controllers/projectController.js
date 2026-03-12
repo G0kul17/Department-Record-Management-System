@@ -6,7 +6,10 @@ import fs from "fs";
 import logger, { reqContext } from "../utils/logger.js";
 import { QueryBuilder } from "../utils/queryBuilder.js";
 import { reviewProject, ReviewError } from "../services/reviewService.js";
-import { tracedQuery } from "../utils/tracing.js";
+import {
+  ActivityTypeValidationError,
+  requireActivityTypeByName,
+} from "../utils/activityTypeUtils.js";
 
 // Note: 'upload' is multer instance exported above
 // We'll expose middleware usage in routes.
@@ -24,6 +27,7 @@ export async function createProject(req, res) {
       team_members_count,
       team_member_names,
       github_url,
+      activity_type,
     } = req.body;
     const created_by = req.user?.id;
 
@@ -159,10 +163,16 @@ export async function createProject(req, res) {
       });
     }
 
+    const activityTypeRow = await requireActivityTypeByName(
+      pool,
+      (activity_type || "project").trim(),
+      "activity_type",
+    );
+
     // If staff/admin creator, auto-approve the project
     const isStaff = req.user?.role === "staff" || req.user?.role === "admin";
-    let insertSql = `INSERT INTO projects (title, description, mentor_name, academic_year, status, created_by, team_members_count, team_member_names, github_url)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`;
+    let insertSql = `INSERT INTO projects (title, description, mentor_name, academic_year, status, created_by, team_members_count, team_member_names, github_url, activity_type_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`;
     let insertParams = [
       title.trim(),
       description || null,
@@ -173,10 +183,11 @@ export async function createProject(req, res) {
       team_members_count ? Number(team_members_count) : null,
       team_member_names || null,
       gh,
+      activityTypeRow.id,
     ];
     if (isStaff) {
-      insertSql = `INSERT INTO projects (title, description, mentor_name, academic_year, status, created_by, team_members_count, team_member_names, github_url, verified, verification_status, verified_by, verified_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, true, 'approved', $10, NOW()) RETURNING *`;
+      insertSql = `INSERT INTO projects (title, description, mentor_name, academic_year, status, created_by, team_members_count, team_member_names, github_url, activity_type_id, verified, verification_status, verified_by, verified_at)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, true, 'approved', $11, NOW()) RETURNING *`;
       insertParams = [
         title.trim(),
         description || null,
@@ -187,6 +198,7 @@ export async function createProject(req, res) {
         team_members_count ? Number(team_members_count) : null,
         team_member_names || null,
         gh,
+        activityTypeRow.id,
         created_by || null,
       ];
     }
@@ -236,7 +248,10 @@ export async function createProject(req, res) {
       });
       return res
         .status(201)
-        .json({ message: "Project created", project: { ...project, files: pf } });
+        .json({
+          message: "Project created",
+          project: { ...project, files: pf, activity_type: activityTypeRow.name },
+        });
     } catch (err) {
       await client.query("ROLLBACK");
       throw err;
@@ -244,6 +259,26 @@ export async function createProject(req, res) {
       client.release();
     }
   } catch (err) {
+    if (err instanceof ActivityTypeValidationError) {
+      const fieldFiles = req.files || {};
+      const srsFiles = Array.isArray(fieldFiles.srs_document)
+        ? fieldFiles.srs_document
+        : [];
+      const otherFiles = Array.isArray(fieldFiles.files) ? fieldFiles.files : [];
+      for (const f of [...srsFiles, ...otherFiles]) {
+        try {
+          fs.unlinkSync(
+            path.resolve(
+              process.env.FILE_STORAGE_PATH || "./uploads",
+              f.filename,
+            ),
+          );
+        } catch {
+          // Ignore cleanup failures.
+        }
+      }
+      return res.status(err.status).json({ message: err.message });
+    }
     logger.error("Project controller error", { err,
       ...reqContext(req) });
     return res
@@ -383,12 +418,13 @@ export async function listProjects(req, res) {
     // Fixed JOINs live in the base string; the conditional staff JOIN is added
     // via qb.addJoin() so QueryBuilder can always emit all JOINs before WHERE.
     const qb = new QueryBuilder(
-      "SELECT p.*, " +
+      "SELECT p.*, at.name AS activity_type, " +
       "COALESCE(u.full_name, up.full_name) AS uploader_full_name, " +
       "COALESCE(u.email, up.email) AS uploader_email, " +
       "COALESCE(u.role, up.role) AS uploader_role, " +
       "v.full_name AS verified_by_fullname, v.email AS verified_by_email " +
       "FROM projects p " +
+      "LEFT JOIN activity_types at ON at.id = p.activity_type_id " +
       "LEFT JOIN users u ON u.id = p.created_by " +
       "LEFT JOIN LATERAL (" +
       "  SELECT u2.full_name, u2.email, u2.role FROM project_files pf " +
@@ -418,7 +454,7 @@ export async function listProjects(req, res) {
     if (requesterRole === "staff" && requesterId && !isViewingVerified) {
       const staffRef = qb.addParam(requesterId);
       qb.addJoin(
-        `LEFT JOIN activity_coordinators ac ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = ${staffRef}`,
+        `LEFT JOIN activity_coordinators ac ON ac.activity_type_id = p.activity_type_id AND ac.staff_id = ${staffRef}`,
       );
       qb.addWhere(`ac.id IS NOT NULL`);
     }
@@ -532,7 +568,7 @@ export async function getProjectDetails(req, res) {
            OR p.created_by = $2
            OR EXISTS (
              SELECT 1 FROM activity_coordinators ac
-             WHERE LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) 
+             WHERE ac.activity_type_id = p.activity_type_id
                AND ac.staff_id = $2
            )
          )`,
@@ -545,9 +581,10 @@ export async function getProjectDetails(req, res) {
       }
     }
 
-    const { rows } = await tracedQuery(pool, 
-      `SELECT p.*, u.email AS uploader_email, u.full_name AS uploader_full_name
+    const { rows } = await pool.query(
+      `SELECT p.*, at.name AS activity_type, u.email AS uploader_email, u.full_name AS uploader_full_name
          FROM projects p
+        LEFT JOIN activity_types at ON at.id = p.activity_type_id
          LEFT JOIN users u ON u.id = p.created_by
         ${whereClause}`,
       params,

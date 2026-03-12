@@ -98,7 +98,7 @@ export async function staffDashboard(req, res) {
               `SELECT p.id, p.title, p.academic_year, p.created_by, p.created_at, u.email as created_by_email
                         FROM projects p
                         LEFT JOIN users u ON p.created_by = u.id
-                        JOIN activity_coordinators ac ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = $1
+                        JOIN activity_coordinators ac ON ac.activity_type_id = p.activity_type_id AND ac.staff_id = $1
                        WHERE p.verification_status = 'pending'
                        ORDER BY p.created_at DESC LIMIT 50`,
               [staffId]
@@ -112,7 +112,7 @@ export async function staffDashboard(req, res) {
               `SELECT a.id, a.title, a.user_id, a.date_of_award, a.created_at, u.email as user_email
                         FROM achievements a
                         LEFT JOIN users u ON a.user_id = u.id
-                        JOIN activity_coordinators ac ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = $1
+                        JOIN activity_coordinators ac ON ac.activity_type_id = a.activity_type_id AND ac.staff_id = $1
                        WHERE a.verification_status = 'pending'
                        ORDER BY a.created_at DESC LIMIT 50`,
               [staffId]

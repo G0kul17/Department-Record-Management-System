@@ -5,6 +5,10 @@ import fs from "fs";
 import logger, { reqContext } from "../utils/logger.js";
 import { QueryBuilder } from "../utils/queryBuilder.js";
 import { reviewAchievement, ReviewError } from "../services/reviewService.js";
+import {
+  ActivityTypeValidationError,
+  requireActivityTypeByName,
+} from "../utils/activityTypeUtils.js";
 
 // create achievement (students)
 export async function createAchievement(req, res) {
@@ -61,7 +65,12 @@ export async function createAchievement(req, res) {
       return res.status(409).json({ message: "Duplicate achievement" });
     }
 
-    const activityType = (activity_type || title || "").trim() || null;
+    const activityTypeInput = (activity_type || title || "achievement").trim();
+    const activityTypeRow = await requireActivityTypeByName(
+      pool,
+      activityTypeInput,
+      "activity_type",
+    );
     const eventNameVal = (event_name || "").trim() || null;
 
     // Parse prize_amount safely
@@ -105,7 +114,7 @@ export async function createAchievement(req, res) {
       }
 
       let insertSql =
-        "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, certificate_file_id, event_photos_file_id, date, event_id, event_name, activity_type, name, prize_amount, position) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *";
+        "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, certificate_file_id, event_photos_file_id, date, event_id, event_name, activity_type_id, name, prize_amount, position) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *";
       let params = [
         userId,
         title.trim(),
@@ -117,7 +126,7 @@ export async function createAchievement(req, res) {
         date || null,
         event_id ? Number(event_id) : null,
         eventNameVal,
-        activityType,
+        activityTypeRow.id,
         name.trim(),
         prizeAmount,
         pos,
@@ -126,7 +135,7 @@ export async function createAchievement(req, res) {
       // If staff/admin, auto-approve (verified=true)
       if (userRole === "staff" || userRole === "admin") {
         insertSql =
-          "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, certificate_file_id, event_photos_file_id, date, event_id, event_name, activity_type, name, prize_amount, position, verified, verification_status, verified_by, verified_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14, true, 'approved', $15, NOW()) RETURNING *";
+          "INSERT INTO achievements (user_id, title, issuer, date_of_award, proof_file_id, certificate_file_id, event_photos_file_id, date, event_id, event_name, activity_type_id, name, prize_amount, position, verified, verification_status, verified_by, verified_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14, true, 'approved', $15, NOW()) RETURNING *";
         params = [
           userId,
           title.trim(),
@@ -138,7 +147,7 @@ export async function createAchievement(req, res) {
           date || null,
           event_id ? Number(event_id) : null,
           eventNameVal,
-          activityType,
+          activityTypeRow.id,
           name.trim(),
           prizeAmount,
           pos,
@@ -154,9 +163,13 @@ export async function createAchievement(req, res) {
       }
 
       await client.query("COMMIT");
+      const achievement = {
+        ...result.rows[0],
+        activity_type: activityTypeRow.name,
+      };
       return res
         .status(201)
-        .json({ message: "Achievement created", achievement: result.rows[0] });
+        .json({ message: "Achievement created", achievement });
     } catch (err) {
       await client.query("ROLLBACK");
       throw err;
@@ -164,6 +177,25 @@ export async function createAchievement(req, res) {
       client.release();
     }
   } catch (err) {
+    if (err instanceof ActivityTypeValidationError) {
+      const files = req.files || {};
+      for (const field of ["proof", "certificate", "event_photos"]) {
+        const uploaded = Array.isArray(files[field]) ? files[field] : [];
+        for (const f of uploaded) {
+          try {
+            fs.unlinkSync(
+              path.resolve(
+                process.env.FILE_STORAGE_PATH || "./uploads",
+                f.filename,
+              ),
+            );
+          } catch {
+            // Ignore cleanup failures.
+          }
+        }
+      }
+      return res.status(err.status).json({ message: err.message });
+    }
     logger.error("Achievement controller error", { err,
       ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
@@ -187,7 +219,8 @@ export async function listAchievements(req, res) {
     // Fixed JOINs live in the base string; the conditional staff JOIN is added
     // via qb.addJoin() so QueryBuilder can always emit all JOINs before WHERE.
     const qb = new QueryBuilder(
-      `SELECT a.*, COALESCE(u.email, u2.email, ux.email)        AS user_email,
+        `SELECT a.*, at.name AS activity_type,
+          COALESCE(u.email, u2.email, ux.email)        AS user_email,
           COALESCE(u.full_name, u2.full_name, ux.full_name) AS user_fullname,
             pf.original_name                    AS proof_name,
             pf.filename                         AS proof_filename,
@@ -205,6 +238,7 @@ export async function listAchievements(req, res) {
             LEFT JOIN project_files pf ON a.proof_file_id = pf.id
             LEFT JOIN project_files pfc ON a.certificate_file_id = pfc.id
             LEFT JOIN project_files pfe ON a.event_photos_file_id = pfe.id
+            LEFT JOIN activity_types at ON at.id = a.activity_type_id
           LEFT JOIN users u2 ON u2.id = pf.uploaded_by
           LEFT JOIN users ux ON LOWER(ux.full_name) = LOWER(a.name)
           LEFT JOIN users v ON v.id = a.verified_by`,
@@ -238,7 +272,7 @@ export async function listAchievements(req, res) {
     if (requesterRole === "staff" && requesterId && !isViewingVerified && !isMine) {
       const staffRef = qb.addParam(requesterId);
       qb.addJoin(
-        `LEFT JOIN activity_coordinators ac ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = ${staffRef}`,
+        `LEFT JOIN activity_coordinators ac ON ac.activity_type_id = a.activity_type_id AND ac.staff_id = ${staffRef}`,
       );
       qb.addWhere(`ac.id IS NOT NULL`);
     }
@@ -348,7 +382,7 @@ export async function getAchievementDetails(req, res) {
         const { rows: auth } = await pool.query(
           `SELECT 1 FROM achievements a
              JOIN activity_coordinators ac
-               ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = $1
+               ON ac.activity_type_id = a.activity_type_id AND ac.staff_id = $1
             WHERE a.id = $2`,
           [requesterId, id],
         );
@@ -361,7 +395,7 @@ export async function getAchievementDetails(req, res) {
     }
 
     const { rows } = await pool.query(
-      `SELECT a.*,
+      `SELECT a.*, at.name AS activity_type,
               COALESCE(u.email, u2.email, ux.email)        AS user_email,
               COALESCE(u.full_name, u2.full_name, ux.full_name) AS user_fullname,
               pf.filename                         AS proof_filename,
@@ -378,6 +412,7 @@ export async function getAchievementDetails(req, res) {
        LEFT JOIN project_files pf ON a.proof_file_id = pf.id
        LEFT JOIN project_files pfc ON a.certificate_file_id = pfc.id
        LEFT JOIN project_files pfe ON a.event_photos_file_id = pfe.id
+      LEFT JOIN activity_types at ON at.id = a.activity_type_id
        LEFT JOIN users u2 ON u2.id = pf.uploaded_by
        LEFT JOIN users ux ON LOWER(ux.full_name) = LOWER(a.name)
        ${whereClause}`,

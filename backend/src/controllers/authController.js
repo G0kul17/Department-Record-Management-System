@@ -157,7 +157,7 @@ export async function verifyOTP(req, res) {
       "SELECT * FROM otp_verifications WHERE email=$1",
       [emailLower],
     );
-    if (!rows.length) return res.status(400).json({ message: "Invalid OTP" });
+    if (!rows.length) return res.status(401).json({ message: "Invalid OTP" });
 
     const otpRow = rows[0];
 
@@ -171,12 +171,12 @@ export async function verifyOTP(req, res) {
     // its expiry window with unlimited retry time.
     if (new Date() > otpRow.expires_at) {
       await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
-      return res.status(400).json({ message: "OTP expired" });
+      return res.status(401).json({ message: "OTP expired" });
     }
 
     if (otpRow.otp_code.trim() !== otpClean) {
       await tracedQuery(pool, "UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1", [otpRow.id]);
-      return res.status(400).json({ message: "Invalid OTP" });
+      return res.status(401).json({ message: "Invalid OTP" });
     }
 
     // mark verified and remove otp
@@ -238,11 +238,11 @@ export async function login(req, res) {
       emailLower,
     ]);
     if (!rows.length)
-      return res.status(400).json({ message: "User not found" });
+      return res.status(401).json({ message: "User not found" });
 
     const user = rows[0];
     const match = await bcrypt.compare(password, user.password_hash || "");
-    if (!match) return res.status(400).json({ message: "Invalid credentials" });
+    if (!match) return res.status(401).json({ message: "Invalid credentials" });
 
     if (!user.is_verified) {
       // User hasn't verified account yet: generate a fresh verification OTP and return it
@@ -360,7 +360,7 @@ export async function loginVerifyOTP(req, res) {
       "SELECT * FROM otp_verifications WHERE email=$1",
       [emailLower],
     );
-    if (!rows.length) return res.status(400).json({ message: "Invalid OTP" });
+    if (!rows.length) return res.status(401).json({ message: "Invalid OTP" });
 
     const otpRow = rows[0];
 
@@ -371,12 +371,12 @@ export async function loginVerifyOTP(req, res) {
 
     if (new Date() > otpRow.expires_at) {
       await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
-      return res.status(400).json({ message: "OTP expired" });
+      return res.status(401).json({ message: "OTP expired" });
     }
 
     if (otpRow.otp_code.trim() !== otpClean) {
       await tracedQuery(pool, "UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1", [otpRow.id]);
-      return res.status(400).json({ message: "Invalid OTP" });
+      return res.status(401).json({ message: "Invalid OTP" });
     }
 
     await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
@@ -458,7 +458,7 @@ export async function forgotVerifyOTP(req, res) {
       "SELECT * FROM otp_verifications WHERE email=$1",
       [emailLower]
     );
-    if (!rows.length) return res.status(400).json({ message: "Invalid OTP" });
+    if (!rows.length) return res.status(401).json({ message: "Invalid OTP" });
 
     const otpRow = rows[0];
 
@@ -470,7 +470,7 @@ export async function forgotVerifyOTP(req, res) {
     // Expiry before code — expired rows must not be brute-forced
     if (new Date() > otpRow.expires_at) {
       await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
-      return res.status(400).json({ message: "OTP expired" });
+      return res.status(401).json({ message: "OTP expired" });
     }
 
     if (otpRow.otp_code.trim() !== otpClean) {
@@ -478,7 +478,7 @@ export async function forgotVerifyOTP(req, res) {
         "UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1",
         [otpRow.id]
       );
-      return res.status(400).json({ message: "Invalid OTP" });
+      return res.status(401).json({ message: "Invalid OTP" });
     }
 
     // OTP is valid — leave the row in DB so /auth/reset can consume it
@@ -562,7 +562,7 @@ export async function resetPassword(req, res) {
       "SELECT * FROM otp_verifications WHERE email=$1",
       [emailLower],
     );
-    if (!rows.length) return res.status(400).json({ message: "Invalid OTP" });
+    if (!rows.length) return res.status(401).json({ message: "Invalid OTP" });
 
     const otpRow = rows[0];
 
@@ -573,12 +573,12 @@ export async function resetPassword(req, res) {
 
     if (new Date() > otpRow.expires_at) {
       await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
-      return res.status(400).json({ message: "OTP expired" });
+      return res.status(401).json({ message: "OTP expired" });
     }
 
     if (otpRow.otp_code.trim() !== otpClean) {
       await tracedQuery(pool, "UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1", [otpRow.id]);
-      return res.status(400).json({ message: "Invalid OTP" });
+      return res.status(401).json({ message: "Invalid OTP" });
     }
 
     const hashed = await bcrypt.hash(newPassword, 10);
@@ -593,7 +593,7 @@ export async function resetPassword(req, res) {
     await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
 
     if (!updated.length) {
-      return res.status(400).json({ message: "Invalid OTP" });
+      return res.status(401).json({ message: "Invalid OTP" });
     }
 
     await invalidateAllUserSessions(updated[0].id);

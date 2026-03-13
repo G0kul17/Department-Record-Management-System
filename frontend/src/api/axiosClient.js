@@ -55,7 +55,18 @@ class ApiClient {
         throw new Error("Unauthorized");
       }
 
-      const data = await response.json();
+      const contentType = response.headers.get("content-type") || "";
+      let data;
+      if (contentType.includes("application/json")) {
+        try {
+          data = await response.json();
+        } catch {
+          data = { message: "Invalid JSON response from server" };
+        }
+      } else {
+        const text = await response.text();
+        data = { message: text || "Unexpected response from server" };
+      }
 
       if (!response.ok) {
         const err = new Error(data.message || "Request failed");

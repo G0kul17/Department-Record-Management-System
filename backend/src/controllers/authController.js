@@ -186,11 +186,14 @@ export async function verifyOTP(req, res) {
     await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
 
     // return jwt
-    const { rows: users } = await tracedQuery(pool, 
+    const { rows: users } = await tracedQuery(pool,
       "SELECT id, email, role, profile_details FROM users WHERE email=$1",
       [emailLower],
     );
     const user = users[0];
+    if (!user) {
+      return res.status(500).json({ message: "Server error", trace_id: req.correlationId });
+    }
     // If this email is listed in ADMIN_EMAILS, ensure role is admin both in DB and token
     if (ADMIN_EMAILS.includes(emailLower) && user.role !== "admin") {
       await tracedQuery(pool, "UPDATE users SET role='admin' WHERE email=$1", [
@@ -382,11 +385,14 @@ export async function loginVerifyOTP(req, res) {
     await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
 
     // issue token
-    const { rows: users } = await tracedQuery(pool, 
+    const { rows: users } = await tracedQuery(pool,
       "SELECT id, email, role, profile_details FROM users WHERE email=$1",
       [emailLower],
     );
     const user = users[0];
+    if (!user) {
+      return res.status(500).json({ message: "Server error", trace_id: req.correlationId });
+    }
     // If this email is listed in ADMIN_EMAILS, ensure role is admin both in DB and token
     if (ADMIN_EMAILS.includes(emailLower) && user.role !== "admin") {
       await tracedQuery(pool, "UPDATE users SET role='admin' WHERE email=$1", [

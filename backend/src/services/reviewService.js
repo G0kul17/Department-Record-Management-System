@@ -40,7 +40,8 @@ export async function reviewProject(projectId, staffId, action, comment, correla
   });
 
   // Staff must coordinate the project's activity type
-  const { rows: authRows } = await pool.query(
+  const { rows: authRows } = await tracedQuery(
+    pool,
     `SELECT 1
        FROM projects p
        JOIN activity_coordinators ac
@@ -124,7 +125,8 @@ export async function reviewAchievement(achievementId, staffId, action, comment,
   });
 
   // Staff must coordinate the achievement's activity type
-  const { rows: authRows } = await pool.query(
+  const { rows: authRows } = await tracedQuery(
+    pool,
     `SELECT 1
        FROM achievements a
        JOIN activity_coordinators ac

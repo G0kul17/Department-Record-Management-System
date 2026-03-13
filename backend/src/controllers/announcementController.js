@@ -50,48 +50,62 @@ export async function createAnnouncement(req, res) {
         .json({ message: "At least one recipient is required" });
     }
 
-    let brochureFileId = null;
-    const brochureFile = req.files?.brochure?.[0];
-    if (brochureFile) {
-      const { rows: fileRows } = await tracedQuery(pool, 
-        "INSERT INTO project_files (project_id, filename, original_name, mime_type, size, file_type, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id",
+    const client = await pool.connect();
+    let announcementId;
+    try {
+      await client.query("BEGIN");
+
+      let brochureFileId = null;
+      const brochureFile = req.files?.brochure?.[0];
+      if (brochureFile) {
+        const { rows: fileRows } = await client.query(
+          "INSERT INTO project_files (project_id, filename, original_name, mime_type, size, file_type, uploaded_by) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id",
+          [
+            null,
+            brochureFile.filename,
+            brochureFile.originalname,
+            brochureFile.mimetype,
+            brochureFile.size,
+            "announcement_brochure",
+            staffId,
+          ],
+        );
+        brochureFileId = fileRows[0]?.id || null;
+      }
+
+      const { rows } = await client.query(
+        "INSERT INTO staff_announcements (title, description, message, brochure_file_id, created_by) VALUES ($1,$2,$3,$4,$5) RETURNING id",
         [
-          null,
-          brochureFile.filename,
-          brochureFile.originalname,
-          brochureFile.mimetype,
-          brochureFile.size,
-          "announcement_brochure",
+          title.trim(),
+          description && description.trim() ? description.trim() : null,
+          message.trim(),
+          brochureFileId,
           staffId,
         ],
       );
-      brochureFileId = fileRows[0]?.id || null;
+
+      announcementId = rows[0]?.id;
+      if (!announcementId) {
+        await client.query("ROLLBACK");
+        return res.status(500).json({ message: "Failed to create announcement" });
+      }
+
+      const uniqueIds = Array.from(new Set(recipientIds));
+      const valuesSql = uniqueIds.map((_, idx) => `($1,$${idx + 2})`).join(",");
+      await client.query(
+        `INSERT INTO staff_announcement_recipients (announcement_id, user_id)
+         VALUES ${valuesSql}
+         ON CONFLICT (announcement_id, user_id) DO NOTHING`,
+        [announcementId, ...uniqueIds],
+      );
+
+      await client.query("COMMIT");
+    } catch (txErr) {
+      await client.query("ROLLBACK");
+      throw txErr;
+    } finally {
+      client.release();
     }
-
-    const { rows } = await tracedQuery(pool, 
-      "INSERT INTO staff_announcements (title, description, message, brochure_file_id, created_by) VALUES ($1,$2,$3,$4,$5) RETURNING id",
-      [
-        title.trim(),
-        description && description.trim() ? description.trim() : null,
-        message.trim(),
-        brochureFileId,
-        staffId,
-      ],
-    );
-
-    const announcementId = rows[0]?.id;
-    if (!announcementId) {
-      return res.status(500).json({ message: "Failed to create announcement" });
-    }
-
-    const uniqueIds = Array.from(new Set(recipientIds));
-    const valuesSql = uniqueIds.map((_, idx) => `($1,$${idx + 2})`).join(",");
-    await tracedQuery(pool, 
-      `INSERT INTO staff_announcement_recipients (announcement_id, user_id)
-       VALUES ${valuesSql}
-       ON CONFLICT (announcement_id, user_id) DO NOTHING`,
-      [announcementId, ...uniqueIds],
-    );
 
     return res
       .status(201)

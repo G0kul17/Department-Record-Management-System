@@ -1,17 +1,19 @@
 import React, { useState } from "react";
 import apiClient from "../../api/axiosClient";
 import SuccessModal from "../../components/ui/SuccessModal";
-import BackButton from "../../components/BackButton";
 import UploadDropzone from "../../components/ui/UploadDropzone";
 
-export default function AdminFacultyResearch() {
+export default function FacultyResearch() {
   const [form, setForm] = useState({
     faculty_name: "",
     funded_type: "",
     principal_investigator: "",
     team_members: "",
+    teamMembersCount: 0,
+    teamMembers: [],
     title: "",
     agency: "",
+    agency_custom: "",
     current_status: "",
     duration: "",
     start_date: "",
@@ -27,16 +29,21 @@ export default function AdminFacultyResearch() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    const normalizedAgency =
+      form.agency === "__custom__" ? (form.agency_custom || "").trim() : form.agency;
+    if (!normalizedAgency) {
+      setMessage("Please enter agency");
+      return;
+    }
     setSubmitting(true);
     setMessage("");
     try {
       const fd = new FormData();
-      // Normalize fields for backend expectations
-      Object.entries(form).forEach(([k, v]) => {
+      const payload = { ...form, agency: normalizedAgency };
+      Object.entries(payload).forEach(([k, v]) => {
         if (k === "teamMembers") {
-          // Backend expects team_members or team_member_names
           fd.append("team_member_names", (v || []).join(", "));
-        } else if (k !== "teamMembersCount") {
+        } else if (k !== "teamMembersCount" && k !== "agency_custom") {
           fd.append(k, v || "");
         }
       });
@@ -45,12 +52,14 @@ export default function AdminFacultyResearch() {
       setMessage("Faculty research added");
       setShowSuccess(true);
       setForm({
-        faculty_name: "",
         funded_type: "",
         principal_investigator: "",
         team_members: "",
+        teamMembersCount: 0,
+        teamMembers: [],
         title: "",
         agency: "",
+        agency_custom: "",
         current_status: "",
         duration: "",
         start_date: "",
@@ -67,7 +76,6 @@ export default function AdminFacultyResearch() {
 
   return (
     <div className="mx-auto max-w-4xl p-6">
-      <BackButton />
       <SuccessModal
         open={showSuccess}
         title="Saved successfully"
@@ -75,10 +83,10 @@ export default function AdminFacultyResearch() {
         onClose={() => setShowSuccess(false)}
       />
       <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">
-        Admin: Faculty Research
+        Faculty Research
       </h1>
       <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">
-        Create research entries on behalf of faculty.
+        Add research funding and project details.
       </p>
 
       <form onSubmit={onSubmit} className="space-y-6">
@@ -218,7 +226,14 @@ export default function AdminFacultyResearch() {
               <select
                 className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
                 value={form.agency}
-                onChange={update("agency")}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setForm((prev) => ({
+                    ...prev,
+                    agency: v,
+                    agency_custom: v === "__custom__" ? prev.agency_custom : "",
+                  }));
+                }}
                 required
               >
                 <option value="" disabled>
@@ -231,7 +246,17 @@ export default function AdminFacultyResearch() {
                 <option value="CSIR">CSIR</option>
                 <option value="IBM">IBM</option>
                 <option value="VEE CANADA">VEE CANADA</option>
+                <option value="__custom__">Custom Type</option>
               </select>
+              {form.agency === "__custom__" && (
+                <input
+                  className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                  value={form.agency_custom}
+                  onChange={update("agency_custom")}
+                  placeholder="Enter custom agency"
+                  required
+                />
+              )}
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">

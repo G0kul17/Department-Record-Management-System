@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import Card from "../components/ui/Card";
@@ -7,6 +7,8 @@ import PageHeader from "../components/ui/PageHeader";
 export default function QuickActions() {
   const nav = useNavigate();
   const { user } = useAuth();
+  const isStaff = user?.role === "staff";
+  const [activeStaffTab, setActiveStaffTab] = useState("upload");
   const goTo = (key) => () => {
     // Common routes
     if (key === "achievements") return nav("/achievements");
@@ -32,7 +34,6 @@ export default function QuickActions() {
     // Generic placeholders
     if (key === "community") return nav("/"); // placeholder until community page exists
     if (key === "events") return nav("/events");
-    if (key === "alumni") return nav("/"); // placeholder until alumni page exists
     return nav("/");
   };
 
@@ -44,244 +45,360 @@ export default function QuickActions() {
           subtitle="Get started with your most common tasks."
         />
 
+        {isStaff && (
+          <div className="mb-6 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveStaffTab("upload")}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                activeStaffTab === "upload"
+                  ? "bg-slate-900 text-white"
+                  : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100"
+              }`}
+            >
+              Upload
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveStaffTab("verify")}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                activeStaffTab === "verify"
+                  ? "bg-slate-900 text-white"
+                  : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100"
+              }`}
+            >
+              Verify
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveStaffTab("export")}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                activeStaffTab === "export"
+                  ? "bg-slate-900 text-white"
+                  : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100"
+              }`}
+            >
+              Export
+            </button>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {/* Always available actions */}
-          <Card
-            onClick={goTo("achievements")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <div className="flex items-center gap-3">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                >
-                  <path
-                    d="M20 6l-11 11-5-5"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-              <h3 className="text-lg font-semibold text-slate-800">
-                Add Achievement
-              </h3>
-            </div>
-            <p className="mt-2 text-slate-600">
-              Showcase your accomplishments and milestones.
-            </p>
-          </Card>
-          <Card
-            onClick={goTo("projects")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <div className="flex items-center gap-3">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                >
-                  <rect
-                    x="3"
-                    y="4"
-                    width="18"
-                    height="14"
-                    rx="2"
-                    strokeWidth="2"
-                  />
-                  <path d="M3 10h18" strokeWidth="2" />
-                </svg>
-              </span>
-              <h3 className="text-lg font-semibold text-slate-800">
-                Upload Project
-              </h3>
-            </div>
-            <p className="mt-2 text-slate-600">
-              Share your latest projects with the department.
-            </p>
-          </Card>
-          <Card
-            onClick={goTo("hackathons")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <div className="flex items-center gap-3">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                >
-                  <path
-                    d="M20 6l-11 11-5-5"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-              <h3 className="text-lg font-semibold text-slate-800">
-                Hackathon Entry and Progress
-              </h3>
-            </div>
-            <p className="mt-2 text-slate-600">
-              Upload your Hackathon participation and Track your progress
-            </p>
-          </Card>
+          {(!isStaff || activeStaffTab === "upload") && (
+            <Card
+              onClick={goTo("achievements")}
+              className="p-6 glitter-card bulge-card"
+            >
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <path
+                      d="M20 6l-11 11-5-5"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </span>
+                <h3 className="text-lg font-semibold text-slate-800">
+                  Add Achievement
+                </h3>
+              </div>
+              <p className="mt-2 text-slate-600">
+                Showcase your accomplishments and milestones.
+              </p>
+            </Card>
+          )}
+          {(!isStaff || activeStaffTab === "upload") && (
+            <Card
+              onClick={goTo("projects")}
+              className="p-6 glitter-card bulge-card"
+            >
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <rect
+                      x="3"
+                      y="4"
+                      width="18"
+                      height="14"
+                      rx="2"
+                      strokeWidth="2"
+                    />
+                    <path d="M3 10h18" strokeWidth="2" />
+                  </svg>
+                </span>
+                <h3 className="text-lg font-semibold text-slate-800">
+                  Upload Project
+                </h3>
+              </div>
+              <p className="mt-2 text-slate-600">
+                Share your latest projects with the department.
+              </p>
+            </Card>
+          )}
+          {(!isStaff || activeStaffTab === "upload") && (
+            <Card
+              onClick={goTo("hackathons")}
+              className="p-6 glitter-card bulge-card"
+            >
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <path
+                      d="M20 6l-11 11-5-5"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </span>
+                <h3 className="text-lg font-semibold text-slate-800">
+                  Hackathon Entry and Progress
+                </h3>
+              </div>
+              <p className="mt-2 text-slate-600">
+                Upload your Hackathon participation and Track your progress
+              </p>
+            </Card>
+          )}
 
           {/* Role-specific actions for staff */}
           {user?.role === "staff" ? (
             <>
-              <Card
-                onClick={goTo("studentsBatch")}
-                className="p-6 glitter-card bulge-card"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                    >
-                      <path
-                        d="M12 5v14M5 12h14"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </span>
-                  <h3 className="text-lg font-semibold text-slate-800">
-                    Add Students Batch
-                  </h3>
-                </div>
-                <p className="mt-2 text-slate-600">
-                  Upload a CSV/Excel to add students in bulk.
-                </p>
-              </Card>
-              <Card
-                onClick={goTo("uploadExtra")}
-                className="p-6 glitter-card bulge-card"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                    >
-                      <path
-                        d="M12 5v14M5 12h14"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </span>
-                  <h3 className="text-lg font-semibold text-slate-800">
-                    Other Data Upload
-                  </h3>
-                </div>
-                <p className="mt-2 text-slate-600">
-                  Upload CSV/Excel of activities and save.
-                </p>
-              </Card>
-              <Card
-                onClick={goTo("facultyParticipation")}
-                className="p-6 glitter-card bulge-card"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                    >
-                      <path
-                        d="M12 19l-7-7 7-7"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M5 12h14"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </span>
-                  <h3 className="text-lg font-semibold text-slate-800">
-                    Faculty Participation
-                  </h3>
-                </div>
-                <p className="mt-2 text-slate-600">
-                  Add faculty training/participation details.
-                </p>
-              </Card>
-              <Card
-                onClick={goTo("facultyResearch")}
-                className="p-6 glitter-card bulge-card"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                    >
-                      <path d="M12 3l7 7-7 7-7-7 7-7z" strokeWidth="2" />
-                    </svg>
-                  </span>
-                  <h3 className="text-lg font-semibold text-slate-800">
-                    Faculty Research
-                  </h3>
-                </div>
-                <p className="mt-2 text-slate-600">
-                  Add research funding and project details.
-                </p>
-              </Card>
-              <Card
-                onClick={goTo("facultyConsultancy")}
-                className="p-6 glitter-card bulge-card"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                    >
-                      <circle cx="12" cy="12" r="9" strokeWidth="2" />
-                      <path d="M12 7v10M7 12h10" strokeWidth="2" />
-                    </svg>
-                  </span>
-                  <h3 className="text-lg font-semibold text-slate-800">
-                    Faculty Consultancy
-                  </h3>
-                </div>
-                <p className="mt-2 text-slate-600">
-                  Add consultancy engagements and proof.
-                </p>
-              </Card>
-              <Card
-                onClick={goTo("verifyAchievements")}
-                className="p-6 glitter-card bulge-card"
-              >
+              {activeStaffTab === "upload" && (
+                <>
+                  <Card
+                    onClick={goTo("studentsBatch")}
+                    className="p-6 glitter-card bulge-card"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            d="M12 5v14M5 12h14"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </span>
+                      <h3 className="text-lg font-semibold text-slate-800">
+                        Add Students Batch
+                      </h3>
+                    </div>
+                    <p className="mt-2 text-slate-600">
+                      Upload a CSV/Excel to add students in bulk.
+                    </p>
+                  </Card>
+                  <Card
+                    onClick={goTo("uploadExtra")}
+                    className="p-6 glitter-card bulge-card"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            d="M12 5v14M5 12h14"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </span>
+                      <h3 className="text-lg font-semibold text-slate-800">
+                        Other Data Upload
+                      </h3>
+                    </div>
+                    <p className="mt-2 text-slate-600">
+                      Upload CSV/Excel of activities and save.
+                    </p>
+                  </Card>
+                  <Card
+                    onClick={goTo("facultyParticipation")}
+                    className="p-6 glitter-card bulge-card"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            d="M12 19l-7-7 7-7"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M5 12h14"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </span>
+                      <h3 className="text-lg font-semibold text-slate-800">
+                        Faculty Participation
+                      </h3>
+                    </div>
+                    <p className="mt-2 text-slate-600">
+                      Add faculty training/participation details.
+                    </p>
+                  </Card>
+                  <Card
+                    onClick={goTo("facultyResearch")}
+                    className="p-6 glitter-card bulge-card"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path d="M12 3l7 7-7 7-7-7 7-7z" strokeWidth="2" />
+                        </svg>
+                      </span>
+                      <h3 className="text-lg font-semibold text-slate-800">
+                        Faculty Research
+                      </h3>
+                    </div>
+                    <p className="mt-2 text-slate-600">
+                      Add research funding and project details.
+                    </p>
+                  </Card>
+                  <Card
+                    onClick={goTo("facultyConsultancy")}
+                    className="p-6 glitter-card bulge-card"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <circle cx="12" cy="12" r="9" strokeWidth="2" />
+                          <path d="M12 7v10M7 12h10" strokeWidth="2" />
+                        </svg>
+                      </span>
+                      <h3 className="text-lg font-semibold text-slate-800">
+                        Faculty Consultancy
+                      </h3>
+                    </div>
+                    <p className="mt-2 text-slate-600">
+                      Add consultancy engagements and proof.
+                    </p>
+                  </Card>
+                  <Card
+                    onClick={goTo("staffEvents")}
+                    className="p-6 glitter-card bulge-card"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <rect
+                            x="3"
+                            y="4"
+                            width="18"
+                            height="18"
+                            rx="2"
+                            strokeWidth="2"
+                          />
+                          <path
+                            d="M16 2v4M8 2v4M3 10h18"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </span>
+                      <h3 className="text-lg font-semibold text-slate-800">
+                        Upload Events
+                      </h3>
+                    </div>
+                    <p className="mt-2 text-slate-600">
+                      Create and manage department events.
+                    </p>
+                  </Card>
+                  <Card
+                    onClick={goTo("topAchieversAnnouncement")}
+                    className="p-6 glitter-card bulge-card"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            d="M12 4l3 6 6 .5-4.5 4 1.5 6-6-3.5-6 3.5 1.5-6L3 10.5 9 10l3-6z"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </span>
+                      <h3 className="text-lg font-semibold text-slate-800">
+                        Top Achievers
+                      </h3>
+                    </div>
+                    <p className="mt-2 text-slate-600">
+                      Send announcements to selected top achievers.
+                    </p>
+                  </Card>
+                </>
+              )}
+
+              {activeStaffTab === "verify" && (
+                <>
+                  <Card
+                    onClick={goTo("verifyAchievements")}
+                    className="p-6 glitter-card bulge-card"
+                  >
                 <div className="flex items-center gap-3">
                   <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                     <svg
@@ -306,10 +423,10 @@ export default function QuickActions() {
                   Review and verify student achievements.
                 </p>
               </Card>
-              <Card
-                onClick={goTo("verifyProjects")}
-                className="p-6 glitter-card bulge-card"
-              >
+                  <Card
+                    onClick={goTo("verifyProjects")}
+                    className="p-6 glitter-card bulge-card"
+                  >
                 <div className="flex items-center gap-3">
                   <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                     <svg
@@ -334,10 +451,10 @@ export default function QuickActions() {
                   Approve or reject submitted projects.
                 </p>
               </Card>
-              <Card
-                onClick={goTo("verifyHackathonProgress")}
-                className="p-6 glitter-card bulge-card"
-              >
+                  <Card
+                    onClick={goTo("verifyHackathonProgress")}
+                    className="p-6 glitter-card bulge-card"
+                  >
                 <div className="flex items-center gap-3">
                   <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                     <svg
@@ -361,76 +478,16 @@ export default function QuickActions() {
                 <p className="mt-2 text-slate-600">
                   Review mapped hackathons and update rounds, progress, prize, and duration.
                 </p>
-              </Card>
-              <Card
-                onClick={goTo("staffEvents")}
-                className="p-6 glitter-card bulge-card"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                    >
-                      <rect
-                        x="3"
-                        y="4"
-                        width="18"
-                        height="18"
-                        rx="2"
-                        strokeWidth="2"
-                      />
-                      <path
-                        d="M16 2v4M8 2v4M3 10h18"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </span>
-                  <h3 className="text-lg font-semibold text-slate-800">
-                    Upload Events
-                  </h3>
-                </div>
-                <p className="mt-2 text-slate-600">
-                  Create and manage department events.
-                </p>
-              </Card>
-              <Card
-                onClick={goTo("topAchieversAnnouncement")}
-                className="p-6 glitter-card bulge-card"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                    >
-                      <path
-                        d="M12 4l3 6 6 .5-4.5 4 1.5 6-6-3.5-6 3.5 1.5-6L3 10.5 9 10l3-6z"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </span>
-                  <h3 className="text-lg font-semibold text-slate-800">
-                    Top Achievers
-                  </h3>
-                </div>
-                <p className="mt-2 text-slate-600">
-                  Send announcements to selected top achievers.
-                </p>
-              </Card>
-              <Card
-                onClick={goTo("exportRecords")}
-                className="p-6 glitter-card bulge-card"
-              >
+                  </Card>
+                </>
+              )}
+
+              {activeStaffTab === "export" && (
+                <>
+                  <Card
+                    onClick={goTo("exportRecords")}
+                    className="p-6 glitter-card bulge-card"
+                  >
                 <div className="flex items-center gap-3">
                   <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                     <svg
@@ -470,11 +527,11 @@ export default function QuickActions() {
                 <p className="mt-2 text-slate-600">
                   Generate Excel/CSV reports for projects and achievements.
                 </p>
-              </Card>
-              <Card
-                onClick={goTo("bulkExport")}
-                className="p-6 glitter-card bulge-card"
-              >
+                  </Card>
+                  <Card
+                    onClick={goTo("bulkExport")}
+                    className="p-6 glitter-card bulge-card"
+                  >
                 <div className="flex items-center gap-3">
                   <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
                     <svg
@@ -499,38 +556,12 @@ export default function QuickActions() {
                 <p className="mt-2 text-slate-600">
                   Download complete database backup in Excel format.
                 </p>
-              </Card>
+                  </Card>
+                </>
+              )}
             </>
           ) : (
             <>
-              <Card
-                onClick={goTo("community")}
-                className="p-6 glitter-card bulge-card"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                    >
-                      <path
-                        d="M4 6h16M4 12h10M4 18h8"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </span>
-                  <h3 className="text-lg font-semibold text-slate-800">
-                    Post Update
-                  </h3>
-                </div>
-                <p className="mt-2 text-slate-600">
-                  Share news or updates with the community.
-                </p>
-              </Card>
               <Card
                 onClick={goTo("community")}
                 className="p-6 glitter-card bulge-card"
@@ -597,36 +628,6 @@ export default function QuickActions() {
               </Card>
             </>
           )}
-
-          {/* Always available */}
-          <Card
-            onClick={goTo("alumni")}
-            className="p-6 glitter-card bulge-card"
-          >
-            <div className="flex items-center gap-3">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                >
-                  <path
-                    d="M7 20h10M12 14a5 5 0 100-10 5 5 0 000 10z"
-                    strokeWidth="2"
-                  />
-                  <path d="M2 20a10 10 0 0120 0" strokeWidth="2" />
-                </svg>
-              </span>
-              <h3 className="text-lg font-semibold text-slate-800">
-                Connect with Alumni
-              </h3>
-            </div>
-            <p className="mt-2 text-slate-600">
-              Network with graduates and build connections.
-            </p>
-          </Card>
         </div>
       </div>
     </div>

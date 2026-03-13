@@ -21,6 +21,7 @@ export default function AdminQuickActions() {
     if (key === "facultyConsultancy") return nav("/admin/faculty-consultancy");
     if (key === "uploadExtra") return nav("/admin/upload-extra-curricular");
     if (key === "studentsBatch") return nav("/admin/upload-students-batch");
+    if (key === "staffBatch") return nav("/admin/upload-staff-batch");
     if (key === "exportRecords") return nav("/admin/reports");
     if (key === "bulkExport") return nav("/admin/bulk-export");
     if (key === "manageUsers") return nav("/admin/users");
@@ -46,6 +47,17 @@ export default function AdminQuickActions() {
               title="Add Students Batch"
               desc="Upload CSV/Excel to add students in bulk."
               color="fuchsia"
+            />
+          </Card>
+          <Card
+            onClick={goTo("staffBatch")}
+            className="p-6 glitter-card bulge-card"
+          >
+            <Tile
+              icon={<IconUpload />}
+              title="Staff Batch Upload"
+              desc="Upload CSV/Excel to create staff accounts in bulk."
+              color="violet"
             />
           </Card>
           <Card

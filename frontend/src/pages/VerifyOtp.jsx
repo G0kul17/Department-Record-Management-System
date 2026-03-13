@@ -67,9 +67,7 @@ const VerifyOtp = () => {
           const dest =
             data.role === "admin"
               ? "/admin"
-              : data.role === "staff"
-              ? "/"
-              : "/student";
+              : "/";
           navigate(dest);
           return;
         }
@@ -92,9 +90,7 @@ const VerifyOtp = () => {
           const dest =
             data.role === "admin"
               ? "/admin"
-              : data.role === "staff"
-              ? "/"
-              : "/student";
+              : "/";
           navigate(dest);
           return;
         }

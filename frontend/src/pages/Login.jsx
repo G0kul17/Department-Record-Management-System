@@ -21,7 +21,7 @@ const Login = () => {
 
   // Redirect already-authenticated users to their dashboard
   if (user) {
-    const dest = user.role === "admin" ? "/admin" : user.role === "staff" ? "/" : "/student";
+    const dest = user.role === "admin" ? "/admin" : "/";
     return <Navigate to={dest} replace />;
   }
 
@@ -69,9 +69,7 @@ const Login = () => {
         const dest =
           resp.role === "admin"
             ? "/admin"
-            : resp.role === "staff"
-            ? "/"
-            : "/student";
+            : "/";
         navigate(dest, { state: { loginSuccess: true } });
         return;
       }
@@ -115,9 +113,7 @@ const Login = () => {
         const dest =
           data.role === "admin"
             ? "/admin"
-            : data.role === "staff"
-            ? "/"
-            : "/student";
+            : "/";
         navigate(dest, { state: { loginSuccess: true } });
       } else {
         navigate("/");

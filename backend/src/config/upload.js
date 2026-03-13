@@ -389,6 +389,24 @@ function fileFilter(req, file, cb) {
     );
   }
 
+  // Allow CSV/Excel for 'staff_file' field (staff batch uploads)
+  if (file.fieldname === "staff_file") {
+    const name = file.originalname || "";
+    const ext = path.extname(name).toLowerCase();
+    const allowedMimes = new Set([
+      "text/csv",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ]);
+    const allowedExts = new Set([".csv", ".xlsx", ".xls"]);
+    if (allowedMimes.has(file.mimetype) || allowedExts.has(ext))
+      return cb(null, true);
+    return cb(
+      new Error("Only CSV or Excel files are allowed for staff uploads."),
+      false,
+    );
+  }
+
   // Allow standard image types for 'avatar' field (profile photos)
   if (file.fieldname === "avatar" || file.fieldname === "profile_photo") {
     const name = file.originalname || "";

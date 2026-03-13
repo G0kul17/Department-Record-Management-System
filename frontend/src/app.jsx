@@ -16,6 +16,9 @@ const VerifyAchievements = React.lazy(() =>
   import("./pages/staff/VerifyAchievements")
 );
 const VerifyProjects = React.lazy(() => import("./pages/staff/VerifyProjects"));
+const VerifyHackathonProgress = React.lazy(() =>
+  import("./pages/staff/VerifyHackathonProgress"),
+);
 const UploadEvents = React.lazy(() => import("./pages/staff/UploadEvents"));
 const ReportGenerator = React.lazy(() =>
   import("./pages/staff/ReportGenerator")
@@ -104,6 +107,9 @@ const AdminStudentsBatchUpload = React.lazy(() =>
 const Achievements = React.lazy(() =>
   import("./pages/student/StudentsAchievements")
 );
+const HackathonEntryandProgress = React.lazy(() =>
+  import("./pages/student/HackathonEntryandProgress")
+);
 const ProjectUpload = React.lazy(() =>
   import("./pages/student/StudentsProjectUpload")
 );
@@ -179,6 +185,16 @@ export default function App() {
                 allowedRoles={["student", "alumni", "staff", "admin"]}
               >
                 <Achievements />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hackathons"
+            element={
+              <ProtectedRoute
+                allowedRoles={["student", "alumni", "staff", "admin"]}
+              >
+                <HackathonEntryandProgress />
               </ProtectedRoute>
             }
           />
@@ -459,6 +475,14 @@ export default function App() {
             }
           />
           <Route
+            path="/verify-hackathon-progress"
+            element={
+              <ProtectedRoute allowedRoles={["staff", "admin"]}>
+                <VerifyHackathonProgress />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/upload-events"
             element={
               <ProtectedRoute allowedRoles={["staff", "admin"]}>
@@ -583,6 +607,10 @@ export default function App() {
           <Route
             path="/staff/verify-achievements"
             element={<Navigate to="/verify-achievements" replace />}
+          />
+          <Route
+            path="/staff/verify-hackathon-progress"
+            element={<Navigate to="/verify-hackathon-progress" replace />}
           />
           <Route
             path="/staff/upload-events"

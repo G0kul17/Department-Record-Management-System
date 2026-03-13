@@ -75,10 +75,11 @@ export const bulkDataExport = async (req, res) => {
     ].map((k) => ({ header: k, key: k }));
     await streamRows(
       `SELECT id, title, description, team, team_members_count, team_member_names,
-              github_url, mentor_name, academic_year, activity_type, status,
+              github_url, mentor_name, academic_year, at.name AS activity_type, status,
               verified, verification_status, verification_comment, verified_by,
               verified_at, created_by, created_at
-         FROM projects
+         FROM projects p
+         LEFT JOIN activity_types at ON at.id = p.activity_type_id
         ORDER BY id`,
       [],
       (row) => projectsSheet.addRow(row).commit(),
@@ -95,10 +96,11 @@ export const bulkDataExport = async (req, res) => {
     ].map((k) => ({ header: k, key: k }));
     await streamRows(
       `SELECT id, user_id, event_id, title, name, date, date_of_award, event_name,
-              activity_type, issuer, position, prize_amount, academic_year,
+              at.name AS activity_type, issuer, position, prize_amount, academic_year,
               proof_file_id, certificate_file_id, event_photos_file_id, verified,
               verification_status, verification_comment, verified_by, verified_at, created_at
-         FROM achievements
+         FROM achievements a
+         LEFT JOIN activity_types at ON at.id = a.activity_type_id
         ORDER BY id`,
       [],
       (row) => achievementsSheet.addRow(row).commit(),
@@ -112,7 +114,7 @@ export const bulkDataExport = async (req, res) => {
       "start_date","end_date","conducted_by","details","publications_type",
       "claiming_faculty_name","publication_indexing","authors_list","paper_title",
       "journal_name","volume_no","issue_no","page_or_doi","issn_or_isbn",
-      "pub_month_year","academic_year","citations_count","paper_url","journal_home_url",
+      "pub_month_year","citations_count","paper_url","journal_home_url",
       "publisher","impact_factor","indexed_in_db","full_paper_drive_link",
       "first_page_drive_link","sdg_mapping","joint_publication_with",
       "publication_domain","coauthors_students","proof_file_id","created_by",
@@ -123,7 +125,7 @@ export const bulkDataExport = async (req, res) => {
               start_date, end_date, conducted_by, details, publications_type,
               claiming_faculty_name, publication_indexing, authors_list, paper_title,
               journal_name, volume_no, issue_no, page_or_doi, issn_or_isbn,
-              pub_month_year, academic_year, citations_count, paper_url, journal_home_url,
+              pub_month_year, citations_count, paper_url, journal_home_url,
               publisher, impact_factor, indexed_in_db, full_paper_drive_link,
               first_page_drive_link, sdg_mapping, joint_publication_with,
               publication_domain, coauthors_students, proof_file_id, created_by,

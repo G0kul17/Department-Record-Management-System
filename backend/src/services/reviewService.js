@@ -39,13 +39,12 @@ export async function reviewProject(projectId, staffId, action, comment, correla
     ...ctx,
   });
 
-  // Staff must coordinate the project's activity_type
-  const { rows: authRows } = await tracedQuery(
-    pool,
+  // Staff must coordinate the project's activity type
+  const { rows: authRows } = await pool.query(
     `SELECT 1
        FROM projects p
        JOIN activity_coordinators ac
-         ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(p.activity_type)) AND ac.staff_id = $1
+         ON ac.activity_type_id = p.activity_type_id AND ac.staff_id = $1
       WHERE p.id = $2`,
     [staffId, projectId],
   );
@@ -124,13 +123,12 @@ export async function reviewAchievement(achievementId, staffId, action, comment,
     ...ctx,
   });
 
-  // Staff must coordinate the achievement's activity_type
-  const { rows: authRows } = await tracedQuery(
-    pool,
+  // Staff must coordinate the achievement's activity type
+  const { rows: authRows } = await pool.query(
     `SELECT 1
        FROM achievements a
        JOIN activity_coordinators ac
-         ON LOWER(TRIM(ac.activity_type)) = LOWER(TRIM(a.activity_type)) AND ac.staff_id = $1
+         ON ac.activity_type_id = a.activity_type_id AND ac.staff_id = $1
       WHERE a.id = $2`,
     [staffId, achievementId],
   );

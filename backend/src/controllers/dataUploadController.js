@@ -4,7 +4,7 @@ import path from "path";
 import * as XLSX from "xlsx";
 import csvParser from "csv-parser";
 import logger, { reqContext } from "../utils/logger.js";
-import { tracedQuery } from "../utils/tracing.js";
+import { requireActivityTypeByName } from "../utils/activityTypeUtils.js";
 
 // Utility: Parse CSV
 const parseCSV = (filePath) =>
@@ -267,6 +267,9 @@ async function saveAchievement(normalized, user, rowNum) {
   const date = (normalized.date || normalized.achievement_date || "").trim();
   const issuer = (normalized.issuer || normalized.issued_by || "").trim();
   const name = (normalized.name || normalized.achievement_name || "").trim();
+  const activityTypeInput = (
+    normalized.activity_type || normalized.activity || title || "achievement"
+  ).trim();
 
   if (!user_email || !title) {
     throw new Error("Required fields missing: user_email, title");
@@ -280,10 +283,16 @@ async function saveAchievement(normalized, user, rowNum) {
   }
 
   const user_id = userResult.rows[0].id;
-  await tracedQuery(pool, 
-    `INSERT INTO achievements (user_id, title, date, issuer, name, verified, verification_status)
-     VALUES ($1, $2, $3, $4, $5, false, 'pending')`,
-    [user_id, title, date || null, issuer || null, name || null]
+  const activityType = await requireActivityTypeByName(
+    pool,
+    activityTypeInput,
+    `activity_type (row ${rowNum})`,
+  );
+
+  await pool.query(
+    `INSERT INTO achievements (user_id, title, date, issuer, name, activity_type_id, verified, verification_status)
+     VALUES ($1, $2, $3, $4, $5, $6, false, 'pending')`,
+    [user_id, title, date || null, issuer || null, name || null, activityType.id]
   );
 }
 
@@ -311,14 +320,23 @@ async function saveProject(normalized, user, rowNum) {
     normalized.team_members ||
     ""
   ).trim();
+  const activityTypeInput = (
+    normalized.activity_type || normalized.activity || "project"
+  ).trim();
 
   if (!title) {
     throw new Error("Required fields missing: title");
   }
 
-  await tracedQuery(pool, 
-    `INSERT INTO projects (title, description, mentor_name, academic_year, status, github_url, team_member_names, created_by, verification_status)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending')`,
+  const activityType = await requireActivityTypeByName(
+    pool,
+    activityTypeInput,
+    `activity_type (row ${rowNum})`,
+  );
+
+  await pool.query(
+    `INSERT INTO projects (title, description, mentor_name, academic_year, status, github_url, team_member_names, created_by, activity_type_id, verification_status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending')`,
     [
       title,
       description,
@@ -328,6 +346,7 @@ async function saveProject(normalized, user, rowNum) {
       github_url,
       team_member_names,
       user.id,
+      activityType.id,
     ]
   );
 }

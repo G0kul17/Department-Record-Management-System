@@ -498,24 +498,6 @@ export default function ProjectUpload() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => setPreviewModal({ open: true, item: p })}
-                      className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100"
-                    >
-                      View
-                    </button>
-                    {p.verified ? (
-                      <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/40 dark:text-green-300">
-                        Verified
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300">
-                        Pending
-                      </span>
-                    )}
-                  </div>
                   {p.created_at && (
                     <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                       Uploaded: {new Date(p.created_at).toLocaleDateString()}

@@ -328,7 +328,7 @@ export default function HackathonEntryandProgress() {
                 min="1"
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
                 value={form.team_members_count}
-                onChange={(e) => setForm({ ...form, team_members_count: e.target.value })}
+                onChange={(e) => setForm({ ...form, team_members_count: parseInt(e.target.value, 10) || 1 })}
                 required
               />
             </div>

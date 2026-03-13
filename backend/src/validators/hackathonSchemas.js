@@ -60,7 +60,7 @@ export const createHackathonSchema = Joi.object({
       "date.base": "Valid start date is required",
       "any.required": "Duration start date is required",
     }),
-  duration_end_date: Joi.date().iso().min(Joi.ref("duration_start_date")).optional().allow(""),
+  duration_end_date: Joi.date().iso().min(Joi.ref("duration_start_date")).optional().allow(null),
   no_of_rounds: Joi.number().integer().min(1).max(10).optional().allow(null, "")
     .messages({
       "number.min": "Number of rounds must be at least 1",

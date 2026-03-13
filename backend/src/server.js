@@ -21,6 +21,7 @@ import announcementRoutes from "./routes/announcementRoutes.js";
 import hackathonRoutes from "./routes/hackathonRoutes.js";
 import pool, { logPoolHealth, getPoolHealth } from "./config/db.js";
 import { verifyFileStorage } from "./config/upload.js";
+import { cleanupExpiredSessions } from "./utils/sessionUtils.js";
 import { requireAuth } from "./middleware/authMiddleware.js";
 import { requireRole } from "./middleware/roleAuth.js";
 import { verifyToken } from "./utils/tokenUtils.js";
@@ -262,6 +263,20 @@ async function startApplication() {
         "server.api_base": `http://localhost:${PORT}/api`,
       });
     });
+
+    // Step 4: Schedule periodic cleanup of expired sessions (every 24 hours)
+    const SESSION_CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
+    setInterval(() => {
+      cleanupExpiredSessions().catch((err) =>
+        logger.error("Session cleanup failed", { err }),
+      );
+    }, SESSION_CLEANUP_INTERVAL_MS);
+    // Run once shortly after startup to clean any backlog
+    setTimeout(() => {
+      cleanupExpiredSessions().catch((err) =>
+        logger.error("Session cleanup (initial) failed", { err }),
+      );
+    }, 60_000);
   } catch (err) {
     logger.error("Startup failed — fix the error and restart", { err });
     process.exit(1);

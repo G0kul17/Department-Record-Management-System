@@ -93,27 +93,6 @@ export default function EventsManagement() {
           subtitle="Event successfully uploaded."
           onClose={() => setSuccessOpen(false)}
         />
-        {successOpen && (
-          <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-green-800 dark:border-green-800 dark:bg-green-900/30 dark:text-green-200">
-            <div className="flex items-center justify-between">
-              <span>Event successfully uploaded.</span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => navigate("/")}
-                  className="btn btn-primary btn-xs"
-                >
-                  View on Home
-                </button>
-                <button
-                  onClick={() => setSuccessOpen(false)}
-                  className="rounded px-2 py-1 text-xs text-green-800 underline dark:text-green-200"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
         {errorMsg && (
           <div className="mb-4 rounded-md border border-rose-200 bg-rose-50 p-3 text-rose-800 dark:border-rose-800 dark:bg-rose-900/30 dark:text-rose-200">
             {errorMsg}

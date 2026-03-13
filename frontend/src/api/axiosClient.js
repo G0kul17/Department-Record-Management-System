@@ -44,17 +44,14 @@ class ApiClient {
     try {
       const response = await fetch(url, config);
 
-      // Handle 401 Unauthorized
-      if (response.status === 401) {
+      // Handle 401 Unauthorized — but only redirect to /login when the user is
+      // already authenticated (i.e. the session/token expired mid-session).
+      // Auth endpoints (/auth/*) return 401 for wrong password / invalid OTP;
+      // those errors must be surfaced to the form, not trigger a redirect.
+      if (response.status === 401 && !endpoint.startsWith("/auth/")) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        // Use pathname so BrowserRouter picks up the change correctly
-        try {
-          window.location.href = "/login";
-        } catch (e) {
-          // fallback to assign
-          window.location.assign("/login");
-        }
+        window.location.href = "/login";
         throw new Error("Unauthorized");
       }
 
@@ -122,17 +119,12 @@ class ApiClient {
       body: formData,
     });
 
-    // Handle 401 Unauthorized consistently (same behavior as request())
-    if (response.status === 401) {
-      try {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        window.location.href = "/login";
-      } catch (_) {
-        try {
-          window.location.assign("/login");
-        } catch (_) {}
-      }
+    // Handle 401 Unauthorized — redirect only for authenticated endpoints,
+    // not for auth endpoints (same guard as request()).
+    if (response.status === 401 && !endpoint.startsWith("/auth/")) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/login";
       throw new Error("Unauthorized");
     }
 

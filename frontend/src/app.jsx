@@ -161,11 +161,23 @@ export default function App() {
     path.startsWith("/admin") ||
     path.startsWith("/staff") ||
     path.startsWith("/student");
+  // Hide navbar from auth pages
+  const authRoutes = [
+    "/login",
+    "/verify-otp",
+    "/register-student",
+    "/register-staff",
+    "/forgot",
+    "/forgot-password",
+    "/reset",
+    "/reset-password",
+  ];
+  const hideNavbar = authRoutes.includes(path);
   // Show Back button on all non-dashboard routes (admin routes will render local Back inside pages)
   const showBackButton = !hideBackButton;
   return (
     <>
-      <Navbar />
+      {!hideNavbar && <Navbar />}
       {showBackButton && <BackButton />}
       <Suspense fallback={<LoadingFallback />}>
         <Routes>

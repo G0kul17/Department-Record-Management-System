@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { Link, useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import InputField from "../components/InputField";
-import BlurText from "../components/ui/BlurText";
 import apiClient from "../api/axiosClient";
 import ErrorMessage from "../components/ErrorMessage";
+import AuthSplitLayout from "../components/AuthSplitLayout";
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -150,25 +150,18 @@ const Login = () => {
     return `${m}:${s}`;
   };
 
-  const COLLEGE_NAME = "Sona College Of Technology";
-
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-slate-900 flex items-center justify-center p-4">
+    <>
       {!isLoginSuccess && (
-        <div className="glitter-card bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 ring-1 ring-slate-300/60 max-w-md w-full">
-          <div className="text-center mb-3">
-            <BlurText
-              text={COLLEGE_NAME}
-              className="text-2xl font-extrabold text-blue-700 dark:text-blue-400 tracking-wide"
-              delay={60}
-              step={24}
-            />
-          </div>
-          <h2 className="text-3xl font-bold text-center mb-6 text-slate-900 dark:text-slate-100">
-            Login
-          </h2>
-
-          <ErrorMessage error={error} className="mb-4" />
+        <AuthSplitLayout
+          title="Welcome Back"
+          subtitle={
+            otpSent
+              ? "Enter your one-time password to complete sign in."
+              : "Enter your email and password to access your account."
+          }
+        >
+          <ErrorMessage error={error} className="mb-5 rounded-xl" />
 
           {!otpSent ? (
             <form onSubmit={handleSendOtp}>
@@ -180,6 +173,8 @@ const Login = () => {
                 onChange={handleChange}
                 placeholder="Enter your email"
                 required
+                labelClassName="mb-1 text-sm font-medium text-slate-600"
+                inputClassName="rounded-xl border border-slate-200 bg-white px-4 py-3 text-base shadow-none focus:border-slate-400 focus:ring-slate-300"
               />
               <InputField
                 label="Password"
@@ -189,48 +184,90 @@ const Login = () => {
                 onChange={handleChange}
                 placeholder="Enter your password"
                 required
+                labelClassName="mb-1 text-sm font-medium text-slate-600"
+                inputClassName="rounded-xl border border-slate-200 bg-white px-4 py-3 text-base shadow-none focus:border-slate-400 focus:ring-slate-300"
               />
+
+              <div className="mb-5 flex items-center justify-between text-sm text-slate-500">
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-400"
+                  />
+                  Remember me
+                </label>
+                <Link to="/forgot" className="font-medium text-slate-700 hover:underline">
+                  Forgot Password
+                </Link>
+              </div>
+
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="w-full rounded-xl bg-black px-4 py-3 text-base font-semibold text-white transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "Please wait..." : "Login"}
+                {loading ? "Please wait..." : "Sign In"}
               </button>
             </form>
           ) : (
             <form onSubmit={handleLogin}>
               <InputField
-                label="OTP"
+                label="One-Time Password"
                 type="text"
                 name="otp"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
                 placeholder="Enter OTP"
                 required
+                labelClassName="mb-1 text-sm font-medium text-slate-600"
+                inputClassName="rounded-xl border border-slate-200 bg-white px-4 py-3 text-base shadow-none focus:border-slate-400 focus:ring-slate-300"
               />
-              <p className="text-sm text-gray-500 mb-4">
+
+              <p
+                className={`mb-5 text-sm ${
+                  timeLeft === 0 ? "text-red-500" : "text-slate-500"
+                }`}
+              >
                 OTP expires in {formatMMSS(timeLeft)}.
               </p>
+
               <button
                 type="submit"
                 disabled={loading || timeLeft === 0}
-                className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="w-full rounded-xl bg-black px-4 py-3 text-base font-semibold text-white transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "Logging in..." : "Login"}
+                {loading ? "Logging in..." : "Verify and Sign In"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setOtpSent(false);
+                  setOtp("");
+                  setOtpExpiresAt(null);
+                  setTimeLeft(0);
+                }}
+                className="mt-3 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+              >
+                Use different credentials
               </button>
             </form>
           )}
 
-          <div className="mt-4 text-center space-y-2">
-            <Link to="/forgot" className="link link-primary block">
-              Forgot Password?
-            </Link>
-          </div>
-        </div>
+          {!otpSent && (
+            <p className="mt-8 text-center text-sm text-slate-600">
+              Need help with password reset?{" "}
+              <Link to="/forgot" className="font-semibold text-slate-800 hover:underline">
+                Send OTP
+              </Link>
+            </p>
+          )}
+        </AuthSplitLayout>
       )}
-    </div>
+    </>
   );
 };
 
 export default Login;
+
+

@@ -3,6 +3,33 @@ import apiClient from "../../api/axiosClient";
 import exportToXlsxOrCsv from "../../utils/exportData";
 import BackButton from "../../components/BackButton";
 
+const ACHIEVEMENT_TITLE_OPTIONS = [
+  "Hackathon",
+  "Paper presentation",
+  "Coding competition",
+  "Conference presentation",
+  "Journal publications",
+  "NPTEL certificate",
+  "Internship certificate",
+  "Other MOOC courses",
+];
+
+const FACULTY_PARTICIPATION_EVENT_TYPE_OPTIONS = [
+  "FDP",
+  "Webinar",
+  "Seminar",
+  "Online Certification",
+  "NPTEL Online Certification",
+  "NPTEL - FDP",
+  "Conference",
+  "Workshop",
+  "Hackathon",
+  "STTP",
+  "Professional Development Course",
+  "Journal Publications",
+  "Conference Publications",
+];
+
 function Dropdown({ label, value, onChange, options }) {
   return (
     <label className="flex flex-col text-sm">
@@ -26,7 +53,7 @@ function Dropdown({ label, value, onChange, options }) {
 }
 
 export default function ReportGenerator() {
-  const [mode, setMode] = useState("achievements"); // achievements | projects | participation | research | consultancy
+  const [mode, setMode] = useState("achievements"); // achievements | projects | participation | research | consultancy | hackathons
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -53,6 +80,7 @@ export default function ReportGenerator() {
         if (mode === "research") endpoint = "/faculty-research?limit=2000";
         if (mode === "consultancy")
           endpoint = "/faculty-consultancy?limit=2000";
+        if (mode === "hackathons") endpoint = "/hackathons?limit=2000";
 
         const data = await apiClient.get(endpoint);
         if (!mounted) return;
@@ -68,6 +96,8 @@ export default function ReportGenerator() {
           setItems(
             data.consultancies || data.facultyConsultancy || data.items || []
           );
+        else if (mode === "hackathons")
+          setItems(data.hackathons || data.items || []);
       } catch (err) {
         console.error(err);
         if (mounted) setItems([]);
@@ -76,6 +106,11 @@ export default function ReportGenerator() {
       }
     })();
     return () => (mounted = false);
+  }, [mode]);
+
+  useEffect(() => {
+    // Prevent stale title filters from one dataset affecting another.
+    setTitleFilter("");
   }, [mode]);
 
   const issuerOptions = useMemo(() => {
@@ -87,12 +122,11 @@ export default function ReportGenerator() {
   }, [items]);
 
   const titleOptions = useMemo(() => {
-    const s = new Set();
-    items.forEach((it) => {
-      if (it.title) s.add(it.title);
-    });
-    return Array.from(s).sort();
-  }, [items]);
+    if (mode === "achievements") return ACHIEVEMENT_TITLE_OPTIONS;
+    if (mode === "participation")
+      return FACULTY_PARTICIPATION_EVENT_TYPE_OPTIONS;
+    return [];
+  }, [mode]);
 
   const studentOptions = useMemo(() => {
     const s = new Set();
@@ -110,8 +144,15 @@ export default function ReportGenerator() {
 
   const applyFilters = (list) => {
     return list.filter((it) => {
-      // title filter (for achievements)
-      if (titleFilter && (it.title || "") !== titleFilter) return false;
+      if (titleFilter) {
+        if (mode === "achievements" && (it.title || "") !== titleFilter)
+          return false;
+        if (
+          mode === "participation" &&
+          (it.type_of_event || it.event_type || "") !== titleFilter
+        )
+          return false;
+      }
       if (issuer && (it.issuer || it.issuer_name) !== issuer) return false;
       // Filter by user type (student/staff)
       if (userType) {
@@ -276,6 +317,31 @@ export default function ReportGenerator() {
         { key: "verification_status", header: "Verification Status" },
       ];
     }
+    if (mode === "hackathons") {
+      return [
+        { key: "id", header: "ID" },
+        { key: "student_name", header: "Student Name" },
+        { key: "mobile_number", header: "Mobile Number" },
+        { key: "team_leader_name", header: "Team Leader" },
+        { key: "team_members_count", header: "Team Count" },
+        { key: "team_member_names", header: "Team Members" },
+        { key: "hackathon_name", header: "Hackathon Name" },
+        { key: "mentor", header: "Mentor" },
+        { key: "hosted_by", header: "Hosted By" },
+        { key: "location", header: "Location" },
+        { key: "duration_start_date", header: "Start Date" },
+        { key: "duration_end_date", header: "End Date" },
+        { key: "no_of_rounds", header: "No. of Rounds" },
+        { key: "progress", header: "Progress" },
+        { key: "prize", header: "Prize" },
+        { key: "proof_file", header: "Proof File" },
+        { key: "created_at", header: "Created At" },
+        { key: "verified", header: "Verified" },
+        { key: "verification_status", header: "Verification Status" },
+        { key: "verified_by", header: "Verified By" },
+        { key: "verified_at", header: "Verified At" },
+      ];
+    }
     // achievements
     return [
       { key: "id", header: "ID" },
@@ -385,6 +451,35 @@ export default function ReportGenerator() {
           it.verification_status || (it.verified ? "approved" : "pending"),
       };
     }
+    if (mode === "hackathons") {
+      const proof = it.proof_name || it.proof_filename || it.proof || "";
+      return {
+        id: it.id,
+        student_name: it.student_name || it.user_fullname || it.user_name || "",
+        mobile_number: it.mobile_number || "",
+        team_leader_name: it.team_leader_name || "",
+        team_members_count: it.team_members_count || "",
+        team_member_names:
+          it.team_member_names || it.teamMembers || it.team_members || "",
+        hackathon_name: it.hackathon_name || it.title || "",
+        mentor: it.mentor || "",
+        hosted_by: it.hosted_by || "",
+        location: it.location || "",
+        duration_start_date: it.duration_start_date || "",
+        duration_end_date: it.duration_end_date || "",
+        no_of_rounds: it.no_of_rounds || "",
+        progress: it.progress || "",
+        prize: it.prize || "",
+        proof_file: proof,
+        created_at: it.created_at || "",
+        verified: it.verified || false,
+        verification_status:
+          it.verification_status || (it.verified ? "approved" : "pending"),
+        verified_by:
+          it.verified_by_name || it.verified_by_fullname || it.verified_by || "",
+        verified_at: it.verified_at || "",
+      };
+    }
     // achievements
     const proof =
       it.proof_name || it.proof_filename
@@ -469,16 +564,17 @@ export default function ReportGenerator() {
                 <option value="participation">Faculty Participation</option>
                 <option value="research">Faculty Research</option>
                 <option value="consultancy">Faculty Consultancy</option>
+                <option value="hackathons">Hackathon Entry and Progress</option>
               </select>
             </div>
           </div>
 
-          {/* Title (only for achievements) */}
+          {/* Title */}
           <div>
             <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
               Title
             </label>
-            {mode === "achievements" ? (
+            {mode === "achievements" || mode === "participation" ? (
               <Dropdown
                 label=""
                 value={titleFilter}
@@ -715,6 +811,7 @@ export default function ReportGenerator() {
           <button
             onClick={() => {
               setIssuer("");
+              setTitleFilter("");
               setStudent("");
               setVerified("");
               setFromDate("");

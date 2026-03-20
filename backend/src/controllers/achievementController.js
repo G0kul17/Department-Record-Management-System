@@ -486,9 +486,11 @@ export async function getAchievementsCount(req, res) {
 
 export async function getAchievementsLeaderboard(req, res) {
   try {
-    const limit = Number(req.query.limit) || 10;
+    const parsedLimit = Number(req.query.limit);
+    const limit = Number.isFinite(parsedLimit)
+      ? Math.min(Math.max(Math.trunc(parsedLimit), 1), 100)
+      : 10;
     const type = (req.query.type || "achievements").toLowerCase();
-    const role = (req.query.role || "student").toLowerCase();
 
     // Map of supported leaderboard queries keyed by type
     const queries = {
@@ -505,7 +507,6 @@ export async function getAchievementsLeaderboard(req, res) {
               GROUP BY u.id, u.email, u.full_name
               ORDER BY item_count DESC, u.full_name ASC
               LIMIT $1`,
-        params: [limit, role],
       },
       projects: {
         sql: `SELECT
@@ -525,7 +526,6 @@ export async function getAchievementsLeaderboard(req, res) {
               GROUP BY u.id, u.email, u.full_name
               ORDER BY item_count DESC, u.full_name ASC
               LIMIT $1`,
-        params: [limit, role],
       },
       faculty_research: {
         sql: `SELECT
@@ -539,7 +539,6 @@ export async function getAchievementsLeaderboard(req, res) {
               GROUP BY u.id, u.email, u.full_name
               ORDER BY item_count DESC, u.full_name ASC
               LIMIT $1`,
-        params: [limit, role],
       },
       faculty_consultancy: {
         sql: `SELECT
@@ -553,7 +552,6 @@ export async function getAchievementsLeaderboard(req, res) {
               GROUP BY u.id, u.email, u.full_name
               ORDER BY item_count DESC, u.full_name ASC
               LIMIT $1`,
-        params: [limit, role],
       },
       faculty_participation: {
         sql: `SELECT
@@ -567,13 +565,23 @@ export async function getAchievementsLeaderboard(req, res) {
               GROUP BY u.id, u.email, u.full_name
               ORDER BY item_count DESC, u.full_name ASC
               LIMIT $1`,
-        params: [limit, role],
       },
     };
 
     const key = queries[type] ? type : "achievements";
-    const { sql, params } = queries[key];
-    const { rows } = await tracedQuery(pool, sql, params);
+    const role = key.startsWith("faculty_") ? "staff" : "student";
+
+    // Faculty leaderboards should only be visible to authenticated staff/admin users.
+    if (
+      role === "staff" &&
+      (!req.user || !["staff", "admin"].includes((req.user.role || "").toLowerCase()))
+    ) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const { sql } = queries[key];
+    const finalParams = [limit, role];
+    const { rows } = await tracedQuery(pool, sql, finalParams);
 
     // Normalize field name for the frontend
     const leaderboard = rows.map((row) => ({

@@ -254,14 +254,6 @@ const Login = () => {
             </form>
           )}
 
-          {!otpSent && (
-            <p className="mt-8 text-center text-sm text-slate-600">
-              Need help with password reset?{" "}
-              <Link to="/forgot" className="font-semibold text-slate-800 hover:underline">
-                Send OTP
-              </Link>
-            </p>
-          )}
         </AuthSplitLayout>
       )}
     </>

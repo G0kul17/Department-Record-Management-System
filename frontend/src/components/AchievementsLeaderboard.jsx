@@ -16,12 +16,18 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("achievements");
 
-  // Only show Achievements and Projects for students
+  const userRole = (user?.role || "").toLowerCase();
+  const canViewFacultyBoards = userRole === "staff" || userRole === "admin";
+
+  // Students should only see student categories; staff/admin can access all.
   const availableCategories = useMemo(() => {
-    return CATEGORY_OPTIONS.filter(
-      (opt) => opt.key === "achievements" || opt.key === "projects",
-    );
-  }, []);
+    if (!canViewFacultyBoards) {
+      return CATEGORY_OPTIONS.filter(
+        (opt) => opt.key === "achievements" || opt.key === "projects",
+      );
+    }
+    return CATEGORY_OPTIONS;
+  }, [canViewFacultyBoards]);
 
   // Reset category if it's not available
   useEffect(() => {
@@ -37,6 +43,12 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
     switch (category) {
       case "projects":
         return "Top Student Project Submitters";
+      case "faculty_research":
+        return "Top Faculty Researchers";
+      case "faculty_consultancy":
+        return "Top Faculty Consultants";
+      case "faculty_participation":
+        return "Top Faculty Participants";
       default:
         return "Top Student Achievers";
     }
@@ -62,8 +74,9 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
     (async () => {
       setLoading(true);
       try {
+        const roleParam = category.startsWith("faculty_") ? "staff" : "student";
         const data = await apiClient.get(
-          `/achievements/leaderboard?type=${category}&limit=${limit}&role=student`,
+          `/achievements/leaderboard?type=${category}&limit=${limit}&role=${roleParam}`,
         );
         if (!mounted) return;
         setLeaderboard(data.leaderboard || []);
@@ -94,10 +107,11 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
       </div>
       <p className="text-xs text-slate-300 mb-4">{subtitle}</p>
 
-      {user?.role === "admin" && (
+      {availableCategories.length > 1 && (
         <div className="mb-4 flex flex-wrap gap-2">
           {availableCategories.map((opt) => (
             <button
+              type="button"
               key={opt.key}
               onClick={() => setCategory(opt.key)}
               className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors border ${

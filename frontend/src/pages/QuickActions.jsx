@@ -31,8 +31,6 @@ export default function QuickActions() {
     if (key === "exportRecords") return nav("/staff/reports");
     if (key === "bulkExport") return nav("/staff/bulk-export");
 
-    // Generic placeholders
-    if (key === "community") return nav("/"); // placeholder until community page exists
     if (key === "events") return nav("/events");
     return nav("/");
   };
@@ -562,34 +560,6 @@ export default function QuickActions() {
             </>
           ) : (
             <>
-              <Card
-                onClick={goTo("community")}
-                className="p-6 glitter-card bulge-card"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                    >
-                      <path
-                        d="M21 15a4 4 0 01-4 4H8l-5 3V7a4 4 0 014-4h10a4 4 0 014 4v8z"
-                        strokeWidth="2"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </span>
-                  <h3 className="text-lg font-semibold text-slate-800">
-                    Join Discussion
-                  </h3>
-                </div>
-                <p className="mt-2 text-slate-600">
-                  Engage in conversations on the community forums.
-                </p>
-              </Card>
               <Card
                 onClick={goTo("events")}
                 className="p-6 glitter-card bulge-card"

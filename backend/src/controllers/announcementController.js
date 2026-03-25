@@ -122,7 +122,7 @@ export async function listMyAnnouncements(req, res) {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-    const limit = Number(req.query.limit) || 50;
+    const limit = Math.min(200, Math.max(1, Number(req.query.limit) || 50));
 
     const { rows } = await tracedQuery(pool, 
       `SELECT a.id,

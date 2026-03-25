@@ -13,6 +13,7 @@ export default function FacultyResearch() {
     teamMembers: [],
     title: "",
     agency: "",
+    agency_custom: "",
     current_status: "",
     duration: "",
     start_date: "",
@@ -28,14 +29,21 @@ export default function FacultyResearch() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    const normalizedAgency =
+      form.agency === "__custom__" ? (form.agency_custom || "").trim() : form.agency;
+    if (!normalizedAgency) {
+      setMessage("Please enter agency");
+      return;
+    }
     setSubmitting(true);
     setMessage("");
     try {
       const fd = new FormData();
-      Object.entries(form).forEach(([k, v]) => {
+      const payload = { ...form, agency: normalizedAgency };
+      Object.entries(payload).forEach(([k, v]) => {
         if (k === "teamMembers") {
           fd.append("team_member_names", (v || []).join(", "));
-        } else if (k !== "teamMembersCount") {
+        } else if (k !== "teamMembersCount" && k !== "agency_custom") {
           fd.append(k, v || "");
         }
       });
@@ -51,6 +59,7 @@ export default function FacultyResearch() {
         teamMembers: [],
         title: "",
         agency: "",
+        agency_custom: "",
         current_status: "",
         duration: "",
         start_date: "",
@@ -217,7 +226,14 @@ export default function FacultyResearch() {
               <select
                 className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
                 value={form.agency}
-                onChange={update("agency")}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setForm((prev) => ({
+                    ...prev,
+                    agency: v,
+                    agency_custom: v === "__custom__" ? prev.agency_custom : "",
+                  }));
+                }}
                 required
               >
                 <option value="" disabled>
@@ -230,7 +246,17 @@ export default function FacultyResearch() {
                 <option value="CSIR">CSIR</option>
                 <option value="IBM">IBM</option>
                 <option value="VEE CANADA">VEE CANADA</option>
+                <option value="__custom__">Custom Type</option>
               </select>
+              {form.agency === "__custom__" && (
+                <input
+                  className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                  value={form.agency_custom}
+                  onChange={update("agency_custom")}
+                  placeholder="Enter custom agency"
+                  required
+                />
+              )}
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">

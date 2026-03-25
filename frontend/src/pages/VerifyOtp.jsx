@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+﻿import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import InputField from "../components/InputField";
 import apiClient from "../api/axiosClient";
 import { useAuth } from "../hooks/useAuth";
+import ErrorMessage from "../components/ErrorMessage";
+import AuthSplitLayout from "../components/AuthSplitLayout";
 
 const VerifyOtp = () => {
   const navigate = useNavigate();
@@ -67,9 +69,7 @@ const VerifyOtp = () => {
           const dest =
             data.role === "admin"
               ? "/admin"
-              : data.role === "staff"
-              ? "/"
-              : "/student";
+              : "/";
           navigate(dest);
           return;
         }
@@ -92,9 +92,7 @@ const VerifyOtp = () => {
           const dest =
             data.role === "admin"
               ? "/admin"
-              : data.role === "staff"
-              ? "/"
-              : "/student";
+              : "/";
           navigate(dest);
           return;
         }
@@ -108,41 +106,53 @@ const VerifyOtp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-        <h2 className="text-3xl font-bold text-center mb-6">Verify OTP</h2>
+    <AuthSplitLayout
+      title="Verify OTP"
+      subtitle="Enter the one-time password sent to your email address."
+      heroTitle="Secure Every Login"
+      heroDescription="Your OTP is valid for 5 minutes. Verify quickly to continue to your account."
+    >
+      <ErrorMessage error={error} className="mb-5 rounded-xl" />
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
+      <form onSubmit={handleSubmit}>
+        <InputField
+          label="One-Time Password"
+          type="text"
+          name="otp"
+          value={otp}
+          onChange={(e) => setOtp(e.target.value)}
+          placeholder="Enter 6-digit OTP"
+          required
+          labelClassName="mb-1 text-sm font-medium text-slate-600"
+          inputClassName="rounded-xl border border-slate-200 bg-white px-4 py-3 text-base shadow-none focus:border-slate-400 focus:ring-slate-300"
+        />
+        <p
+          className={`mb-5 text-sm ${
+            timeLeft === 0 ? "text-red-500" : "text-slate-500"
+          }`}
+        >
+          OTP expires in {formatMMSS(timeLeft)}.
+        </p>
 
-        <form onSubmit={handleSubmit}>
-          <InputField
-            label="OTP"
-            type="text"
-            name="otp"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-            placeholder="Enter 6-digit OTP"
-            required
-          />
-          <p className="text-sm text-gray-500 mb-4">
-            OTP expires in {formatMMSS(timeLeft)}.
-          </p>
+        <button
+          type="submit"
+          disabled={loading || timeLeft === 0}
+          className="w-full rounded-xl bg-black px-4 py-3 text-base font-semibold text-white transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? "Verifying..." : "Verify OTP"}
+        </button>
+      </form>
 
-          <button
-            type="submit"
-            disabled={loading || timeLeft === 0}
-            className="w-full bg-[#87CEEB] text-white py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50"
-          >
-            {loading ? "Verifying..." : "Verify OTP"}
-          </button>
-        </form>
-      </div>
-    </div>
+      <p className="mt-8 text-center text-sm text-slate-600">
+        Wrong email address?{" "}
+        <Link to="/forgot" className="font-semibold text-slate-800 hover:underline">
+          Send OTP again
+        </Link>
+      </p>
+    </AuthSplitLayout>
   );
 };
 
 export default VerifyOtp;
+
+

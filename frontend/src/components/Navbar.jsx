@@ -54,7 +54,7 @@ const Navbar = () => {
   function goToDashboard() {
     if (user.role === "admin") nav("/admin");
     else if (user.role === "staff") nav("/");
-    else if (user.role === "student") nav("/student");
+    else if (user.role === "student") nav("/");
   }
 
   // Navigation links per role

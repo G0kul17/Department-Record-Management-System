@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import InputField from "../components/InputField";
 import apiClient from "../api/axiosClient";
+import ErrorMessage from "../components/ErrorMessage";
+import AuthSplitLayout from "../components/AuthSplitLayout";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -31,50 +33,51 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-        <h2 className="text-3xl font-bold text-center mb-6">Forgot Password</h2>
+    <AuthSplitLayout
+      title="Forgot Password"
+      subtitle="Enter your registered email and we will send a one-time password."
+      heroTitle="Recover Access Fast"
+      heroDescription="Security-first recovery flow helps you reset your account safely in a few quick steps."
+    >
+      <ErrorMessage error={error} className="mb-5 rounded-xl" />
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-            {success}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <InputField
-            label="Email"
-            type="email"
-            name="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your registered email"
-            required
-          />
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn btn-primary w-full"
-          >
-            {loading ? "Sending..." : "Send OTP"}
-          </button>
-        </form>
-
-        <div className="mt-4 text-center">
-          <Link to="/login" className="link link-primary">
-            Back to Login
-          </Link>
+      {success && (
+        <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+          {success}
         </div>
-      </div>
-    </div>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        <InputField
+          label="Email"
+          type="email"
+          name="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Enter your registered email"
+          required
+          labelClassName="mb-1 text-sm font-medium text-slate-600"
+          inputClassName="rounded-xl border border-slate-200 bg-white px-4 py-3 text-base shadow-none focus:border-slate-400 focus:ring-slate-300"
+        />
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full rounded-xl bg-black px-4 py-3 text-base font-semibold text-white transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? "Sending..." : "Send OTP"}
+        </button>
+      </form>
+
+      <p className="mt-8 text-center text-sm text-slate-600">
+        Remembered your password?{" "}
+        <Link to="/login" className="font-semibold text-slate-800 hover:underline">
+          Back to Login
+        </Link>
+      </p>
+    </AuthSplitLayout>
   );
 };
 
 export default ForgotPassword;
+

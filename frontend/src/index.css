@@ -1,6 +1,40 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:wght@400;500;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@keyframes auth-panel-flow {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-1.5%, 0.8%, 0) scale(1.03);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes auth-card-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-panel-flow {
+  animation: auth-panel-flow 16s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.auth-card-rise {
+  animation: auth-card-rise 460ms ease-out both;
+}
 
 .bulge-card {
   transition: transform 180ms ease, box-shadow 180ms ease;

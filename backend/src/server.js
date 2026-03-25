@@ -15,6 +15,7 @@ import facultyConsultancyRoutes from "./routes/facultyConsultancyRoutes.js";
 import dataUploadRoutes from "./routes/dataUploadRoutes.js";
 import studentProfileRoutes from "./routes/studentProfileRoutes.js";
 import addStudentsRoutes from "./routes/addStudentsRoutes.js";
+import addStaffBatchRoutes from "./routes/addStaffBatchRoutes.js";
 import bulkExportRoutes from "./routes/bulkExportRoutes.js";
 import activityCoordinatorRoutes from "./routes/activityCoordinatorRoutes.js";
 import announcementRoutes from "./routes/announcementRoutes.js";
@@ -130,6 +131,7 @@ app.get("/pool-stats", requireAuth, requireRole(["admin"]), (req, res) => {
 
 app.use("/api/student/profile", studentProfileRoutes);
 app.use("/api/students", addStudentsRoutes);
+app.use("/api/staff-batch", addStaffBatchRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/achievements", achievementRoutes);

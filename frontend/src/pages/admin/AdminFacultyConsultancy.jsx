@@ -9,6 +9,7 @@ export default function AdminFacultyConsultancy() {
     faculty_name: "",
     team_members: "",
     agency: "",
+    agency_custom: "",
     amount: "",
     duration: "",
     start_date: "",
@@ -23,11 +24,21 @@ export default function AdminFacultyConsultancy() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    const normalizedAgency =
+      form.agency === "__custom__" ? (form.agency_custom || "").trim() : form.agency;
+    if (!normalizedAgency) {
+      setMessage("Please enter agency");
+      return;
+    }
     setSubmitting(true);
     setMessage("");
     try {
       const fd = new FormData();
-      Object.entries(form).forEach(([k, v]) => fd.append(k, v || ""));
+      const payload = { ...form, agency: normalizedAgency };
+      Object.entries(payload).forEach(([k, v]) => {
+        if (k === "agency_custom") return;
+        fd.append(k, v || "");
+      });
       if (proof) fd.append("proof", proof);
       await apiClient.uploadFile("/faculty-consultancy", fd);
       setMessage("Faculty consultancy added");
@@ -35,6 +46,7 @@ export default function AdminFacultyConsultancy() {
       setForm({
         team_members: "",
         agency: "",
+        agency_custom: "",
         amount: "",
         duration: "",
         start_date: "",
@@ -88,7 +100,14 @@ export default function AdminFacultyConsultancy() {
               <select
                 className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
                 value={form.agency}
-                onChange={update("agency")}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setForm((prev) => ({
+                    ...prev,
+                    agency: v,
+                    agency_custom: v === "__custom__" ? prev.agency_custom : "",
+                  }));
+                }}
                 required
               >
                 <option value="" disabled>
@@ -101,7 +120,17 @@ export default function AdminFacultyConsultancy() {
                 <option value="CSIR">CSIR</option>
                 <option value="IBM">IBM</option>
                 <option value="VEE CANADA">VEE CANADA</option>
+                <option value="__custom__">Custom Type</option>
               </select>
+              {form.agency === "__custom__" && (
+                <input
+                  className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                  value={form.agency_custom}
+                  onChange={update("agency_custom")}
+                  placeholder="Enter custom agency"
+                  required
+                />
+              )}
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">

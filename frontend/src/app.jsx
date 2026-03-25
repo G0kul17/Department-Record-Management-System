@@ -66,9 +66,6 @@ const AdminRoleUsersList = React.lazy(() =>
 const AdminStaffCoordinators = React.lazy(() =>
   import("./pages/admin/AdminStaffCoordinators")
 );
-const StudentDashboard = React.lazy(() =>
-  import("./pages/student/StudentDashboard")
-);
 const Home = React.lazy(() => import("./pages/Home"));
 const QuickActions = React.lazy(() => import("./pages/QuickActions"));
 const AdminQuickActions = React.lazy(() =>
@@ -103,6 +100,9 @@ const StudentsBatchUpload = React.lazy(() =>
 );
 const AdminStudentsBatchUpload = React.lazy(() =>
   import("./pages/admin/AdminStudentsBatchUpload.jsx")
+);
+const AdminStaffBatchUpload = React.lazy(() =>
+  import("./pages/admin/AdminStaffBatchUpload.jsx")
 );
 const Achievements = React.lazy(() =>
   import("./pages/student/StudentsAchievements")
@@ -150,7 +150,7 @@ function RoleRedirect() {
   if (!user?.token) return <Navigate to="/login" />;
   if (user.role === "admin") return <Navigate to="/admin" />;
   if (user.role === "staff") return <Navigate to="/staff" />;
-  return <Navigate to="/student" />;
+  return <Navigate to="/" />;
 }
 
 export default function App() {
@@ -161,11 +161,23 @@ export default function App() {
     path.startsWith("/admin") ||
     path.startsWith("/staff") ||
     path.startsWith("/student");
+  // Hide navbar from auth pages
+  const authRoutes = [
+    "/login",
+    "/verify-otp",
+    "/register-student",
+    "/register-staff",
+    "/forgot",
+    "/forgot-password",
+    "/reset",
+    "/reset-password",
+  ];
+  const hideNavbar = authRoutes.includes(path);
   // Show Back button on all non-dashboard routes (admin routes will render local Back inside pages)
   const showBackButton = !hideBackButton;
   return (
     <>
-      <Navbar />
+      {!hideNavbar && <Navbar />}
       {showBackButton && <BackButton />}
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
@@ -390,6 +402,14 @@ export default function App() {
             }
           />
           <Route
+            path="/admin/upload-staff-batch"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminStaffBatchUpload />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/upload-extra-curricular"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
@@ -594,7 +614,7 @@ export default function App() {
             path="/student/*"
             element={
               <ProtectedRoute allowedRoles={["student"]}>
-                <StudentDashboard />
+                <Navigate to="/" replace />
               </ProtectedRoute>
             }
           />

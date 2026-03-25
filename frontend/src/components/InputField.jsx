@@ -11,6 +11,8 @@ const InputField = ({
   error,
   disabled = false,
   className = "",
+  inputClassName = "",
+  labelClassName = "",
 }) => {
   const [show, setShow] = useState(false);
   const isPassword = type === "password";
@@ -18,7 +20,9 @@ const InputField = ({
   return (
     <div className={`mb-4 ${className}`}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          className={`block text-sm font-medium text-gray-700 mb-1 ${labelClassName}`}
+        >
           {label} {required && <span className="text-red-500">*</span>}
         </label>
       )}
@@ -41,7 +45,7 @@ const InputField = ({
             disabled
               ? "bg-gray-100 dark:bg-slate-800 cursor-not-allowed"
               : "bg-white dark:bg-slate-900"
-          }`}
+          } ${inputClassName}`}
         />
         {isPassword && (
           <button

@@ -175,7 +175,10 @@ export default function FacultyParticipation() {
                     ...f,
                     type_of_event: v,
                     publications_type:
-                      v === "Others" ? f.publications_type : "",
+                      v === "Journal Publications" ||
+                      v === "Conference Publications"
+                        ? v
+                        : "",
                   }));
                 }}
                 required
@@ -198,32 +201,15 @@ export default function FacultyParticipation() {
                 <option value="Professional Development Course">
                   Professional Development Course
                 </option>
-                <option value="Others">Others</option>
+                <option value="Journal Publications">
+                  Journal Publications
+                </option>
+                <option value="Conference Publications">
+                  Conference Publications
+                </option>
               </select>
             </div>
-            {form.type_of_event === "Others" && (
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  Publications <span className="text-red-600">*</span>
-                </label>
-                <select
-                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-                  value={form.publications_type}
-                  onChange={update("publications_type")}
-                  required
-                >
-                  <option value="">Select Publication Type</option>
-                  <option value="Journal Publications">
-                    Journal Publications
-                  </option>
-                  <option value="Conference Publications">
-                    Conference Publications
-                  </option>
-                </select>
-              </div>
-            )}
-            {form.type_of_event === "Others" &&
-              form.publications_type === "Journal Publications" && (
+            {form.type_of_event === "Journal Publications" && (
                 <div className="md:col-span-2 mt-2 border-t border-slate-200 dark:border-slate-700 pt-4">
                   <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">
                     Journal Publications Details
@@ -496,8 +482,7 @@ export default function FacultyParticipation() {
                 </div>
               )}
 
-            {form.type_of_event === "Others" &&
-              form.publications_type === "Conference Publications" && (
+            {form.type_of_event === "Conference Publications" && (
                 <div className="md:col-span-2 mt-2 border-t border-slate-200 dark:border-slate-700 pt-4">
                   <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3">
                     Conference Publications Details

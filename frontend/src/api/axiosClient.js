@@ -65,7 +65,14 @@ class ApiClient {
         }
       } else {
         const text = await response.text();
-        data = { message: text || "Unexpected response from server" };
+        // If the server returned an HTML error page (e.g. nginx 502/503),
+        // don't surface raw markup to the user.
+        const isHtml = text.trim().startsWith("<");
+        data = {
+          message: isHtml
+            ? "Server is unreachable. Please try again later."
+            : text || "Unexpected response from server",
+        };
       }
 
       if (!response.ok) {
@@ -79,6 +86,10 @@ class ApiClient {
       return data;
     } catch (error) {
       console.error("API Error:", error);
+      // Replace browser-internal network errors with a friendly message.
+      if (error.message === "Failed to fetch" || error instanceof TypeError) {
+        throw new Error("Unable to reach the server. Please check your connection.");
+      }
       throw error;
     }
   }
@@ -149,7 +160,12 @@ class ApiClient {
         }
       }
       const text = await response.text();
-      return { message: text };
+      const isHtml = text.trim().startsWith("<");
+      return {
+        message: isHtml
+          ? "Server is unreachable. Please try again later."
+          : text,
+      };
     };
 
     const data = await parseBody();

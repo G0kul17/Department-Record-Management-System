@@ -130,6 +130,7 @@ const StaffDashboard = () => {
 };
 
 function OverviewPanel({ user }) {
+  const navigate = useNavigate();
   const [projCount, setProjCount] = useState(null);
   const [achCount, setAchCount] = useState(null);
   const [partCount, setPartCount] = useState(null);

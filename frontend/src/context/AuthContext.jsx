@@ -39,6 +39,7 @@ export const AuthProvider = ({ children }) => {
       // Fetch and sync profile details so avatar persists across reloads
       refreshUserProfile()?.catch(() => {});
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, token]);
 
   const login = (userData, authToken, sessionTokenValue = null) => {

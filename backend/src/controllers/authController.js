@@ -1,7 +1,7 @@
 import pool from "../config/db.js";
 import bcrypt from "bcrypt";
 import { generateOTP, getExpiryDate } from "../utils/otpGenerator.js";
-import { sendMail } from "../config/mailer.js";
+import { enqueueMail } from "../utils/mailClient.js";
 import { detectRole } from "../utils/roleUtils.js";
 import dotenv from "dotenv";
 import { signToken } from "../utils/tokenUtils.js";
@@ -11,7 +11,7 @@ import {
   invalidateAllUserSessions,
 } from "../utils/sessionUtils.js";
 import logger, { reqContext } from "../utils/logger.js";
-import { tracedQuery, tracedExternalCall } from "../utils/tracing.js";
+import { tracedQuery } from "../utils/tracing.js";
 dotenv.config();
 
 const OTP_EXPIRY_MIN = Number(process.env.OTP_EXPIRY_MIN || 5);
@@ -123,13 +123,11 @@ export async function register(req, res) {
     );
 
     // send email
-    await tracedExternalCall("mail.send", { "email.to": emailLower, "email.subject": "Your verification OTP" }, () =>
-      sendMail({
-        to: emailLower,
-        subject: "Your verification OTP",
-        text: `Your OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
-      })
-    );
+    enqueueMail({
+      to: emailLower,
+      subject: "Your verification OTP",
+      text: `Your OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
+    });
 
     return res.json({
       message: `OTP sent to ${emailLower}`,
@@ -259,13 +257,11 @@ export async function login(req, res) {
         [emailLower, otp, expiresAt],
       );
 
-      await tracedExternalCall("mail.send", { "email.to": emailLower, "email.subject": "Account Verification OTP" }, () =>
-        sendMail({
-          to: emailLower,
-          subject: "Account Verification OTP",
-          text: `Your verification OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
-        })
-      );
+      enqueueMail({
+        to: emailLower,
+        subject: "Account Verification OTP",
+        text: `Your verification OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
+      });
 
       return res.json({
         message: "Please verify your account via OTP",
@@ -332,13 +328,11 @@ export async function login(req, res) {
       [emailLower, otp, expiresAt],
     );
 
-    await tracedExternalCall("mail.send", { "email.to": emailLower, "email.subject": "Login OTP" }, () =>
-      sendMail({
-        to: emailLower,
-        subject: "Login OTP",
-        text: `Your login OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
-      })
-    );
+    enqueueMail({
+      to: emailLower,
+      subject: "Login OTP",
+      text: `Your login OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
+    });
 
     return res.json({ message: "Login OTP sent to email" });
   } catch (err) {
@@ -524,13 +518,11 @@ export async function initiateForgotPassword(req, res) {
         [emailLower, otp, expiresAt]
       );
 
-      await tracedExternalCall("mail.send", { "email.to": emailLower, "email.subject": "Password Reset OTP" }, () =>
-        sendMail({
-          to: emailLower,
-          subject: "Password Reset OTP",
-          text: `Your password reset OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
-        })
-      );
+      enqueueMail({
+        to: emailLower,
+        subject: "Password Reset OTP",
+        text: `Your password reset OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
+      });
 
     }
 

@@ -4,8 +4,8 @@ vi.mock("../../config/db.js", () => ({
   default: { query: vi.fn() },
 }));
 
-vi.mock("../../config/mailer.js", () => ({
-  sendMail: vi.fn(),
+vi.mock("../../utils/mailClient.js", () => ({
+  enqueueMail: vi.fn(),
 }));
 
 vi.mock("../../utils/logger.js", () => ({
@@ -13,7 +13,7 @@ vi.mock("../../utils/logger.js", () => ({
 }));
 
 import pool from "../../config/db.js";
-import { sendMail } from "../../config/mailer.js";
+import { enqueueMail } from "../../utils/mailClient.js";
 import {
   ReviewError,
   reviewProject,
@@ -22,7 +22,7 @@ import {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  sendMail.mockResolvedValue(undefined);
+  enqueueMail.mockResolvedValue(undefined);
 });
 
 // ── ReviewError ────────────────────────────────────────────────────────────────
@@ -105,8 +105,8 @@ describe("reviewProject", () => {
   it("sends an email notification to the project creator on approve", async () => {
     mockApproveFlow();
     await reviewProject(1, 2, "approve", "Nice work");
-    expect(sendMail).toHaveBeenCalledOnce();
-    const mailArgs = sendMail.mock.calls[0][0];
+    expect(enqueueMail).toHaveBeenCalledOnce();
+    const mailArgs = enqueueMail.mock.calls[0][0];
     expect(mailArgs.to).toBe("student@test.com");
     expect(mailArgs.subject).toContain("approved");
   });
@@ -120,8 +120,8 @@ describe("reviewProject", () => {
 
     await reviewProject(1, 2, "reject", "Bad work");
 
-    expect(sendMail).toHaveBeenCalledOnce();
-    const mailArgs = sendMail.mock.calls[0][0];
+    expect(enqueueMail).toHaveBeenCalledOnce();
+    const mailArgs = enqueueMail.mock.calls[0][0];
     expect(mailArgs.subject).toContain("rejected");
   });
 
@@ -148,7 +148,7 @@ describe("reviewProject", () => {
     pool.query.mockResolvedValueOnce({ rows: [] }); // no email row
 
     await reviewProject(1, 2, "approve", null);
-    expect(sendMail).not.toHaveBeenCalled();
+    expect(enqueueMail).not.toHaveBeenCalled();
   });
 
   it("skips email when created_by is null/undefined", async () => {
@@ -158,12 +158,12 @@ describe("reviewProject", () => {
     });
 
     await reviewProject(1, 2, "approve", null);
-    expect(sendMail).not.toHaveBeenCalled();
+    expect(enqueueMail).not.toHaveBeenCalled();
   });
 
   it("does not throw when email sending fails (logs error instead)", async () => {
     mockApproveFlow();
-    sendMail.mockRejectedValueOnce(new Error("SMTP down"));
+    enqueueMail.mockRejectedValueOnce(new Error("SMTP down"));
 
     // Should NOT throw; email failure is caught and logged
     await expect(reviewProject(1, 2, "approve", null)).resolves.toEqual({
@@ -226,9 +226,9 @@ describe("reviewAchievement", () => {
   it("sends email to achievement owner on approve", async () => {
     mockApproveAchievementFlow();
     await reviewAchievement(1, 2, "approve", "Great");
-    expect(sendMail).toHaveBeenCalledOnce();
-    expect(sendMail.mock.calls[0][0].to).toBe("student@test.com");
-    expect(sendMail.mock.calls[0][0].subject).toContain("approved");
+    expect(enqueueMail).toHaveBeenCalledOnce();
+    expect(enqueueMail.mock.calls[0][0].to).toBe("student@test.com");
+    expect(enqueueMail.mock.calls[0][0].subject).toContain("approved");
   });
 
   it("throws ReviewError(403) when staff is not an activity coordinator", async () => {
@@ -248,7 +248,7 @@ describe("reviewAchievement", () => {
 
   it("does not throw when email sending fails (logs error instead)", async () => {
     mockApproveAchievementFlow();
-    sendMail.mockRejectedValueOnce(new Error("SMTP error"));
+    enqueueMail.mockRejectedValueOnce(new Error("SMTP error"));
 
     await expect(reviewAchievement(1, 2, "approve", null)).resolves.toEqual({
       message: "Achievement approved",

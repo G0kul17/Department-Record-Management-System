@@ -5,7 +5,7 @@
 // delegate here so DB update + email notification are always in sync.
 
 import pool from "../config/db.js";
-import { sendMail } from "../config/mailer.js";
+import { enqueueMail } from "../utils/mailClient.js";
 import logger from "../utils/logger.js";
 import { tracedQuery } from "../utils/tracing.js";
 import { getTraceCtx } from "../utils/traceStore.js";
@@ -78,13 +78,13 @@ export async function reviewProject(projectId, staffId, action, comment, correla
     );
     if (userRows[0]) {
       try {
-        await sendMail({
+        await enqueueMail({
           to: userRows[0].email,
           subject: `Your project "${rows[0].title}" has been ${approved ? "approved" : "rejected"}`,
           text: `Your project has been ${approved ? "approved" : "rejected"} by staff. Comment: ${comment || "No comment"}`,
         });
       } catch (err) {
-        logger.error("Failed to send project review email", { err, trace: { id: correlationId }, ...ctx });
+        logger.error("Failed to enqueue project review email", { err, trace: { id: correlationId }, ...ctx });
       }
     }
   }
@@ -165,13 +165,13 @@ export async function reviewAchievement(achievementId, staffId, action, comment,
   );
   if (userRows[0]) {
     try {
-      await sendMail({
+      await enqueueMail({
         to: userRows[0].email,
         subject: `Your achievement "${rows[0].title}" has been ${approved ? "approved" : "rejected"}`,
         text: `Your achievement has been ${approved ? "approved" : "rejected"} by staff. Comment: ${comment || "No comment"}`,
       });
     } catch (err) {
-      logger.error("Failed to send achievement review email", { err, trace: { id: correlationId }, ...ctx });
+      logger.error("Failed to enqueue achievement review email", { err, trace: { id: correlationId }, ...ctx });
     }
   }
 

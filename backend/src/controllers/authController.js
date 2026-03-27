@@ -127,7 +127,7 @@ export async function register(req, res) {
       to: emailLower,
       subject: "Your verification OTP",
       text: `Your OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
-    }).catch(err => logger.error("mail.enqueue.error", { err, ...reqContext(req) }));
+    });
 
     return res.json({
       message: `OTP sent to ${emailLower}`,
@@ -258,7 +258,7 @@ export async function login(req, res) {
         to: emailLower,
         subject: "Account Verification OTP",
         text: `Your verification OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
-      }).catch(err => logger.error("mail.enqueue.error", { err, ...reqContext(req) }));
+      });
 
       return res.json({
         message: "Please verify your account via OTP",
@@ -329,7 +329,7 @@ export async function login(req, res) {
       to: emailLower,
       subject: "Login OTP",
       text: `Your login OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
-    }).catch(err => logger.error("mail.enqueue.error", { err, ...reqContext(req) }));
+    });
 
     return res.json({ message: "Login OTP sent to email" });
   } catch (err) {
@@ -516,7 +516,7 @@ export async function initiateForgotPassword(req, res) {
         to: emailLower,
         subject: "Password Reset OTP",
         text: `Your password reset OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
-      }).catch(err => logger.error("mail.enqueue.error", { err, ...reqContext(req) }));
+      });
 
     }
 

@@ -225,7 +225,7 @@ export const uploadStudents = async (req, res) => {
         ]
       );
 
-      await enqueueMail({
+      enqueueMail({
         to: s.email,
         subject: "Student Account Created",
         text: `

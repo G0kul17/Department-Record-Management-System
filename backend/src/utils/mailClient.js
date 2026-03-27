@@ -1,50 +1,30 @@
 // src/utils/mailClient.js
 //
-// Sends outbound email by posting to the mail-worker HTTP microservice.
-// The backend never touches SMTP directly — all delivery config lives in
-// the mail-worker process.
+// Non-blocking mail dispatch. Starts the SMTP send in the background and
+// returns immediately so the HTTP request cycle is never held up by mail
+// delivery latency or a slow/unavailable SMTP server.
 //
-// OTP callers use fire-and-forget (.catch()) so auth endpoints are not
-// blocked by mail delivery latency.
+// Delivery errors are logged but never propagate to the caller.
 
+import { sendMail } from "../config/mailer.js";
 import logger from "./logger.js";
 import { getTraceCtx } from "./traceStore.js";
-import dotenv from "dotenv";
-dotenv.config();
-
-const MAIL_WORKER_URL    = process.env.MAIL_WORKER_URL;
-const MAIL_WORKER_SECRET = process.env.MAIL_WORKER_SECRET || "";
 
 /**
- * Dispatch an outbound email via the mail-worker service.
+ * Send an email in the background — returns immediately, does not block.
  *
  * @param {{ to: string, subject: string, text?: string, html?: string }} opts
- * @returns {Promise<void>}
  */
-export async function enqueueMail({ to, subject, text, html }) {
+export function enqueueMail({ to, subject, text, html }) {
   const ctx = getTraceCtx();
-
-  if (!MAIL_WORKER_URL) {
-    throw new Error("MAIL_WORKER_URL is not configured — set it in backend .env");
-  }
-
-  const res = await fetch(`${MAIL_WORKER_URL}/api/send`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(MAIL_WORKER_SECRET ? { Authorization: `Bearer ${MAIL_WORKER_SECRET}` } : {}),
-    },
-    body: JSON.stringify({ to, subject, text: text ?? null, html: html ?? null }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`mail-worker responded ${res.status}: ${body}`);
-  }
-
-  logger.debug("mail.dispatched", {
-    "email.to":      to,
-    "email.subject": subject,
-    ...ctx,
-  });
+  // Intentionally not awaited. The promise is detached from the request cycle;
+  // any SMTP error is caught here and logged rather than surfaced to the caller.
+  sendMail({ to, subject, text, html }).catch((err) =>
+    logger.error("mail.send.error", {
+      err,
+      "email.to": to,
+      "email.subject": subject,
+      ...ctx,
+    }),
+  );
 }

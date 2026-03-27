@@ -1,30 +1,49 @@
 // src/utils/mailClient.js
 //
-// Drop-in replacement for sendMail() from config/mailer.js.
-// Instead of calling SMTP directly, inserts a row into the mail_queue table.
-// The mail-worker process polls that table and handles delivery, retries, and
-// back-off — completely decoupled from the main HTTP request cycle.
+// Sends outbound email by posting to the mail-worker HTTP microservice.
+// The backend never touches SMTP directly — all delivery config lives in
+// the mail-worker process.
+//
+// OTP callers use fire-and-forget (.catch()) so auth endpoints are not
+// blocked by mail delivery latency.
 
-import pool from "../config/db.js";
 import logger from "./logger.js";
 import { getTraceCtx } from "./traceStore.js";
+import dotenv from "dotenv";
+dotenv.config();
+
+const MAIL_WORKER_URL    = process.env.MAIL_WORKER_URL;
+const MAIL_WORKER_SECRET = process.env.MAIL_WORKER_SECRET || "";
 
 /**
- * Enqueue an outbound email for asynchronous delivery by the mail-worker.
+ * Dispatch an outbound email via the mail-worker service.
  *
  * @param {{ to: string, subject: string, text?: string, html?: string }} opts
- * @returns {Promise<void>} Resolves once the row is written to mail_queue.
- *   Callers that want fire-and-forget should wrap with .catch().
+ * @returns {Promise<void>}
  */
 export async function enqueueMail({ to, subject, text, html }) {
   const ctx = getTraceCtx();
-  await pool.query(
-    `INSERT INTO mail_queue (to_email, subject, text_body, html_body)
-     VALUES ($1, $2, $3, $4)`,
-    [to, subject, text ?? null, html ?? null],
-  );
-  logger.debug("mail.enqueued", {
-    "email.to": to,
+
+  if (!MAIL_WORKER_URL) {
+    throw new Error("MAIL_WORKER_URL is not configured — set it in backend .env");
+  }
+
+  const res = await fetch(`${MAIL_WORKER_URL}/api/send`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(MAIL_WORKER_SECRET ? { Authorization: `Bearer ${MAIL_WORKER_SECRET}` } : {}),
+    },
+    body: JSON.stringify({ to, subject, text: text ?? null, html: html ?? null }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`mail-worker responded ${res.status}: ${body}`);
+  }
+
+  logger.debug("mail.dispatched", {
+    "email.to":      to,
     "email.subject": subject,
     ...ctx,
   });

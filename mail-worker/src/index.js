@@ -1,34 +1,62 @@
 // mail-worker/src/index.js
-// Entry point for the standalone mail dispatch daemon.
-// Starts the polling loop and handles graceful shutdown.
+// Standalone HTTP mail microservice.
+// The main backend POSTs { to, subject, text, html } here; this service
+// delivers the email via SMTP (nodemailer) and returns immediately.
+// No database, no queue — just a thin HTTP wrapper around nodemailer.
 
 import dotenv from "dotenv";
 dotenv.config();
 
-import logger           from "./utils/logger.js";
-import pool             from "./config/db.js";
-import { runDispatcher } from "./worker/dispatcher.js";
+import express      from "express";
+import logger       from "./utils/logger.js";
+import { sendMail } from "./config/mailer.js";
 
-logger.info("mail-worker.starting");
+const PORT   = Number(process.env.MAIL_WORKER_PORT || 3001);
+const SECRET = process.env.MAIL_WORKER_SECRET || "";
 
-// Verify DB connectivity before entering the dispatch loop.
-try {
-  const { rows } = await pool.query("SELECT 1 AS ok");
-  if (rows[0]?.ok !== 1) throw new Error("Unexpected DB ping result");
-  logger.info("mail-worker.db.connected");
-} catch (err) {
-  logger.error("mail-worker.db.connection_failed — exiting", { err });
-  process.exit(1);
+const app = express();
+app.use(express.json());
+
+// ── Bearer-token auth ────────────────────────────────────────────────────────
+function requireSecret(req, res, next) {
+  if (!SECRET) {
+    // No secret configured — only allow in development
+    if (process.env.NODE_ENV === "production") {
+      return res.status(500).json({ message: "MAIL_WORKER_SECRET must be set in production" });
+    }
+    return next();
+  }
+  const header = req.headers.authorization || "";
+  if (header !== `Bearer ${SECRET}`) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  next();
 }
 
-runDispatcher();
+// ── POST /api/send ───────────────────────────────────────────────────────────
+app.post("/api/send", requireSecret, async (req, res) => {
+  const { to, subject, text, html } = req.body ?? {};
 
-// ── Graceful shutdown ────────────────────────────────────────────────────────
-async function shutdown(signal) {
-  logger.info("mail-worker.shutdown", { signal });
-  await pool.end();
-  process.exit(0);
-}
+  if (!to || !subject) {
+    return res.status(400).json({ message: "'to' and 'subject' are required" });
+  }
 
-process.on("SIGTERM", () => shutdown("SIGTERM"));
-process.on("SIGINT",  () => shutdown("SIGINT"));
+  try {
+    await sendMail({ to, subject, text, html });
+    return res.json({ message: "sent" });
+  } catch (err) {
+    logger.error("mail.send.failed", { err, "email.to": to, "email.subject": subject });
+    return res.status(500).json({ message: "Failed to send email", detail: err.message });
+  }
+});
+
+// ── Health check ─────────────────────────────────────────────────────────────
+app.get("/health", (_req, res) => res.json({ status: "ok" }));
+
+// ── Start ─────────────────────────────────────────────────────────────────────
+app.listen(PORT, "0.0.0.0", () => {
+  logger.info("mail-worker.started", { "server.port": PORT });
+});
+
+process.on("SIGTERM", () => { logger.info("mail-worker.shutdown"); process.exit(0); });
+process.on("SIGINT",  () => { logger.info("mail-worker.shutdown"); process.exit(0); });

@@ -1,268 +1,268 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="116" failures="0" errors="0" time="1.088">
-    <testsuite name="src/__tests__/middleware/authMiddleware.test.js" timestamp="2026-03-27T09:45:29.124Z" hostname="vm" tests="15" failures="0" errors="0" skipped="0" time="0.015273318">
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; no auth headers &gt; returns 401 &apos;No token&apos; when both Authorization and x-session-token are absent" time="0.00313843">
+<testsuites name="vitest tests" tests="116" failures="0" errors="0" time="1.808">
+    <testsuite name="src/__tests__/middleware/authMiddleware.test.js" timestamp="2026-03-27T10:37:42.486Z" hostname="vm" tests="15" failures="0" errors="0" skipped="0" time="0.018908082">
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; no auth headers &gt; returns 401 &apos;No token&apos; when both Authorization and x-session-token are absent" time="0.00309212">
         </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; session-token path &gt; returns 401 &apos;Invalid session&apos; when verifySession returns null" time="0.000936461">
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; session-token path &gt; returns 401 &apos;Invalid session&apos; when verifySession returns null" time="0.000999895">
         </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; session-token path &gt; returns 401 &apos;User not found&apos; when session is valid but user not in DB" time="0.003304637">
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; session-token path &gt; returns 401 &apos;User not found&apos; when session is valid but user not in DB" time="0.003001721">
             <system-out>
-{&quot;@timestamp&quot;:&quot;2026-03-27T09:45:28.476Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
-{&quot;@timestamp&quot;:&quot;2026-03-27T09:45:28.477Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:2.33,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-03-27T10:37:41.630Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-03-27T10:37:41.631Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:2.03,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
 
             </system-out>
         </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; session-token path &gt; sets req.user, calls next() and extends session on valid session token" time="0.000940753">
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; session-token path &gt; sets req.user, calls next() and extends session on valid session token" time="0.001784161">
             <system-out>
-{&quot;@timestamp&quot;:&quot;2026-03-27T09:45:28.478Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
-{&quot;@timestamp&quot;:&quot;2026-03-27T09:45:28.478Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.19,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-03-27T10:37:41.633Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-03-27T10:37:41.633Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.23,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
 
             </system-out>
         </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; session-token path &gt; returns 401 when session verification throws" time="0.000496277">
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; session-token path &gt; returns 401 when session verification throws" time="0.000536547">
         </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; returns 401 &apos;Invalid token format&apos; when Authorization header has no token after &apos;Bearer &apos;" time="0.00130381">
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; returns 401 &apos;Invalid token format&apos; when Authorization header has no token after &apos;Bearer &apos;" time="0.000475628">
         </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; calls next() and sets req.user for a valid Bearer JWT without sid" time="0.000356467">
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; calls next() and sets req.user for a valid Bearer JWT without sid" time="0.000373353">
         </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; returns 401 &apos;Token expired&apos; for an expired JWT" time="0.000349262">
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; returns 401 &apos;Token expired&apos; for an expired JWT" time="0.000446418">
         </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; returns 401 &apos;Invalid token&apos; for a malformed JWT" time="0.000563512">
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; returns 401 &apos;Invalid token&apos; for a malformed JWT" time="0.001130682">
         </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; returns 401 &apos;Session revoked&apos; when JWT has sid but session is no longer active" time="0.000333485">
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; returns 401 &apos;Session revoked&apos; when JWT has sid but session is no longer active" time="0.000615371">
         </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; calls next() when JWT has sid and session is still active" time="0.000348463">
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; calls next() when JWT has sid and session is still active" time="0.000839838">
         </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="optionalAuth &gt; calls next() without setting req.user when no auth headers are present" time="0.00038112">
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="optionalAuth &gt; calls next() without setting req.user when no auth headers are present" time="0.000427487">
         </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="optionalAuth &gt; sets req.user and calls next() for a valid session token" time="0.000641085">
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="optionalAuth &gt; sets req.user and calls next() for a valid session token" time="0.00071592">
             <system-out>
-{&quot;@timestamp&quot;:&quot;2026-03-27T09:45:28.483Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
-{&quot;@timestamp&quot;:&quot;2026-03-27T09:45:28.484Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.27,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-03-27T10:37:41.639Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-03-27T10:37:41.639Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.29,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
 
             </system-out>
         </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="optionalAuth &gt; sets req.user and calls next() for a valid Bearer JWT" time="0.000247189">
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="optionalAuth &gt; sets req.user and calls next() for a valid Bearer JWT" time="0.002260292">
         </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="optionalAuth &gt; returns 401 &apos;Token expired&apos; for expired JWT in optionalAuth" time="0.00041405">
-        </testcase>
-    </testsuite>
-    <testsuite name="src/__tests__/middleware/requestLogger.test.js" timestamp="2026-03-27T09:45:29.129Z" hostname="vm" tests="14" failures="0" errors="0" skipped="0" time="0.015605301">
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="request log — url.path &gt; logs the full originalUrl path, not the router-scoped req.path" time="0.002672618">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="request log — url.path &gt; strips query string from url.path" time="0.000883987">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log — url.path &gt; logs the full originalUrl path on finish, not the router-scoped req.path" time="0.00131318">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log — url.path &gt; logs the full path for nested routes like /api/announcements/mine" time="0.0004264">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log — url.path &gt; request and response logs record the same url.path" time="0.000441445">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="abort log — url.path &gt; logs the full originalUrl path when the client disconnects before a response" time="0.000438256">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="correlation ID &gt; reuses a valid client-supplied X-Correlation-ID" time="0.000414888">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="correlation ID &gt; generates a new UUID when the supplied correlation ID is invalid" time="0.000928942">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;200&apos; level for HTTP NaN" time="0.000758637">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;302&apos; level for HTTP NaN" time="0.000420547">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;400&apos; level for HTTP NaN" time="0.000348912">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;404&apos; level for HTTP NaN" time="0.00268689">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;500&apos; level for HTTP NaN" time="0.000573363">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;503&apos; level for HTTP NaN" time="0.000927255">
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="optionalAuth &gt; returns 401 &apos;Token expired&apos; for expired JWT in optionalAuth" time="0.000470159">
         </testcase>
     </testsuite>
-    <testsuite name="src/__tests__/middleware/roleAuth.test.js" timestamp="2026-03-27T09:45:29.130Z" hostname="vm" tests="6" failures="0" errors="0" skipped="0" time="0.010373537">
-        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; calls next() when the user has an allowed role" time="0.00198517">
+    <testsuite name="src/__tests__/middleware/requestLogger.test.js" timestamp="2026-03-27T10:37:42.502Z" hostname="vm" tests="14" failures="0" errors="0" skipped="0" time="0.026975903">
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="request log — url.path &gt; logs the full originalUrl path, not the router-scoped req.path" time="0.004373348">
         </testcase>
-        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; returns 403 when the user&apos;s role is not in the allowed list" time="0.002970105">
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="request log — url.path &gt; strips query string from url.path" time="0.00117077">
         </testcase>
-        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; returns 401 when req.user is undefined" time="0.002645165">
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log — url.path &gt; logs the full originalUrl path on finish, not the router-scoped req.path" time="0.002486182">
         </testcase>
-        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; allows any role listed in the allowed array" time="0.000573439">
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log — url.path &gt; logs the full path for nested routes like /api/announcements/mine" time="0.000827312">
         </testcase>
-        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; rejects a role not in a multi-role allowed list" time="0.000371579">
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log — url.path &gt; request and response logs record the same url.path" time="0.000860577">
         </testcase>
-        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; rejects when allowedRoles is empty" time="0.000324153">
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="abort log — url.path &gt; logs the full originalUrl path when the client disconnects before a response" time="0.001164971">
         </testcase>
-    </testsuite>
-    <testsuite name="src/__tests__/middleware/validate.test.js" timestamp="2026-03-27T09:45:29.130Z" hostname="vm" tests="7" failures="0" errors="0" skipped="0" time="0.011123064">
-        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; calls next() and replaces req.body with sanitized value on valid input" time="0.003441747">
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="correlation ID &gt; reuses a valid client-supplied X-Correlation-ID" time="0.000860074">
         </testcase>
-        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; returns 400 with errors array on invalid input" time="0.001966835">
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="correlation ID &gt; generates a new UUID when the supplied correlation ID is invalid" time="0.001436501">
         </testcase>
-        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; collects all validation errors (abortEarly: false)" time="0.000940901">
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;200&apos; level for HTTP NaN" time="0.001207">
         </testcase>
-        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; strips unknown fields from req.body (stripUnknown: true)" time="0.001470333">
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;302&apos; level for HTTP NaN" time="0.003568616">
         </testcase>
-        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; coerces string numbers to numbers (convert: true)" time="0.00080633">
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;400&apos; level for HTTP NaN" time="0.000968445">
         </testcase>
-        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; handles undefined req.body gracefully (defaults to {})" time="0.00073585">
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;404&apos; level for HTTP NaN" time="0.003972269">
         </testcase>
-        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; error details include field path and message" time="0.000579766">
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;500&apos; level for HTTP NaN" time="0.000392344">
         </testcase>
-    </testsuite>
-    <testsuite name="src/__tests__/services/reviewService.test.js" timestamp="2026-03-27T09:45:29.131Z" hostname="vm" tests="23" failures="0" errors="0" skipped="0" time="0.013410611">
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="ReviewError &gt; is an instance of Error" time="0.001365082">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="ReviewError &gt; stores the HTTP status code" time="0.000406886">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="ReviewError &gt; stores the message" time="0.000157983">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; returns success message on approve" time="0.001363207">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; returns success message on reject" time="0.000368449">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; passes &apos;approved&apos; status to DB on approve action" time="0.000405086">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; passes &apos;rejected&apos; status to DB on reject action" time="0.000363221">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; sends an email notification to the project creator on approve" time="0.00038028">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; sends an email notification on reject" time="0.000418666">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; throws ReviewError(403) when staff is not an activity coordinator" time="0.001036267">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; throws ReviewError(404) when project is not found" time="0.000381805">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; skips email when creator has no email row in the DB" time="0.000508652">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; skips email when created_by is null/undefined" time="0.000205032">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; does not throw when email sending fails (logs error instead)" time="0.000527608">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; returns success message on approve" time="0.000490277">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; returns success message on reject" time="0.000206973">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; passes &apos;approved&apos; status and verified=true to DB on approve" time="0.000241237">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; passes &apos;rejected&apos; status and verified=false to DB on reject" time="0.000240095">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; sends email to achievement owner on approve" time="0.000192108">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; throws ReviewError(403) when staff is not an activity coordinator" time="0.000196363">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; throws ReviewError(404) when achievement is not found" time="0.000181231">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; does not throw when email sending fails (logs error instead)" time="0.00183927">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; uses null for comment when none is provided" time="0.00041616">
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;503&apos; level for HTTP NaN" time="0.00039739">
         </testcase>
     </testsuite>
-    <testsuite name="src/__tests__/utils/otpGenerator.test.js" timestamp="2026-03-27T09:45:29.133Z" hostname="vm" tests="9" failures="0" errors="0" skipped="0" time="0.005636443">
-        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; generateOTP &gt; returns a string" time="0.001572775">
+    <testsuite name="src/__tests__/middleware/roleAuth.test.js" timestamp="2026-03-27T10:37:42.506Z" hostname="vm" tests="6" failures="0" errors="0" skipped="0" time="0.011121523">
+        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; calls next() when the user has an allowed role" time="0.003799104">
         </testcase>
-        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; generateOTP &gt; returns exactly 6 characters" time="0.000781745">
+        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; returns 403 when the user&apos;s role is not in the allowed list" time="0.002352239">
         </testcase>
-        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; generateOTP &gt; contains only digit characters" time="0.00016446">
+        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; returns 401 when req.user is undefined" time="0.001055352">
         </testcase>
-        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; generateOTP &gt; is in the range 100000–999999" time="0.00031846">
+        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; allows any role listed in the allowed array" time="0.00116249">
         </testcase>
-        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; generateOTP &gt; produces different values on repeated calls (probabilistic)" time="0.000235317">
+        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; rejects a role not in a multi-role allowed list" time="0.000737769">
         </testcase>
-        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; getExpiryDate &gt; returns a Date object" time="0.000263019">
-        </testcase>
-        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; getExpiryDate &gt; defaults to 5 minutes from now" time="0.000263682">
-        </testcase>
-        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; getExpiryDate &gt; accepts a custom minutes value" time="0.000148267">
-        </testcase>
-        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; getExpiryDate &gt; returns a date in the future" time="0.000194933">
+        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; rejects when allowedRoles is empty" time="0.000492015">
         </testcase>
     </testsuite>
-    <testsuite name="src/__tests__/utils/queryBuilder.test.js" timestamp="2026-03-27T09:45:29.134Z" hostname="vm" tests="11" failures="0" errors="0" skipped="0" time="0.004998249">
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; build() with only a base returns just the base SQL" time="0.001644352">
+    <testsuite name="src/__tests__/middleware/validate.test.js" timestamp="2026-03-27T10:37:42.507Z" hostname="vm" tests="7" failures="0" errors="0" skipped="0" time="0.013331517">
+        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; calls next() and replaces req.body with sanitized value on valid input" time="0.004399746">
         </testcase>
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; addWhere adds a WHERE clause for a single condition" time="0.000313695">
+        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; returns 400 with errors array on invalid input" time="0.002927763">
         </testcase>
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; multiple addWhere calls are joined with AND" time="0.000141284">
+        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; collects all validation errors (abortEarly: false)" time="0.001062999">
         </testcase>
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; addJoin inserts a JOIN clause before the WHERE block" time="0.000252572">
+        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; strips unknown fields from req.body (stripUnknown: true)" time="0.001498884">
         </testcase>
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; addParam returns sequential placeholders $1, $2, ..." time="0.000217028">
+        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; coerces string numbers to numbers (convert: true)" time="0.000798342">
         </testcase>
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; addParam populates the values array in order" time="0.000211266">
+        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; handles undefined req.body gracefully (defaults to {})" time="0.000838922">
         </testcase>
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; build(suffix) appends suffix after WHERE" time="0.000167098">
-        </testcase>
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; build(suffix) without WHERE still appends suffix" time="0.000166719">
-        </testcase>
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; addJoin and addWhere return this for fluent chaining" time="0.00027423">
-        </testcase>
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; does not emit WHERE keyword when no conditions added" time="0.00018391">
-        </testcase>
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; param placeholders in JOINs and WHEREs reference correct values" time="0.000197723">
+        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; error details include field path and message" time="0.000504675">
         </testcase>
     </testsuite>
-    <testsuite name="src/__tests__/utils/sessionUtils.test.js" timestamp="2026-03-27T09:45:29.135Z" hostname="vm" tests="23" failures="0" errors="0" skipped="0" time="0.01508779">
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — pure functions &gt; generateSessionToken &gt; returns a 64-character hexadecimal string" time="0.001620427">
+    <testsuite name="src/__tests__/services/reviewService.test.js" timestamp="2026-03-27T10:37:42.508Z" hostname="vm" tests="23" failures="0" errors="0" skipped="0" time="0.031957016">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="ReviewError &gt; is an instance of Error" time="0.004276751">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — pure functions &gt; generateSessionToken &gt; returns unique values across consecutive calls" time="0.000594486">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="ReviewError &gt; stores the HTTP status code" time="0.001213627">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — pure functions &gt; getSessionExpiryDate &gt; returns a Date instance" time="0.000536028">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="ReviewError &gt; stores the message" time="0.000377012">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — pure functions &gt; getSessionExpiryDate &gt; returns a date approximately 90 days in the future" time="0.000339751">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; returns success message on approve" time="0.002041615">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; createSession &gt; calls pool.query and returns the created session row" time="0.001544159">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; returns success message on reject" time="0.001689466">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; createSession &gt; stores null for deviceInfo when not provided" time="0.000391732">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; passes &apos;approved&apos; status to DB on approve action" time="0.000567283">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; createSession &gt; serialises deviceInfo as JSON when provided" time="0.000308926">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; passes &apos;rejected&apos; status to DB on reject action" time="0.000922205">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; createSession &gt; propagates DB errors" time="0.001407507">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; sends an email notification to the project creator on approve" time="0.000718508">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; verifySession &gt; returns the session row when found" time="0.000408401">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; sends an email notification on reject" time="0.00094631">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; verifySession &gt; returns null when no matching session exists" time="0.000264031">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; throws ReviewError(403) when staff is not an activity coordinator" time="0.00176197">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; verifySession &gt; propagates DB errors" time="0.000365864">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; throws ReviewError(404) when project is not found" time="0.00071124">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; extendSession &gt; returns the updated session when token is valid" time="0.000238525">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; skips email when creator has no email row in the DB" time="0.001286921">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; extendSession &gt; returns null when token is not found or inactive" time="0.000160129">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; skips email when created_by is null/undefined" time="0.000675664">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; getUserActiveSessions &gt; returns array of active sessions for a user" time="0.00079148">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; does not throw when email sending fails (logs error instead)" time="0.001340694">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; getUserActiveSessions &gt; returns empty array when user has no active sessions" time="0.001878193">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; returns success message on approve" time="0.002441238">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; hasValidSession &gt; returns true when a valid session exists" time="0.000411855">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; returns success message on reject" time="0.000867337">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; hasValidSession &gt; returns false when no valid session exists" time="0.000177919">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; passes &apos;approved&apos; status and verified=true to DB on approve" time="0.000931389">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; invalidateSession &gt; returns true when a session was successfully invalidated" time="0.000213584">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; passes &apos;rejected&apos; status and verified=false to DB on reject" time="0.00051494">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; invalidateSession &gt; returns false when token was not found" time="0.000145548">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; sends email to achievement owner on approve" time="0.001072185">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; invalidateAllUserSessions &gt; returns the number of sessions invalidated" time="0.000335902">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; throws ReviewError(403) when staff is not an activity coordinator" time="0.000474448">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; invalidateAllUserSessions &gt; returns 0 when user had no sessions" time="0.000168511">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; throws ReviewError(404) when achievement is not found" time="0.000904153">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; cleanupExpiredSessions &gt; returns the count of deleted sessions" time="0.000190311">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; does not throw when email sending fails (logs error instead)" time="0.000545702">
         </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; cleanupExpiredSessions &gt; issues a DELETE query" time="0.000162557">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; uses null for comment when none is provided" time="0.000828604">
         </testcase>
     </testsuite>
-    <testsuite name="src/__tests__/utils/tokenUtils.test.js" timestamp="2026-03-27T09:45:29.136Z" hostname="vm" tests="8" failures="0" errors="0" skipped="0" time="0.015127414">
-        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; signToken &gt; produces a non-empty JWT string" time="0.004249637">
+    <testsuite name="src/__tests__/utils/otpGenerator.test.js" timestamp="2026-03-27T10:37:42.516Z" hostname="vm" tests="9" failures="0" errors="0" skipped="0" time="0.009807873">
+        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; generateOTP &gt; returns a string" time="0.003906182">
         </testcase>
-        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; signToken &gt; encodes the payload in the token" time="0.001507992">
+        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; generateOTP &gt; returns exactly 6 characters" time="0.001034613">
         </testcase>
-        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; signToken &gt; respects a custom expiresIn value" time="0.001440135">
+        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; generateOTP &gt; contains only digit characters" time="0.000239432">
         </testcase>
-        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; signToken &gt; defaults expiry to 1 hour" time="0.000979753">
+        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; generateOTP &gt; is in the range 100000–999999" time="0.000453652">
         </testcase>
-        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; verifyToken &gt; returns the decoded payload for a valid token" time="0.000875053">
+        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; generateOTP &gt; produces different values on repeated calls (probabilistic)" time="0.000365293">
         </testcase>
-        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; verifyToken &gt; throws TokenExpiredError for an expired token" time="0.002617921">
+        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; getExpiryDate &gt; returns a Date object" time="0.000383578">
         </testcase>
-        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; verifyToken &gt; throws JsonWebTokenError for a tampered token" time="0.001057421">
+        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; getExpiryDate &gt; defaults to 5 minutes from now" time="0.000299427">
         </testcase>
-        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; verifyToken &gt; throws for a completely invalid string" time="0.000678155">
+        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; getExpiryDate &gt; accepts a custom minutes value" time="0.000184334">
+        </testcase>
+        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; getExpiryDate &gt; returns a date in the future" time="0.00117845">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/utils/queryBuilder.test.js" timestamp="2026-03-27T10:37:42.517Z" hostname="vm" tests="11" failures="0" errors="0" skipped="0" time="0.008549076">
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; build() with only a base returns just the base SQL" time="0.002317828">
+        </testcase>
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; addWhere adds a WHERE clause for a single condition" time="0.000583027">
+        </testcase>
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; multiple addWhere calls are joined with AND" time="0.000309436">
+        </testcase>
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; addJoin inserts a JOIN clause before the WHERE block" time="0.000496009">
+        </testcase>
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; addParam returns sequential placeholders $1, $2, ..." time="0.000462308">
+        </testcase>
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; addParam populates the values array in order" time="0.000491116">
+        </testcase>
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; build(suffix) appends suffix after WHERE" time="0.000332459">
+        </testcase>
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; build(suffix) without WHERE still appends suffix" time="0.000419804">
+        </testcase>
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; addJoin and addWhere return this for fluent chaining" time="0.000470229">
+        </testcase>
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; does not emit WHERE keyword when no conditions added" time="0.000431009">
+        </testcase>
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; param placeholders in JOINs and WHEREs reference correct values" time="0.000391131">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/utils/sessionUtils.test.js" timestamp="2026-03-27T10:37:42.519Z" hostname="vm" tests="23" failures="0" errors="0" skipped="0" time="0.040927272">
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — pure functions &gt; generateSessionToken &gt; returns a 64-character hexadecimal string" time="0.003109163">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — pure functions &gt; generateSessionToken &gt; returns unique values across consecutive calls" time="0.001565659">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — pure functions &gt; getSessionExpiryDate &gt; returns a Date instance" time="0.001316033">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — pure functions &gt; getSessionExpiryDate &gt; returns a date approximately 90 days in the future" time="0.000683072">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; createSession &gt; calls pool.query and returns the created session row" time="0.003484028">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; createSession &gt; stores null for deviceInfo when not provided" time="0.000607616">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; createSession &gt; serialises deviceInfo as JSON when provided" time="0.00056593">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; createSession &gt; propagates DB errors" time="0.002617661">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; verifySession &gt; returns the session row when found" time="0.000771462">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; verifySession &gt; returns null when no matching session exists" time="0.001002414">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; verifySession &gt; propagates DB errors" time="0.000938893">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; extendSession &gt; returns the updated session when token is valid" time="0.000930827">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; extendSession &gt; returns null when token is not found or inactive" time="0.001518309">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; getUserActiveSessions &gt; returns array of active sessions for a user" time="0.001667994">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; getUserActiveSessions &gt; returns empty array when user has no active sessions" time="0.00093247">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; hasValidSession &gt; returns true when a valid session exists" time="0.00126429">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; hasValidSession &gt; returns false when no valid session exists" time="0.000410306">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; invalidateSession &gt; returns true when a session was successfully invalidated" time="0.000873767">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; invalidateSession &gt; returns false when token was not found" time="0.000377288">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; invalidateAllUserSessions &gt; returns the number of sessions invalidated" time="0.000888692">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; invalidateAllUserSessions &gt; returns 0 when user had no sessions" time="0.000357998">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; cleanupExpiredSessions &gt; returns the count of deleted sessions" time="0.002923685">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; cleanupExpiredSessions &gt; issues a DELETE query" time="0.006287949">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/utils/tokenUtils.test.js" timestamp="2026-03-27T10:37:42.523Z" hostname="vm" tests="8" failures="0" errors="0" skipped="0" time="0.019465124">
+        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; signToken &gt; produces a non-empty JWT string" time="0.009101552">
+        </testcase>
+        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; signToken &gt; encodes the payload in the token" time="0.002893505">
+        </testcase>
+        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; signToken &gt; respects a custom expiresIn value" time="0.000781552">
+        </testcase>
+        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; signToken &gt; defaults expiry to 1 hour" time="0.00049269">
+        </testcase>
+        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; verifyToken &gt; returns the decoded payload for a valid token" time="0.000672331">
+        </testcase>
+        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; verifyToken &gt; throws TokenExpiredError for an expired token" time="0.003015804">
+        </testcase>
+        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; verifyToken &gt; throws JsonWebTokenError for a tampered token" time="0.0006858">
+        </testcase>
+        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; verifyToken &gt; throws for a completely invalid string" time="0.000310643">
         </testcase>
     </testsuite>
 </testsuites>

@@ -7,6 +7,8 @@ A comprehensive web-based system for managing department records, including stud
 ![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)
 ![React](https://img.shields.io/badge/react-18.3.1-61dafb)
 
+**Last verified against codebase:** March 26, 2026
+
 ---
 
 ## 🎉 What's New in v1.1.0 (February 2026)
@@ -107,11 +109,12 @@ A comprehensive web-based system for managing department records, including stud
 
 - **Runtime**: Node.js 18+
 - **Framework**: Express 5.1
-- **Database**: PostgreSQL 8.16
+- **Database Driver**: `pg` 8.16.3 (PostgreSQL)
 - **Authentication**: JWT (jsonwebtoken 9.0.2)
 - **Password Hashing**: bcrypt 6.0
 - **Email**: Nodemailer 7.0
 - **File Upload**: Multer 2.0
+- **Security**: Helmet 8.1, CORS 2.8
 - **Data Export**: ExcelJS 4.4, XLSX 0.18
 - **Validation**: Joi 18.0
 - **Environment**: dotenv 17.2
@@ -242,8 +245,16 @@ CREATE DATABASE drms_db;
 # Navigate to backend directory
 cd backend
 
-# Apply the initial schema migration
+# Apply migrations in order
 psql -U postgres -d drms_db -f migrations/001_initial_schema.sql
+psql -U postgres -d drms_db -f migrations/002_otp_attempts.sql
+psql -U postgres -d drms_db -f migrations/003_schema_fixes.sql
+psql -U postgres -d drms_db -f migrations/004_student_profiles.sql
+psql -U postgres -d drms_db -f migrations/005_missing_tables.sql
+psql -U postgres -d drms_db -f migrations/006_hackathons.sql
+psql -U postgres -d drms_db -f migrations/007_hackathon_progress_workflow.sql
+psql -U postgres -d drms_db -f migrations/008_activity_types_lookup.sql
+psql -U postgres -d drms_db -f migrations/009_achievement_activity_types_seed.sql
 ```
 
 This will create all necessary tables, indexes, and constraints. The application **no longer creates tables automatically** at runtime.
@@ -256,10 +267,10 @@ This will create all necessary tables, indexes, and constraints. The application
 >
 > If upgrading from v1.0.0, these changes are included in the migration file.
 
-**Verify migration applied:**
+**Verify latest migration applied:**
 
 ```bash
-psql -U postgres -d drms_db -c "SELECT * FROM schema_version;"
+psql -U postgres -d drms_db -c "SELECT version, description, applied_at FROM schema_version ORDER BY version DESC LIMIT 1;"
 ```
 
 Expected output:
@@ -267,7 +278,7 @@ Expected output:
 ```
  version |                    description                     |       applied_at
 ---------+----------------------------------------------------+-------------------------
-       1 | Initial schema: All core tables, indexes, and ... | 2026-02-23 10:30:00.123
+  9 | Seed achievement activity types                     | 2026-03-xx xx:xx:xx.xxx
 ```
 
 > 📘 **Note:** If you have an existing database from a previous version, see [MIGRATION_QUICK_START.md](backend/MIGRATION_QUICK_START.md) for upgrade instructions.
@@ -281,8 +292,10 @@ cd backend
 # Install dependencies
 npm install
 
-# Create .env file
+# Create .env file (choose one)
 cp .env.example .env
+# or on Windows PowerShell:
+Copy-Item .env.example .env
 ```
 
 Configure the `.env` file:
@@ -728,95 +741,145 @@ COUNT(DISTINCT p.id) as project_count
 
 ## 🌐 API Endpoints
 
+The following endpoint map reflects the current route wiring in `backend/src/server.js` and `backend/src/routes/*`.
+
 ### Authentication (`/api/auth`)
 
 ```
-POST   /auth/register-student    # Student registration
-POST   /auth/register-staff      # Staff registration
-POST   /auth/login               # Login (sends OTP or validates session)
-POST   /auth/login-verify        # OTP verification
-POST   /auth/logout              # Logout (invalidates sessions)
-POST   /auth/forgot-password     # Password reset request
-POST   /auth/reset-password      # Password reset with token
-GET    /auth/me                  # Get current user profile
+POST   /api/auth/register         # Register user + send OTP
+POST   /api/auth/verify           # Verify registration OTP
+POST   /api/auth/login            # Login + send OTP / resume session
+POST   /api/auth/login-verify     # Verify login OTP
+POST   /api/auth/forgot           # Start forgot password OTP flow
+POST   /api/auth/forgot-verify    # Verify forgot password OTP
+POST   /api/auth/reset            # Reset password
+POST   /api/auth/logout           # Logout (auth required)
+GET    /api/auth/profile          # Get profile (auth required)
+PUT    /api/auth/profile          # Update profile (auth required)
+POST   /api/auth/profile/photo    # Upload avatar (auth required)
 ```
 
 ### Projects (`/api/projects`)
 
 ```
-GET    /api/projects               # List all approved projects
-GET    /api/projects/my            # List user's projects (as creator or team member)
-GET    /api/projects/:id           # Get project details
-POST   /api/projects               # Create new project (checks GitHub URL uniqueness)
-PUT    /api/projects/:id           # Update project
-DELETE /api/projects/:id           # Delete project
-
-Query Parameters:
-  - mine=true                      # Filter to show only user's projects (creator or team member)
-
-Response Codes:
-  - 409 Conflict                   # GitHub URL already exists (duplicate project)
+GET    /api/projects               # List projects
+GET    /api/projects/count         # Project count
+GET    /api/projects/:id           # Project details
+POST   /api/projects               # Create project
+POST   /api/projects/:id/files     # Upload project files
+POST   /api/projects/:id/verify    # Verify (staff)
+POST   /api/projects/:id/reject    # Reject (staff)
 ```
 
 ### Achievements (`/api/achievements`)
 
 ```
-GET    /api/achievements               # List all approved achievements
-GET    /api/achievements/my            # List user's achievements
-GET    /api/achievements/leaderboard   # Top achievers leaderboard
-GET    /api/achievements/:id           # Get achievement details
-POST   /api/achievements               # Submit new achievement
-PUT    /api/achievements/:id           # Update achievement
-DELETE /api/achievements/:id           # Delete achievement
-
-Query Parameters (leaderboard):
-  - type=achievements|projects         # Filter by category
-  - role=student                       # Fixed to student role
-  - limit=10                           # Number of top achievers to return
-
-Leaderboard Features:
-  - Students only (no staff rankings)
-  - Team members credited for projects
-  - Sorted by achievement/project count
+GET    /api/achievements                # List achievements
+GET    /api/achievements/count          # Achievement count
+GET    /api/achievements/leaderboard    # Leaderboard
+GET    /api/achievements/:id            # Achievement details
+POST   /api/achievements                # Create achievement
+POST   /api/achievements/:id/verify     # Verify (staff)
+POST   /api/achievements/:id/reject     # Reject (staff)
 ```
 
-### Events (`/api/events`, `/api/events-admin`)
+### Hackathons (`/api/hackathons`)
 
 ```
-GET    /api/events                     # Public events list
-GET    /api/events/:id                 # Event details
-POST   /api/staff/events               # Create event (staff/admin)
-PUT    /api/staff/events/:id           # Update event
-DELETE /api/staff/events/:id           # Delete event
+GET    /api/hackathons                  # List hackathons
+GET    /api/hackathons/count            # Hackathon count
+GET    /api/hackathons/coordinator/queue# Staff/admin queue
+GET    /api/hackathons/:id              # Details
+POST   /api/hackathons                  # Create entry
+POST   /api/hackathons/:id/verify       # Verify (staff)
+POST   /api/hackathons/:id/reject       # Reject (staff)
+PATCH  /api/hackathons/:id/progress     # Coordinator update (staff/admin)
+PATCH  /api/hackathons/:id/student-update # Student/alumni update
+```
+
+### Events
+
+```
+GET    /api/events                      # Public events list
+POST   /api/events-admin                # Create event (staff/admin)
+PUT    /api/events-admin/:id            # Update event (staff/admin)
+DELETE /api/events-admin/:id            # Delete event (staff/admin)
+
+# Also exposed under staff namespace:
+GET    /api/staff/events
+POST   /api/staff/events
+PUT    /api/staff/events/:id
+DELETE /api/staff/events/:id
 ```
 
 ### Staff Operations (`/api/staff`)
 
 ```
-GET    /api/staff/dashboard            # Staff dashboard stats
-POST   /api/staff/projects/:id/approve # Approve project
-POST   /api/staff/projects/:id/reject  # Reject project
-POST   /api/staff/achievements/:id/approve
-POST   /api/staff/achievements/:id/reject
-POST   /api/staff/announcements        # Send announcement
+GET    /api/staff/dashboard             # Staff/admin dashboard
+POST   /api/staff/projects/:id/approve  # Approve project (staff)
+POST   /api/staff/projects/:id/reject   # Reject project (staff)
+POST   /api/staff/achievements/:id/approve # Approve achievement (staff)
+POST   /api/staff/achievements/:id/reject  # Reject achievement (staff)
+POST   /api/staff/announcements         # Send announcement
 ```
 
 ### Admin Operations (`/api/admin`)
 
 ```
-GET    /api/admin/users                # List all users
-GET    /api/admin/users/:role          # List users by role
-POST   /api/admin/users                # Create user
-PUT    /api/admin/users/:id            # Update user
-DELETE /api/admin/users/:id            # Delete user
-POST   /api/admin/coordinators         # Assign coordinator
+GET    /api/admin/stats                 # Admin dashboard stats
+GET    /api/admin/users                 # List users
+PATCH  /api/admin/users/:id             # Update user role
+DELETE /api/admin/users/:id             # Delete user
 ```
 
-### Bulk Operations
+### Data Upload, Batch, and Export
 
 ```
-POST   /api/students/batch-upload      # Bulk upload students (CSV/Excel)
-GET    /api/bulk-export/:type          # Export data (CSV/Excel)
+POST   /api/data-uploads/preview        # Upload & parse data file
+POST   /api/data-uploads/save           # Save parsed upload
+GET    /api/data-uploads                # List uploaded records
+GET    /api/data-uploads/:id            # View uploaded record
+
+POST   /api/students/upload             # Student batch upload (staff/admin)
+POST   /api/staff-batch/upload          # Staff batch upload (admin)
+
+GET    /api/bulk-export                 # Generate bulk export
+GET    /api/bulk-export/list            # List generated exports
+```
+
+### Additional Resource Routes
+
+```
+GET    /api/announcements/mine          # User announcements
+
+GET    /api/activity-coordinators/types # Activity types (auth)
+GET    /api/activity-coordinators       # List coordinators (admin)
+POST   /api/activity-coordinators       # Assign coordinator (admin)
+DELETE /api/activity-coordinators/:mappingId # Remove coordinator (admin)
+
+GET    /api/student/profile             # Student profile
+PUT    /api/student/profile             # Update student profile
+
+GET    /api/faculty-participations
+GET    /api/faculty-participations/count
+POST   /api/faculty-participations
+PUT    /api/faculty-participations/:id
+DELETE /api/faculty-participations/:id
+
+GET    /api/faculty-research
+GET    /api/faculty-research/count
+POST   /api/faculty-research
+PUT    /api/faculty-research/:id
+DELETE /api/faculty-research/:id
+
+GET    /api/faculty-consultancy
+GET    /api/faculty-consultancy/count
+POST   /api/faculty-consultancy
+PUT    /api/faculty-consultancy/:id
+DELETE /api/faculty-consultancy/:id
+
+GET    /api/files/:filename             # Authenticated file access
+GET    /health                          # Service health
 ```
 
 ---

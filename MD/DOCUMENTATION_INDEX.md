@@ -168,6 +168,18 @@
 
 **Best For**: QA verification, sign-off, confidence building
 
+### **10. USER_MANUAL.md** 👥 END-USER GUIDE
+**Length**: 12+ pages | **Time**: 20-30 minutes
+**Content**:
+- Full user guide for Student, Staff, and Admin roles
+- Login, OTP, and 90-day session behavior
+- Project, achievement, hackathon, and event workflows
+- Verification and approval lifecycle
+- Reports, exports, batch uploads, and admin controls
+- Troubleshooting and FAQ for common user issues
+
+**Best For**: Training users, onboarding, operations handover
+
 ---
 
 ## 🗺️ Navigation by Topic
@@ -177,6 +189,7 @@
 - SESSION_BASED_LOGIN_DOCS.md → Login flow details
 - VISUAL_ARCHITECTURE.md → Login sequence diagrams
 - CODE_REFERENCE.md → Code implementation
+- USER_MANUAL.md → End-user login and recovery steps
 
 ### **Session Management**
 - SESSION_BASED_LOGIN_DOCS.md → Session system details
@@ -217,6 +230,7 @@
 - QUICKSTART.md → Troubleshooting section
 - README_DOCUMENTATION.md → Quick troubleshooting
 - VERIFICATION_CHECKLIST.md → Verification procedures
+- USER_MANUAL.md → User-facing issue resolution steps
 
 ---
 

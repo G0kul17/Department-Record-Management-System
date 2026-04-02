@@ -4,6 +4,7 @@ import { useAuth } from "../../hooks/useAuth";
 import SuccessModal from "../../components/ui/SuccessModal";
 import UploadDropzone from "../../components/ui/UploadDropzone";
 import { getFileUrl } from "../../utils/fileUrl";
+import { jsPDF } from "jspdf";
 
 const progressOptions = [
   "Registered",
@@ -52,6 +53,150 @@ export default function HackathonEntryandProgress() {
     prize: "",
   });
   const [updatingResult, setUpdatingResult] = useState(false);
+
+  const formatDate = (value) => {
+    if (!value) return "N/A";
+    const dt = new Date(value);
+    if (Number.isNaN(dt.getTime())) return "N/A";
+    return dt.toLocaleDateString("en-GB");
+  };
+
+  const safeFilePart = (value, fallback) => {
+    const normalized = String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    return normalized || fallback;
+  };
+
+  const buildOdSerialNumber = (item) => {
+    const entryId = item?.id ? String(item.id).padStart(4, "0") : "DRAFT";
+    const startDate = item?.duration_start_date ? new Date(item.duration_start_date) : new Date();
+    const year = Number.isNaN(startDate.getTime()) ? new Date().getFullYear() : startDate.getFullYear();
+    return `SCT/IT/OD/HACK/${year}/${entryId}`;
+  };
+
+  const downloadOdLetterPdf = (item) => {
+    if (!item) return;
+
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 18;
+    const contentWidth = pageWidth - margin * 2;
+    let y = 18;
+
+    const addTextBlock = (text, spacing = 5, size = 11) => {
+      doc.setFontSize(size);
+      const lines = doc.splitTextToSize(text, contentWidth);
+      doc.text(lines, margin, y);
+      y += lines.length * spacing;
+    };
+
+    const registerNumber =
+      user?.register_number || user?.registerNumber || user?.register_no || "________________";
+    const odSerialNumber = buildOdSerialNumber(item);
+    const today = new Date().toLocaleDateString("en-GB");
+
+    doc.setFont("times", "bold");
+    doc.setFontSize(15);
+    doc.text("SONA COLLEGE OF TECHNOLOGY - SALEM", pageWidth / 2, y, { align: "center" });
+    y += 6;
+
+    doc.setFontSize(13);
+    doc.text("DEPARTMENT OF INFORMATION TECHNOLOGY", pageWidth / 2, y, { align: "center" });
+    y += 8;
+
+    doc.setFontSize(14);
+    doc.text("ON-DUTY REQUEST LETTER", pageWidth / 2, y, { align: "center" });
+    y += 8;
+
+    doc.setLineWidth(0.35);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 8;
+
+    doc.setFont("times", "normal");
+    doc.setFontSize(11);
+    doc.text(`OD Serial Register No: ${odSerialNumber}`, margin, y);
+    y += 6;
+    doc.text(`Date: ${today}`, pageWidth - margin, y, { align: "right" });
+    y += 10;
+
+    addTextBlock(
+      `FROM:\n${item.student_name || user?.full_name || "N/A"}\nRegister Number: ${registerNumber}\nMobile Number: ${
+        item.mobile_number || user?.phone || "N/A"
+      }\nDepartment of Information Technology`,
+      5,
+      11,
+    );
+    y += 3;
+
+    addTextBlock(
+      "TO:\nThe Head of the Department,\nDepartment of Information Technology,\nSona College of Technology - Salem.",
+      5,
+      11,
+    );
+    y += 3;
+
+    addTextBlock(
+      `SUBJECT: Request for On-Duty Permission to Participate in ${item.hackathon_name || "Hackathon"}`,
+      5,
+      11,
+    );
+    y += 3;
+
+    addTextBlock("Respected Sir/Madam,");
+
+    addTextBlock(
+      `I respectfully request On-Duty permission for my participation in the hackathon \"${
+        item.hackathon_name || "N/A"
+      }\", organized by ${item.hosted_by || "N/A"} at ${item.location || "N/A"}. ` +
+        `The event duration is from ${formatDate(item.duration_start_date)} to ${formatDate(item.duration_end_date)}.`,
+    );
+
+    addTextBlock(
+      `Participation Details:\n` +
+        `Team Leader: ${item.team_leader_name || "N/A"}\n` +
+        `Team Members (${item.team_members_count || 1}): ${item.team_member_names || "N/A"}\n` +
+        `Mentor: ${item.mentor || "________________"}\n` +
+        `Current Progress: ${item.progress || "Registered"}${
+          item.no_of_rounds ? `\nNumber of Rounds: ${item.no_of_rounds}` : ""
+        }${item.prize ? `\nResult/Prize: ${item.prize}` : ""}`,
+    );
+
+    addTextBlock(
+      "I kindly request you to grant me On-Duty permission for the above period. I assure you that I will submit all relevant proofs and updates after the event.",
+    );
+    y += 2;
+
+    addTextBlock("Thank you.");
+    y += 8;
+
+    doc.text("Yours faithfully,", margin, y);
+    y += 6;
+    doc.text("Student Signature: __________________________", margin, y);
+    y += 16;
+
+    doc.setFont("times", "bold");
+    doc.text("Recommended / Approved Signatures", margin, y);
+    y += 8;
+    doc.setFont("times", "normal");
+
+    const colWidth = contentWidth / 2;
+    doc.text("Mentor", margin, y + 8);
+    doc.text("Class Counsellor", margin + colWidth, y + 8);
+    doc.line(margin, y, margin + colWidth - 8, y);
+    doc.line(margin + colWidth, y, pageWidth - margin, y);
+
+    y += 24;
+    doc.text("Hackathon Coordinator", margin, y + 8);
+    doc.text("HOD/Deputy HOD", margin + colWidth, y + 8);
+    doc.line(margin, y, margin + colWidth - 8, y);
+    doc.line(margin + colWidth, y, pageWidth - margin, y);
+
+    const fileName = `hackathon-od-letter-${safeFilePart(item.hackathon_name, "entry")}-${item.id || "draft"}.pdf`;
+    doc.save(fileName);
+  };
 
   const loadMine = async () => {
     setLoadingMine(true);
@@ -114,9 +259,9 @@ export default function HackathonEntryandProgress() {
       if (form.prize) fd.append("prize", form.prize.trim());
       fd.append("proof", proof);
 
-      await apiClient.uploadFile("/hackathons", fd);
+      const response = await apiClient.uploadFile("/hackathons", fd);
       setSuccess(true);
-      setMessage("Hackathon entry submitted successfully.");
+      setMessage("Hackathon entry submitted successfully. OD letter downloaded as PDF.");
       setShowSuccess(true);
       setForm({
         student_name: user?.full_name || "",
@@ -135,6 +280,11 @@ export default function HackathonEntryandProgress() {
         prize: "",
       });
       setProof(null);
+
+      if (response?.hackathon) {
+        downloadOdLetterPdf(response.hackathon);
+      }
+
       await loadMine();
     } catch (err) {
       setSuccess(false);
@@ -547,6 +697,18 @@ export default function HackathonEntryandProgress() {
                           🏆 {item.prize}
                         </p>
                       )}
+                      <div className="mt-3">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            downloadOdLetterPdf(item);
+                          }}
+                          className="rounded-md border border-blue-300 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+                        >
+                          Download OD Letter (PDF)
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -695,6 +857,16 @@ export default function HackathonEntryandProgress() {
                     <p className="font-semibold text-slate-800 dark:text-slate-100">{previewModal.item.verification_comment}</p>
                   </div>
                 )}
+
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => downloadOdLetterPdf(previewModal.item)}
+                    className="rounded-md border border-blue-300 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+                  >
+                    Download OD Letter (PDF)
+                  </button>
+                </div>
 
                 <div className="mt-4 border-t border-slate-200 pt-4 dark:border-slate-700">
                   <h4 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-3">

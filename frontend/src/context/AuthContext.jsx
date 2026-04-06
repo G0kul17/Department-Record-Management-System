@@ -15,8 +15,15 @@ export const AuthProvider = ({ children }) => {
     const storedSessionToken = localStorage.getItem("sessionToken");
 
     if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+      try {
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+      } catch {
+        // Corrupted storage — clear it so the user can log in fresh
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("sessionToken");
+      }
     }
 
     if (storedSessionToken) {
@@ -32,6 +39,7 @@ export const AuthProvider = ({ children }) => {
       // Fetch and sync profile details so avatar persists across reloads
       refreshUserProfile()?.catch(() => {});
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, token]);
 
   const login = (userData, authToken, sessionTokenValue = null) => {

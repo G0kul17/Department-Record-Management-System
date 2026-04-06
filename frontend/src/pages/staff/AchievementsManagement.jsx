@@ -10,6 +10,7 @@ export default function AchievementsManagement() {
   const [modal, setModal] = useState({ open: false, item: null });
   const [view, setView] = useState("pending");
   const [suggestion, setSuggestion] = useState("");
+  const [actionError, setActionError] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -32,6 +33,7 @@ export default function AchievementsManagement() {
   const approve = async (id, comment) => {
     try {
       setBusyId(id);
+      setActionError("");
       const payload =
         typeof comment === "string" && comment.trim()
           ? { comment: comment.trim() }
@@ -39,7 +41,7 @@ export default function AchievementsManagement() {
       const resp = await apiClient.post(`/achievements/${id}/verify`, payload);
       if (resp) await load();
     } catch (e) {
-      // optionally handle error
+      setActionError(e?.message || "Failed to approve achievement. Please try again.");
     } finally {
       setBusyId(null);
     }
@@ -48,6 +50,7 @@ export default function AchievementsManagement() {
   const reject = async (id, comment) => {
     try {
       setBusyId(id);
+      setActionError("");
       const payload =
         typeof comment === "string" && comment.trim()
           ? { comment: comment.trim() }
@@ -55,7 +58,7 @@ export default function AchievementsManagement() {
       const resp = await apiClient.post(`/achievements/${id}/reject`, payload);
       if (resp) await load();
     } catch (e) {
-      // optionally handle error
+      setActionError(e?.message || "Failed to reject achievement. Please try again.");
     } finally {
       setBusyId(null);
     }
@@ -99,6 +102,12 @@ export default function AchievementsManagement() {
 
   return (
     <div className="glitter-card rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      {actionError && (
+        <div className="mb-4 flex items-center justify-between rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/30 dark:text-red-200">
+          <span>{actionError}</span>
+          <button onClick={() => setActionError("")} className="ml-3 text-red-600 hover:text-red-800 dark:text-red-300">✕</button>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">

@@ -1,7 +1,7 @@
 import pool from "../config/db.js";
 import bcrypt from "bcrypt";
 import { generateOTP, getExpiryDate } from "../utils/otpGenerator.js";
-import { sendMail } from "../config/mailer.js";
+import { enqueueMail } from "../utils/mailClient.js";
 import { detectRole } from "../utils/roleUtils.js";
 import dotenv from "dotenv";
 import { signToken } from "../utils/tokenUtils.js";
@@ -11,7 +11,7 @@ import {
   invalidateAllUserSessions,
 } from "../utils/sessionUtils.js";
 import logger, { reqContext } from "../utils/logger.js";
-import { tracedQuery, tracedExternalCall } from "../utils/tracing.js";
+import { tracedQuery } from "../utils/tracing.js";
 dotenv.config();
 
 const OTP_EXPIRY_MIN = Number(process.env.OTP_EXPIRY_MIN || 5);
@@ -123,13 +123,11 @@ export async function register(req, res) {
     );
 
     // send email
-    await tracedExternalCall("mail.send", { "email.to": emailLower, "email.subject": "Your verification OTP" }, () =>
-      sendMail({
-        to: emailLower,
-        subject: "Your verification OTP",
-        text: `Your OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
-      })
-    );
+    enqueueMail({
+      to: emailLower,
+      subject: "Your verification OTP",
+      text: `Your OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
+    });
 
     return res.json({
       message: `OTP sent to ${emailLower}`,
@@ -157,7 +155,7 @@ export async function verifyOTP(req, res) {
       "SELECT * FROM otp_verifications WHERE email=$1",
       [emailLower],
     );
-    if (!rows.length) return res.status(400).json({ message: "Invalid OTP" });
+    if (!rows.length) return res.status(401).json({ message: "Invalid OTP" });
 
     const otpRow = rows[0];
 
@@ -171,12 +169,12 @@ export async function verifyOTP(req, res) {
     // its expiry window with unlimited retry time.
     if (new Date() > otpRow.expires_at) {
       await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
-      return res.status(400).json({ message: "OTP expired" });
+      return res.status(401).json({ message: "OTP expired" });
     }
 
     if (otpRow.otp_code.trim() !== otpClean) {
       await tracedQuery(pool, "UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1", [otpRow.id]);
-      return res.status(400).json({ message: "Invalid OTP" });
+      return res.status(401).json({ message: "Invalid OTP" });
     }
 
     // mark verified and remove otp
@@ -186,11 +184,14 @@ export async function verifyOTP(req, res) {
     await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
 
     // return jwt
-    const { rows: users } = await tracedQuery(pool, 
+    const { rows: users } = await tracedQuery(pool,
       "SELECT id, email, role, profile_details FROM users WHERE email=$1",
       [emailLower],
     );
     const user = users[0];
+    if (!user) {
+      return res.status(500).json({ message: "Server error", trace_id: req.correlationId });
+    }
     // If this email is listed in ADMIN_EMAILS, ensure role is admin both in DB and token
     if (ADMIN_EMAILS.includes(emailLower) && user.role !== "admin") {
       await tracedQuery(pool, "UPDATE users SET role='admin' WHERE email=$1", [
@@ -238,11 +239,11 @@ export async function login(req, res) {
       emailLower,
     ]);
     if (!rows.length)
-      return res.status(400).json({ message: "User not found" });
+      return res.status(401).json({ message: "User not found" });
 
     const user = rows[0];
     const match = await bcrypt.compare(password, user.password_hash || "");
-    if (!match) return res.status(400).json({ message: "Invalid credentials" });
+    if (!match) return res.status(401).json({ message: "Invalid credentials" });
 
     if (!user.is_verified) {
       // User hasn't verified account yet: generate a fresh verification OTP and return it
@@ -256,13 +257,11 @@ export async function login(req, res) {
         [emailLower, otp, expiresAt],
       );
 
-      await tracedExternalCall("mail.send", { "email.to": emailLower, "email.subject": "Account Verification OTP" }, () =>
-        sendMail({
-          to: emailLower,
-          subject: "Account Verification OTP",
-          text: `Your verification OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
-        })
-      );
+      enqueueMail({
+        to: emailLower,
+        subject: "Account Verification OTP",
+        text: `Your verification OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
+      });
 
       return res.json({
         message: "Please verify your account via OTP",
@@ -329,13 +328,11 @@ export async function login(req, res) {
       [emailLower, otp, expiresAt],
     );
 
-    await tracedExternalCall("mail.send", { "email.to": emailLower, "email.subject": "Login OTP" }, () =>
-      sendMail({
-        to: emailLower,
-        subject: "Login OTP",
-        text: `Your login OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
-      })
-    );
+    enqueueMail({
+      to: emailLower,
+      subject: "Login OTP",
+      text: `Your login OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
+    });
 
     return res.json({ message: "Login OTP sent to email" });
   } catch (err) {
@@ -360,7 +357,7 @@ export async function loginVerifyOTP(req, res) {
       "SELECT * FROM otp_verifications WHERE email=$1",
       [emailLower],
     );
-    if (!rows.length) return res.status(400).json({ message: "Invalid OTP" });
+    if (!rows.length) return res.status(401).json({ message: "Invalid OTP" });
 
     const otpRow = rows[0];
 
@@ -371,22 +368,25 @@ export async function loginVerifyOTP(req, res) {
 
     if (new Date() > otpRow.expires_at) {
       await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
-      return res.status(400).json({ message: "OTP expired" });
+      return res.status(401).json({ message: "OTP expired" });
     }
 
     if (otpRow.otp_code.trim() !== otpClean) {
       await tracedQuery(pool, "UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1", [otpRow.id]);
-      return res.status(400).json({ message: "Invalid OTP" });
+      return res.status(401).json({ message: "Invalid OTP" });
     }
 
     await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
 
     // issue token
-    const { rows: users } = await tracedQuery(pool, 
+    const { rows: users } = await tracedQuery(pool,
       "SELECT id, email, role, profile_details FROM users WHERE email=$1",
       [emailLower],
     );
     const user = users[0];
+    if (!user) {
+      return res.status(500).json({ message: "Server error", trace_id: req.correlationId });
+    }
     // If this email is listed in ADMIN_EMAILS, ensure role is admin both in DB and token
     if (ADMIN_EMAILS.includes(emailLower) && user.role !== "admin") {
       await tracedQuery(pool, "UPDATE users SET role='admin' WHERE email=$1", [
@@ -458,7 +458,7 @@ export async function forgotVerifyOTP(req, res) {
       "SELECT * FROM otp_verifications WHERE email=$1",
       [emailLower]
     );
-    if (!rows.length) return res.status(400).json({ message: "Invalid OTP" });
+    if (!rows.length) return res.status(401).json({ message: "Invalid OTP" });
 
     const otpRow = rows[0];
 
@@ -470,7 +470,7 @@ export async function forgotVerifyOTP(req, res) {
     // Expiry before code — expired rows must not be brute-forced
     if (new Date() > otpRow.expires_at) {
       await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
-      return res.status(400).json({ message: "OTP expired" });
+      return res.status(401).json({ message: "OTP expired" });
     }
 
     if (otpRow.otp_code.trim() !== otpClean) {
@@ -478,7 +478,7 @@ export async function forgotVerifyOTP(req, res) {
         "UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1",
         [otpRow.id]
       );
-      return res.status(400).json({ message: "Invalid OTP" });
+      return res.status(401).json({ message: "Invalid OTP" });
     }
 
     // OTP is valid — leave the row in DB so /auth/reset can consume it
@@ -518,13 +518,11 @@ export async function initiateForgotPassword(req, res) {
         [emailLower, otp, expiresAt]
       );
 
-      await tracedExternalCall("mail.send", { "email.to": emailLower, "email.subject": "Password Reset OTP" }, () =>
-        sendMail({
-          to: emailLower,
-          subject: "Password Reset OTP",
-          text: `Your password reset OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
-        })
-      );
+      enqueueMail({
+        to: emailLower,
+        subject: "Password Reset OTP",
+        text: `Your password reset OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
+      });
 
     }
 
@@ -562,7 +560,7 @@ export async function resetPassword(req, res) {
       "SELECT * FROM otp_verifications WHERE email=$1",
       [emailLower],
     );
-    if (!rows.length) return res.status(400).json({ message: "Invalid OTP" });
+    if (!rows.length) return res.status(401).json({ message: "Invalid OTP" });
 
     const otpRow = rows[0];
 
@@ -573,12 +571,12 @@ export async function resetPassword(req, res) {
 
     if (new Date() > otpRow.expires_at) {
       await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
-      return res.status(400).json({ message: "OTP expired" });
+      return res.status(401).json({ message: "OTP expired" });
     }
 
     if (otpRow.otp_code.trim() !== otpClean) {
       await tracedQuery(pool, "UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1", [otpRow.id]);
-      return res.status(400).json({ message: "Invalid OTP" });
+      return res.status(401).json({ message: "Invalid OTP" });
     }
 
     const hashed = await bcrypt.hash(newPassword, 10);
@@ -593,7 +591,7 @@ export async function resetPassword(req, res) {
     await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
 
     if (!updated.length) {
-      return res.status(400).json({ message: "Invalid OTP" });
+      return res.status(401).json({ message: "Invalid OTP" });
     }
 
     await invalidateAllUserSessions(updated[0].id);

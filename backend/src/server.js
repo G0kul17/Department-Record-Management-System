@@ -22,6 +22,7 @@ import announcementRoutes from "./routes/announcementRoutes.js";
 import hackathonRoutes from "./routes/hackathonRoutes.js";
 import pool, { logPoolHealth, getPoolHealth } from "./config/db.js";
 import { verifyFileStorage } from "./config/upload.js";
+import { cleanupExpiredSessions } from "./utils/sessionUtils.js";
 import { requireAuth } from "./middleware/authMiddleware.js";
 import { requireRole } from "./middleware/roleAuth.js";
 import { verifyToken } from "./utils/tokenUtils.js";
@@ -264,6 +265,20 @@ async function startApplication() {
         "server.api_base": `http://localhost:${PORT}/api`,
       });
     });
+
+    // Step 4: Schedule periodic cleanup of expired sessions (every 24 hours)
+    const SESSION_CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
+    setInterval(() => {
+      cleanupExpiredSessions().catch((err) =>
+        logger.error("Session cleanup failed", { err }),
+      );
+    }, SESSION_CLEANUP_INTERVAL_MS);
+    // Run once shortly after startup to clean any backlog
+    setTimeout(() => {
+      cleanupExpiredSessions().catch((err) =>
+        logger.error("Session cleanup (initial) failed", { err }),
+      );
+    }, 60_000);
   } catch (err) {
     logger.error("Startup failed — fix the error and restart", { err });
     process.exit(1);
@@ -305,15 +320,21 @@ app.use((err, req, res, next) => {
       .json({ message: err.message || "File upload error", trace_id: traceId });
   }
 
-  const status = err.status || 400; // default to 400 for validation-like issues
-  const message = err.message || "Server error";
+  // Use err.status when it's an intentional HTTP status (ReviewError 403/404,
+  // explicitly-tagged validation errors, etc.).  Fall back to 500 for anything
+  // else — unhandled crashes (TypeError, DB errors, ...) are server faults, not
+  // client errors, so 400 would be misleading to callers and monitoring tools.
+  const status = err.status && err.status >= 400 && err.status < 600 ? err.status : 500;
+  // For 500s expose a generic message to clients; for intentional 4xx/5xx keep
+  // the original message since it's already user-facing (e.g. ReviewError).
+  const message = status >= 500 ? "Server error" : (err.message || "Request failed");
 
   // Always include trace_id in error responses so users/frontend can surface a
   // reference code to support — the same pattern Cloudflare uses with Ray IDs.
-  // In development also surface the error detail; never in production.
+  // In development also surface the real error detail; never in production.
   const body =
     process.env.NODE_ENV !== "production"
-      ? { message, trace_id: traceId, error: String(err.message || err) }
+      ? { message, trace_id: traceId, error: String(err) }
       : { message, trace_id: traceId };
 
   res.status(status).json(body);

@@ -414,7 +414,7 @@ export async function listHackathons(req, res) {
     }
 
     // Build query with ORDER BY, LIMIT, OFFSET in suffix
-    const suffix = `ORDER BY h.created_at DESC LIMIT ${parseInt(limit, 10) || 20} OFFSET ${parseInt(offset, 10) || 0}`;
+    const suffix = `ORDER BY h.created_at DESC LIMIT ${Math.max(1, Math.min(200, parseInt(limit, 10) || 20))} OFFSET ${Math.max(0, parseInt(offset, 10) || 0)}`;
     const { text, values } = qb.build(suffix);
     const result = await pool.query(text, values);
     return res.json({ hackathons: result.rows });

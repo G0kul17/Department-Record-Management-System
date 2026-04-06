@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Routes, Route, Link } from "react-router-dom";
+import { Routes, Route, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import ProjectsManagement from "./ProjectsManagement";
 import AchievementsManagement from "./AchievementsManagement";
@@ -18,6 +18,7 @@ import AchievementsLeaderboard from "../../components/AchievementsLeaderboard";
 const StaffDashboard = () => {
   const { user } = useAuth();
   const displayName = formatDisplayName(user);
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navLinks = [
@@ -129,6 +130,7 @@ const StaffDashboard = () => {
 };
 
 function OverviewPanel({ user }) {
+  const navigate = useNavigate();
   const [projCount, setProjCount] = useState(null);
   const [achCount, setAchCount] = useState(null);
   const [partCount, setPartCount] = useState(null);
@@ -201,7 +203,7 @@ function OverviewPanel({ user }) {
             </h2>
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => (window.location.href = "/projects/approved")}
+                onClick={() => (navigate("/projects/approved"))}
                 className="rounded-xl p-3 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
               >
                 <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -212,7 +214,7 @@ function OverviewPanel({ user }) {
                 </div>
               </button>
               <button
-                onClick={() => (window.location.href = "/achievements/approved")}
+                onClick={() => (navigate("/achievements/approved"))}
                 className="rounded-xl p-3 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
               >
                 <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -223,7 +225,7 @@ function OverviewPanel({ user }) {
                 </div>
               </button>
               <button
-                onClick={() => (window.location.href = "/staff/faculty-participation")}
+                onClick={() => (navigate("/staff/faculty-participation"))}
                 className="rounded-xl p-3 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
               >
                 <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -234,7 +236,7 @@ function OverviewPanel({ user }) {
                 </div>
               </button>
               <button
-                onClick={() => (window.location.href = "/staff/faculty-research")}
+                onClick={() => (navigate("/staff/faculty-research"))}
                 className="rounded-xl p-3 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
               >
                 <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -245,7 +247,7 @@ function OverviewPanel({ user }) {
                 </div>
               </button>
               <button
-                onClick={() => (window.location.href = "/staff/faculty-consultancy")}
+                onClick={() => (navigate("/staff/faculty-consultancy"))}
                 className="rounded-xl p-3 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
               >
                 <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">

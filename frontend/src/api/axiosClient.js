@@ -44,21 +44,36 @@ class ApiClient {
     try {
       const response = await fetch(url, config);
 
-      // Handle 401 Unauthorized
-      if (response.status === 401) {
+      // Handle 401 Unauthorized — but only redirect to /login when the user is
+      // already authenticated (i.e. the session/token expired mid-session).
+      // Auth endpoints (/auth/*) return 401 for wrong password / invalid OTP;
+      // those errors must be surfaced to the form, not trigger a redirect.
+      if (response.status === 401 && !endpoint.startsWith("/auth/")) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        // Use pathname so BrowserRouter picks up the change correctly
-        try {
-          window.location.href = "/login";
-        } catch (e) {
-          // fallback to assign
-          window.location.assign("/login");
-        }
+        window.location.href = "/login";
         throw new Error("Unauthorized");
       }
 
-      const data = await response.json();
+      const contentType = response.headers.get("content-type") || "";
+      let data;
+      if (contentType.includes("application/json")) {
+        try {
+          data = await response.json();
+        } catch {
+          data = { message: "Invalid JSON response from server" };
+        }
+      } else {
+        const text = await response.text();
+        // If the server returned an HTML error page (e.g. nginx 502/503),
+        // don't surface raw markup to the user.
+        const isHtml = text.trim().startsWith("<");
+        data = {
+          message: isHtml
+            ? "Server is unreachable. Please try again later."
+            : text || "Unexpected response from server",
+        };
+      }
 
       if (!response.ok) {
         const err = new Error(data.message || "Request failed");
@@ -71,6 +86,10 @@ class ApiClient {
       return data;
     } catch (error) {
       console.error("API Error:", error);
+      // Replace browser-internal network errors with a friendly message.
+      if (error.message === "Failed to fetch" || error instanceof TypeError) {
+        throw new Error("Unable to reach the server. Please check your connection.");
+      }
       throw error;
     }
   }
@@ -122,17 +141,12 @@ class ApiClient {
       body: formData,
     });
 
-    // Handle 401 Unauthorized consistently (same behavior as request())
-    if (response.status === 401) {
-      try {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        window.location.href = "/login";
-      } catch (_) {
-        try {
-          window.location.assign("/login");
-        } catch (_) {}
-      }
+    // Handle 401 Unauthorized — redirect only for authenticated endpoints,
+    // not for auth endpoints (same guard as request()).
+    if (response.status === 401 && !endpoint.startsWith("/auth/")) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/login";
       throw new Error("Unauthorized");
     }
 
@@ -146,7 +160,12 @@ class ApiClient {
         }
       }
       const text = await response.text();
-      return { message: text };
+      const isHtml = text.trim().startsWith("<");
+      return {
+        message: isHtml
+          ? "Server is unreachable. Please try again later."
+          : text,
+      };
     };
 
     const data = await parseBody();

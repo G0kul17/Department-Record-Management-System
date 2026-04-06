@@ -1,5 +1,7 @@
+import { randomInt } from "crypto";
+
 export function generateOTP() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return randomInt(100000, 1000000).toString();
 }
 
 export function getExpiryDate(minutes = 5) {

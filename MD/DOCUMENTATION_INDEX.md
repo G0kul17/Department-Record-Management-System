@@ -180,6 +180,17 @@
 
 **Best For**: Training users, onboarding, operations handover
 
+### **11. DEVELOPER_MANUAL.md** 🛠️ ENGINEERING GUIDE
+**Length**: 12+ pages | **Time**: 30-45 minutes
+**Content**:
+- Current architecture and module map (frontend + backend)
+- Exact route modules, startup lifecycle, and environment config
+- Migration-first database workflow and runbook commands
+- CI/CD pipeline flow (Jenkins) and production proxy pattern (Nginx)
+- Security model, operational checks, and present-stage implementation notes
+
+**Best For**: Developers, maintainers, DevOps, production handover
+
 ---
 
 ## 🗺️ Navigation by Topic

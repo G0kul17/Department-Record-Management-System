@@ -186,6 +186,12 @@ class ApiClient {
         finalMsg = "Please upload CSV or Excel";
       }
       const err = new Error(finalMsg);
+      if (data) {
+        err.responseData = data;
+        if (Array.isArray(data.errors)) {
+          err.validationErrors = data.errors;
+        }
+      }
       if (data && data.trace_id) err.traceId = data.trace_id;
       throw err;
     }

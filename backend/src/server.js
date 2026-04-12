@@ -320,11 +320,31 @@ app.use((err, req, res, next) => {
       .json({ message: err.message || "File upload error", trace_id: traceId });
   }
 
+  const errMsg = String(err?.message || "").toLowerCase();
+  const looksLikeUploadValidationError = [
+    "file type",
+    "invalid image type",
+    "invalid proof file",
+    "invalid certificate file",
+    "invalid event photo file",
+    "only .zip files",
+    "only csv or excel",
+    "invalid data file type",
+    "brochure file type",
+    "thumbnail",
+    "file too large",
+  ].some((token) => errMsg.includes(token));
+
   // Use err.status when it's an intentional HTTP status (ReviewError 403/404,
   // explicitly-tagged validation errors, etc.).  Fall back to 500 for anything
   // else — unhandled crashes (TypeError, DB errors, ...) are server faults, not
   // client errors, so 400 would be misleading to callers and monitoring tools.
-  const status = err.status && err.status >= 400 && err.status < 600 ? err.status : 500;
+  const status =
+    err.status && err.status >= 400 && err.status < 600
+      ? err.status
+      : looksLikeUploadValidationError
+        ? 400
+        : 500;
   // For 500s expose a generic message to clients; for intentional 4xx/5xx keep
   // the original message since it's already user-facing (e.g. ReviewError).
   const message = status >= 500 ? "Server error" : (err.message || "Request failed");

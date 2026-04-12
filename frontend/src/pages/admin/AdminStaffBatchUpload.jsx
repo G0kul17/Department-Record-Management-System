@@ -13,6 +13,7 @@ export default function AdminStaffBatchUpload() {
   const [preview, setPreview] = useState(null);
   const [previewing, setPreviewing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [validationErrors, setValidationErrors] = useState([]);
 
   return (
     <div className="mx-auto max-w-6xl w-full p-6">
@@ -74,6 +75,7 @@ export default function AdminStaffBatchUpload() {
               if (!file) return;
               setPreview(null);
               setResult(null);
+              setValidationErrors([]);
               setMessage("");
               setPreviewing(true);
               try {
@@ -104,13 +106,15 @@ export default function AdminStaffBatchUpload() {
               !file ||
               !preview ||
               submitting ||
-              (preview?.headerErrors?.length ?? 0) > 0
+              (preview?.headerErrors?.length ?? 0) > 0 ||
+              (preview?.rowIssues?.length ?? 0) > 0
             }
             onClick={async () => {
               if (!file) return;
               setSubmitting(true);
               setMessage("");
               setResult(null);
+              setValidationErrors([]);
               try {
                 const fd = new FormData();
                 fd.append("staff_file", file);
@@ -120,6 +124,12 @@ export default function AdminStaffBatchUpload() {
                 setShowSuccess(true);
               } catch (e) {
                 setMessage(e.message || "Upload failed");
+                const backendErrors = Array.isArray(e?.validationErrors)
+                  ? e.validationErrors
+                  : Array.isArray(e?.responseData?.errors)
+                    ? e.responseData.errors
+                    : [];
+                setValidationErrors(backendErrors);
               } finally {
                 setSubmitting(false);
               }
@@ -160,6 +170,31 @@ export default function AdminStaffBatchUpload() {
             Download sample CSV
           </a>
         </div>
+
+        {(preview?.rowIssues?.length ?? 0) > 0 && (
+          <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            Fix preview issues before uploading. Upload is blocked while invalid rows exist.
+          </div>
+        )}
+
+        {validationErrors.length > 0 && (
+          <div className="rounded border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+            <div className="font-semibold mb-1">Validation details</div>
+            <ul className="list-disc pl-5 space-y-1">
+              {validationErrors.slice(0, 20).map((err, idx) => (
+                <li key={`${err.row || "r"}-${idx}`}>
+                  Row {err.row || "?"}: {err.message || "Invalid data"}
+                  {Array.isArray(err.missingFields) && err.missingFields.length > 0
+                    ? ` (${err.missingFields.join(", ")})`
+                    : ""}
+                </li>
+              ))}
+            </ul>
+            {validationErrors.length > 20 && (
+              <div className="mt-1">Showing first 20 errors.</div>
+            )}
+          </div>
+        )}
 
         {result && (
           <div className="text-xs text-slate-700 dark:text-slate-200">

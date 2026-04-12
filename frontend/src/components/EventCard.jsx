@@ -33,9 +33,22 @@ export default function EventCard({
 
   const isExternal = typeof eventUrl === "string" && eventUrl.trim().length > 0;
 
+  const normalizeUploadUrl = (u) => {
+    if (!u) return null;
+    const raw = String(u).trim();
+    if (!raw) return null;
+
+    const uploadsMarker = "/uploads/";
+    if (raw.includes(uploadsMarker)) {
+      return getFileUrl(raw.split(uploadsMarker)[1]);
+    }
+    if (/^https?:\/\//i.test(raw)) return raw;
+    return getFileUrl(raw);
+  };
+
   // Choose a thumbnail: explicit image prop, or first image attachment
   const thumb =
-    image ||
+    normalizeUploadUrl(image) ||
     (Array.isArray(attachments)
       ? attachments.find((a) =>
           /\.(jpe?g|png|gif)$/i.test(a.name || a.filename || "")
@@ -44,6 +57,8 @@ export default function EventCard({
           /\.(jpe?g|png|gif)$/i.test(a.name || a.filename || "")
         )?.filename
       : null);
+
+  const thumbUrl = normalizeUploadUrl(thumb);
 
   const formatDateRange = () => {
     if (start_date && end_date) {
@@ -83,7 +98,7 @@ export default function EventCard({
           {thumb && (
             <div className="hidden md:block flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden">
               <img
-                src={thumb}
+                src={thumbUrl}
                 alt={title}
                 className="w-full h-full object-cover"
               />
@@ -157,7 +172,7 @@ export default function EventCard({
                 {attachments.slice(0, 3).map((a, i) => (
                   <div key={i} className="truncate">
                     <a
-                      href={a.url || getFileUrl(a.filename)}
+                      href={normalizeUploadUrl(a.url || a.filename)}
                       target="_blank"
                       rel="noreferrer"
                       className="underline text-sky-700 hover:text-sky-600"

@@ -113,6 +113,9 @@ export const uploadStaffBatch = async (req, res) => {
     rows.forEach((row, index) => {
       const rowNumber = index + 2;
       const fields = extractFieldsFromRow(row);
+      if (!fields.full_name && fields.first_name && fields.last_name) {
+        fields.full_name = `${fields.first_name} ${fields.last_name}`.trim();
+      }
       const {
         full_name,
         first_name,
@@ -124,8 +127,22 @@ export const uploadStaffBatch = async (req, res) => {
         designation,
       } = fields;
 
+      // Ignore completely blank rows (common in CSV/XLSX exports).
+      const allEmpty = [
+        full_name,
+        first_name,
+        last_name,
+        email,
+        employee_id,
+        contact_number,
+        department,
+        designation,
+      ].every((v) => !String(v || "").trim());
+      if (allEmpty) {
+        return;
+      }
+
       const missingFields = [];
-      if (!full_name) missingFields.push("Full name");
       if (!first_name) missingFields.push("First name");
       if (!last_name) missingFields.push("Last name");
       if (!email) missingFields.push("College mail");

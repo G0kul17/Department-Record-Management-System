@@ -35,6 +35,22 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
 
   if (!length) return null;
 
+  const normalizeMediaUrl = (u) => {
+    if (!u) return null;
+    const raw = String(u).trim();
+    if (!raw) return null;
+
+    // Legacy paths may still be stored as /uploads/* or full backend URLs.
+    const uploadsMarker = "/uploads/";
+    if (raw.includes(uploadsMarker)) {
+      return getFileUrl(raw.split(uploadsMarker)[1]);
+    }
+    if (/^https?:\/\//i.test(raw)) return raw;
+
+    // Bare filename fallback (legacy payload shape)
+    return getFileUrl(raw);
+  };
+
   return (
     <div className="w-full">
       <div className="relative overflow-hidden rounded-lg shadow-sm">
@@ -43,16 +59,9 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
           style={{ transform: `translateX(${-index * 100}%)` }}
         >
           {events.map((ev) => {
-            const makeAbsolute = (u) => {
-              if (!u) return null;
-              if (/^https?:\/\//i.test(u)) return u;
-              if (u.startsWith("/uploads/"))
-                return getFileUrl(u.split("/uploads/")[1]);
-              return u;
-            };
             const thumb =
-              makeAbsolute(ev.image) ||
-              makeAbsolute(ev.thumbnail) ||
+              normalizeMediaUrl(ev.image) ||
+              normalizeMediaUrl(ev.thumbnail) ||
               (ev.thumbnail_filename
                 ? getFileUrl(ev.thumbnail_filename)
                 : null);

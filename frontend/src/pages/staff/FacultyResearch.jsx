@@ -23,6 +23,8 @@ export default function FacultyResearch() {
   const [proof, setProof] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("error");
+  const [errorDetails, setErrorDetails] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
 
   const update = (k) => (e) => setForm({ ...form, [k]: e.target.value });
@@ -33,10 +35,13 @@ export default function FacultyResearch() {
       form.agency === "__custom__" ? (form.agency_custom || "").trim() : form.agency;
     if (!normalizedAgency) {
       setMessage("Please enter agency");
+      setMessageType("error");
       return;
     }
     setSubmitting(true);
     setMessage("");
+    setMessageType("error");
+    setErrorDetails([]);
     try {
       const fd = new FormData();
       const payload = { ...form, agency: normalizedAgency };
@@ -50,8 +55,10 @@ export default function FacultyResearch() {
       if (proof) fd.append("proof", proof);
       await apiClient.uploadFile("/faculty-research", fd);
       setMessage("Faculty research added");
+      setMessageType("success");
       setShowSuccess(true);
       setForm({
+        faculty_name: "",
         funded_type: "",
         principal_investigator: "",
         team_members: "",
@@ -69,6 +76,13 @@ export default function FacultyResearch() {
       setProof(null);
     } catch (err) {
       setMessage(err.message || "Failed to submit");
+      setMessageType("error");
+      const details = Array.isArray(err?.validationErrors)
+        ? err.validationErrors
+        : Array.isArray(err?.responseData?.errors)
+          ? err.responseData.errors
+          : [];
+      setErrorDetails(details);
     } finally {
       setSubmitting(false);
     }
@@ -93,12 +107,25 @@ export default function FacultyResearch() {
         {message && (
           <div
             className={`rounded-md px-4 py-2 text-sm ${
-              showSuccess
+              messageType === "success"
                 ? "bg-green-50 text-green-700 border border-green-200"
                 : "bg-red-50 text-red-700 border border-red-200"
             }`}
           >
             {message}
+          </div>
+        )}
+        {errorDetails.length > 0 && (
+          <div className="rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800">
+            <div className="font-semibold">Validation details</div>
+            <ul className="mt-1 list-disc pl-5">
+              {errorDetails.map((e, idx) => (
+                <li key={`${e.field || "field"}-${idx}`}>
+                  {e.field ? `${e.field}: ` : ""}
+                  {e.message || "Invalid value"}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
         <section className="glitter-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">

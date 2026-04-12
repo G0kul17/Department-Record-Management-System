@@ -7,6 +7,7 @@ import { formatDisplayName, getInitials } from "../utils/displayName";
 import AvatarPicker from "./ui/AvatarPicker";
 import NotificationsBell from "./NotificationsBell";
 import apiClient from "../api/axiosClient";
+import { getFileUrl } from "../utils/fileUrl";
 
 const Navbar = () => {
   const { user, token, logout } = useAuth();
@@ -16,10 +17,23 @@ const Navbar = () => {
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const displayName = formatDisplayName(user);
-  const photoUrl =
-    (user &&
-      (user.photoUrl || user.avatarUrl || user.imageUrl || user.profilePic)) ||
-    null;
+  const photoUrl = (() => {
+    const raw =
+      (user &&
+        (user.photoUrl || user.avatarUrl || user.imageUrl || user.profilePic)) ||
+      "";
+    if (!raw) return null;
+    const value = String(raw).trim();
+    if (!value) return null;
+
+    const uploadsMarker = "/uploads/";
+    if (value.includes(uploadsMarker)) {
+      return getFileUrl(value.split(uploadsMarker)[1]);
+    }
+    if (/^https?:\/\//i.test(value)) return value;
+
+    return getFileUrl(value);
+  })();
   const completion = (() => {
     if (user?.role === "student") {
       const fields = [

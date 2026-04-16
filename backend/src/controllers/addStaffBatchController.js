@@ -84,6 +84,7 @@ const generateTemporaryPassword = () => crypto.randomBytes(5).toString("hex");
 /* ================= CONTROLLER ================= */
 
 export const uploadStaffBatch = async (req, res) => {
+  let client;
   try {
     if (!req.file) {
       return res.status(400).json({ message: "File is required" });
@@ -193,10 +194,14 @@ export const uploadStaffBatch = async (req, res) => {
 
     let created = 0;
     const skipped = [];
+    const pendingMails = [];
+
+    client = await pool.connect();
+    await client.query("BEGIN");
 
     for (const staff of validStaff) {
       const exists = await tracedQuery(
-        pool,
+        client,
         "SELECT id FROM users WHERE LOWER(email) = LOWER($1)",
         [staff.email],
       );
@@ -210,7 +215,7 @@ export const uploadStaffBatch = async (req, res) => {
       const hash = await bcrypt.hash(defaultPassword, 10);
 
       await tracedQuery(
-        pool,
+        client,
         `
         INSERT INTO users
         (email, password_hash, role, is_verified, profile_details, full_name)
@@ -232,17 +237,10 @@ export const uploadStaffBatch = async (req, res) => {
         ],
       );
 
-      await tracedExternalCall(
-        "mail.send",
-        {
-          "email.to": staff.email,
-          "email.subject": "Staff Account Created",
-        },
-        () =>
-          sendMail({
-            to: staff.email,
-            subject: "Staff Account Created",
-            text: `
+      pendingMails.push({
+        to: staff.email,
+        subject: "Staff Account Created",
+        text: `
 Hello ${staff.full_name || staff.first_name},
 
 Your DRMS staff account has been created.
@@ -255,21 +253,52 @@ Please log in and change your password using the "Forgot Password" option.
 Regards,
 Department Admin
             `,
-          }),
-      );
+      });
 
       created++;
+    }
+
+    await client.query("COMMIT");
+
+    const mailFailures = [];
+    for (const mail of pendingMails) {
+      try {
+        await tracedExternalCall(
+          "mail.send",
+          {
+            "email.to": mail.to,
+            "email.subject": mail.subject,
+          },
+          () => sendMail(mail),
+        );
+      } catch (mailErr) {
+        mailFailures.push({ email: mail.to, reason: "Mail send failed" });
+        logger.error("Staff welcome email failed", {
+          mailErr,
+          email: mail.to,
+          ...reqContext(req),
+        });
+      }
     }
 
     return res.json({
       message: "Staff upload completed successfully",
       created,
       skipped,
+      mailFailures: mailFailures.length ? mailFailures : undefined,
     });
   } catch (err) {
+    if (client) {
+      try {
+        await client.query("ROLLBACK");
+      } catch (rollbackErr) {
+        logger.error("Staff batch rollback failed", { rollbackErr, ...reqContext(req) });
+      }
+    }
     logger.error("Staff batch upload failed", { err, ...reqContext(req) });
     return res.status(500).json({ message: "Upload failed" });
   } finally {
+    if (client) client.release();
     if (req.file?.path) fs.unlink(req.file.path, () => {});
   }
 };

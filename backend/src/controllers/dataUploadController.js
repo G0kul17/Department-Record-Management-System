@@ -5,6 +5,7 @@ import * as XLSX from "xlsx";
 import csvParser from "csv-parser";
 import logger, { reqContext } from "../utils/logger.js";
 import { requireActivityTypeByName } from "../utils/activityTypeUtils.js";
+import { tracedQuery } from "../utils/tracing.js";
 
 // Utility: Parse CSV
 const parseCSV = (filePath) =>
@@ -142,6 +143,7 @@ export const uploadDataFile = async (req, res) => {
 
 // ================= SAVE TO DATABASE =================
 export const saveUploadedData = async (req, res) => {
+  let client;
   try {
     const user = req.user;
     const {
@@ -212,6 +214,9 @@ export const saveUploadedData = async (req, res) => {
     const skipped = [];
     const errors = [];
 
+    client = await pool.connect();
+    await client.query("BEGIN");
+
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       const normalized = {};
@@ -222,19 +227,19 @@ export const saveUploadedData = async (req, res) => {
 
       try {
         if (dataType === "achievements") {
-          await saveAchievement(normalized, user, i + 2);
+          await saveAchievement(client, normalized, user, i + 2);
           created++;
         } else if (dataType === "projects") {
-          await saveProject(normalized, user, i + 2);
+          await saveProject(client, normalized, user, i + 2);
           created++;
         } else if (dataType === "faculty_consultancy") {
-          await saveFacultyConsultancy(normalized, user, i + 2);
+          await saveFacultyConsultancy(client, normalized, user, i + 2);
           created++;
         } else if (dataType === "faculty_research") {
-          await saveFacultyResearch(normalized, user, i + 2);
+          await saveFacultyResearch(client, normalized, user, i + 2);
           created++;
         } else if (dataType === "faculty_participations") {
-          await saveFacultyParticipation(normalized, user, i + 2);
+          await saveFacultyParticipation(client, normalized, user, i + 2);
           created++;
         }
       } catch (err) {
@@ -246,6 +251,19 @@ export const saveUploadedData = async (req, res) => {
       }
     }
 
+    if (errors.length > 0) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({
+        message: `Save failed. No rows were inserted due to ${errors.length} error(s).`,
+        dataType,
+        created: 0,
+        skipped,
+        errors,
+      });
+    }
+
+    await client.query("COMMIT");
+
     res.status(201).json({
       message: `Data saved to ${dataType} table`,
       dataType,
@@ -254,14 +272,23 @@ export const saveUploadedData = async (req, res) => {
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (err) {
+    if (client) {
+      try {
+        await client.query("ROLLBACK");
+      } catch (rollbackErr) {
+        logger.error("Data upload rollback failed", { rollbackErr, ...reqContext(req) });
+      }
+    }
     logger.error("Data upload controller error", { err,
       ...reqContext(req) });
     res.status(500).json({ message: "Save failed", error: err.message });
+  } finally {
+    if (client) client.release();
   }
 };
 
 // Helper functions to save to specific tables
-async function saveAchievement(normalized, user, rowNum) {
+async function saveAchievement(db, normalized, user, rowNum) {
   const user_email = (normalized.user_email || normalized.email || "").trim();
   const title = (normalized.title || normalized.achievement_title || "").trim();
   const date = (normalized.date || normalized.achievement_date || "").trim();
@@ -275,7 +302,7 @@ async function saveAchievement(normalized, user, rowNum) {
     throw new Error("Required fields missing: user_email, title");
   }
 
-  const userResult = await tracedQuery(pool, "SELECT id FROM users WHERE email = $1", [
+  const userResult = await tracedQuery(db, "SELECT id FROM users WHERE email = $1", [
     user_email,
   ]);
   if (!userResult.rows.length) {
@@ -284,19 +311,19 @@ async function saveAchievement(normalized, user, rowNum) {
 
   const user_id = userResult.rows[0].id;
   const activityType = await requireActivityTypeByName(
-    pool,
+    db,
     activityTypeInput,
     `activity_type (row ${rowNum})`,
   );
 
-  await pool.query(
+  await db.query(
     `INSERT INTO achievements (user_id, title, date, issuer, name, activity_type_id, verified, verification_status)
      VALUES ($1, $2, $3, $4, $5, $6, false, 'pending')`,
     [user_id, title, date || null, issuer || null, name || null, activityType.id]
   );
 }
 
-async function saveProject(normalized, user, rowNum) {
+async function saveProject(db, normalized, user, rowNum) {
   const title = (normalized.title || normalized.project_title || "").trim();
   const description = (normalized.description || "").trim();
   const mentor_name = (
@@ -329,12 +356,12 @@ async function saveProject(normalized, user, rowNum) {
   }
 
   const activityType = await requireActivityTypeByName(
-    pool,
+    db,
     activityTypeInput,
     `activity_type (row ${rowNum})`,
   );
 
-  await pool.query(
+  await db.query(
     `INSERT INTO projects (title, description, mentor_name, academic_year, status, github_url, team_member_names, created_by, activity_type_id, verification_status)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending')`,
     [
@@ -351,7 +378,7 @@ async function saveProject(normalized, user, rowNum) {
   );
 }
 
-async function saveFacultyConsultancy(normalized, user, rowNum) {
+async function saveFacultyConsultancy(db, normalized, user, rowNum) {
   const faculty_name = (normalized.faculty_name || "").trim();
   const team_members = (normalized.team_members || "").trim();
   const agency = (normalized.agency || "").trim();
@@ -364,7 +391,7 @@ async function saveFacultyConsultancy(normalized, user, rowNum) {
     throw new Error("Required fields missing: agency");
   }
 
-  await tracedQuery(pool, 
+  await tracedQuery(db, 
     `INSERT INTO faculty_consultancy (faculty_name, team_members, agency, amount, duration, start_date, end_date, created_by)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
     [
@@ -380,7 +407,7 @@ async function saveFacultyConsultancy(normalized, user, rowNum) {
   );
 }
 
-async function saveFacultyResearch(normalized, user, rowNum) {
+async function saveFacultyResearch(db, normalized, user, rowNum) {
   const faculty_name = (normalized.faculty_name || "").trim();
   const funded_type = (normalized.funded_type || "").trim();
   const principal_investigator = (
@@ -407,7 +434,7 @@ async function saveFacultyResearch(normalized, user, rowNum) {
     );
   }
 
-  await tracedQuery(pool, 
+  await tracedQuery(db, 
     `INSERT INTO faculty_research (faculty_name, funded_type, principal_investigator, team_members, title, agency, current_status, duration, start_date, end_date, amount, created_by)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
     [
@@ -427,7 +454,7 @@ async function saveFacultyResearch(normalized, user, rowNum) {
   );
 }
 
-async function saveFacultyParticipation(normalized, user, rowNum) {
+async function saveFacultyParticipation(db, normalized, user, rowNum) {
   const faculty_name = (normalized.faculty_name || "").trim();
   const department = (normalized.department || normalized.dept || "").trim();
   const type_of_event = (
@@ -463,7 +490,7 @@ async function saveFacultyParticipation(normalized, user, rowNum) {
     );
   }
 
-  await tracedQuery(pool, 
+  await tracedQuery(db, 
     `INSERT INTO faculty_participations (faculty_name, department, type_of_event, mode_of_training, title, start_date, end_date, conducted_by, details, created_by)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
     [

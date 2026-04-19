@@ -6,6 +6,7 @@
 
 import pool from "../config/db.js";
 import { enqueueMail } from "../utils/mailClient.js";
+import { projectReviewEmail, achievementReviewEmail } from "../utils/emailTemplates.js";
 import logger from "../utils/logger.js";
 import { tracedQuery } from "../utils/tracing.js";
 import { getTraceCtx } from "../utils/traceStore.js";
@@ -81,7 +82,11 @@ export async function reviewProject(projectId, staffId, action, comment, correla
         await enqueueMail({
           to: userRows[0].email,
           subject: `Your project "${rows[0].title}" has been ${approved ? "approved" : "rejected"}`,
-          text: `Your project has been ${approved ? "approved" : "rejected"} by staff. Comment: ${comment || "No comment"}`,
+          ...projectReviewEmail({
+            title: rows[0].title,
+            status: approved ? "approved" : "rejected",
+            staffComment: comment || null,
+          }),
         });
       } catch (err) {
         logger.error("Failed to enqueue project review email", { err, trace: { id: correlationId }, ...ctx });
@@ -168,7 +173,11 @@ export async function reviewAchievement(achievementId, staffId, action, comment,
       await enqueueMail({
         to: userRows[0].email,
         subject: `Your achievement "${rows[0].title}" has been ${approved ? "approved" : "rejected"}`,
-        text: `Your achievement has been ${approved ? "approved" : "rejected"} by staff. Comment: ${comment || "No comment"}`,
+        ...achievementReviewEmail({
+          title: rows[0].title,
+          status: approved ? "approved" : "rejected",
+          staffComment: comment || null,
+        }),
       });
     } catch (err) {
       logger.error("Failed to enqueue achievement review email", { err, trace: { id: correlationId }, ...ctx });

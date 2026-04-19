@@ -6,6 +6,7 @@ import crypto from "crypto";
 import xlsx from "xlsx";
 import csvParser from "csv-parser";
 import { sendMail } from "../config/mailer.js";
+import { staffWelcomeEmail } from "../utils/emailTemplates.js";
 import logger, { reqContext } from "../utils/logger.js";
 import { tracedExternalCall, tracedQuery } from "../utils/tracing.js";
 
@@ -240,19 +241,11 @@ export const uploadStaffBatch = async (req, res) => {
       pendingMails.push({
         to: staff.email,
         subject: "Staff Account Created",
-        text: `
-Hello ${staff.full_name || staff.first_name},
-
-Your DRMS staff account has been created.
-
-Email: ${staff.email}
-Temporary Password: ${defaultPassword}
-
-Please log in and change your password using the "Forgot Password" option.
-
-Regards,
-Department Admin
-            `,
+        ...staffWelcomeEmail({
+          fullName: staff.full_name || staff.first_name,
+          email: staff.email,
+          password: defaultPassword,
+        }),
       });
 
       created++;

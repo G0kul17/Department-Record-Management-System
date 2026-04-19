@@ -86,11 +86,12 @@ export function registrationOtpEmail({ otp, OTP_EXPIRY_MIN }) {
   const html = baseLayout(
     "#2563eb",
     "Account Verification",
-    `<h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:700;">Verify your account</h2>
+    `<p style="margin:0 0 16px;color:#374151;font-size:15px;">Hi there,</p>
+     <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:700;">Verify your account</h2>
      <p style="margin:0 0 4px;color:#6b7280;font-size:15px;">Use the code below to complete your registration.</p>
      ${otpBox(otp, OTP_EXPIRY_MIN)}`,
   );
-  const text = `Your OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`;
+  const text = `Hi there,\n\nYour OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`;
   return { html, text };
 }
 
@@ -98,11 +99,12 @@ export function loginUnverifiedOtpEmail({ otp, OTP_EXPIRY_MIN }) {
   const html = baseLayout(
     "#2563eb",
     "Account Verification",
-    `<h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:700;">Verify your account</h2>
-     <p style="margin:0 0 4px;color:#6b7280;font-size:15px;">Your account is not yet verified. Use the code below to verify it.</p>
+    `<p style="margin:0 0 16px;color:#374151;font-size:15px;">Hi there,</p>
+     <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:700;">Verify your account</h2>
+     <p style="margin:0 0 4px;color:#6b7280;font-size:15px;">Your account is not yet verified. Use the code below to verify your account.</p>
      ${otpBox(otp, OTP_EXPIRY_MIN)}`,
   );
-  const text = `Your verification OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`;
+  const text = `Hi there,\n\nYour verification OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`;
   return { html, text };
 }
 
@@ -110,11 +112,12 @@ export function loginSessionExpiredOtpEmail({ otp, OTP_EXPIRY_MIN }) {
   const html = baseLayout(
     "#2563eb",
     "Login OTP",
-    `<h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:700;">Login to your account</h2>
+    `<p style="margin:0 0 16px;color:#374151;font-size:15px;">Hi there,</p>
+     <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:700;">Login to your account</h2>
      <p style="margin:0 0 4px;color:#6b7280;font-size:15px;">Use the code below to complete your sign-in.</p>
      ${otpBox(otp, OTP_EXPIRY_MIN)}`,
   );
-  const text = `Your login OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`;
+  const text = `Hi there,\n\nYour login OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`;
   return { html, text };
 }
 
@@ -122,12 +125,13 @@ export function forgotPasswordOtpEmail({ otp, OTP_EXPIRY_MIN }) {
   const html = baseLayout(
     "#2563eb",
     "Password Reset",
-    `<h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:700;">Reset your password</h2>
+    `<p style="margin:0 0 16px;color:#374151;font-size:15px;">Hi there,</p>
+     <h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:700;">Reset your password</h2>
      <p style="margin:0 0 4px;color:#6b7280;font-size:15px;">We received a request to reset your password. Use the code below.</p>
      ${otpBox(otp, OTP_EXPIRY_MIN)}
      <p style="margin:16px 0 0;color:#9ca3af;font-size:13px;">If you did not request a password reset, please ignore this email.</p>`,
   );
-  const text = `Your password reset OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`;
+  const text = `Hi there,\n\nYour password reset OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.\n\nIf you did not request a password reset, please ignore this email.`;
   return { html, text };
 }
 
@@ -138,11 +142,11 @@ export function studentWelcomeEmail({ fullName, email, password }) {
     "#2563eb",
     "Welcome to DRMS",
     `<h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:700;">Welcome, ${fullName}!</h2>
-     <p style="margin:0 0 4px;color:#6b7280;font-size:15px;">Your student account has been created and you are now part of the DRMS community. Here are your login credentials:</p>
+     <p style="margin:0 0 4px;color:#6b7280;font-size:15px;">Your student account has been created and you're now part of the DRMS platform. Here are your login credentials:</p>
      ${credentialsBox(email, password)}
-     <p style="margin:16px 0 0;color:#374151;font-size:14px;">Please log in and change your password using the <strong>"Forgot Password"</strong> option as soon as possible.</p>`,
+     <p style="margin:16px 0 0;color:#374151;font-size:14px;">Please log in and set a new password from your profile settings as soon as possible.</p>`,
   );
-  const text = `Hello ${fullName},\n\nYour student account has been created. And you are added in the Community of DRMS.\n\nEmail: ${email}\nTemporary Password: ${password}\n\nPlease change your password using the "Forgot Password" option.\n\nRegards,\nDepartment Admin`;
+  const text = `Hello ${fullName},\n\nYour student account has been created and you're now part of the DRMS platform.\n\nEmail: ${email}\nTemporary Password: ${password}\n\nPlease log in and set a new password from your profile settings.\n\nRegards,\nDepartment Admin`;
   return { html, text };
 }
 
@@ -153,9 +157,9 @@ export function staffWelcomeEmail({ fullName, email, password }) {
     `<h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:700;">Welcome, ${fullName}!</h2>
      <p style="margin:0 0 4px;color:#6b7280;font-size:15px;">Your DRMS staff account has been created. Here are your login credentials:</p>
      ${credentialsBox(email, password)}
-     <p style="margin:16px 0 0;color:#374151;font-size:14px;">Please log in and change your password using the <strong>"Forgot Password"</strong> option as soon as possible.</p>`,
+     <p style="margin:16px 0 0;color:#374151;font-size:14px;">Please log in and set a new password from your profile settings as soon as possible.</p>`,
   );
-  const text = `Hello ${fullName},\n\nYour DRMS staff account has been created.\n\nEmail: ${email}\nTemporary Password: ${password}\n\nPlease log in and change your password using the "Forgot Password" option.\n\nRegards,\nDepartment Admin`;
+  const text = `Hello ${fullName},\n\nYour DRMS staff account has been created.\n\nEmail: ${email}\nTemporary Password: ${password}\n\nPlease log in and set a new password from your profile settings.\n\nRegards,\nDepartment Admin`;
   return { html, text };
 }
 
@@ -164,33 +168,39 @@ export function staffWelcomeEmail({ fullName, email, password }) {
 export function projectReviewEmail({ title, status, staffComment }) {
   const approved = status === "approved";
   const accentColor = approved ? "#16a34a" : "#dc2626";
+  const opener = approved
+    ? "Great news! Your project has been approved."
+    : "Unfortunately, your project was not approved this time.";
   const html = baseLayout(
     accentColor,
     `Project ${approved ? "Approved" : "Rejected"}`,
-    `<p style="margin:0 0 12px;color:#6b7280;font-size:14px;">Your project submission has been reviewed.</p>
+    `<p style="margin:0 0 12px;color:#374151;font-size:15px;">${opener}</p>
      <table cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
        <tr><td style="padding-right:12px;vertical-align:middle;">${statusBadge(status)}</td></tr>
      </table>
      <h3 style="margin:0 0 16px;color:#111827;font-size:18px;font-weight:600;">${title}</h3>
      ${commentBox(staffComment)}`,
   );
-  const text = `Your project has been ${status} by staff. Comment: ${staffComment || "No comment"}`;
+  const text = `${opener}\n\nProject: ${title}${staffComment ? `\n\nStaff Comment: ${staffComment}` : ""}`;
   return { html, text };
 }
 
 export function achievementReviewEmail({ title, status, staffComment }) {
   const approved = status === "approved";
   const accentColor = approved ? "#16a34a" : "#dc2626";
+  const opener = approved
+    ? "Great news! Your achievement has been approved."
+    : "Unfortunately, your achievement was not approved this time.";
   const html = baseLayout(
     accentColor,
     `Achievement ${approved ? "Approved" : "Rejected"}`,
-    `<p style="margin:0 0 12px;color:#6b7280;font-size:14px;">Your achievement submission has been reviewed.</p>
+    `<p style="margin:0 0 12px;color:#374151;font-size:15px;">${opener}</p>
      <table cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
        <tr><td style="padding-right:12px;vertical-align:middle;">${statusBadge(status)}</td></tr>
      </table>
      <h3 style="margin:0 0 16px;color:#111827;font-size:18px;font-weight:600;">${title}</h3>
      ${commentBox(staffComment)}`,
   );
-  const text = `Your achievement has been ${status} by staff. Comment: ${staffComment || "No comment"}`;
+  const text = `${opener}\n\nAchievement: ${title}${staffComment ? `\n\nStaff Comment: ${staffComment}` : ""}`;
   return { html, text };
 }

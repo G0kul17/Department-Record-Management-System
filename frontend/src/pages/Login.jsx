@@ -19,12 +19,6 @@ const Login = () => {
   const { login, user } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect already-authenticated users to their dashboard
-  if (user) {
-    const dest = user.role === "admin" ? "/admin" : "/";
-    return <Navigate to={dest} replace />;
-  }
-
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -63,13 +57,10 @@ const Login = () => {
             fullName: resp.fullName,
             photoUrl: resp.photoUrl,
           },
-          resp.token
+          resp.token,
         );
         setIsLoginSuccess(true);
-        const dest =
-          resp.role === "admin"
-            ? "/admin"
-            : "/";
+        const dest = resp.role === "admin" ? "/admin" : "/";
         navigate(dest, { state: { loginSuccess: true } });
         return;
       }
@@ -107,13 +98,10 @@ const Login = () => {
             fullName: data.fullName,
             photoUrl: data.photoUrl,
           },
-          data.token
+          data.token,
         );
         setIsLoginSuccess(true);
-        const dest =
-          data.role === "admin"
-            ? "/admin"
-            : "/";
+        const dest = data.role === "admin" ? "/admin" : "/";
         navigate(dest, { state: { loginSuccess: true } });
       } else {
         navigate("/");
@@ -131,7 +119,7 @@ const Login = () => {
     const interval = setInterval(() => {
       const remaining = Math.max(
         0,
-        Math.floor((otpExpiresAt - Date.now()) / 1000)
+        Math.floor((otpExpiresAt - Date.now()) / 1000),
       );
       setTimeLeft(remaining);
     }, 1000);
@@ -149,6 +137,12 @@ const Login = () => {
       .padStart(2, "0");
     return `${m}:${s}`;
   };
+
+  // Redirect already-authenticated users to their dashboard
+  if (user) {
+    const dest = user.role === "admin" ? "/admin" : "/";
+    return <Navigate to={dest} replace />;
+  }
 
   return (
     <>
@@ -196,7 +190,10 @@ const Login = () => {
                   />
                   Remember me
                 </label>
-                <Link to="/forgot" className="font-medium text-slate-700 hover:underline">
+                <Link
+                  to="/forgot"
+                  className="font-medium text-slate-700 hover:underline"
+                >
                   Forgot Password
                 </Link>
               </div>
@@ -253,7 +250,6 @@ const Login = () => {
               </button>
             </form>
           )}
-
         </AuthSplitLayout>
       )}
     </>
@@ -261,5 +257,3 @@ const Login = () => {
 };
 
 export default Login;
-
-

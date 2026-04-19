@@ -43,6 +43,7 @@ export default function AdminFacultyParticipation() {
   const [proof, setProof] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [errorDetails, setErrorDetails] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
 
   const update = (k) => (e) => setForm({ ...form, [k]: e.target.value });
@@ -51,6 +52,7 @@ export default function AdminFacultyParticipation() {
     e.preventDefault();
     setSubmitting(true);
     setMessage("");
+    setErrorDetails([]);
     try {
       const fd = new FormData();
       Object.entries(form).forEach(([k, v]) => fd.append(k, v || ""));
@@ -95,6 +97,12 @@ export default function AdminFacultyParticipation() {
       setProof(null);
     } catch (err) {
       setMessage(err.message || "Failed to submit");
+      const details = Array.isArray(err?.validationErrors)
+        ? err.validationErrors
+        : Array.isArray(err?.responseData?.errors)
+          ? err.responseData.errors
+          : [];
+      setErrorDetails(details);
     } finally {
       setSubmitting(false);
     }
@@ -118,6 +126,19 @@ export default function AdminFacultyParticipation() {
       {message && (
         <div className="alert alert-info mb-4">
           {message}
+        </div>
+      )}
+      {errorDetails.length > 0 && (
+        <div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          <div className="font-semibold">Validation details</div>
+          <ul className="mt-1 list-disc pl-5">
+            {errorDetails.map((e, idx) => (
+              <li key={`${e.field || "field"}-${idx}`}>
+                {e.field ? `${e.field}: ` : ""}
+                {e.message || "Invalid value"}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
       <form onSubmit={onSubmit} className="space-y-6">

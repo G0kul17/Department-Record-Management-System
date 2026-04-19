@@ -87,6 +87,7 @@ const extractFieldsFromRow = (row) => {
 /* ================= CONTROLLER ================= */
 
 export const uploadStudents = async (req, res) => {
+  let client;
   try {
     if (!req.file) {
       return res.status(400).json({ message: "File is required" });
@@ -187,9 +188,13 @@ export const uploadStudents = async (req, res) => {
 
     let created = 0;
     const skipped = [];
+    const pendingMails = [];
+
+    client = await pool.connect();
+    await client.query("BEGIN");
 
     for (const s of validStudents) {
-      const exists = await tracedQuery(pool, "SELECT id FROM users WHERE LOWER(email) = LOWER($1)", [
+      const exists = await tracedQuery(client, "SELECT id FROM users WHERE LOWER(email) = LOWER($1)", [
         s.email,
       ]);
 
@@ -201,7 +206,7 @@ export const uploadStudents = async (req, res) => {
       const defaultPassword = Math.random().toString(36).slice(-8);
       const hash = await bcrypt.hash(defaultPassword, 10);
 
-      await tracedQuery(pool, 
+      await tracedQuery(client, 
         `
         INSERT INTO users
         (email, password_hash, role, is_verified, profile_details, full_name)
@@ -225,7 +230,7 @@ export const uploadStudents = async (req, res) => {
         ]
       );
 
-      enqueueMail({
+      pendingMails.push({
         to: s.email,
         subject: "Student Account Created",
         text: `
@@ -246,16 +251,30 @@ Department Admin
       created++;
     }
 
+    await client.query("COMMIT");
+
+    for (const mail of pendingMails) {
+      enqueueMail(mail);
+    }
+
     res.json({
       message: "Student upload completed successfully",
       created,
       skipped,
     });
   } catch (err) {
+    if (client) {
+      try {
+        await client.query("ROLLBACK");
+      } catch (rollbackErr) {
+        logger.error("Student upload rollback failed", { rollbackErr, ...reqContext(req) });
+      }
+    }
     logger.error("Student upload failed", { err,
       ...reqContext(req) });
     res.status(500).json({ message: "Upload failed" });
   } finally {
+    if (client) client.release();
     if (req.file?.path) fs.unlink(req.file.path, () => {});
   }
 };

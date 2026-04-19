@@ -89,7 +89,8 @@ function validateRow(obj) {
   if (!emailOk) errs["College mail"] = "Invalid email";
   if (phone.length !== 10) errs["Contact number"] = "Must be 10 digits";
 
-  for (const k of REQUIRED_HEADERS) {
+  const requiredKeys = REQUIRED_HEADERS.filter((k) => k !== "Full name");
+  for (const k of requiredKeys) {
     if (!String(obj[k] ?? "").trim()) {
       errs[k] = "Required";
     }
@@ -130,6 +131,9 @@ export async function generateStaffPreview(file) {
     for (const h of REQUIRED_HEADERS) {
       const idx = map[h];
       obj[h] = idx !== undefined ? (r[idx] ?? "").toString().trim() : "";
+    }
+    if (!obj["Full name"] && obj["First name"] && obj["Last name"]) {
+      obj["Full name"] = `${obj["First name"]} ${obj["Last name"]}`.trim();
     }
     return obj;
   });

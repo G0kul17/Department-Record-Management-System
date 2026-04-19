@@ -43,6 +43,7 @@ export default function FacultyConsultancy() {
       setMessage("Faculty consultancy added");
       setShowSuccess(true);
       setForm({
+        faculty_name: "",
         team_members: "",
         agency: "",
         agency_custom: "",

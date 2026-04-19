@@ -48,6 +48,19 @@ export default function Events() {
     ? events.find((e) => String(e.id) === String(id))
     : null;
 
+  const normalizeEventFileUrl = (value) => {
+    if (!value) return "";
+    const raw = String(value).trim();
+    if (!raw) return "";
+
+    const uploadsMarker = "/uploads/";
+    if (raw.includes(uploadsMarker)) {
+      return getFileUrl(raw.split(uploadsMarker)[1]);
+    }
+    if (/^https?:\/\//i.test(raw)) return raw;
+    return getFileUrl(raw);
+  };
+
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -209,12 +222,12 @@ export default function Events() {
                     {ev.attachments.map((a, idx) => (
                       <li key={idx}>
                         <a
-                          href={a.url || a}
+                          href={normalizeEventFileUrl(a?.url || a)}
                           target="_blank"
                           rel="noreferrer"
                           className="link link-primary"
                         >
-                          {a.name || a}
+                          {a?.name || a?.original_name || a}
                         </a>
                       </li>
                     ))}

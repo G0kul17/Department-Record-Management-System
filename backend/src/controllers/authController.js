@@ -15,6 +15,9 @@ import { tracedQuery } from "../utils/tracing.js";
 dotenv.config();
 
 const OTP_EXPIRY_MIN = Number(process.env.OTP_EXPIRY_MIN || 5);
+const INVALID_LOGIN_MESSAGE = "Invalid credentials";
+// Precomputed bcrypt hash used to equalize login timing when email does not exist.
+const DUMMY_PASSWORD_HASH = "$2b$10$w8cfPEjAt5v9E8w2B0f9ku2xYQbQ4f4AXjQ3x8fNq7KP1h6JjA7fW";
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "")
   .split(",")
   .map((s) => s.trim().toLowerCase())
@@ -238,12 +241,16 @@ export async function login(req, res) {
     const { rows } = await tracedQuery(pool, "SELECT * FROM users WHERE email=$1", [
       emailLower,
     ]);
-    if (!rows.length)
-      return res.status(401).json({ message: "User not found" });
+    if (!rows.length) {
+      // Run a dummy compare to make the missing-user path timing closer to real auth checks.
+      await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
+      return res.status(401).json({ message: INVALID_LOGIN_MESSAGE });
+    }
 
     const user = rows[0];
     const match = await bcrypt.compare(password, user.password_hash || "");
-    if (!match) return res.status(401).json({ message: "Invalid credentials" });
+    if (!match)
+      return res.status(401).json({ message: INVALID_LOGIN_MESSAGE });
 
     if (!user.is_verified) {
       // User hasn't verified account yet: generate a fresh verification OTP and return it

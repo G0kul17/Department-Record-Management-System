@@ -52,7 +52,7 @@ export async function sendMail({ to, subject, text, html }) {
 
   try {
     const info = await transporter.sendMail({
-      from: `"No Reply" <${process.env.EMAIL_USER}>`,
+      from: `"DRMS" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       text,

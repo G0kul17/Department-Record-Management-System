@@ -2,6 +2,12 @@ import pool from "../config/db.js";
 import bcrypt from "bcrypt";
 import { generateOTP, getExpiryDate } from "../utils/otpGenerator.js";
 import { enqueueMail } from "../utils/mailClient.js";
+import {
+  registrationOtpEmail,
+  loginUnverifiedOtpEmail,
+  loginSessionExpiredOtpEmail,
+  forgotPasswordOtpEmail,
+} from "../utils/emailTemplates.js";
 import { detectRole } from "../utils/roleUtils.js";
 import dotenv from "dotenv";
 import { signToken } from "../utils/tokenUtils.js";
@@ -129,7 +135,7 @@ export async function register(req, res) {
     enqueueMail({
       to: emailLower,
       subject: "Your verification OTP",
-      text: `Your OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
+      ...registrationOtpEmail({ otp, OTP_EXPIRY_MIN }),
     });
 
     return res.json({
@@ -267,7 +273,7 @@ export async function login(req, res) {
       enqueueMail({
         to: emailLower,
         subject: "Account Verification OTP",
-        text: `Your verification OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
+        ...loginUnverifiedOtpEmail({ otp, OTP_EXPIRY_MIN }),
       });
 
       return res.json({
@@ -338,7 +344,7 @@ export async function login(req, res) {
     enqueueMail({
       to: emailLower,
       subject: "Login OTP",
-      text: `Your login OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
+      ...loginSessionExpiredOtpEmail({ otp, OTP_EXPIRY_MIN }),
     });
 
     return res.json({ message: "Login OTP sent to email" });
@@ -528,7 +534,7 @@ export async function initiateForgotPassword(req, res) {
       enqueueMail({
         to: emailLower,
         subject: "Password Reset OTP",
-        text: `Your password reset OTP is ${otp}. It expires in ${OTP_EXPIRY_MIN} minutes.`,
+        ...forgotPasswordOtpEmail({ otp, OTP_EXPIRY_MIN }),
       });
 
     }

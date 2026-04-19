@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 import xlsx from "xlsx";
 import csvParser from "csv-parser";
 import { enqueueMail } from "../utils/mailClient.js";
+import { studentWelcomeEmail } from "../utils/emailTemplates.js";
 import logger, { reqContext } from "../utils/logger.js";
 import { tracedQuery } from "../utils/tracing.js";
 
@@ -233,19 +234,11 @@ export const uploadStudents = async (req, res) => {
       pendingMails.push({
         to: s.email,
         subject: "Student Account Created",
-        text: `
-Hello ${s.full_name || s.first_name},
-
-Your student account has been created. And you are added in the Community of DRMS.
-
-Email: ${s.email}
-Temporary Password: ${defaultPassword}
-
-Please change your password using the "Forgot Password" option.
-
-Regards,
-Department Admin
-        `,
+        ...studentWelcomeEmail({
+          fullName: s.full_name || s.first_name,
+          email: s.email,
+          password: defaultPassword,
+        }),
       });
 
       created++;

@@ -431,7 +431,11 @@ export default function NotificationsBell() {
 
   return (
     <div className="relative" ref={panelRef}>
-      <button title="Notifications" onClick={toggleOpen} className="relative">
+      <button
+        title="Notifications"
+        onClick={toggleOpen}
+        className="relative inline-flex h-9 w-9 items-center justify-center rounded-lg transition hover:bg-white/10"
+      >
         {/* bell icon */}
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -452,15 +456,19 @@ export default function NotificationsBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-10 mt-2 w-80 rounded-xl border-2 border-[#87CEEB] bg-white shadow">
-          <div className="border-b border-[#87CEEB]/40 p-3 text-sm font-semibold text-black">
+        <div className="fixed right-3 top-[4.75rem] z-50 w-[min(22rem,calc(100vw-1.5rem))] origin-top-right overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl ring-1 ring-slate-900/5 sm:absolute sm:right-0 sm:top-full sm:mt-2 sm:w-80 sm:max-w-[calc(100vw-1rem)]">
+          <div className="border-b border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900">
             Notifications
           </div>
-          <div className="p-2 space-y-1">
+          <div className="max-h-[70vh] space-y-1 overflow-y-auto p-2 sm:max-h-[28rem]">
             {loading ? (
-              <div className="text-sm text-slate-600 p-3">Loading...</div>
+              <div className="rounded-xl bg-slate-50 px-3 py-3 text-sm text-slate-600">
+                Loading...
+              </div>
             ) : items.length === 0 ? (
-              <div className="text-sm text-slate-600 p-3">No notifications</div>
+              <div className="rounded-xl bg-slate-50 px-3 py-4 text-center text-sm text-slate-600">
+                No notifications
+              </div>
             ) : (
               items.map((n, idx) => {
                 const Wrapper = n.href ? "a" : "div";
@@ -469,10 +477,10 @@ export default function NotificationsBell() {
                   <Wrapper
                     key={idx}
                     {...wrapperProps}
-                    className="block rounded-md px-3 py-2 hover:bg-slate-100"
+                    className="block rounded-xl px-3 py-2 transition hover:bg-slate-100"
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="text-sm text-slate-800 pr-3">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0 text-sm text-slate-800 sm:pr-3">
                         {n.type === "event" ? (
                           <span>
                             Event:{" "}

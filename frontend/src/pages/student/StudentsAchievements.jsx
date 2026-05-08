@@ -461,85 +461,111 @@ export default function Achievements() {
           onClick={() => setPreviewModal({ open: false, item: null })}
         >
           <div
-            className="max-w-3xl w-full rounded-xl bg-white p-6 shadow-xl dark:bg-slate-900 my-8 max-h-[90vh] overflow-y-auto"
+            className="max-w-4xl w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-xl dark:border-slate-800 dark:bg-slate-900 my-8 max-h-[90vh] overflow-y-auto sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-                Achievement Preview
-              </h3>
+            <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 dark:border-slate-800 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <div className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold tracking-wide text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+                  Achievement Preview
+                </div>
+                <h3 className="mt-2 text-xl font-bold text-slate-800 dark:text-slate-100 sm:text-2xl break-words">
+                  {previewModal.item?.title || "Achievement"}
+                </h3>
+              </div>
               <button
-                className="rounded-md bg-slate-200 px-3 py-1 text-sm hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700"
+                className="inline-flex w-fit items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-blue-200 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-blue-700"
                 onClick={() => setPreviewModal({ open: false, item: null })}
               >
                 Close
               </button>
             </div>
-            <div className="space-y-3 text-sm text-slate-700 dark:text-slate-300">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <span className="font-semibold">Title:</span>{" "}
-                  {previewModal.item?.title}
-                </div>
-                <div>
-                  <span className="font-semibold">Issuer:</span>{" "}
-                  {previewModal.item?.issuer}
-                </div>
-                <div>
-                  <span className="font-semibold">Award Date:</span>{" "}
-                  {previewModal.item?.date_of_award
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {[
+                {
+                  label: "Title",
+                  value: previewModal.item?.title || "-",
+                },
+                {
+                  label: "Issuer",
+                  value: previewModal.item?.issuer || "-",
+                },
+                {
+                  label: "Award Date",
+                  value: previewModal.item?.date_of_award
                     ? new Date(previewModal.item.date_of_award).toLocaleDateString()
-                    : "-"}
-                </div>
-                <div>
-                  <span className="font-semibold">Name:</span>{" "}
-                  {previewModal.item?.name}
-                </div>
-                {previewModal.item?.event_name && (
-                  <div>
-                    <span className="font-semibold">Event Name:</span>{" "}
-                    {previewModal.item.event_name}
+                    : "-",
+                },
+                {
+                  label: "Name",
+                  value: previewModal.item?.name || "-",
+                },
+                ...(previewModal.item?.event_name
+                  ? [
+                      {
+                        label: "Event Name",
+                        value: previewModal.item.event_name,
+                      },
+                    ]
+                  : []),
+                ...(previewModal.item?.position
+                  ? [
+                      {
+                        label: "Position",
+                        value: previewModal.item.position,
+                      },
+                    ]
+                  : []),
+                ...(previewModal.item?.prize_amount
+                  ? [
+                      {
+                        label: "Prize Amount",
+                        value: `₹${parseFloat(previewModal.item.prize_amount).toFixed(2)}`,
+                      },
+                    ]
+                  : []),
+                {
+                  label: "Status",
+                  value:
+                    previewModal.item?.verification_status === "approved" ||
+                    previewModal.item?.verified
+                      ? "Approved"
+                      : previewModal.item?.verification_status === "rejected"
+                      ? "Rejected"
+                      : "Pending",
+                },
+              ].map((field) => (
+                <div
+                  key={field.label}
+                  className="rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800/60"
+                >
+                  <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    {field.label}
                   </div>
-                )}
-                {previewModal.item?.position && (
-                  <div>
-                    <span className="font-semibold">Position:</span>{" "}
-                    {previewModal.item.position}
+                  <div className="mt-1 break-words text-sm font-medium text-slate-800 dark:text-slate-100">
+                    {field.value}
                   </div>
-                )}
-                {previewModal.item?.prize_amount && (
-                  <div>
-                    <span className="font-semibold">Prize Amount:</span> ₹
-                    {parseFloat(previewModal.item.prize_amount).toFixed(2)}
-                  </div>
-                )}
-                <div>
-                  <span className="font-semibold">Status:</span>{" "}
-                  {previewModal.item?.verification_status === "approved" ||
-                  previewModal.item?.verified
-                    ? "Approved"
-                    : previewModal.item?.verification_status === "rejected"
-                    ? "Rejected"
-                    : "Pending"}
                 </div>
-              </div>
+              ))}
 
               {/* Main Proof */}
               {previewModal.item?.proof_filename && (
-                <div className="mt-4">
-                  <div className="font-semibold mb-2">Main Proof:</div>
+                <div className="sm:col-span-2 xl:col-span-3 mt-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/40">
+                  <div className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    Main Proof
+                  </div>
                   {previewModal.item?.proof_mime?.startsWith("image/") ? (
                     <img
                       alt={previewModal.item?.proof_name || "proof"}
                       src={getFileUrl(previewModal.item?.proof_filename)}
-                      className="max-h-80 rounded border"
+                      className="max-h-80 w-full rounded-xl border border-slate-200 object-contain bg-white dark:border-slate-700 dark:bg-slate-950"
                     />
                   ) : (
                     <a
                       href={getFileUrl(previewModal.item?.proof_filename)}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-blue-600 hover:underline dark:text-blue-400"
+                      className="inline-flex break-all text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
                     >
                       {previewModal.item?.proof_name || "Download proof"}
                     </a>
@@ -549,20 +575,22 @@ export default function Achievements() {
 
               {/* Certificate */}
               {previewModal.item?.certificate_filename && (
-                <div className="mt-4">
-                  <div className="font-semibold mb-2">Certificate:</div>
+                <div className="sm:col-span-2 xl:col-span-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/40">
+                  <div className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    Certificate
+                  </div>
                   {previewModal.item?.certificate_mime?.startsWith("image/") ? (
                     <img
                       alt={previewModal.item?.certificate_name || "certificate"}
                       src={getFileUrl(previewModal.item?.certificate_filename)}
-                      className="max-h-80 rounded border"
+                      className="max-h-80 w-full rounded-xl border border-slate-200 object-contain bg-white dark:border-slate-700 dark:bg-slate-950"
                     />
                   ) : (
                     <a
                       href={getFileUrl(previewModal.item?.certificate_filename)}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-blue-600 hover:underline dark:text-blue-400"
+                      className="inline-flex break-all text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
                     >
                       {previewModal.item?.certificate_name || "Download certificate"}
                     </a>
@@ -572,20 +600,22 @@ export default function Achievements() {
 
               {/* Event Photos */}
               {previewModal.item?.event_photos_filename && (
-                <div className="mt-4">
-                  <div className="font-semibold mb-2">Event Photos:</div>
+                <div className="sm:col-span-2 xl:col-span-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/40">
+                  <div className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    Event Photos
+                  </div>
                   {previewModal.item?.event_photos_mime?.startsWith("image/") ? (
                     <img
                       alt={previewModal.item?.event_photos_name || "event photos"}
                       src={getFileUrl(previewModal.item?.event_photos_filename)}
-                      className="max-h-80 rounded border"
+                      className="max-h-80 w-full rounded-xl border border-slate-200 object-contain bg-white dark:border-slate-700 dark:bg-slate-950"
                     />
                   ) : (
                     <a
                       href={getFileUrl(previewModal.item?.event_photos_filename)}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-blue-600 hover:underline dark:text-blue-400"
+                      className="inline-flex break-all text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
                     >
                       {previewModal.item?.event_photos_name || "Download photos"}
                     </a>

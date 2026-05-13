@@ -117,14 +117,14 @@ export default function Achievements() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950">
-      <div className="mx-auto max-w-6xl px-6 py-10">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-10">
         <SuccessModal
           open={showSuccess}
           title="Saved successfully"
           subtitle="Your achievement has been submitted."
           onClose={() => setShowSuccess(false)}
         />
-        <h2 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100">
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100">
           Add Achievement
         </h2>
         <p className="text-slate-600 dark:text-slate-300 mb-6">
@@ -461,7 +461,7 @@ export default function Achievements() {
           onClick={() => setPreviewModal({ open: false, item: null })}
         >
           <div
-            className="max-w-4xl w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-xl dark:border-slate-800 dark:bg-slate-900 my-8 max-h-[90vh] overflow-y-auto sm:p-6"
+            className="max-w-lg w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-xl dark:border-slate-800 dark:bg-slate-900 my-4 sm:my-8 max-h-[90vh] overflow-y-auto sm:p-6 sm:max-w-2xl md:max-w-4xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 dark:border-slate-800 sm:flex-row sm:items-start sm:justify-between">
@@ -480,7 +480,7 @@ export default function Achievements() {
                 Close
               </button>
             </div>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
               {[
                 {
                   label: "Title",
@@ -550,7 +550,7 @@ export default function Achievements() {
 
               {/* Main Proof */}
               {previewModal.item?.proof_filename && (
-                <div className="sm:col-span-2 xl:col-span-3 mt-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/40">
+                <div className="sm:col-span-2 sm:col-span-2 mt-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/40">
                   <div className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
                     Main Proof
                   </div>
@@ -575,7 +575,7 @@ export default function Achievements() {
 
               {/* Certificate */}
               {previewModal.item?.certificate_filename && (
-                <div className="sm:col-span-2 xl:col-span-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/40">
+                <div className="sm:col-span-2 sm:col-span-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/40">
                   <div className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
                     Certificate
                   </div>
@@ -600,7 +600,7 @@ export default function Achievements() {
 
               {/* Event Photos */}
               {previewModal.item?.event_photos_filename && (
-                <div className="sm:col-span-2 xl:col-span-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/40">
+                <div className="sm:col-span-2 sm:col-span-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/40">
                   <div className="mb-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
                     Event Photos
                   </div>

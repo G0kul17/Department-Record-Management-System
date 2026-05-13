@@ -188,7 +188,7 @@ function OverviewPanel({ user }) {
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch">
-        <div className="lg:col-span-2 rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-7 shadow-md dark:border-slate-800 dark:from-slate-900 dark:to-slate-950">
+        <div className="lg:col-span-2 rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5 sm:p-7 shadow-md dark:border-slate-800 dark:from-slate-900 dark:to-slate-950">
           <h1 className="text-xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100">{`Welcome, ${displayName || "Staff"}`}</h1>
           <p className="text-slate-600 dark:text-slate-400 mt-3 text-base leading-relaxed">
             Use the side menu to manage projects, achievements and events.
@@ -197,63 +197,63 @@ function OverviewPanel({ user }) {
         </div>
 
         <div className="lg:col-span-1">
-          <div className="rounded-2xl border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 p-6 shadow-xl h-full">
-            <h2 className="text-base font-bold text-slate-100 mb-5">
+          <div className="rounded-2xl border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 p-4 sm:p-6 shadow-xl h-full">
+            <h2 className="text-base font-bold text-slate-100 mb-4">
               At a Glance
             </h2>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={() => (navigate("/projects/approved"))}
-                className="rounded-xl p-3 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
+                className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
               >
-                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
                   Projects
                 </div>
-                <div className="mt-1 text-lg sm:text-2xl font-extrabold text-slate-100">
+                <div className="mt-1 text-base font-extrabold text-slate-100">
                   {projCount === null ? "—" : projCount}
                 </div>
               </button>
               <button
                 onClick={() => (navigate("/achievements/approved"))}
-                className="rounded-xl p-3 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
+                className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
               >
-                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Achievements
+                <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
+                  Achieve
                 </div>
-                <div className="mt-1 text-lg sm:text-2xl font-extrabold text-slate-100">
+                <div className="mt-1 text-base font-extrabold text-slate-100">
                   {achCount === null ? "—" : achCount}
                 </div>
               </button>
               <button
                 onClick={() => (navigate("/staff/faculty-participation"))}
-                className="rounded-xl p-3 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
+                className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
               >
-                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Participation
+                <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
+                  Particip.
                 </div>
-                <div className="mt-1 text-lg sm:text-2xl font-extrabold text-slate-100">
+                <div className="mt-1 text-base font-extrabold text-slate-100">
                   {partCount === null ? "—" : partCount}
                 </div>
               </button>
               <button
                 onClick={() => (navigate("/staff/faculty-research"))}
-                className="rounded-xl p-3 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
+                className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
               >
-                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
                   Research
                 </div>
-                <div className="mt-1 text-lg sm:text-2xl font-extrabold text-slate-100">
+                <div className="mt-1 text-base font-extrabold text-slate-100">
                   {resCount === null ? "—" : resCount}
                 </div>
               </button>
               <button
                 onClick={() => (navigate("/staff/faculty-consultancy"))}
-                className="rounded-xl p-3 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
+                className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
               >
-                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Consultancy
+                <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
+                  Consult.
                 </div>
-                <div className="mt-1 text-lg sm:text-2xl font-extrabold text-slate-100">
+                <div className="mt-1 text-base font-extrabold text-slate-100">
                   {consCount === null ? "—" : consCount}
                 </div>
               </button>

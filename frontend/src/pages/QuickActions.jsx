@@ -83,12 +83,12 @@ export default function QuickActions({ embedded = false }) {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {/* Always available actions */}
           {(!isStaff || activeStaffTab === "upload") && (
             <Card
               onClick={goTo("achievements")}
-              className="p-6 glitter-card bulge-card"
+              className="p-4 sm:p-6 glitter-card bulge-card"
             >
               <div className="flex items-center gap-3">
                 <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
@@ -118,7 +118,7 @@ export default function QuickActions({ embedded = false }) {
           {(!isStaff || activeStaffTab === "upload") && (
             <Card
               onClick={goTo("projects")}
-              className="p-6 glitter-card bulge-card"
+              className="p-4 sm:p-6 glitter-card bulge-card"
             >
               <div className="flex items-center gap-3">
                 <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
@@ -152,7 +152,7 @@ export default function QuickActions({ embedded = false }) {
           {(!isStaff || activeStaffTab === "upload") && (
             <Card
               onClick={goTo("hackathons")}
-              className="p-6 glitter-card bulge-card"
+              className="p-4 sm:p-6 glitter-card bulge-card"
             >
               <div className="flex items-center gap-3">
                 <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
@@ -187,7 +187,7 @@ export default function QuickActions({ embedded = false }) {
                 <>
                   <Card
                     onClick={goTo("studentsBatch")}
-                    className="p-6 glitter-card bulge-card"
+                    className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                     <div className="flex items-center gap-3">
                       <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
@@ -215,7 +215,7 @@ export default function QuickActions({ embedded = false }) {
                   </Card>
                   <Card
                     onClick={goTo("uploadExtra")}
-                    className="p-6 glitter-card bulge-card"
+                    className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                     <div className="flex items-center gap-3">
                       <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
@@ -243,7 +243,7 @@ export default function QuickActions({ embedded = false }) {
                   </Card>
                   <Card
                     onClick={goTo("facultyParticipation")}
-                    className="p-6 glitter-card bulge-card"
+                    className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                     <div className="flex items-center gap-3">
                       <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
@@ -278,7 +278,7 @@ export default function QuickActions({ embedded = false }) {
                   </Card>
                   <Card
                     onClick={goTo("facultyResearch")}
-                    className="p-6 glitter-card bulge-card"
+                    className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                     <div className="flex items-center gap-3">
                       <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
@@ -302,7 +302,7 @@ export default function QuickActions({ embedded = false }) {
                   </Card>
                   <Card
                     onClick={goTo("facultyConsultancy")}
-                    className="p-6 glitter-card bulge-card"
+                    className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                     <div className="flex items-center gap-3">
                       <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
@@ -327,7 +327,7 @@ export default function QuickActions({ embedded = false }) {
                   </Card>
                   <Card
                     onClick={goTo("staffEvents")}
-                    className="p-6 glitter-card bulge-card"
+                    className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                     <div className="flex items-center gap-3">
                       <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
@@ -363,7 +363,7 @@ export default function QuickActions({ embedded = false }) {
                   </Card>
                   <Card
                     onClick={goTo("topAchieversAnnouncement")}
-                    className="p-6 glitter-card bulge-card"
+                    className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                     <div className="flex items-center gap-3">
                       <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
@@ -397,7 +397,7 @@ export default function QuickActions({ embedded = false }) {
                 <>
                   <Card
                     onClick={goTo("verifyAchievements")}
-                    className="p-6 glitter-card bulge-card"
+                    className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                 <div className="flex items-center gap-3">
                   <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
@@ -425,7 +425,7 @@ export default function QuickActions({ embedded = false }) {
               </Card>
                   <Card
                     onClick={goTo("verifyProjects")}
-                    className="p-6 glitter-card bulge-card"
+                    className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                 <div className="flex items-center gap-3">
                   <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
@@ -453,7 +453,7 @@ export default function QuickActions({ embedded = false }) {
               </Card>
                   <Card
                     onClick={goTo("verifyHackathonProgress")}
-                    className="p-6 glitter-card bulge-card"
+                    className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                 <div className="flex items-center gap-3">
                   <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
@@ -486,7 +486,7 @@ export default function QuickActions({ embedded = false }) {
                 <>
                   <Card
                     onClick={goTo("exportRecords")}
-                    className="p-6 glitter-card bulge-card"
+                    className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                 <div className="flex items-center gap-3">
                   <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
@@ -530,7 +530,7 @@ export default function QuickActions({ embedded = false }) {
                   </Card>
                   <Card
                     onClick={goTo("bulkExport")}
-                    className="p-6 glitter-card bulge-card"
+                    className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                 <div className="flex items-center gap-3">
                   <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
@@ -564,7 +564,7 @@ export default function QuickActions({ embedded = false }) {
             <>
               <Card
                 onClick={goTo("events")}
-                className="p-6 glitter-card bulge-card"
+                className="p-4 sm:p-6 glitter-card bulge-card"
               >
                 <div className="flex items-center gap-3">
                   <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">

@@ -47,7 +47,7 @@ export default function FacultyParticipationApproved() {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <div className="mx-auto max-w-6xl p-6">
+    <div className="mx-auto max-w-6xl p-4 sm:p-6">
       {/* Centered search below navbar */}
       <div className="mx-auto max-w-3xl mb-8">
         <div className="glitter-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -133,7 +133,7 @@ export default function FacultyParticipationApproved() {
           {items.map((item) => (
             <div
               key={item.id}
-              className="glitter-card rounded-xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow dark:border-slate-800 dark:bg-slate-900"
+              className="glitter-card rounded-xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow dark:border-slate-800 dark:bg-slate-900"
             >
               {/* Header */}
               <div className="mb-4 border-b border-slate-200 dark:border-slate-700 pb-4">

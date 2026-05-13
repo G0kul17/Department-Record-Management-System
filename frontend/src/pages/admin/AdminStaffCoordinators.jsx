@@ -92,11 +92,11 @@ export default function AdminStaffCoordinators() {
 	});
 
 	return (
-		<div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950 py-10">
-			<div className="mx-auto max-w-6xl px-6">
+		<div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950 py-6 sm:py-10">
+			<div className="mx-auto max-w-6xl px-4 sm:px-6">
 				<BackButton />
 				<div className="mb-8">
-					<h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2">
+					<h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2">
 						Staff Coordinators Mapping
 					</h1>
 					<p className="text-slate-600 dark:text-slate-300">

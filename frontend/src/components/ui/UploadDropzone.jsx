@@ -85,7 +85,7 @@ export default function UploadDropzone({
         onClick={openPicker}
         role="button"
         aria-label="File upload dropzone"
-        className={`relative cursor-pointer rounded-xl border-2 border-dashed p-6 transition ${
+        className={`relative cursor-pointer rounded-xl border-2 border-dashed p-4 sm:p-6 transition ${
           isDragOver
             ? "border-sky-400 bg-sky-50"
             : "border-slate-300 hover:border-sky-300 bg-white"

@@ -60,8 +60,8 @@ export default function FacultyConsultancyApproved() {
   }, [filtered, page, limit]);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950 py-10">
-      <div className="mx-auto max-w-6xl px-6">
+    <div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950 py-6 sm:py-10">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <PageHeader title="Faculty Consultancy Projects" />
 
         {/* Search Box */}
@@ -146,7 +146,7 @@ export default function FacultyConsultancyApproved() {
             {pageItems.map((item) => (
               <Card
                 key={item.id}
-                className="p-6 flex flex-col hover:shadow-lg transition-shadow w-full border-sky-300"
+                className="p-4 sm:p-6 flex flex-col hover:shadow-lg transition-shadow w-full border-sky-300"
               >
                 {/* Header */}
                 <div className="mb-4">

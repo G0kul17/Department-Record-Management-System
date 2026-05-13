@@ -148,15 +148,15 @@ export default function AdminUsersManagement() {
           </div>
         )}
 
-        <div className="overflow-auto rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-sm">
+        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-sm">
           <table className="min-w-full text-sm">
             <thead>
               <tr className="bg-slate-100 dark:bg-slate-800 text-left">
                 <th className="px-3 py-2 font-semibold">Email</th>
                 <th className="px-3 py-2 font-semibold">Name</th>
                 <th className="px-3 py-2 font-semibold">Role</th>
-                <th className="px-3 py-2 font-semibold">Verified</th>
-                <th className="px-3 py-2 font-semibold">Created</th>
+                <th className="hidden sm:table-cell px-3 py-2 font-semibold">Verified</th>
+                <th className="hidden md:table-cell px-3 py-2 font-semibold">Created</th>
                 <th className="px-3 py-2 font-semibold">Actions</th>
               </tr>
             </thead>
@@ -166,8 +166,8 @@ export default function AdminUsersManagement() {
                   key={u.id}
                   className="border-t border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
-                  <td className="px-3 py-2 whitespace-nowrap">{u.email}</td>
-                  <td className="px-3 py-2">{u.full_name || "—"}</td>
+                  <td className="px-3 py-2 max-w-[160px] truncate" title={u.email}>{u.email}</td>
+                  <td className="px-3 py-2 max-w-[120px] truncate">{u.full_name || "—"}</td>
                   <td className="px-3 py-2">
                     <select
                       value={u.role}
@@ -180,8 +180,8 @@ export default function AdminUsersManagement() {
                       <option value="admin">admin</option>
                     </select>
                   </td>
-                  <td className="px-3 py-2">{u.is_verified ? "Yes" : "No"}</td>
-                  <td className="px-3 py-2 text-xs opacity-70">
+                  <td className="hidden sm:table-cell px-3 py-2">{u.is_verified ? "Yes" : "No"}</td>
+                  <td className="hidden md:table-cell px-3 py-2 text-xs opacity-70">
                     {u.created_at
                       ? new Date(u.created_at).toLocaleDateString()
                       : ""}

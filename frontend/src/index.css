@@ -55,6 +55,7 @@
 
 /* Custom styles */
 body {
+  overflow-x: hidden;
   margin: 0;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
     "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
@@ -219,6 +220,7 @@ body {
 
 /* Global theming so all pages respond to dark mode */
 html {
+  overflow-x: hidden;
   color-scheme: light;
 }
 .dark {

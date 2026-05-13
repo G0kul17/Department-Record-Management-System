@@ -217,9 +217,9 @@ export default function Home({ hideAtAGlance = false }) {
             </div>
 
             {/* At a Glance Card */}
-            {user && (
+            {user && !hideAtAGlance && (
               <div className="md:col-span-1">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl h-full backdrop-blur-sm">
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6 shadow-xl h-full backdrop-blur-sm">
                   <h2 className="text-base font-bold text-slate-100 mb-4">
                     At a Glance
                   </h2>
@@ -357,7 +357,7 @@ export default function Home({ hideAtAGlance = false }) {
               </div>
 
               {/* Key Statistics Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6 mb-10">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-10">
                 <StatCard
                   label="Projects"
                   value={projCount ?? 0}
@@ -421,9 +421,9 @@ export default function Home({ hideAtAGlance = false }) {
               </div>
 
               {/* Charts - Row 1 */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
                 {/* Left Column */}
-                <div className="space-y-6 lg:space-y-8">
+                <div className="space-y-4 sm:space-y-6 lg:space-y-8">
                   {/* Activities Overview - Horizontal Bar Chart */}
                   <HorizontalBarChart
                     title="All Activities Overview"
@@ -465,7 +465,7 @@ export default function Home({ hideAtAGlance = false }) {
                 </div>
 
                 {/* Right Column */}
-                <div className="space-y-6 lg:space-y-8">
+                <div className="space-y-4 sm:space-y-6 lg:space-y-8">
                   {/* Users Distribution - Pie Chart (Admin only) */}
                   <div>
                     {user?.role === "admin" ? (
@@ -575,14 +575,14 @@ function StatCard({ label, value, icon, color, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="rounded-xl border border-slate-200 bg-white p-5 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer text-left"
+      className="rounded-xl border border-slate-200 bg-white p-3 sm:p-5 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer text-left"
     >
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-bold">{label}</p>
-          <p className="text-2xl font-bold mt-1">{value}</p>
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-xs sm:text-sm font-bold truncate">{label}</p>
+          <p className="text-xl sm:text-2xl font-bold mt-1">{value}</p>
         </div>
-        <span className={`material-icons text-4xl ${iconColorClasses[color]}`}>
+        <span className={`material-icons text-2xl sm:text-4xl flex-shrink-0 ${iconColorClasses[color]}`}>
           {icon}
         </span>
       </div>
@@ -594,11 +594,11 @@ function HorizontalBarChart({ title, data, color }) {
   const maxValue = Math.max(...data.map((d) => d.value), 1);
   const colors = ["#3b82f6", "#06b6d4", "#14b8a6", "#10b981", "#0ea5e9"];
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-7 shadow-md hover:shadow-lg transition-all duration-200">
-      <h3 className="text-lg sm:text-xl font-bold text-slate-800 mb-6">
+    <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-md hover:shadow-lg transition-all duration-200">
+      <h3 className="text-base sm:text-xl font-bold text-slate-800 mb-4 sm:mb-6">
         {title}
       </h3>
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {data.map((item, idx) => (
           <div key={idx}>
             <div className="flex justify-between text-sm mb-2">
@@ -710,11 +710,11 @@ function DonutChart({ title, data }) {
 function BarChart({ title, data, color }) {
   const maxValue = Math.max(...data.map((d) => d.value), 1);
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-7 shadow-md hover:shadow-lg transition-all duration-200">
-      <h3 className="text-lg sm:text-xl font-bold text-slate-800 mb-5">
+    <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-md hover:shadow-lg transition-all duration-200">
+      <h3 className="text-base sm:text-xl font-bold text-slate-800 mb-4 sm:mb-5">
         {title}
       </h3>
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {data.map((item, idx) => (
           <div key={idx}>
             <div className="flex justify-between text-sm mb-1">
@@ -777,8 +777,8 @@ function PieChart({ title, data }) {
   let cumulativePercent = 0;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-7 shadow-md hover:shadow-lg transition-all duration-200">
-      <h3 className="text-lg sm:text-xl font-bold text-slate-800 mb-5">
+    <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-md hover:shadow-lg transition-all duration-200">
+      <h3 className="text-base sm:text-xl font-bold text-slate-800 mb-4 sm:mb-5">
         {title}
       </h3>
       <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8">

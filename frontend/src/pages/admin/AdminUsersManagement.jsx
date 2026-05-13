@@ -148,15 +148,69 @@ export default function AdminUsersManagement() {
           </div>
         )}
 
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-sm">
+        {/* Mobile card list */}
+        <div className="md:hidden space-y-3">
+          {loading && (
+            <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 px-4 py-6 text-center text-sm text-slate-500">
+              Loading...
+            </div>
+          )}
+          {!loading && filtered.length === 0 && (
+            <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 px-4 py-6 text-center text-sm text-slate-500">
+              No users match current filters.
+            </div>
+          )}
+          {filtered.map((u) => (
+            <div
+              key={u.id}
+              className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-sm p-4"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="font-semibold text-slate-800 dark:text-slate-100 text-sm truncate">
+                    {u.full_name || "—"}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 break-all mt-0.5">
+                    {u.email}
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <select
+                      value={u.role}
+                      disabled={busyId === u.id}
+                      onChange={(e) => updateRole(u.id, e.target.value)}
+                      className="rounded border px-2 py-1 text-xs bg-white dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+                    >
+                      <option value="student">student</option>
+                      <option value="staff">staff</option>
+                      <option value="admin">admin</option>
+                    </select>
+                    <span className="text-xs text-slate-400">
+                      {u.is_verified ? "✓ Verified" : "Unverified"}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => removeUser(u.id)}
+                  disabled={busyId === u.id}
+                  className="flex-shrink-0 rounded bg-red-600 px-3 py-1 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                >
+                  {busyId === u.id ? "..." : "Delete"}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-sm">
           <table className="min-w-full text-sm">
             <thead>
               <tr className="bg-slate-100 dark:bg-slate-800 text-left">
                 <th className="px-3 py-2 font-semibold">Email</th>
                 <th className="px-3 py-2 font-semibold">Name</th>
                 <th className="px-3 py-2 font-semibold">Role</th>
-                <th className="hidden sm:table-cell px-3 py-2 font-semibold">Verified</th>
-                <th className="hidden md:table-cell px-3 py-2 font-semibold">Created</th>
+                <th className="px-3 py-2 font-semibold">Verified</th>
+                <th className="px-3 py-2 font-semibold">Created</th>
                 <th className="px-3 py-2 font-semibold">Actions</th>
               </tr>
             </thead>
@@ -166,8 +220,8 @@ export default function AdminUsersManagement() {
                   key={u.id}
                   className="border-t border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
-                  <td className="px-3 py-2 max-w-[160px] truncate" title={u.email}>{u.email}</td>
-                  <td className="px-3 py-2 max-w-[120px] truncate">{u.full_name || "—"}</td>
+                  <td className="px-3 py-2 break-all">{u.email}</td>
+                  <td className="px-3 py-2">{u.full_name || "—"}</td>
                   <td className="px-3 py-2">
                     <select
                       value={u.role}
@@ -180,11 +234,9 @@ export default function AdminUsersManagement() {
                       <option value="admin">admin</option>
                     </select>
                   </td>
-                  <td className="hidden sm:table-cell px-3 py-2">{u.is_verified ? "Yes" : "No"}</td>
-                  <td className="hidden md:table-cell px-3 py-2 text-xs opacity-70">
-                    {u.created_at
-                      ? new Date(u.created_at).toLocaleDateString()
-                      : ""}
+                  <td className="px-3 py-2">{u.is_verified ? "Yes" : "No"}</td>
+                  <td className="px-3 py-2 text-xs opacity-70">
+                    {u.created_at ? new Date(u.created_at).toLocaleDateString() : ""}
                   </td>
                   <td className="px-3 py-2">
                     <button
@@ -199,20 +251,14 @@ export default function AdminUsersManagement() {
               ))}
               {filtered.length === 0 && !loading && (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-3 py-6 text-center text-slate-500"
-                  >
+                  <td colSpan={6} className="px-3 py-6 text-center text-slate-500">
                     No users match current filters.
                   </td>
                 </tr>
               )}
               {loading && (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-3 py-6 text-center text-slate-500"
-                  >
+                  <td colSpan={6} className="px-3 py-6 text-center text-slate-500">
                     Loading...
                   </td>
                 </tr>

@@ -37,10 +37,10 @@ export default function AdminQuickActions() {
           title="Quick Actions"
           subtitle="Manage and verify department submissions."
         />
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           <Card
             onClick={goTo("studentsBatch")}
-            className="p-6 glitter-card bulge-card"
+            className="p-4 sm:p-6 glitter-card bulge-card"
           >
             <Tile
               icon={<IconUpload />}
@@ -51,7 +51,7 @@ export default function AdminQuickActions() {
           </Card>
           <Card
             onClick={goTo("staffBatch")}
-            className="p-6 glitter-card bulge-card"
+            className="p-4 sm:p-6 glitter-card bulge-card"
           >
             <Tile
               icon={<IconUpload />}
@@ -62,7 +62,7 @@ export default function AdminQuickActions() {
           </Card>
           <Card
             onClick={goTo("uploadExtra")}
-            className="p-6 glitter-card bulge-card"
+            className="p-4 sm:p-6 glitter-card bulge-card"
           >
             <Tile
               icon={<IconUpload />}
@@ -73,7 +73,7 @@ export default function AdminQuickActions() {
           </Card>
           <Card
             onClick={goTo("staffEvents")}
-            className="p-6 glitter-card bulge-card"
+            className="p-4 sm:p-6 glitter-card bulge-card"
           >
             <Tile
               icon={<IconCalendar />}
@@ -84,7 +84,7 @@ export default function AdminQuickActions() {
           </Card>
           <Card
             onClick={goTo("exportRecords")}
-            className="p-6 glitter-card bulge-card"
+            className="p-4 sm:p-6 glitter-card bulge-card"
           >
             <Tile
               icon={<IconUpload />}
@@ -95,7 +95,7 @@ export default function AdminQuickActions() {
           </Card>
           <Card
             onClick={goTo("bulkExport")}
-            className="p-6 glitter-card bulge-card"
+            className="p-4 sm:p-6 glitter-card bulge-card"
           >
             <Tile
               icon={<IconDownload />}
@@ -106,7 +106,7 @@ export default function AdminQuickActions() {
           </Card>
           <Card
             onClick={goTo("manageUsers")}
-            className="p-6 glitter-card bulge-card"
+            className="p-4 sm:p-6 glitter-card bulge-card"
           >
             <Tile
               icon={<IconUsers />}
@@ -117,7 +117,7 @@ export default function AdminQuickActions() {
           </Card>
           <Card
             onClick={goTo("activityCoordinators")}
-            className="p-6 glitter-card bulge-card"
+            className="p-4 sm:p-6 glitter-card bulge-card"
           >
             <Tile
               icon={<IconList />}

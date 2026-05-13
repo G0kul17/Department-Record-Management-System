@@ -117,9 +117,9 @@ export default function AdminUploadExtracurricular() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl p-6">
+    <div className="mx-auto max-w-4xl p-4 sm:p-6">
       <BackButton />
-      <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">
+      <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100">
         Other Data Upload
       </h1>
       <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">

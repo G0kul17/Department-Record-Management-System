@@ -262,7 +262,7 @@ function OverviewPanel({ user }) {
         </div>
       </div>
 
-      <QuickActions />
+      <QuickActions embedded />
 
       <div>
         <div className="mb-5">

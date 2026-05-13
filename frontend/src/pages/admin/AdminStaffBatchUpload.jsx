@@ -16,7 +16,7 @@ export default function AdminStaffBatchUpload() {
   const [validationErrors, setValidationErrors] = useState([]);
 
   return (
-    <div className="mx-auto max-w-6xl w-full p-6">
+    <div className="mx-auto max-w-6xl w-full p-4 sm:p-6">
       <SuccessModal
         open={showSuccess}
         title="Saved successfully"
@@ -32,7 +32,7 @@ export default function AdminStaffBatchUpload() {
         onClose={() => setShowSuccess(false)}
       />
       <BackButton />
-      <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">
+      <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100">
         Admin: Staff Batch Upload
       </h1>
       <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">

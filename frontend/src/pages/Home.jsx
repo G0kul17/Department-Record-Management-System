@@ -165,7 +165,7 @@ export default function Home({ hideAtAGlance = false }) {
     <>
       <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-white to-slate-50">
         {/* Hero Section */}
-        <div className="relative w-full overflow-hidden bg-slate-900 px-3 sm:px-4 md:px-6 lg:px-12 pt-12 sm:pt-16 md:pt-24 pb-16 sm:pb-20 md:pb-24">
+        <div className="relative w-full overflow-hidden bg-slate-900 px-3 sm:px-4 md:px-6 lg:px-12 pt-8 sm:pt-14 md:pt-24 pb-8 sm:pb-16 md:pb-24">
           {/* Ambient glow */}
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <div className="absolute -top-32 right-0 h-[200px] w-[200px] rounded-full bg-blue-600/10 blur-3xl sm:h-[360px] sm:w-[360px] md:h-[520px] md:w-[520px]" />
@@ -223,15 +223,15 @@ export default function Home({ hideAtAGlance = false }) {
                   <h2 className="text-base font-bold text-slate-100 mb-4">
                     At a Glance
                   </h2>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className={`grid gap-2 ${user?.role === "staff" ? "grid-cols-3" : "grid-cols-2"}`}>
                     <button
                       onClick={() => nav("/projects/approved")}
                       className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
                     >
-                      <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                      <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
                         Projects
                       </div>
-                      <div className="mt-1 text-lg font-extrabold text-slate-100">
+                      <div className="mt-1 text-base font-extrabold text-slate-100">
                         {user?.role === "staff"
                           ? staffProjCount === null
                             ? "—"
@@ -245,10 +245,10 @@ export default function Home({ hideAtAGlance = false }) {
                       onClick={() => nav("/achievements/approved")}
                       className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
                     >
-                      <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                        Achievements
+                      <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
+                        Achieve
                       </div>
-                      <div className="mt-1 text-lg font-extrabold text-slate-100">
+                      <div className="mt-1 text-base font-extrabold text-slate-100">
                         {achCount === null ? "—" : achCount}
                       </div>
                     </button>
@@ -258,10 +258,10 @@ export default function Home({ hideAtAGlance = false }) {
                           onClick={() => nav("/faculty-participation-approved")}
                           className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
                         >
-                          <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                            Participation
+                          <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
+                            Particip.
                           </div>
-                          <div className="mt-1 text-lg font-extrabold text-slate-100">
+                          <div className="mt-1 text-base font-extrabold text-slate-100">
                             {staffPartCount === null ? "—" : staffPartCount}
                           </div>
                         </button>
@@ -269,10 +269,10 @@ export default function Home({ hideAtAGlance = false }) {
                           onClick={() => nav("/faculty-research-approved")}
                           className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
                         >
-                          <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                          <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
                             Research
                           </div>
-                          <div className="mt-1 text-lg font-extrabold text-slate-100">
+                          <div className="mt-1 text-base font-extrabold text-slate-100">
                             {staffResCount === null ? "—" : staffResCount}
                           </div>
                         </button>
@@ -280,10 +280,10 @@ export default function Home({ hideAtAGlance = false }) {
                           onClick={() => nav("/faculty-consultancy-approved")}
                           className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
                         >
-                          <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                            Consultancy
+                          <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
+                            Consult.
                           </div>
-                          <div className="mt-1 text-lg font-extrabold text-slate-100">
+                          <div className="mt-1 text-base font-extrabold text-slate-100">
                             {staffConsCount === null ? "—" : staffConsCount}
                           </div>
                         </button>

@@ -3,11 +3,11 @@ import apiClient from "../api/axiosClient";
 import { useAuth } from "../hooks/useAuth";
 
 const CATEGORY_OPTIONS = [
-  { key: "achievements", label: "Achievements" },
-  { key: "projects", label: "Projects" },
-  { key: "faculty_research", label: "Faculty Research" },
-  { key: "faculty_consultancy", label: "Faculty Consultancy" },
-  { key: "faculty_participation", label: "Faculty Participation" },
+  { key: "achievements", label: "Achievements", short: "Achieve" },
+  { key: "projects", label: "Projects", short: "Projects" },
+  { key: "faculty_research", label: "Faculty Research", short: "Research" },
+  { key: "faculty_consultancy", label: "Faculty Consultancy", short: "Consult." },
+  { key: "faculty_participation", label: "Faculty Participation", short: "Particip." },
 ];
 
 export default function AchievementsLeaderboard({ limit = 10 }) {
@@ -93,7 +93,7 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
   }, [limit, category]);
 
   return (
-    <div className="rounded-xl border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 p-6 shadow-lg">
+    <div className="rounded-xl border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 p-4 sm:p-6 shadow-lg">
       <div className="flex items-center gap-2 mb-4">
         <svg
           className="w-5 h-5 text-yellow-400"
@@ -108,19 +108,20 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
       <p className="text-xs text-slate-300 mb-4">{subtitle}</p>
 
       {availableCategories.length > 1 && (
-        <div className="mb-4 flex flex-wrap gap-2">
+        <div className="mb-4 flex flex-wrap gap-1.5">
           {availableCategories.map((opt) => (
             <button
               type="button"
               key={opt.key}
               onClick={() => setCategory(opt.key)}
-              className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors border ${
+              className={`rounded-full px-2.5 py-1 text-xs font-semibold transition-colors border ${
                 category === opt.key
                   ? "bg-blue-600 text-white border-blue-600"
                   : "bg-slate-800 text-slate-200 border-slate-600 hover:border-slate-400"
               }`}
             >
-              {opt.label}
+              <span className="sm:hidden">{opt.short}</span>
+              <span className="hidden sm:inline">{opt.label}</span>
             </button>
           ))}
         </div>

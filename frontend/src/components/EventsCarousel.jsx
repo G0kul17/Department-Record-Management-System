@@ -83,12 +83,12 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
                       <img
                         src={thumb}
                         alt={ev.title}
-                        className="w-full h-auto max-h-[420px] md:max-h-[520px] object-contain"
+                        className="w-full h-auto max-h-[160px] sm:max-h-[280px] md:max-h-[420px] object-contain"
                         loading="lazy"
                       />
                     </div>
                   ) : (
-                    <div className="mt-3 h-40 md:h-56 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-100" />
+                    <div className="mt-3 h-28 sm:h-40 md:h-56 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-100" />
                   )}
                 </a>
               </div>

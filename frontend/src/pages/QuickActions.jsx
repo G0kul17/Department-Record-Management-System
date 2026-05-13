@@ -4,7 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import Card from "../components/ui/Card";
 import PageHeader from "../components/ui/PageHeader";
 
-export default function QuickActions() {
+export default function QuickActions({ embedded = false }) {
   const nav = useNavigate();
   const { user } = useAuth();
   const isStaff = user?.role === "staff";
@@ -36,12 +36,14 @@ export default function QuickActions() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-slate-50">
-      <div className="mx-auto max-w-7xl w-full px-4 sm:px-6 py-8 sm:py-12">
-        <PageHeader
-          title="Quick Actions"
-          subtitle="Get started with your most common tasks."
-        />
+    <div className={embedded ? "" : "min-h-[calc(100vh-4rem)] bg-slate-50"}>
+      <div className={`mx-auto max-w-7xl w-full px-4 sm:px-6 ${embedded ? "py-0" : "py-8 sm:py-12"}`}>
+        {!embedded && (
+          <PageHeader
+            title="Quick Actions"
+            subtitle="Get started with your most common tasks."
+          />
+        )}
 
         {isStaff && (
           <div className="mb-6 flex flex-wrap items-center gap-2">

@@ -155,14 +155,14 @@ export default function ProjectUpload() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950">
-      <div className="mx-auto max-w-6xl px-6 py-10">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-10">
         <SuccessModal
           open={showSuccess}
           title="Saved successfully"
           subtitle="Your project has been uploaded."
           onClose={() => setShowSuccess(false)}
         />
-        <h2 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100">
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100">
           Upload Project
         </h2>
         <p className="text-slate-600 dark:text-slate-300 mb-6">
@@ -353,11 +353,11 @@ export default function ProjectUpload() {
                         Team Member {idx + 1}{" "}
                         <span className="text-red-600">*</span>
                       </label>
-                      <div className="mt-1 relative">
+                      <div className="mt-1 flex flex-col gap-2 sm:flex-row">
                         <input
                           type="text"
                           placeholder={`Name of member ${idx + 1}`}
-                          className="w-full rounded-lg border border-slate-300 pl-3 pr-32 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-400"
+                          className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-400"
                           value={
                             typeof member === "string"
                               ? member
@@ -377,7 +377,7 @@ export default function ProjectUpload() {
                           required
                         />
                         <select
-                          className="absolute right-0 top-0 h-full rounded-r-lg border border-slate-300 bg-slate-50 px-2 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 cursor-pointer"
+                          className="rounded-lg border border-slate-300 bg-slate-50 px-2 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 cursor-pointer sm:w-28 flex-shrink-0"
                           value={
                             typeof member === "object"
                               ? member?.role || "Team Member"

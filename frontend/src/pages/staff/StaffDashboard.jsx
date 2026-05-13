@@ -189,7 +189,7 @@ function OverviewPanel({ user }) {
     <div className="space-y-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch">
         <div className="lg:col-span-2 rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-7 shadow-md dark:border-slate-800 dark:from-slate-900 dark:to-slate-950">
-          <h1 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100">{`Welcome, ${displayName || "Staff"}`}</h1>
+          <h1 className="text-xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100">{`Welcome, ${displayName || "Staff"}`}</h1>
           <p className="text-slate-600 dark:text-slate-400 mt-3 text-base leading-relaxed">
             Use the side menu to manage projects, achievements and events.
           </p>
@@ -209,7 +209,7 @@ function OverviewPanel({ user }) {
                 <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Projects
                 </div>
-                <div className="mt-1 text-2xl font-extrabold text-slate-100">
+                <div className="mt-1 text-lg sm:text-2xl font-extrabold text-slate-100">
                   {projCount === null ? "—" : projCount}
                 </div>
               </button>
@@ -220,7 +220,7 @@ function OverviewPanel({ user }) {
                 <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Achievements
                 </div>
-                <div className="mt-1 text-2xl font-extrabold text-slate-100">
+                <div className="mt-1 text-lg sm:text-2xl font-extrabold text-slate-100">
                   {achCount === null ? "—" : achCount}
                 </div>
               </button>
@@ -231,7 +231,7 @@ function OverviewPanel({ user }) {
                 <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Participation
                 </div>
-                <div className="mt-1 text-2xl font-extrabold text-slate-100">
+                <div className="mt-1 text-lg sm:text-2xl font-extrabold text-slate-100">
                   {partCount === null ? "—" : partCount}
                 </div>
               </button>
@@ -242,7 +242,7 @@ function OverviewPanel({ user }) {
                 <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Research
                 </div>
-                <div className="mt-1 text-2xl font-extrabold text-slate-100">
+                <div className="mt-1 text-lg sm:text-2xl font-extrabold text-slate-100">
                   {resCount === null ? "—" : resCount}
                 </div>
               </button>
@@ -253,7 +253,7 @@ function OverviewPanel({ user }) {
                 <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Consultancy
                 </div>
-                <div className="mt-1 text-2xl font-extrabold text-slate-100">
+                <div className="mt-1 text-lg sm:text-2xl font-extrabold text-slate-100">
                   {consCount === null ? "—" : consCount}
                 </div>
               </button>

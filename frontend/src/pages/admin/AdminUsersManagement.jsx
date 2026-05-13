@@ -67,19 +67,19 @@ export default function AdminUsersManagement() {
   });
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950 py-10">
-      <div className="mx-auto max-w-6xl px-6">
+    <div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950 py-6 sm:py-10">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <BackButton />
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between sm:mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">
               Manage Users
             </h1>
             <p className="text-slate-600 dark:text-slate-300 text-sm mt-1">
               View, change roles, or remove accounts.
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={load}
               disabled={loading}
@@ -89,13 +89,13 @@ export default function AdminUsersManagement() {
             </button>
             <a
               href="/register-student"
-              className="rounded-md bg-[#87CEEB] px-4 py-2 text-sm font-semibold text-white hover:bg-[#7dc0df]"
+              className="rounded-md bg-[#87CEEB] px-3 py-2 text-sm font-semibold text-white hover:bg-[#7dc0df]"
             >
               Register Student
             </a>
             <a
               href="/register-staff"
-              className="rounded-md bg-[#87CEEB] px-4 py-2 text-sm font-semibold text-white hover:bg-[#7dc0df]"
+              className="rounded-md bg-[#87CEEB] px-3 py-2 text-sm font-semibold text-white hover:bg-[#7dc0df]"
             >
               Register Staff
             </a>

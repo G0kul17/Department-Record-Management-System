@@ -131,7 +131,7 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-slate-900">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-3 py-6 sm:px-4 sm:py-8">
         <div className="glitter-card mx-auto max-w-xl rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
           <h2 className="mb-4 text-2xl font-bold text-slate-900 dark:text-slate-100">
             Edit Profile
@@ -148,7 +148,7 @@ const Profile = () => {
           )}
           <form onSubmit={onSubmit}>
             {/* Non-editable fields */}
-            <div className="mb-4 grid grid-cols-2 gap-4">
+            <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
               <InputField
                 label="First Name"
                 type="text"
@@ -335,10 +335,10 @@ const Profile = () => {
                     {exportsList.map((f) => (
                       <li
                         key={f.name}
-                        className="flex items-center justify-between p-3"
+                        className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between"
                       >
-                        <div>
-                          <div className="font-medium text-slate-800 dark:text-slate-100">
+                        <div className="min-w-0">
+                          <div className="font-medium text-slate-800 dark:text-slate-100 break-all">
                             {f.name}
                           </div>
                           <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -350,7 +350,7 @@ const Profile = () => {
                           href={f.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs rounded-md bg-slate-700 px-3 py-1 font-semibold text-white shadow hover:opacity-90"
+                          className="text-xs rounded-md bg-slate-700 px-3 py-1 font-semibold text-white shadow hover:opacity-90 self-start sm:self-auto flex-shrink-0"
                         >
                           Download
                         </a>

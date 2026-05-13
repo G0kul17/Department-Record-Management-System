@@ -168,8 +168,8 @@ export default function Home({ hideAtAGlance = false }) {
         <div className="relative w-full overflow-hidden bg-slate-900 px-3 sm:px-4 md:px-6 lg:px-12 pt-12 sm:pt-16 md:pt-24 pb-16 sm:pb-20 md:pb-24">
           {/* Ambient glow */}
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            <div className="absolute -top-32 right-0 h-[520px] w-[520px] rounded-full bg-blue-600/10 blur-3xl" />
-            <div className="absolute -bottom-24 -left-24 h-[400px] w-[400px] rounded-full bg-indigo-600/10 blur-3xl" />
+            <div className="absolute -top-32 right-0 h-[200px] w-[200px] rounded-full bg-blue-600/10 blur-3xl sm:h-[360px] sm:w-[360px] md:h-[520px] md:w-[520px]" />
+            <div className="absolute -bottom-24 -left-24 h-[160px] w-[160px] rounded-full bg-indigo-600/10 blur-3xl sm:h-[280px] sm:w-[280px] md:h-[400px] md:w-[400px]" />
           </div>
           <div className="relative grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-stretch">
             <div className="md:col-span-2 text-center md:text-left space-y-5">
@@ -348,7 +348,7 @@ export default function Home({ hideAtAGlance = false }) {
             <div className="py-8 sm:py-12 md:py-16">
               <div className="mb-8">
                 <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Admin</p>
-                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900">
                   Analytics & Visualization
                 </h1>
                 <p className="mt-2 text-slate-500 text-base">
@@ -635,8 +635,8 @@ function DonutChart({ title, data }) {
       <h3 className="text-lg sm:text-xl font-bold text-slate-800 mb-4">
         {title}
       </h3>
-      <div className="flex flex-wrap items-center justify-center gap-6">
-        <svg width="110" height="110" viewBox="0 0 110 110" className="flex-shrink-0">
+      <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
+        <svg viewBox="0 0 110 110" className="w-[90px] h-[90px] sm:w-[110px] sm:h-[110px] flex-shrink-0">
           {total > 0 ? (
             data.map((item, idx) => {
               const percent = (item.value / total) * 100;
@@ -745,17 +745,17 @@ function VerticalBarChart({ title, data, color }) {
       <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-4">
         {title}
       </h3>
-      <div className="flex items-end justify-center gap-6 h-40">
+      <div className="flex items-end justify-center gap-4 sm:gap-6 h-40">
         {data.map((item, idx) => (
           <div key={idx} className="flex flex-col items-center gap-2">
             <div className="flex flex-col items-center">
-              <span className="text-base font-bold text-slate-900 mb-1">
+              <span className="text-sm sm:text-base font-bold text-slate-900 mb-1">
                 {item.value}
               </span>
               <div
                 className="rounded-t-lg transition-all duration-500"
                 style={{
-                  width: "50px",
+                  width: "clamp(32px, 8vw, 50px)",
                   height: `${(item.value / maxValue) * 120}px`,
                   backgroundColor: colors[idx],
                 }}
@@ -781,8 +781,8 @@ function PieChart({ title, data }) {
       <h3 className="text-lg sm:text-xl font-bold text-slate-800 mb-5">
         {title}
       </h3>
-      <div className="flex flex-wrap items-center justify-center gap-8">
-        <svg width="140" height="140" viewBox="0 0 140 140" className="flex-shrink-0">
+      <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8">
+        <svg viewBox="0 0 140 140" className="w-[110px] h-[110px] sm:w-[140px] sm:h-[140px] flex-shrink-0">
           {total > 0 ? (
             data.map((item, idx) => {
               const percent = (item.value / total) * 100;

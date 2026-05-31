@@ -3,6 +3,7 @@ import apiClient from "../../api/axiosClient";
 import PageHeader from "../../components/ui/PageHeader";
 import { useAuth } from "../../hooks/useAuth";
 import { getFileUrl } from "../../utils/fileUrl";
+import { FiCheck } from "react-icons/fi";
 
 export default function StudentNotifications() {
   const { user } = useAuth();
@@ -12,12 +13,23 @@ export default function StudentNotifications() {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
   const [clearedNotifications, setClearedNotifications] = useState(new Set());
+  const [clearedAllAt, setClearedAllAt] = useState(0);
 
   // Load cleared notifications from localStorage
+  const getStoredClearedAllAt = (id) => {
+    const userKey = id ? `cleared_notifications_all_at_${id}` : null;
+    if (userKey) {
+      const value = Number(localStorage.getItem(userKey) || 0);
+      if (value) return value;
+    }
+    return Number(localStorage.getItem("cleared_notifications_all_at") || 0);
+  };
+
   useEffect(() => {
     if (!user?.id) return;
     const storageKey = `cleared_notifications_${user.id}`;
     const stored = localStorage.getItem(storageKey);
+    const storedAllAt = getStoredClearedAllAt(user.id);
     if (stored) {
       try {
         setClearedNotifications(new Set(JSON.parse(stored)));
@@ -25,6 +37,7 @@ export default function StudentNotifications() {
         console.error("Failed to parse cleared notifications from storage", e);
       }
     }
+    if (storedAllAt) setClearedAllAt(storedAllAt);
   }, [user?.id]);
 
   useEffect(() => {
@@ -141,20 +154,24 @@ export default function StudentNotifications() {
   };
 
   const clearAllNotifications = () => {
-    // Create a Set with all notification IDs
     const allIds = new Set([
-      ...announcements.map((_, idx) => `ann-${idx}`),
-      ...approvalNotifs.map((_, idx) => `approv-${idx}`),
-      ...rejectionNotifs.map((_, idx) => `reject-${idx}`),
+      ...announcements.map((ann, idx) => getAnnouncementId(ann, idx)),
+      ...approvalNotifs.map((item) => getReviewNotifId(item)),
+      ...rejectionNotifs.map((item) => getReviewNotifId(item)),
     ]);
+    const now = Date.now();
 
     setClearedNotifications(allIds);
+    setClearedAllAt(now);
 
     // Save to localStorage
     if (user?.id) {
       const storageKey = `cleared_notifications_${user.id}`;
+      const clearedAllKey = `cleared_notifications_all_at_${user.id}`;
       localStorage.setItem(storageKey, JSON.stringify(Array.from(allIds)));
+      localStorage.setItem(clearedAllKey, String(now));
     }
+    localStorage.setItem("cleared_notifications_all_at", String(now));
 
     // Close any expanded cards
     setExpandedId(null);
@@ -162,6 +179,29 @@ export default function StudentNotifications() {
 
   const isCleared = (notificationId) => {
     return clearedNotifications.has(notificationId);
+  };
+
+  const isClearedByTimestamp = (ts) => {
+    const effectiveClearedAllAt =
+      clearedAllAt || getStoredClearedAllAt(user?.id);
+    if (!effectiveClearedAllAt) return false;
+    return (ts || 0) <= effectiveClearedAllAt;
+  };
+
+  const getAnnouncementId = (ann, idx) => {
+    const base =
+      ann?.id ||
+      ann?.announcement_id ||
+      ann?.brochure_filename ||
+      ann?.created_at ||
+      ann?.delivered_at ||
+      idx;
+    return `ann-${String(base)}`;
+  };
+
+  const getReviewNotifId = (notif) => {
+    const base = notif?.item_id || notif?.id || notif?.timestamp;
+    return `${notif?.type || "review"}-${String(base)}`;
   };
 
   const formatDate = (ts) => {
@@ -179,6 +219,24 @@ export default function StudentNotifications() {
     }
   };
 
+  const visibleAnnouncements = announcements.filter((ann, idx) => {
+    const notifId = getAnnouncementId(ann, idx);
+    const annTs = new Date(ann.created_at || ann.delivered_at || 0).getTime();
+    return !isCleared(notifId) && !isClearedByTimestamp(annTs);
+  });
+
+  const visibleApprovals = approvalNotifs.filter((notif) => {
+    const notifId = getReviewNotifId(notif);
+    const notifTs = notif.timestamp || 0;
+    return !isCleared(notifId) && !isClearedByTimestamp(notifTs);
+  });
+
+  const visibleRejections = rejectionNotifs.filter((notif) => {
+    const notifId = getReviewNotifId(notif);
+    const notifTs = notif.timestamp || 0;
+    return !isCleared(notifId) && !isClearedByTimestamp(notifTs);
+  });
+
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-white">
       <div className="mx-auto max-w-5xl w-full px-6 py-10">
@@ -192,9 +250,9 @@ export default function StudentNotifications() {
           <button
             onClick={clearAllNotifications}
             disabled={
-              announcements.length === 0 &&
-              approvalNotifs.length === 0 &&
-              rejectionNotifs.length === 0
+              visibleAnnouncements.length === 0 &&
+              visibleApprovals.length === 0 &&
+              visibleRejections.length === 0
             }
             className="disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
           >
@@ -212,28 +270,25 @@ export default function StudentNotifications() {
             {/* Announcements */}
             <div>
               <h3 className="text-2xl font-bold text-slate-800 mb-4">
-                Announcements ({announcements.length})
+                Announcements ({visibleAnnouncements.length})
               </h3>
-              {announcements.length === 0 ? (
+              {visibleAnnouncements.length === 0 ? (
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center text-slate-600">
                   No announcements yet.
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {announcements.map((ann, idx) => {
-                    const notifId = `ann-${idx}`;
+                  {visibleAnnouncements.map((ann, idx) => {
+                    const notifId = getAnnouncementId(ann, idx);
                     const isExpanded = expandedId === notifId;
-                    const isCleared_ = isCleared(notifId);
                     const hasFile = ann.brochure_filename;
                     const fileUrl = hasFile
                       ? getFileUrl(ann.brochure_filename)
                       : null;
 
-                    if (isCleared_) return null;
-
                     return (
                       <div
-                        key={idx}
+                        key={notifId}
                         className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow relative"
                       >
                         <button
@@ -325,18 +380,17 @@ export default function StudentNotifications() {
             {/* Approvals */}
             <div>
               <h3 className="text-2xl font-bold text-slate-800 mb-4">
-                Approvals ({approvalNotifs.length})
+                Approvals ({visibleApprovals.length})
               </h3>
-              {approvalNotifs.length === 0 ? (
+              {visibleApprovals.length === 0 ? (
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center text-slate-600">
                   No approvals yet.
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {approvalNotifs.map((notif, idx) => {
-                    const notifId = `approv-${idx}`;
+                  {visibleApprovals.map((notif) => {
+                    const notifId = getReviewNotifId(notif);
                     const isExpanded = expandedId === notifId;
-                    const isCleared_ = isCleared(notifId);
                     const linkHref =
                       notif.type === "project_approved"
                         ? `/projects/${notif.item_id}`
@@ -346,11 +400,9 @@ export default function StudentNotifications() {
                         ? "Project"
                         : "Achievement";
 
-                    if (isCleared_) return null;
-
                     return (
                       <div
-                        key={idx}
+                        key={notifId}
                         className="rounded-lg border border-green-200 bg-green-50 p-4 shadow-sm hover:shadow-md transition-shadow relative"
                       >
                         <button
@@ -379,8 +431,8 @@ export default function StudentNotifications() {
                         >
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-600 text-white text-xs font-bold">
-                                ✓
+                              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-green-600 text-white ring-2 ring-green-200">
+                                <FiCheck className="h-5 w-5" aria-hidden />
                               </span>
                               <h4 className="font-semibold text-slate-800">
                                 {itemLabel} "{notif.title}" was approved
@@ -441,18 +493,17 @@ export default function StudentNotifications() {
             {/* Rejections */}
             <div>
               <h3 className="text-2xl font-bold text-slate-800 mb-4">
-                Rejections ({rejectionNotifs.length})
+                Rejections ({visibleRejections.length})
               </h3>
-              {rejectionNotifs.length === 0 ? (
+              {visibleRejections.length === 0 ? (
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center text-slate-600">
                   No rejections.
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {rejectionNotifs.map((notif, idx) => {
-                    const notifId = `reject-${idx}`;
+                  {visibleRejections.map((notif) => {
+                    const notifId = getReviewNotifId(notif);
                     const isExpanded = expandedId === notifId;
-                    const isCleared_ = isCleared(notifId);
                     const linkHref =
                       notif.type === "project_rejected"
                         ? `/projects/${notif.item_id}`
@@ -462,11 +513,9 @@ export default function StudentNotifications() {
                         ? "Project"
                         : "Achievement";
 
-                    if (isCleared_) return null;
-
                     return (
                       <div
-                        key={idx}
+                        key={notifId}
                         className="rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm hover:shadow-md transition-shadow relative"
                       >
                         <button

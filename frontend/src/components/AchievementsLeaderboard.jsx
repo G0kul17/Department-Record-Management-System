@@ -6,8 +6,16 @@ const CATEGORY_OPTIONS = [
   { key: "achievements", label: "Achievements", short: "Achieve" },
   { key: "projects", label: "Projects", short: "Projects" },
   { key: "faculty_research", label: "Faculty Research", short: "Research" },
-  { key: "faculty_consultancy", label: "Faculty Consultancy", short: "Consult." },
-  { key: "faculty_participation", label: "Faculty Participation", short: "Particip." },
+  {
+    key: "faculty_consultancy",
+    label: "Faculty Consultancy",
+    short: "Consult.",
+  },
+  {
+    key: "faculty_participation",
+    label: "Faculty Participation",
+    short: "Particip.",
+  },
 ];
 
 export default function AchievementsLeaderboard({ limit = 10 }) {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import apiClient from "../../api/axiosClient";
 import { useAuth } from "../../hooks/useAuth";
 import SuccessModal from "../../components/ui/SuccessModal";
+import CustomSelect from "../../components/ui/CustomSelect";
 import UploadDropzone from "../../components/ui/UploadDropzone";
 import { getFileUrl } from "../../utils/fileUrl";
 
@@ -281,15 +282,20 @@ export default function ProjectUpload() {
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
                   Status <span className="text-red-600">*</span>
                 </label>
-                <select
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
-                  value={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  required
-                >
-                  <option value="ongoing">Ongoing</option>
-                  <option value="completed">Completed</option>
-                </select>
+                <div className="mt-1">
+                  <CustomSelect
+                    value={form.status}
+                    onChange={(value) => setForm({ ...form, status: value })}
+                    options={[
+                      { value: "ongoing", label: "Ongoing" },
+                      { value: "completed", label: "Completed" },
+                    ]}
+                    placeholder="Select status"
+                    required
+                    name="project_status"
+                    buttonClassName="rounded-lg"
+                  />
+                </div>
               </div>
             </div>
 
@@ -376,29 +382,30 @@ export default function ProjectUpload() {
                           }}
                           required
                         />
-                        <select
-                          className="rounded-lg border border-slate-300 bg-slate-50 px-2 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200 cursor-pointer sm:w-28 flex-shrink-0"
+                        <CustomSelect
                           value={
                             typeof member === "object"
                               ? member?.role || "Team Member"
                               : "Team Member"
                           }
-                          onChange={(e) => {
+                          onChange={(value) => {
                             const next = [...(form.team_members || [])];
                             next[idx] = {
                               name:
                                 typeof member === "string"
                                   ? member
                                   : member?.name || "",
-                              role: e.target.value,
+                              role: value,
                             };
                             setForm({ ...form, team_members: next });
                           }}
-                          title="Select role"
-                        >
-                          <option value="Team Leader">Leader</option>
-                          <option value="Team Member">Member</option>
-                        </select>
+                          options={[
+                            { value: "Team Leader", label: "Leader" },
+                            { value: "Team Member", label: "Member" },
+                          ]}
+                          placeholder="Select role"
+                          buttonClassName="rounded-lg px-2 py-2 text-xs font-medium sm:w-28 flex-shrink-0"
+                        />
                       </div>
                     </div>
                   ))}

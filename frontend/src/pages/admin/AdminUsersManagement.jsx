@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import apiClient from "../../api/axiosClient";
 import BackButton from "../../components/BackButton";
+import CustomSelect from "../../components/ui/CustomSelect";
 
 export default function AdminUsersManagement() {
   const [users, setUsers] = useState([]);
@@ -118,16 +119,17 @@ export default function AdminUsersManagement() {
             <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
               Role
             </label>
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className="mt-1 rounded border px-3 py-2 text-sm bg-white dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-            >
-              <option value="">All</option>
-              <option value="student">Student</option>
-              <option value="staff">Staff</option>
-              <option value="admin">Admin</option>
-            </select>
+            <div className="mt-1">
+              <CustomSelect
+                className="min-w-[120px]"
+                value={roleFilter}
+                onChange={(value) => setRoleFilter(value)}
+                options={["student", "staff", "admin"]}
+                placeholder="All"
+                buttonClassName="rounded"
+                menuClassName="min-w-[120px]"
+              />
+            </div>
           </div>
           {query || roleFilter ? (
             <button
@@ -174,16 +176,15 @@ export default function AdminUsersManagement() {
                     {u.email}
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <select
+                    <CustomSelect
+                      className="min-w-[120px]"
                       value={u.role}
                       disabled={busyId === u.id}
-                      onChange={(e) => updateRole(u.id, e.target.value)}
-                      className="rounded border px-2 py-1 text-xs bg-white dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-                    >
-                      <option value="student">student</option>
-                      <option value="staff">staff</option>
-                      <option value="admin">admin</option>
-                    </select>
+                      onChange={(value) => updateRole(u.id, value)}
+                      options={["student", "staff", "admin"]}
+                      buttonClassName="rounded px-2 py-1 text-xs"
+                      menuClassName="min-w-[120px]"
+                    />
                     <span className="text-xs text-slate-400">
                       {u.is_verified ? "✓ Verified" : "Unverified"}
                     </span>
@@ -223,20 +224,21 @@ export default function AdminUsersManagement() {
                   <td className="px-3 py-2 break-all">{u.email}</td>
                   <td className="px-3 py-2">{u.full_name || "—"}</td>
                   <td className="px-3 py-2">
-                    <select
+                    <CustomSelect
+                      className="min-w-[120px]"
                       value={u.role}
                       disabled={busyId === u.id}
-                      onChange={(e) => updateRole(u.id, e.target.value)}
-                      className="rounded border px-2 py-1 text-xs bg-white dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-                    >
-                      <option value="student">student</option>
-                      <option value="staff">staff</option>
-                      <option value="admin">admin</option>
-                    </select>
+                      onChange={(value) => updateRole(u.id, value)}
+                      options={["student", "staff", "admin"]}
+                      buttonClassName="rounded px-2 py-1 text-xs"
+                      menuClassName="min-w-[120px]"
+                    />
                   </td>
                   <td className="px-3 py-2">{u.is_verified ? "Yes" : "No"}</td>
                   <td className="px-3 py-2 text-xs opacity-70">
-                    {u.created_at ? new Date(u.created_at).toLocaleDateString() : ""}
+                    {u.created_at
+                      ? new Date(u.created_at).toLocaleDateString()
+                      : ""}
                   </td>
                   <td className="px-3 py-2">
                     <button
@@ -251,14 +253,20 @@ export default function AdminUsersManagement() {
               ))}
               {filtered.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={6} className="px-3 py-6 text-center text-slate-500">
+                  <td
+                    colSpan={6}
+                    className="px-3 py-6 text-center text-slate-500"
+                  >
                     No users match current filters.
                   </td>
                 </tr>
               )}
               {loading && (
                 <tr>
-                  <td colSpan={6} className="px-3 py-6 text-center text-slate-500">
+                  <td
+                    colSpan={6}
+                    className="px-3 py-6 text-center text-slate-500"
+                  >
                     Loading...
                   </td>
                 </tr>

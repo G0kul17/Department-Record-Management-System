@@ -1,20 +1,37 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import apiClient from "../api/axiosClient";
 import Card from "../components/ui/Card";
 import PageHeader from "../components/ui/PageHeader";
 import AttachmentPreview from "../components/AttachmentPreview";
-import { generateAcademicYears } from "../utils/academicYears";
 
 export default function FacultyConsultancyApproved() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
   const [academicYear, setAcademicYear] = useState("");
+  const [yearOpen, setYearOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [previewFile, setPreviewFile] = useState(null);
+  const yearRef = useRef(null);
 
-  const academicYearOptions = useMemo(() => generateAcademicYears(), []);
+  const yearOptions = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let y = currentYear; y >= currentYear - 15; y -= 1) {
+      years.push(String(y));
+    }
+    return years;
+  }, []);
+
+  useEffect(() => {
+    function onDocClick(e) {
+      if (!yearRef.current) return;
+      if (!yearRef.current.contains(e.target)) setYearOpen(false);
+    }
+    if (yearOpen) document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [yearOpen]);
 
   useEffect(() => {
     let mounted = true;
@@ -35,19 +52,25 @@ export default function FacultyConsultancyApproved() {
     return () => (mounted = false);
   }, []);
   const filtered = useMemo(() => {
+    const toYear = (value) => {
+      if (!value) return "";
+      const match = String(value).match(/\b(19|20)\d{2}\b/);
+      return match ? match[0] : "";
+    };
     const query = q.trim().toLowerCase();
     let result = items;
     if (query) {
       result = result.filter((it) =>
         [it.faculty_name, it.team_members, it.agency, it.duration]
           .filter(Boolean)
-          .some((v) => String(v).toLowerCase().includes(query))
+          .some((v) => String(v).toLowerCase().includes(query)),
       );
     }
     if (academicYear) {
       result = result.filter((it) => {
-        const itemYear = it.academic_year || it.start_date?.substring(0, 4);
-        return itemYear && itemYear.includes(academicYear.substring(0, 4));
+        const itemYear =
+          toYear(it.academic_year) || toYear(it.start_date) || "";
+        return itemYear === academicYear;
       });
     }
     return result;
@@ -113,21 +136,52 @@ export default function FacultyConsultancyApproved() {
                 <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
                   Academic Year
                 </label>
-                <select
-                  value={academicYear}
-                  onChange={(e) => {
-                    setAcademicYear(e.target.value);
-                    setPage(1);
-                  }}
-                  className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                >
-                  <option value="">All Years</option>
-                  {academicYearOptions.map(year => (
-                    <option key={year.value} value={year.value}>
-                      {year.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative" ref={yearRef}>
+                  <button
+                    type="button"
+                    onClick={() => setYearOpen((prev) => !prev)}
+                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-left text-xs text-black focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:py-2 sm:text-sm"
+                  >
+                    {academicYear || "All Years"}
+                  </button>
+                  {yearOpen && (
+                    <div className="absolute left-0 right-0 mt-2 max-h-56 overflow-auto rounded-md border border-slate-200 bg-white shadow-lg z-20">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAcademicYear("");
+                          setPage(1);
+                          setYearOpen(false);
+                        }}
+                        className={`w-full px-3 py-2 text-left text-xs text-black hover:text-black sm:text-sm ${
+                          academicYear === ""
+                            ? "bg-sky-200"
+                            : "hover:bg-slate-100"
+                        }`}
+                      >
+                        All Years
+                      </button>
+                      {yearOptions.map((year) => (
+                        <button
+                          key={year}
+                          type="button"
+                          onClick={() => {
+                            setAcademicYear(year);
+                            setPage(1);
+                            setYearOpen(false);
+                          }}
+                          className={`w-full px-3 py-2 text-left text-xs text-black hover:text-black sm:text-sm ${
+                            academicYear === year
+                              ? "bg-sky-200"
+                              : "hover:bg-slate-100"
+                          }`}
+                        >
+                          {year}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import apiClient from "../api/axiosClient";
 import { Link } from "react-router-dom";
 import AttachmentPreview from "../components/AttachmentPreview";
@@ -11,12 +11,23 @@ export default function ProjectsApproved() {
   const [previewFile, setPreviewFile] = useState(null);
   const [q, setQ] = useState("");
   const [academicYear, setAcademicYear] = useState("");
+  const [yearOpen, setYearOpen] = useState(false);
   // Status fixed to approved; UI control removed
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [refreshId, setRefreshId] = useState(0);
+  const yearRef = useRef(null);
 
   const academicYearOptions = useMemo(() => generateAcademicYears(), []);
+
+  useEffect(() => {
+    function onDocClick(e) {
+      if (!yearRef.current) return;
+      if (!yearRef.current.contains(e.target)) setYearOpen(false);
+    }
+    if (yearOpen) document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [yearOpen]);
 
   const getUploaderLabel = (project) => {
     const name =
@@ -62,17 +73,35 @@ export default function ProjectsApproved() {
   return (
     <div className="mx-auto max-w-7xl bg-slate-50 px-4 py-5 sm:px-6 lg:px-8 dark:bg-slate-950">
       <div className="mx-auto max-w-4xl">
-        <div className="glitter-card rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:items-end">
+        <div className="glitter-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3 md:items-end">
             <div className="md:col-span-1">
               <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
                 Search
               </label>
               <div className="relative">
                 <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                    <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-                    <path d="M20 20l-3.5-3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden
+                  >
+                    <circle
+                      cx="11"
+                      cy="11"
+                      r="7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M20 20l-3.5-3.5"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
                   </svg>
                 </span>
                 <input
@@ -94,9 +123,27 @@ export default function ProjectsApproved() {
                   className="absolute right-2 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-white shadow"
                   style={{ backgroundColor: "#87CEEB" }}
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                    <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-                    <path d="M20 20l-3.5-3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden
+                  >
+                    <circle
+                      cx="11"
+                      cy="11"
+                      r="7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M20 20l-3.5-3.5"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
                   </svg>
                 </button>
               </div>
@@ -106,21 +153,55 @@ export default function ProjectsApproved() {
               <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
                 Academic Year
               </label>
-              <select
-                value={academicYear}
-                onChange={(e) => {
-                  setAcademicYear(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-              >
-                <option value="">All Years</option>
-                {academicYearOptions.map((year) => (
-                  <option key={year.value} value={year.value}>
-                    {year.label}
-                  </option>
-                ))}
-              </select>
+              <div className="relative" ref={yearRef}>
+                <button
+                  type="button"
+                  onClick={() => setYearOpen((prev) => !prev)}
+                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-left text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  {academicYear
+                    ? academicYearOptions.find((y) => y.value === academicYear)
+                        ?.label || academicYear
+                    : "All Years"}
+                </button>
+                {yearOpen && (
+                  <div className="absolute left-0 right-0 mt-2 max-h-56 overflow-auto rounded-md border border-slate-200 bg-white shadow-lg z-20">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAcademicYear("");
+                        setPage(1);
+                        setYearOpen(false);
+                      }}
+                      className={`w-full px-3 py-2 text-left text-sm text-black hover:text-black ${
+                        academicYear === ""
+                          ? "bg-sky-200"
+                          : "hover:bg-slate-100"
+                      }`}
+                    >
+                      All Years
+                    </button>
+                    {academicYearOptions.map((year) => (
+                      <button
+                        key={year.value}
+                        type="button"
+                        onClick={() => {
+                          setAcademicYear(year.value);
+                          setPage(1);
+                          setYearOpen(false);
+                        }}
+                        className={`w-full px-3 py-2 text-left text-sm text-black hover:text-black ${
+                          academicYear === year.value
+                            ? "bg-sky-200"
+                            : "hover:bg-slate-100"
+                        }`}
+                      >
+                        {year.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -140,7 +221,9 @@ export default function ProjectsApproved() {
           const files = (() => {
             if (!p.files) return [];
             try {
-              return typeof p.files === "string" ? JSON.parse(p.files) : p.files;
+              return typeof p.files === "string"
+                ? JSON.parse(p.files)
+                : p.files;
             } catch {
               return Array.isArray(p.files) ? p.files : [];
             }
@@ -167,7 +250,9 @@ export default function ProjectsApproved() {
                           Approved
                         </span>
                         <span className="rounded-full bg-slate-100 px-3 py-1 dark:bg-slate-800">
-                          {approvedAt ? new Date(approvedAt).toLocaleString() : "-"}
+                          {approvedAt
+                            ? new Date(approvedAt).toLocaleString()
+                            : "-"}
                         </span>
                       </div>
                     </div>
@@ -177,7 +262,10 @@ export default function ProjectsApproved() {
                         Approved by
                       </div>
                       <div className="mt-1 break-words font-medium text-slate-900 dark:text-slate-100">
-                        {p.verified_by_name || p.approved_by || p.approvedByName || "Staff"}
+                        {p.verified_by_name ||
+                          p.approved_by ||
+                          p.approvedByName ||
+                          "Staff"}
                       </div>
                     </div>
                   </div>
@@ -196,7 +284,10 @@ export default function ProjectsApproved() {
                         Approved by
                       </div>
                       <div className="mt-1 break-words text-sm font-medium text-slate-900 dark:text-slate-100">
-                        {p.verified_by_name || p.approved_by || p.approvedByName || "Staff"}
+                        {p.verified_by_name ||
+                          p.approved_by ||
+                          p.approvedByName ||
+                          "Staff"}
                       </div>
                     </div>
                   </div>
@@ -237,8 +328,12 @@ export default function ProjectsApproved() {
                       </div>
                       <div className="mt-3 grid gap-3 sm:grid-cols-2">
                         {files.map((f, i) => {
-                          const filename = f.filename || f.file || (typeof f === "string" ? f : undefined);
-                          const original = f.original_name || f.name || filename;
+                          const filename =
+                            f.filename ||
+                            f.file ||
+                            (typeof f === "string" ? f : undefined);
+                          const original =
+                            f.original_name || f.name || filename;
                           const downloadUrl = getFileUrl(filename);
 
                           return (
@@ -256,7 +351,9 @@ export default function ProjectsApproved() {
                                 }
                                 className="min-w-0 text-left text-sm font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 dark:text-blue-300"
                               >
-                                <span className="break-words">{original || "Attachment"}</span>
+                                <span className="break-words">
+                                  {original || "Attachment"}
+                                </span>
                               </button>
                               {filename && (
                                 <a
@@ -297,8 +394,21 @@ export default function ProjectsApproved() {
           onClick={() => setPage((p) => Math.max(1, p - 1))}
           className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-            <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden
+          >
+            <path
+              d="M15 6l-6 6 6 6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
           Prev
         </button>
@@ -311,14 +421,30 @@ export default function ProjectsApproved() {
           className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
         >
           Next
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-            <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden
+          >
+            <path
+              d="M9 6l6 6-6 6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </button>
       </div>
 
       {previewFile && (
-        <AttachmentPreview file={previewFile} onClose={() => setPreviewFile(null)} />
+        <AttachmentPreview
+          file={previewFile}
+          onClose={() => setPreviewFile(null)}
+        />
       )}
     </div>
   );

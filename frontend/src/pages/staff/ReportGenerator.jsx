@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import apiClient from "../../api/axiosClient";
 import exportToXlsxOrCsv from "../../utils/exportData";
 import BackButton from "../../components/BackButton";
@@ -30,25 +30,70 @@ const FACULTY_PARTICIPATION_EVENT_TYPE_OPTIONS = [
   "Conference Publications",
 ];
 
-function Dropdown({ label, value, onChange, options }) {
+function Dropdown({ value, onChange, options, placeholder = "All", icon }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    function onDocClick(e) {
+      if (!ref.current) return;
+      if (!ref.current.contains(e.target)) setOpen(false);
+    }
+    if (open) document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [open]);
+
+  const selectedLabel =
+    options.find((opt) => opt.value === value)?.label || value || placeholder;
+
   return (
-    <label className="flex flex-col text-sm">
-      <span className="text-slate-600 dark:text-slate-200 text-xs mb-1">
-        {label}
-      </span>
-      <select
-        value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
-        className="border rounded p-2 text-sm bg-white dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+    <div className="relative" ref={ref}>
+      {icon && (
+        <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
+          {icon}
+        </span>
+      )}
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className={`w-full rounded-md border border-slate-300 bg-white py-2 text-left text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+          icon ? "pl-9 pr-3" : "px-3"
+        }`}
       >
-        <option value="">All</option>
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
-      </select>
-    </label>
+        {selectedLabel}
+      </button>
+      {open && (
+        <div className="absolute left-0 right-0 mt-2 max-h-56 overflow-auto rounded-md border border-slate-200 bg-white shadow-lg z-20">
+          <button
+            type="button"
+            onClick={() => {
+              onChange("");
+              setOpen(false);
+            }}
+            className={`w-full px-3 py-2 text-left text-sm text-black hover:text-black ${
+              value === "" ? "bg-sky-200" : "hover:bg-slate-100"
+            }`}
+          >
+            {placeholder}
+          </button>
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => {
+                onChange(opt.value);
+                setOpen(false);
+              }}
+              className={`w-full px-3 py-2 text-left text-sm text-black hover:text-black ${
+                value === opt.value ? "bg-sky-200" : "hover:bg-slate-100"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -88,13 +133,17 @@ export default function ReportGenerator() {
         else if (mode === "projects") setItems(data.projects || []);
         else if (mode === "participation")
           setItems(
-            data.participation || data.participations || data.facultyParticipation || data.items || []
+            data.participation ||
+              data.participations ||
+              data.facultyParticipation ||
+              data.items ||
+              [],
           );
         else if (mode === "research")
           setItems(data.research || data.facultyResearch || data.items || []);
         else if (mode === "consultancy")
           setItems(
-            data.consultancies || data.facultyConsultancy || data.items || []
+            data.consultancies || data.facultyConsultancy || data.items || [],
           );
         else if (mode === "hackathons")
           setItems(data.hackathons || data.items || []);
@@ -127,6 +176,34 @@ export default function ReportGenerator() {
       return FACULTY_PARTICIPATION_EVENT_TYPE_OPTIONS;
     return [];
   }, [mode]);
+
+  const datasetOptions = useMemo(
+    () => [
+      { value: "achievements", label: "Achievements" },
+      { value: "projects", label: "Projects" },
+      { value: "participation", label: "Faculty Participation" },
+      { value: "research", label: "Faculty Research" },
+      { value: "consultancy", label: "Faculty Consultancy" },
+      { value: "hackathons", label: "Hackathon Entry and Progress" },
+    ],
+    [],
+  );
+
+  const userTypeOptions = useMemo(
+    () => [
+      { value: "student", label: "Student" },
+      { value: "staff", label: "Staff" },
+    ],
+    [],
+  );
+
+  const verifiedOptions = useMemo(
+    () => [
+      { value: "true", label: "Verified" },
+      { value: "false", label: "Not Verified" },
+    ],
+    [],
+  );
 
   const studentOptions = useMemo(() => {
     const s = new Set();
@@ -187,7 +264,7 @@ export default function ReportGenerator() {
             it.verified_at ||
             it.approvedAt ||
             it.date ||
-            it.date_of_award
+            it.date_of_award,
         );
         if (isNaN(d)) return false;
         if (d < new Date(fromDate)) return false;
@@ -198,7 +275,7 @@ export default function ReportGenerator() {
             it.verified_at ||
             it.approvedAt ||
             it.date ||
-            it.date_of_award
+            it.date_of_award,
         );
         if (isNaN(d)) return false;
         if (d > new Date(toDate + "T23:59:59")) return false;
@@ -218,13 +295,13 @@ export default function ReportGenerator() {
     }
 
     const columns = getColumnsForMode(mode).filter((c) =>
-      selectedColumns.includes(c.key)
+      selectedColumns.includes(c.key),
     );
 
     await exportToXlsxOrCsv(
       `${mode}-report-${new Date().toISOString().slice(0, 10)}`,
       rows,
-      columns
+      columns,
     );
   };
 
@@ -241,7 +318,7 @@ export default function ReportGenerator() {
 
   const toggleColumn = (key) => {
     setSelectedColumns((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
     );
   };
 
@@ -367,7 +444,7 @@ export default function ReportGenerator() {
         ? files
             .map(
               (f) =>
-                f.original_name || f.name || f.filename || JSON.stringify(f)
+                f.original_name || f.name || f.filename || JSON.stringify(f),
             )
             .join(" | ")
         : String(files || "");
@@ -476,7 +553,10 @@ export default function ReportGenerator() {
         verification_status:
           it.verification_status || (it.verified ? "approved" : "pending"),
         verified_by:
-          it.verified_by_name || it.verified_by_fullname || it.verified_by || "",
+          it.verified_by_name ||
+          it.verified_by_fullname ||
+          it.verified_by ||
+          "",
         verified_at: it.verified_at || "",
       };
     }
@@ -554,18 +634,28 @@ export default function ReportGenerator() {
                   />
                 </svg>
               </span>
-              <select
+              <Dropdown
                 value={mode}
-                onChange={(e) => setMode(e.target.value)}
-                className="w-full rounded-md border border-slate-300 pl-9 pr-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-              >
-                <option value="achievements">Achievements</option>
-                <option value="projects">Projects</option>
-                <option value="participation">Faculty Participation</option>
-                <option value="research">Faculty Research</option>
-                <option value="consultancy">Faculty Consultancy</option>
-                <option value="hackathons">Hackathon Entry and Progress</option>
-              </select>
+                onChange={setMode}
+                options={datasetOptions}
+                placeholder="All"
+                icon={
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden
+                  >
+                    <path
+                      d="M4 6h16M6 12h12M10 18h4"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                }
+              />
             </div>
           </div>
 
@@ -576,10 +666,26 @@ export default function ReportGenerator() {
             </label>
             {mode === "achievements" || mode === "participation" ? (
               <Dropdown
-                label=""
                 value={titleFilter}
                 onChange={setTitleFilter}
-                options={titleOptions}
+                options={titleOptions.map((o) => ({ value: o, label: o }))}
+                placeholder="All"
+                icon={
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden
+                  >
+                    <path
+                      d="M3 5h18M6 10h12M10 15h4"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                }
               />
             ) : (
               <div className="relative">
@@ -635,15 +741,33 @@ export default function ReportGenerator() {
                   />
                 </svg>
               </span>
-              <select
+              <Dropdown
                 value={userType}
-                onChange={(e) => setUserType(e.target.value)}
-                className="w-full rounded-md border border-slate-300 pl-9 pr-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-              >
-                <option value="">All</option>
-                <option value="student">Student</option>
-                <option value="staff">Staff</option>
-              </select>
+                onChange={setUserType}
+                options={userTypeOptions}
+                placeholder="All"
+                icon={
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden
+                  >
+                    <path
+                      d="M12 12a4 4 0 100-8 4 4 0 000 8z"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M4 20a8 8 0 0116 0"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                }
+              />
             </div>
           </div>
 
@@ -670,15 +794,29 @@ export default function ReportGenerator() {
                   />
                 </svg>
               </span>
-              <select
+              <Dropdown
                 value={verified}
-                onChange={(e) => setVerified(e.target.value)}
-                className="w-full rounded-md border border-slate-300 pl-9 pr-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-              >
-                <option value="">All</option>
-                <option value="true">Verified</option>
-                <option value="false">Not Verified</option>
-              </select>
+                onChange={setVerified}
+                options={verifiedOptions}
+                placeholder="All"
+                icon={
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden
+                  >
+                    <path
+                      d="M20 6L9 17l-5-5"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                }
+              />
             </div>
           </div>
         </div>

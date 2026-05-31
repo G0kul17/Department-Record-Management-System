@@ -223,12 +223,14 @@ export default function Home({ hideAtAGlance = false }) {
                   <h2 className="text-base font-bold text-slate-100 mb-4">
                     At a Glance
                   </h2>
-                  <div className={`grid gap-2 ${user?.role === "staff" ? "grid-cols-3" : "grid-cols-2"}`}>
+                  <div
+                    className={`grid gap-2 ${user?.role === "staff" ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"}`}
+                  >
                     <button
                       onClick={() => nav("/projects/approved")}
                       className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
                     >
-                      <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
+                      <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight break-words">
                         Projects
                       </div>
                       <div className="mt-1 text-base font-extrabold text-slate-100">
@@ -245,8 +247,8 @@ export default function Home({ hideAtAGlance = false }) {
                       onClick={() => nav("/achievements/approved")}
                       className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
                     >
-                      <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
-                        Achieve
+                      <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight break-words">
+                        Achievements
                       </div>
                       <div className="mt-1 text-base font-extrabold text-slate-100">
                         {achCount === null ? "—" : achCount}
@@ -258,8 +260,8 @@ export default function Home({ hideAtAGlance = false }) {
                           onClick={() => nav("/faculty-participation-approved")}
                           className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
                         >
-                          <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
-                            Particip.
+                          <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight break-words">
+                            Participation
                           </div>
                           <div className="mt-1 text-base font-extrabold text-slate-100">
                             {staffPartCount === null ? "—" : staffPartCount}
@@ -269,7 +271,7 @@ export default function Home({ hideAtAGlance = false }) {
                           onClick={() => nav("/faculty-research-approved")}
                           className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
                         >
-                          <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
+                          <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight break-words">
                             Research
                           </div>
                           <div className="mt-1 text-base font-extrabold text-slate-100">
@@ -280,8 +282,8 @@ export default function Home({ hideAtAGlance = false }) {
                           onClick={() => nav("/faculty-consultancy-approved")}
                           className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
                         >
-                          <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
-                            Consult.
+                          <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight break-words">
+                            Consultancy
                           </div>
                           <div className="mt-1 text-base font-extrabold text-slate-100">
                             {staffConsCount === null ? "—" : staffConsCount}
@@ -302,14 +304,18 @@ export default function Home({ hideAtAGlance = false }) {
           className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pt-8 sm:pt-12 md:pt-16 pb-8 sm:pb-10"
         >
           <div className="mb-5 sm:mb-6">
-            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Latest</p>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Events</h2>
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">
+              Latest
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+              Events
+            </h2>
           </div>
-          <div className="grid gap-6 sm:gap-8 md:grid-cols-2">
+          <div className="grid gap-6 sm:gap-8 md:grid-cols-2 items-start">
             <div className="md:col-span-1">
               <EventsCarousel events={events} intervalMs={5000} />
             </div>
-            <div className="md:col-span-1">
+            <div className="md:col-span-1 w-full max-w-[90%] sm:max-w-none mr-auto">
               <AchievementsLeaderboard />
             </div>
           </div>
@@ -321,8 +327,12 @@ export default function Home({ hideAtAGlance = false }) {
           className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-8 sm:pb-10"
         >
           <div className="mb-5 sm:mb-6">
-            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Recent</p>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Projects</h2>
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">
+              Recent
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+              Projects
+            </h2>
           </div>
           <ProjectsRecentGrid limit={6} />
         </div>
@@ -333,8 +343,12 @@ export default function Home({ hideAtAGlance = false }) {
           className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-8 sm:pb-10"
         >
           <div className="mb-5 sm:mb-6">
-            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Recent</p>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">Achievements</h2>
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">
+              Recent
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+              Achievements
+            </h2>
           </div>
           <AchievementsRecentGrid limit={6} />
         </div>
@@ -347,7 +361,9 @@ export default function Home({ hideAtAGlance = false }) {
           >
             <div className="py-8 sm:py-12 md:py-16">
               <div className="mb-8">
-                <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Admin</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">
+                  Admin
+                </p>
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900">
                   Analytics & Visualization
                 </h1>
@@ -582,7 +598,9 @@ function StatCard({ label, value, icon, color, onClick }) {
           <p className="text-xs sm:text-sm font-bold truncate">{label}</p>
           <p className="text-xl sm:text-2xl font-bold mt-1">{value}</p>
         </div>
-        <span className={`material-icons text-2xl sm:text-4xl flex-shrink-0 ${iconColorClasses[color]}`}>
+        <span
+          className={`material-icons text-2xl sm:text-4xl flex-shrink-0 ${iconColorClasses[color]}`}
+        >
           {icon}
         </span>
       </div>
@@ -636,7 +654,10 @@ function DonutChart({ title, data }) {
         {title}
       </h3>
       <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
-        <svg viewBox="0 0 110 110" className="w-[90px] h-[90px] sm:w-[110px] sm:h-[110px] flex-shrink-0">
+        <svg
+          viewBox="0 0 110 110"
+          className="w-[90px] h-[90px] sm:w-[110px] sm:h-[110px] flex-shrink-0"
+        >
           {total > 0 ? (
             data.map((item, idx) => {
               const percent = (item.value / total) * 100;
@@ -782,7 +803,10 @@ function PieChart({ title, data }) {
         {title}
       </h3>
       <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8">
-        <svg viewBox="0 0 140 140" className="w-[110px] h-[110px] sm:w-[140px] sm:h-[140px] flex-shrink-0">
+        <svg
+          viewBox="0 0 140 140"
+          className="w-[110px] h-[110px] sm:w-[140px] sm:h-[140px] flex-shrink-0"
+        >
           {total > 0 ? (
             data.map((item, idx) => {
               const percent = (item.value / total) * 100;

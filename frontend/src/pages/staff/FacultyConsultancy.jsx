@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import apiClient from "../../api/axiosClient";
 import SuccessModal from "../../components/ui/SuccessModal";
+import CustomSelect from "../../components/ui/CustomSelect";
 import UploadDropzone from "../../components/ui/UploadDropzone";
 
 export default function FacultyConsultancy() {
@@ -24,7 +25,9 @@ export default function FacultyConsultancy() {
   const onSubmit = async (e) => {
     e.preventDefault();
     const normalizedAgency =
-      form.agency === "__custom__" ? (form.agency_custom || "").trim() : form.agency;
+      form.agency === "__custom__"
+        ? (form.agency_custom || "").trim()
+        : form.agency;
     if (!normalizedAgency) {
       setMessage("Please enter agency");
       return;
@@ -96,31 +99,30 @@ export default function FacultyConsultancy() {
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
                 Agency <span className="text-red-600">*</span>
               </label>
-              <select
-                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+              <CustomSelect
                 value={form.agency}
-                onChange={(e) => {
-                  const v = e.target.value;
+                onChange={(value) => {
                   setForm((prev) => ({
                     ...prev,
-                    agency: v,
-                    agency_custom: v === "__custom__" ? prev.agency_custom : "",
+                    agency: value,
+                    agency_custom:
+                      value === "__custom__" ? prev.agency_custom : "",
                   }));
                 }}
+                options={[
+                  "DST",
+                  "SONA SEED",
+                  "ICMR",
+                  "DRDO",
+                  "CSIR",
+                  "IBM",
+                  "VEE CANADA",
+                  { value: "__custom__", label: "Custom Type" },
+                ]}
+                placeholder="Select Agency"
                 required
-              >
-                <option value="" disabled>
-                  Select Agency
-                </option>
-                <option value="DST">DST</option>
-                <option value="SONA SEED">SONA SEED</option>
-                <option value="ICMR">ICMR</option>
-                <option value="DRDO">DRDO</option>
-                <option value="CSIR">CSIR</option>
-                <option value="IBM">IBM</option>
-                <option value="VEE CANADA">VEE CANADA</option>
-                <option value="__custom__">Custom Type</option>
-              </select>
+                name="agency"
+              />
               {form.agency === "__custom__" && (
                 <input
                   className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
@@ -135,17 +137,16 @@ export default function FacultyConsultancy() {
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
                 Total Team Members <span className="text-red-600">*</span>
               </label>
-              <select
-                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+              <CustomSelect
                 value={form.teamMembersCount || 0}
-                onChange={(e) => {
-                  const count = Number(e.target.value);
+                onChange={(value) => {
+                  const count = Number(value || 0);
                   const existing = Array.isArray(form.teamMembers)
                     ? form.teamMembers
                     : [];
                   const next = Array.from(
                     { length: count },
-                    (_, i) => existing[i] || ""
+                    (_, i) => existing[i] || "",
                   );
                   setForm((prev) => ({
                     ...prev,
@@ -153,17 +154,14 @@ export default function FacultyConsultancy() {
                     teamMembers: next,
                   }));
                 }}
+                options={[...Array(10)].map((_, i) => ({
+                  value: i + 1,
+                  label: String(i + 1),
+                }))}
+                placeholder="Select Count"
                 required
-              >
-                <option value={0} disabled>
-                  Select Count
-                </option>
-                {[...Array(10)].map((_, i) => (
-                  <option key={i + 1} value={i + 1}>
-                    {i + 1}
-                  </option>
-                ))}
-              </select>
+                name="teamMembersCount"
+              />
               <div className="mt-2 space-y-2">
                 {Array.from({ length: form.teamMembersCount || 0 }).map(
                   (_, idx) => (
@@ -190,7 +188,7 @@ export default function FacultyConsultancy() {
                         required
                       />
                     </div>
-                  )
+                  ),
                 )}
               </div>
             </div>

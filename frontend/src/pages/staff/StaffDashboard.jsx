@@ -77,12 +77,25 @@ const StaffDashboard = () => {
             onClick={() => setSidebarOpen(true)}
             className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 6h16M4 12h16M4 18h16"
+              />
             </svg>
             Menu
           </button>
-          <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Staff Portal</span>
+          <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+            Staff Portal
+          </span>
         </div>
 
         <div className="flex items-start gap-8">
@@ -95,13 +108,26 @@ const StaffDashboard = () => {
           {sidebarOpen && (
             <div className="fixed left-0 top-0 z-50 h-full w-72 max-w-[85vw] rounded-r-2xl border-r border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900 overflow-y-auto lg:hidden">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Staff Portal</span>
+                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                  Staff Portal
+                </span>
                 <button
                   onClick={() => setSidebarOpen(false)}
                   className="rounded-lg p-1 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-slate-600 dark:text-slate-300"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
@@ -113,14 +139,17 @@ const StaffDashboard = () => {
             <Routes>
               <Route index element={<OverviewPanel user={user} />} />
               <Route path="projects" element={<ProjectsManagement />} />
-              <Route
-                path="achievements"
-                element={<AchievementsManagement />}
-              />
+              <Route path="achievements" element={<AchievementsManagement />} />
               <Route path="events" element={<EventsManagement />} />
               <Route path="faculty-research" element={<FacultyResearch />} />
-              <Route path="faculty-participation" element={<FacultyParticipation />} />
-              <Route path="faculty-consultancy" element={<FacultyConsultancy />} />
+              <Route
+                path="faculty-participation"
+                element={<FacultyParticipation />}
+              />
+              <Route
+                path="faculty-consultancy"
+                element={<FacultyConsultancy />}
+              />
             </Routes>
           </main>
         </div>
@@ -201,12 +230,12 @@ function OverviewPanel({ user }) {
             <h2 className="text-base font-bold text-slate-100 mb-4">
               At a Glance
             </h2>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               <button
-                onClick={() => (navigate("/projects/approved"))}
+                onClick={() => navigate("/projects/approved")}
                 className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
               >
-                <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
+                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight break-words">
                   Projects
                 </div>
                 <div className="mt-1 text-base font-extrabold text-slate-100">
@@ -214,32 +243,32 @@ function OverviewPanel({ user }) {
                 </div>
               </button>
               <button
-                onClick={() => (navigate("/achievements/approved"))}
+                onClick={() => navigate("/achievements/approved")}
                 className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
               >
-                <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
-                  Achieve
+                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight break-words">
+                  Achievements
                 </div>
                 <div className="mt-1 text-base font-extrabold text-slate-100">
                   {achCount === null ? "—" : achCount}
                 </div>
               </button>
               <button
-                onClick={() => (navigate("/staff/faculty-participation"))}
+                onClick={() => navigate("/staff/faculty-participation")}
                 className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
               >
-                <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
-                  Particip.
+                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight break-words">
+                  Participation
                 </div>
                 <div className="mt-1 text-base font-extrabold text-slate-100">
                   {partCount === null ? "—" : partCount}
                 </div>
               </button>
               <button
-                onClick={() => (navigate("/staff/faculty-research"))}
+                onClick={() => navigate("/staff/faculty-research")}
                 className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
               >
-                <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
+                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight break-words">
                   Research
                 </div>
                 <div className="mt-1 text-base font-extrabold text-slate-100">
@@ -247,11 +276,11 @@ function OverviewPanel({ user }) {
                 </div>
               </button>
               <button
-                onClick={() => (navigate("/staff/faculty-consultancy"))}
+                onClick={() => navigate("/staff/faculty-consultancy")}
                 className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
               >
-                <div className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
-                  Consult.
+                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight break-words">
+                  Consultancy
                 </div>
                 <div className="mt-1 text-base font-extrabold text-slate-100">
                   {consCount === null ? "—" : consCount}
@@ -266,15 +295,23 @@ function OverviewPanel({ user }) {
 
       <div>
         <div className="mb-5">
-          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Latest</p>
-          <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Events</h3>
+          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">
+            Latest
+          </p>
+          <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            Events
+          </h3>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           <div className="lg:col-span-2">
             {loadingEvents ? (
-              <div className="text-sm text-slate-600 p-8 bg-slate-50 dark:bg-slate-900/40 rounded-xl">Loading events...</div>
+              <div className="text-sm text-slate-600 p-8 bg-slate-50 dark:bg-slate-900/40 rounded-xl">
+                Loading events...
+              </div>
             ) : events.length === 0 ? (
-              <div className="text-sm text-slate-600 p-8 bg-slate-50 dark:bg-slate-900/40 rounded-xl">No events yet.</div>
+              <div className="text-sm text-slate-600 p-8 bg-slate-50 dark:bg-slate-900/40 rounded-xl">
+                No events yet.
+              </div>
             ) : (
               <EventsCarousel events={events} intervalMs={4500} />
             )}
@@ -288,8 +325,12 @@ function OverviewPanel({ user }) {
       {/* Recent Projects grid (latest 6) for staff */}
       <div>
         <div className="mb-5">
-          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Recent</p>
-          <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Projects</h3>
+          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">
+            Recent
+          </p>
+          <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            Projects
+          </h3>
         </div>
         <ProjectsRecentGrid limit={6} />
       </div>
@@ -297,8 +338,12 @@ function OverviewPanel({ user }) {
       {/* Recent Achievements grid (latest 6) for staff */}
       <div className="pb-8">
         <div className="mb-5">
-          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">Recent</p>
-          <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Achievements</h3>
+          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">
+            Recent
+          </p>
+          <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            Achievements
+          </h3>
         </div>
         <AchievementsRecentGrid limit={6} />
       </div>

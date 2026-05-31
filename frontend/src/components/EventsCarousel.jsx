@@ -52,7 +52,7 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full max-w-[90%] sm:max-w-none mr-auto">
       <div className="relative overflow-hidden rounded-lg shadow-sm">
         <div
           className="flex transition-transform duration-500"
@@ -68,27 +68,27 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
             const href = ev.event_url ? ev.event_url : `/events/${ev.id}`;
             const external = Boolean(ev.event_url);
             return (
-              <div key={ev.id} className="flex-shrink-0 w-full p-4">
+              <div key={ev.id} className="flex-shrink-0 w-full p-2 sm:p-4">
                 <a
                   href={href}
                   target={external ? "_blank" : undefined}
                   rel={external ? "noreferrer" : undefined}
-                  className="block rounded-xl border border-slate-200 bg-white p-4 md:p-6 shadow-sm hover:shadow-md transition"
+                  className="block rounded-xl border border-slate-200 bg-white p-3 sm:p-4 md:p-6 shadow-sm hover:shadow-md transition"
                 >
-                  <h3 className="text-lg md:text-xl font-bold text-slate-900 line-clamp-2">
+                  <h3 className="text-base sm:text-lg md:text-xl font-bold text-slate-900 line-clamp-2">
                     {ev.title}
                   </h3>
                   {thumb ? (
-                    <div className="mt-3 overflow-hidden rounded-lg bg-white">
+                    <div className="mt-2 sm:mt-3 overflow-hidden rounded-lg bg-white">
                       <img
                         src={thumb}
                         alt={ev.title}
-                        className="w-full h-auto max-h-[160px] sm:max-h-[280px] md:max-h-[420px] object-contain"
+                        className="w-full h-auto max-h-[140px] sm:max-h-[240px] md:max-h-[420px] object-contain"
                         loading="lazy"
                       />
                     </div>
                   ) : (
-                    <div className="mt-3 h-28 sm:h-40 md:h-56 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-100" />
+                    <div className="mt-2 sm:mt-3 h-24 sm:h-40 md:h-56 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-100" />
                   )}
                 </a>
               </div>
@@ -104,17 +104,39 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
               className="absolute left-2 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow hover:bg-white transition"
               aria-label="Previous event"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 text-slate-700"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
             </button>
             <button
               onClick={next}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow hover:bg-white transition"
+              className="absolute right-6 sm:right-3 md:right-2 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow hover:bg-white transition"
               aria-label="Next event"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 text-slate-700"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </button>
           </>
@@ -126,7 +148,10 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
             {events.map((_, i) => (
               <button
                 key={i}
-                onClick={() => { setIndex(i); resetTimer(); }}
+                onClick={() => {
+                  setIndex(i);
+                  resetTimer();
+                }}
                 className={`w-2 h-2 rounded-full transition-all ${
                   i === index ? "bg-blue-600 scale-125" : "bg-slate-300"
                 }`}

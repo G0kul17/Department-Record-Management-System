@@ -1,7 +1,6 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import apiClient from "../api/axiosClient";
 import AttachmentPreview from "../components/AttachmentPreview";
-import { generateAcademicYears } from "../utils/academicYears";
 
 export default function FacultyParticipationApproved() {
   const [items, setItems] = useState([]);
@@ -9,11 +8,29 @@ export default function FacultyParticipationApproved() {
   const [previewFile, setPreviewFile] = useState(null);
   const [q, setQ] = useState("");
   const [academicYear, setAcademicYear] = useState("");
+  const [yearOpen, setYearOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
+  const yearRef = useRef(null);
 
-  const academicYearOptions = useMemo(() => generateAcademicYears(), []);
+  const yearOptions = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let y = currentYear; y >= currentYear - 15; y -= 1) {
+      years.push(String(y));
+    }
+    return years;
+  }, []);
+
+  useEffect(() => {
+    function onDocClick(e) {
+      if (!yearRef.current) return;
+      if (!yearRef.current.contains(e.target)) setYearOpen(false);
+    }
+    if (yearOpen) document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [yearOpen]);
 
   useEffect(() => {
     let mounted = true;
@@ -24,9 +41,9 @@ export default function FacultyParticipationApproved() {
         params.set("limit", String(limit));
         params.set("offset", String((page - 1) * limit));
         if (q.trim()) params.set("q", q.trim());
-          if (academicYear) params.set("year", academicYear);
+        if (academicYear) params.set("year", academicYear);
         const data = await apiClient.get(
-          `/faculty-participations?${params.toString()}`
+          `/faculty-participations?${params.toString()}`,
         );
         if (!mounted) return;
         setItems(data.participation || []);
@@ -43,6 +60,12 @@ export default function FacultyParticipationApproved() {
     })();
     return () => (mounted = false);
   }, [q, academicYear, page, limit]);
+
+  const toYear = (value) => {
+    if (!value) return "";
+    const match = String(value).match(/\b(19|20)\d{2}\b/);
+    return match ? match[0] : "";
+  };
 
   const totalPages = Math.ceil(total / limit);
 
@@ -97,21 +120,52 @@ export default function FacultyParticipationApproved() {
               <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
                 Academic Year
               </label>
-              <select
-                value={academicYear}
-                onChange={(e) => {
-                  setAcademicYear(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-              >
-                <option value="">All Years</option>
-                {academicYearOptions.map(year => (
-                  <option key={year.value} value={year.value}>
-                    {year.label}
-                  </option>
-                ))}
-              </select>
+              <div className="relative" ref={yearRef}>
+                <button
+                  type="button"
+                  onClick={() => setYearOpen((prev) => !prev)}
+                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-left text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  {academicYear || "All Years"}
+                </button>
+                {yearOpen && (
+                  <div className="absolute left-0 right-0 mt-2 max-h-56 overflow-auto rounded-md border border-slate-200 bg-white shadow-lg z-20">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAcademicYear("");
+                        setPage(1);
+                        setYearOpen(false);
+                      }}
+                      className={`w-full px-3 py-2 text-left text-sm text-black hover:text-black ${
+                        academicYear === ""
+                          ? "bg-sky-200"
+                          : "hover:bg-slate-100"
+                      }`}
+                    >
+                      All Years
+                    </button>
+                    {yearOptions.map((year) => (
+                      <button
+                        key={year}
+                        type="button"
+                        onClick={() => {
+                          setAcademicYear(year);
+                          setPage(1);
+                          setYearOpen(false);
+                        }}
+                        className={`w-full px-3 py-2 text-left text-sm text-black hover:text-black ${
+                          academicYear === year
+                            ? "bg-sky-200"
+                            : "hover:bg-slate-100"
+                        }`}
+                      >
+                        {year}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -130,214 +184,221 @@ export default function FacultyParticipationApproved() {
       {/* Items List */}
       {!loading && items.length > 0 && (
         <div className="space-y-6 mb-8">
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="glitter-card rounded-xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow dark:border-slate-800 dark:bg-slate-900"
-            >
-              {/* Header */}
-              <div className="mb-4 border-b border-slate-200 dark:border-slate-700 pb-4">
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                  {item.title || "Untitled"}
-                </h3>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                    {item.type_of_event || "N/A"}
-                  </span>
-                  {item.mode_of_training && (
-                    <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200">
-                      {item.mode_of_training}
+          {items
+            .filter((item) => {
+              if (!academicYear) return true;
+              const itemYear =
+                toYear(item.academic_year) || toYear(item.start_date) || "";
+              return itemYear === academicYear;
+            })
+            .map((item) => (
+              <div
+                key={item.id}
+                className="glitter-card rounded-xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow dark:border-slate-800 dark:bg-slate-900"
+              >
+                {/* Header */}
+                <div className="mb-4 border-b border-slate-200 dark:border-slate-700 pb-4">
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                    {item.title || "Untitled"}
+                  </h3>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                      {item.type_of_event || "N/A"}
                     </span>
+                    {item.mode_of_training && (
+                      <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200">
+                        {item.mode_of_training}
+                      </span>
+                    )}
+                    {item.publications_type && (
+                      <span className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                        {item.publications_type}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Details Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  {item.faculty_name && (
+                    <div>
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                        Faculty Name
+                      </span>
+                      <p className="text-sm text-slate-900 dark:text-slate-100 font-medium">
+                        {item.faculty_name}
+                      </p>
+                    </div>
                   )}
-                  {item.publications_type && (
-                    <span className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                      {item.publications_type}
-                    </span>
+                  {item.department && (
+                    <div>
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                        Department
+                      </span>
+                      <p className="text-sm text-slate-900 dark:text-slate-100">
+                        {item.department}
+                      </p>
+                    </div>
+                  )}
+                  {item.start_date && (
+                    <div>
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                        Start Date
+                      </span>
+                      <p className="text-sm text-slate-900 dark:text-slate-100">
+                        {new Date(item.start_date).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
+                  {item.end_date && (
+                    <div>
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                        End Date
+                      </span>
+                      <p className="text-sm text-slate-900 dark:text-slate-100">
+                        {new Date(item.end_date).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
+                  {item.conducted_by && (
+                    <div>
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                        Conducted By
+                      </span>
+                      <p className="text-sm text-slate-900 dark:text-slate-100">
+                        {item.conducted_by}
+                      </p>
+                    </div>
                   )}
                 </div>
-              </div>
 
-              {/* Details Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                {item.faculty_name && (
-                  <div>
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                      Faculty Name
-                    </span>
-                    <p className="text-sm text-slate-900 dark:text-slate-100 font-medium">
-                      {item.faculty_name}
-                    </p>
-                  </div>
-                )}
-                {item.department && (
-                  <div>
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                      Department
-                    </span>
-                    <p className="text-sm text-slate-900 dark:text-slate-100">
-                      {item.department}
-                    </p>
-                  </div>
-                )}
-                {item.start_date && (
-                  <div>
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                      Start Date
-                    </span>
-                    <p className="text-sm text-slate-900 dark:text-slate-100">
-                      {new Date(item.start_date).toLocaleDateString()}
-                    </p>
-                  </div>
-                )}
-                {item.end_date && (
-                  <div>
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                      End Date
-                    </span>
-                    <p className="text-sm text-slate-900 dark:text-slate-100">
-                      {new Date(item.end_date).toLocaleDateString()}
-                    </p>
-                  </div>
-                )}
-                {item.conducted_by && (
-                  <div>
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                      Conducted By
-                    </span>
-                    <p className="text-sm text-slate-900 dark:text-slate-100">
-                      {item.conducted_by}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Publications Info (if available) */}
-              {(item.paper_title ||
-                item.journal_name ||
-                item.claiming_faculty_name) && (
-                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                  <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
-                    Publication Details
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {item.claiming_faculty_name && (
-                      <div>
-                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                          Claiming Faculty
-                        </span>
-                        <p className="text-sm text-slate-900 dark:text-slate-100">
-                          {item.claiming_faculty_name}
-                        </p>
-                      </div>
-                    )}
-                    {item.paper_title && (
-                      <div className="md:col-span-2">
-                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                          Paper Title
-                        </span>
-                        <p className="text-sm text-slate-900 dark:text-slate-100">
-                          {item.paper_title}
-                        </p>
-                      </div>
-                    )}
-                    {item.journal_name && (
-                      <div>
-                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                          Journal/Conference
-                        </span>
-                        <p className="text-sm text-slate-900 dark:text-slate-100">
-                          {item.journal_name}
-                        </p>
-                      </div>
-                    )}
-                    {item.publication_indexing && (
-                      <div>
-                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                          Indexing
-                        </span>
-                        <p className="text-sm text-slate-900 dark:text-slate-100">
-                          {item.publication_indexing}
-                        </p>
-                      </div>
-                    )}
-                    {item.impact_factor && (
-                      <div>
-                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                          Impact Factor
-                        </span>
-                        <p className="text-sm text-slate-900 dark:text-slate-100">
-                          {item.impact_factor}
-                        </p>
-                      </div>
-                    )}
-                    {item.citations_count !== null &&
-                      item.citations_count !== undefined && (
+                {/* Publications Info (if available) */}
+                {(item.paper_title ||
+                  item.journal_name ||
+                  item.claiming_faculty_name) && (
+                  <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
+                      Publication Details
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {item.claiming_faculty_name && (
                         <div>
                           <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                            Citations
+                            Claiming Faculty
                           </span>
                           <p className="text-sm text-slate-900 dark:text-slate-100">
-                            {item.citations_count}
+                            {item.claiming_faculty_name}
                           </p>
                         </div>
                       )}
+                      {item.paper_title && (
+                        <div className="md:col-span-2">
+                          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                            Paper Title
+                          </span>
+                          <p className="text-sm text-slate-900 dark:text-slate-100">
+                            {item.paper_title}
+                          </p>
+                        </div>
+                      )}
+                      {item.journal_name && (
+                        <div>
+                          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                            Journal/Conference
+                          </span>
+                          <p className="text-sm text-slate-900 dark:text-slate-100">
+                            {item.journal_name}
+                          </p>
+                        </div>
+                      )}
+                      {item.publication_indexing && (
+                        <div>
+                          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                            Indexing
+                          </span>
+                          <p className="text-sm text-slate-900 dark:text-slate-100">
+                            {item.publication_indexing}
+                          </p>
+                        </div>
+                      )}
+                      {item.impact_factor && (
+                        <div>
+                          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                            Impact Factor
+                          </span>
+                          <p className="text-sm text-slate-900 dark:text-slate-100">
+                            {item.impact_factor}
+                          </p>
+                        </div>
+                      )}
+                      {item.citations_count !== null &&
+                        item.citations_count !== undefined && (
+                          <div>
+                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                              Citations
+                            </span>
+                            <p className="text-sm text-slate-900 dark:text-slate-100">
+                              {item.citations_count}
+                            </p>
+                          </div>
+                        )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Description */}
-              {item.details && (
-                <div className="mt-4">
-                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                    Details
-                  </span>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                    {item.details}
-                  </p>
-                </div>
-              )}
+                {/* Description */}
+                {item.details && (
+                  <div className="mt-4">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                      Details
+                    </span>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                      {item.details}
+                    </p>
+                  </div>
+                )}
 
-              {/* Footer with proof */}
-              {item.proof_filename && (
-                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                  <button
-                    onClick={() =>
-                      setPreviewFile({
-                        filename: item.proof_filename,
-                        original_name:
-                          item.proof_original_name || item.proof_filename,
-                      })
-                    }
-                    className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
+                {/* Footer with proof */}
+                {item.proof_filename && (
+                  <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <button
+                      onClick={() =>
+                        setPreviewFile({
+                          filename: item.proof_filename,
+                          original_name:
+                            item.proof_original_name || item.proof_filename,
+                        })
+                      }
+                      className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                     >
-                      <path
-                        d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <polyline
-                        points="13 2 13 9 20 9"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    View Proof Document
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <polyline
+                          points="13 2 13 9 20 9"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      View Proof Document
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
         </div>
       )}
 

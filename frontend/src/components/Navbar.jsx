@@ -20,7 +20,10 @@ const Navbar = () => {
   const photoUrl = (() => {
     const raw =
       (user &&
-        (user.photoUrl || user.avatarUrl || user.imageUrl || user.profilePic)) ||
+        (user.photoUrl ||
+          user.avatarUrl ||
+          user.imageUrl ||
+          user.profilePic)) ||
       "";
     if (!raw) return null;
     const value = String(raw).trim();
@@ -79,24 +82,32 @@ const Navbar = () => {
             { label: "Events", section: "events", path: "/admin" },
             { label: "Projects", section: "projects", path: "/admin" },
             { label: "Achievements", section: "achievements", path: "/admin" },
-            { label: "Visualization", section: "visualization", path: "/admin" },
+            {
+              label: "Visualization",
+              section: "visualization",
+              path: "/admin",
+            },
             { label: "Notifications", section: null, path: "/notifications" },
           ]
         : user.role === "student"
-        ? [
-            { label: "Events", section: "events", path: "/" },
-            { label: "Projects", section: "projects", path: "/" },
-            { label: "Achievements", section: "achievements", path: "/" },
-            { label: "Notifications", section: null, path: "/notifications" },
-          ]
-        : user.role === "staff"
-        ? [
-            { label: "Events", section: "events", path: "/" },
-            { label: "Projects", section: "projects", path: "/" },
-            { label: "Achievements", section: "achievements", path: "/" },
-            { label: "Notifications", section: null, path: "/notifications" },
-          ]
-        : []
+          ? [
+              { label: "Events", section: "events", path: "/" },
+              { label: "Projects", section: "projects", path: "/" },
+              { label: "Achievements", section: "achievements", path: "/" },
+              { label: "Notifications", section: null, path: "/notifications" },
+            ]
+          : user.role === "staff"
+            ? [
+                { label: "Events", section: "events", path: "/" },
+                { label: "Projects", section: "projects", path: "/" },
+                { label: "Achievements", section: "achievements", path: "/" },
+                {
+                  label: "Notifications",
+                  section: null,
+                  path: "/notifications",
+                },
+              ]
+            : []
       : [];
 
   function handleNavLinkClick(link) {
@@ -190,12 +201,34 @@ const Navbar = () => {
                     aria-label="Toggle menu"
                   >
                     {mobileMenuOpen ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                     ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M4 6h16M4 12h16M4 18h16"
+                        />
                       </svg>
                     )}
                   </button>
@@ -235,7 +268,7 @@ const Navbar = () => {
 
       {/* Mobile nav dropdown (only when logged in) */}
       {mobileMenuOpen && navLinks.length > 0 && (
-        <div className="md:hidden border-t border-white/10 bg-slate-900 px-2 pb-3">
+        <div className="md:hidden absolute left-0 right-0 top-16 z-[9997] max-h-[70vh] border-t border-white/10 bg-slate-900 px-2 pb-3 overflow-auto">
           {navLinks.map((link) => (
             <button
               key={link.label}
@@ -247,7 +280,8 @@ const Navbar = () => {
           ))}
           {user && (
             <div className="mt-1 px-3 py-2 text-sm text-slate-400 border-t border-white/10">
-              Signed in as <span className="text-slate-200 font-medium">{displayName}</span>
+              Signed in as{" "}
+              <span className="text-slate-200 font-medium">{displayName}</span>
             </div>
           )}
         </div>
@@ -261,7 +295,7 @@ const Navbar = () => {
               className="fixed inset-0 z-[9998] bg-black/30 backdrop-blur-sm"
               onClick={() => setSidebarOpen(false)}
             />
-            <div className="fixed right-4 top-16 z-[9999] w-72 max-w-[calc(100vw-2rem)] max-h-[80vh] overflow-auto rounded-xl border border-slate-200 bg-white shadow-xl">
+            <div className="fixed left-2 right-2 top-16 z-[9999] w-auto max-h-[70vh] overflow-auto bg-white shadow-xl md:inset-auto md:right-4 md:top-16 md:w-72 md:max-w-[calc(100vw-2rem)] md:max-h-[80vh] md:rounded-xl md:border md:border-slate-200">
               <div className="flex items-center gap-3 border-b border-slate-200 p-4">
                 <Avatar className="h-10 w-10 bg-slate-100">
                   {photoUrl ? (
@@ -277,7 +311,9 @@ const Navbar = () => {
                     {displayName}
                   </span>
                   {user?.role && (
-                    <span className="text-xs text-slate-500 capitalize">{user.role}</span>
+                    <span className="text-xs text-slate-500 capitalize">
+                      {user.role}
+                    </span>
                   )}
                 </div>
                 <div className="ml-auto flex-shrink-0">

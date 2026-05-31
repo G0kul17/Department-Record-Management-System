@@ -3,6 +3,7 @@ import apiClient from "../../api/axiosClient";
 import SuccessModal from "../../components/ui/SuccessModal";
 import BackButton from "../../components/BackButton";
 import UploadDropzone from "../../components/ui/UploadDropzone";
+import CustomSelect from "../../components/ui/CustomSelect";
 
 export default function AdminUploadExtracurricular() {
   const [uploaderName, setUploaderName] = useState("");
@@ -79,9 +80,9 @@ export default function AdminUploadExtracurricular() {
         missing.length
           ? `Missing required headers for ${dataType.replace(
               "_",
-              " "
+              " ",
             )}: ${missing.join(", ")}`
-          : "Preview generated. Review and click Save."
+          : "Preview generated. Review and click Save.",
       );
     } catch (err) {
       setMessage(err.message || "Failed to generate preview");
@@ -140,23 +141,23 @@ export default function AdminUploadExtracurricular() {
           <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
             Data Category <span className="text-red-600">*</span>
           </label>
-          <select
-            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+          <CustomSelect
             value={dataType}
-            onChange={(e) => setDataType(e.target.value)}
+            onChange={(value) => setDataType(value)}
+            options={[
+              { value: "achievements", label: "Achievement" },
+              { value: "projects", label: "Projects" },
+              { value: "faculty_research", label: "Faculty Research" },
+              { value: "faculty_consultancy", label: "Faculty Consultancy" },
+              {
+                value: "faculty_participations",
+                label: "Faculty Participation",
+              },
+            ]}
+            placeholder="Select category"
             required
-          >
-            <option value="" disabled>
-              Select category
-            </option>
-            <option value="achievements">Achievement</option>
-            <option value="projects">Projects</option>
-            <option value="faculty_research">Faculty Research</option>
-            <option value="faculty_consultancy">Faculty Consultancy</option>
-            <option value="faculty_participations">
-              Faculty Participation
-            </option>
-          </select>
+            name="data_category"
+          />
           {dataType && (
             <div className="mt-2 text-[11px] text-slate-600 dark:text-slate-300">
               Required headers:{" "}

@@ -100,23 +100,37 @@ export default function AttachmentPreview({ file, onClose }) {
     // PDF files: try iframe first (more reliable across browsers); show fallbacks
     if (ext === "pdf") {
       const googleViewer = `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(
-        url
+        url,
       )}`;
       return (
         <div className="w-full h-[70vh] space-y-3">
-          <iframe
-            src={previewUrl}
-            title={name}
+          <object
+            data={previewUrl}
+            type="application/pdf"
             className="w-full h-full border-0"
-          />
-          <div className="flex items-center gap-3 text-sm">
+          >
+            <iframe
+              src={previewUrl}
+              title={name}
+              className="w-full h-full border-0"
+            />
+          </object>
+          <div className="flex flex-wrap items-center gap-3 text-sm">
+            <a
+              href={previewUrl}
+              download={name}
+              className="text-blue-600 underline"
+            >
+              Download {name}
+            </a>
+            <span className="text-slate-400">•</span>
             <a
               href={previewUrl}
               target="_blank"
               rel="noreferrer"
-              className="text-blue-600 underline"
+              className="text-slate-700 underline"
             >
-              Open or download {name}
+              Open in new tab
             </a>
             <span className="text-slate-400">•</span>
             <a
@@ -169,7 +183,7 @@ export default function AttachmentPreview({ file, onClose }) {
     ) {
       // Office files - provide download and Google viewer links
       const publicViewer = `https://docs.google.com/gview?url=${encodeURIComponent(
-        url
+        url,
       )}&embedded=true`;
       return (
         <div className="p-6 flex flex-col items-center justify-center min-h-[400px] gap-4">
@@ -378,7 +392,7 @@ export default function AttachmentPreview({ file, onClose }) {
             onClick={onClose}
             className="px-3 py-1 text-sm text-slate-700"
           >
-            Close
+            X
           </button>
         </div>
         <div className="p-4 max-h-[80vh] overflow-auto">
@@ -387,7 +401,7 @@ export default function AttachmentPreview({ file, onClose }) {
             "AttachmentPreview: url=",
             url,
             " previewUrl=",
-            previewUrl
+            previewUrl,
           )}
           {renderContent()}
         </div>

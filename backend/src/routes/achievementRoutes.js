@@ -34,7 +34,7 @@ router.post(
 
 router.get("/", optionalAuth, listAchievements);
 router.get("/count", getAchievementsCount);
-router.get("/leaderboard", getAchievementsLeaderboard);
+router.get("/leaderboard", optionalAuth, getAchievementsLeaderboard);
 router.get("/:id", optionalAuth, getAchievementDetails);
 
 router.post(

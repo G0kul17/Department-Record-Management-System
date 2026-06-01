@@ -53,7 +53,7 @@ function AuthSplitLayout({
             <p className="mb-2 text-[10px] tracking-[0.25em] text-white/80 [font-family:'DM_Sans',sans-serif] sm:mb-5 sm:text-xs sm:tracking-[0.3em]">
               {heroEyebrow}
             </p>
-            <h2 className="text-2xl leading-[0.9] text-white [font-family:'Cormorant_Garamond',serif] sm:text-4xl md:text-6xl">
+            <h2 className="text-2xl font-bold leading-[0.9] text-[#f3d58b] drop-shadow-[0_2px_14px_rgba(15,23,42,0.55)] [font-family:'Cormorant_Garamond',serif] sm:text-4xl md:text-6xl">
               {heroTitle}
             </h2>
             <p className="mt-2 text-xs leading-relaxed text-white/85 [font-family:'DM_Sans',sans-serif] sm:mt-4 sm:text-sm">
@@ -74,7 +74,7 @@ function AuthSplitLayout({
               />
             </div>
 
-            <h1 className="text-center text-2xl leading-tight text-slate-900 [font-family:'Cormorant_Garamond',serif] sm:text-4xl sm:text-5xl">
+            <h1 className="text-center text-2xl leading-tight text-slate-900 [font-family:'Cormorant_Garamond',serif] sm:text-4xl md:text-5xl">
               {title}
             </h1>
             <p className="mx-auto mt-2 max-w-sm text-center text-xs text-slate-500">

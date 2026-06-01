@@ -571,10 +571,21 @@ export async function getAchievementsLeaderboard(req, res) {
     const key = queries[type] ? type : "achievements";
     const role = key.startsWith("faculty_") ? "staff" : "student";
 
+    let requesterRole = (req.user?.role || "").toLowerCase();
+    if (key.startsWith("faculty_") && req.user?.id) {
+      const { rows: roleRows } = await tracedQuery(
+        pool,
+        "SELECT role FROM users WHERE id = $1",
+        [req.user.id],
+      );
+      const liveRole = (roleRows[0]?.role || "").toLowerCase();
+      if (liveRole) requesterRole = liveRole;
+    }
+
     // Faculty leaderboards should only be visible to authenticated staff/admin users.
     if (
       role === "staff" &&
-      (!req.user || !["staff", "admin"].includes((req.user.role || "").toLowerCase()))
+      (!req.user || !["staff", "admin"].includes(requesterRole))
     ) {
       return res.status(403).json({ message: "Forbidden" });
     }

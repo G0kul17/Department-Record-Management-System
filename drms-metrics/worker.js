@@ -1,17 +1,28 @@
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type",
+};
+
+function json(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { "Content-Type": "application/json", ...CORS_HEADERS },
+  });
+}
+
+function bearerOk(request, token) {
+  const auth = request.headers.get("Authorization") || "";
+  return auth.startsWith("Bearer ") && auth.slice(7) === token;
+}
+
 export default {
   async fetch(request, env) {
     try {
       const url = new URL(request.url);
 
       if (request.method === "OPTIONS") {
-        return new Response(null, {
-          status: 204,
-          headers: {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-            "Access-Control-Allow-Headers": "Authorization, Content-Type",
-          },
-        });
+        return new Response(null, { status: 204, headers: CORS_HEADERS });
       }
 
       if (url.pathname === "/health" && request.method === "GET") {
@@ -19,42 +30,71 @@ export default {
       }
 
       if (url.pathname === "/collect" && request.method === "POST") {
-        const auth = request.headers.get("Authorization") || "";
-        if (!auth.startsWith("Bearer ") || auth.slice(7) !== env.TOKEN) {
+        if (!bearerOk(request, env.TOKEN))
           return new Response("Unauthorized", { status: 401 });
-        }
 
         let payload;
-        try {
-          payload = await request.json();
-        } catch {
-          return new Response("Invalid JSON", { status: 400 });
-        }
+        try { payload = await request.json(); }
+        catch { return new Response("Invalid JSON", { status: 400 }); }
 
         const { indexes, doubles } = payload;
         if (
           !indexes?.service || !indexes?.environment ||
           doubles?.total_requests == null || doubles?.failed_requests == null ||
           doubles?.p95_latency_ms == null || doubles?.auth_failures == null
-        ) {
-          return new Response("Missing required fields", { status: 400 });
-        }
+        ) return new Response("Missing required fields", { status: 400 });
 
         env.DRMS_METRICS.writeDataPoint({
           indexes: [`${indexes.service}:${indexes.environment}`],
-          doubles: [
-            doubles.total_requests,
-            doubles.failed_requests,
-            doubles.p95_latency_ms,
-            doubles.auth_failures,
-          ],
+          doubles: [doubles.total_requests, doubles.failed_requests,
+                    doubles.p95_latency_ms, doubles.auth_failures],
           blobs: [`${indexes.service}:${indexes.environment}`],
         });
 
-        return new Response(JSON.stringify({ status: "ok" }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        });
+        return json({ status: "ok" });
+      }
+
+      // GET /query?from=<unix_seconds>&to=<unix_seconds>&step=<minutes>
+      // Proxies Cloudflare Analytics Engine SQL API for Grafana Infinity plugin.
+      if (url.pathname === "/query" && request.method === "GET") {
+        if (!bearerOk(request, env.TOKEN))
+          return new Response("Unauthorized", { status: 401 });
+
+        const now = Math.floor(Date.now() / 1000);
+        const from = parseInt(url.searchParams.get("from") || String(now - 3600));
+        const to   = parseInt(url.searchParams.get("to")   || String(now));
+        const step = Math.max(1, Math.min(60, parseInt(url.searchParams.get("step") || "1")));
+
+        const sql = `
+          SELECT
+            toStartOfInterval(timestamp, INTERVAL '${step}' MINUTE) AS t,
+            blob1 AS service_env,
+            SUM(double1) AS total_requests,
+            SUM(double2) AS failed_requests,
+            quantileWeighted(0.95)(double3, 1) AS p95_latency_ms,
+            SUM(double4) AS auth_failures
+          FROM drms_metrics
+          WHERE timestamp >= toDateTime(${from})
+            AND timestamp <= toDateTime(${to})
+            AND blob1 != ''
+          GROUP BY t, service_env
+          ORDER BY t ASC
+        `;
+
+        const cfRes = await fetch(
+          `https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}/analytics_engine/sql`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${env.CF_API_TOKEN}`,
+              "Content-Type": "text/plain",
+            },
+            body: sql,
+          }
+        );
+
+        const data = await cfRes.json();
+        return json(data, cfRes.status);
       }
 
       return new Response("Not Found", { status: 404 });

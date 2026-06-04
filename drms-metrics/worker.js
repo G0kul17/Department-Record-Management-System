@@ -48,7 +48,7 @@ export default {
             doubles.p95_latency_ms,
             doubles.auth_failures,
           ],
-          blobs: [],
+          blobs: [`${indexes.service}:${indexes.environment}`],
         });
 
         return new Response(JSON.stringify({ status: "ok" }), {

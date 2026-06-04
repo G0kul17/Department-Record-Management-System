@@ -1,0 +1,10 @@
+name = "drms-metrics"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+[[analytics_engine_datasets]]
+binding = "DRMS_METRICS"
+dataset = "drms_metrics"
+
+[triggers]
+crons = ["*/5 * * * *"]

@@ -27,6 +27,7 @@ import { requireAuth } from "./middleware/authMiddleware.js";
 import { requireRole } from "./middleware/roleAuth.js";
 import { verifyToken } from "./utils/tokenUtils.js";
 import { requestLogger } from "./middleware/requestLogger.js";
+import { startMetricsFlusher } from "./utils/metricsBuffer.js";
 import logger, { reqContext } from "./utils/logger.js";
 import fs from "fs";
 import path from "path";
@@ -266,14 +267,16 @@ async function startApplication() {
       });
     });
 
-    // Step 4: Schedule periodic cleanup of expired sessions (every 24 hours)
+    // Step 4: Start metrics flusher (sends stats to Cloudflare Worker every minute)
+    startMetricsFlusher();
+
+    // Step 5: Schedule periodic cleanup of expired sessions (every 24 hours)
     const SESSION_CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
     setInterval(() => {
       cleanupExpiredSessions().catch((err) =>
         logger.error("Session cleanup failed", { err }),
       );
     }, SESSION_CLEANUP_INTERVAL_MS);
-    // Run once shortly after startup to clean any backlog
     setTimeout(() => {
       cleanupExpiredSessions().catch((err) =>
         logger.error("Session cleanup (initial) failed", { err }),

@@ -2,6 +2,7 @@
 import { v4 as uuidv4 } from "uuid";
 import logger, { reqContext } from "../utils/logger.js";
 import { traceStore } from "../utils/traceStore.js";
+import { record as recordMetric } from "../utils/metricsBuffer.js";
 
 // Routes polled by load balancers / uptime monitors — log at debug to avoid noise.
 const HEALTH_PROBE_PATHS = new Set(["/", "/health", "/favicon.ico"]);
@@ -152,6 +153,11 @@ export function requestLogger(req, res, next) {
         "HTTP response sent",
         resFields(req, res, correlationId, durationNs, urlPath),
       );
+
+      if (!isHealthProbe) {
+        const durationMs = Math.round(Number(durationNs) / 1_000_000 * 100) / 100;
+        recordMetric(res.statusCode, durationMs, urlPath);
+      }
 
       // Emit an extra warning when a request takes longer than the threshold.
       if (!isHealthProbe && durationNs > SLOW_THRESHOLD_NS) {

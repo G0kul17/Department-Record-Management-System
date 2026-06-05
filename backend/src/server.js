@@ -28,6 +28,7 @@ import { requireRole } from "./middleware/roleAuth.js";
 import { verifyToken } from "./utils/tokenUtils.js";
 import { requestLogger } from "./middleware/requestLogger.js";
 import { startMetricsFlusher } from "./utils/metricsBuffer.js";
+import { startHealthMonitor } from "./utils/healthMonitor.js";
 import logger, { reqContext } from "./utils/logger.js";
 import fs from "fs";
 import path from "path";
@@ -270,7 +271,10 @@ async function startApplication() {
     // Step 4: Start metrics flusher (sends stats to Cloudflare Worker every minute)
     startMetricsFlusher();
 
-    // Step 5: Schedule periodic cleanup of expired sessions (every 24 hours)
+    // Step 5: Start internal health monitor (DB, email, storage, OTP table → Zenduty)
+    startHealthMonitor();
+
+    // Step 6: Schedule periodic cleanup of expired sessions (every 24 hours)
     const SESSION_CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
     setInterval(() => {
       cleanupExpiredSessions().catch((err) =>

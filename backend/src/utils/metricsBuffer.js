@@ -1,13 +1,15 @@
 import logger from "./logger.js";
 
 let totalRequests = 0;
-let failedRequests = 0;
+let serverErrors = 0;  // 5xx only — counts against SLO
+let clientErrors = 0;  // 4xx — client fault, does not affect SLO
 let authFailures = 0;
 const latencies = [];
 
 export function record(statusCode, durationMs, urlPath) {
   totalRequests++;
-  if (statusCode >= 400) failedRequests++;
+  if (statusCode >= 500) serverErrors++;
+  else if (statusCode >= 400) clientErrors++;
   if (statusCode === 401 && urlPath.startsWith("/api/auth")) authFailures++;
   latencies.push(durationMs);
 }
@@ -25,13 +27,15 @@ async function flush() {
 
   const snapshot = {
     total: totalRequests,
-    failed: failedRequests,
+    serverErrors,
+    clientErrors,
     p95ms: p95(latencies),
     authFails: authFailures,
   };
 
   totalRequests = 0;
-  failedRequests = 0;
+  serverErrors = 0;
+  clientErrors = 0;
   authFailures = 0;
   latencies.length = 0;
 
@@ -48,9 +52,10 @@ async function flush() {
         indexes: { service: "drms", environment: process.env.NODE_ENV || "development" },
         doubles: {
           total_requests: snapshot.total,
-          failed_requests: snapshot.failed,
+          server_errors: snapshot.serverErrors,
           p95_latency_ms: snapshot.p95ms,
           auth_failures: snapshot.authFails,
+          client_errors: snapshot.clientErrors,
         },
       }),
     });

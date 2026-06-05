@@ -33,6 +33,8 @@ if (isMailConfigured) {
   }
 }
 
+export { transporter, isMailConfigured };
+
 export async function sendMail({ to, subject, text, html }) {
   if (!isMailConfigured) {
     // Never silently skip — a missing email config means the OTP can never

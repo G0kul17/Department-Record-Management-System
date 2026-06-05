@@ -41,7 +41,6 @@ const Login = () => {
           state: {
             email: formData.email,
             type: "register",
-            devOtp: resp.devOtp,
           },
         });
         return;

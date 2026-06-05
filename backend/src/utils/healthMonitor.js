@@ -141,7 +141,8 @@ function buildSummary(checkName, errorMessage) {
   ].join("\n");
 }
 
-  { name: "db",     fn: checkDatabase   },
+const CHECKS = [
+  { name: "db",      fn: checkDatabase   },
   { name: "tables", fn: checkCoreTables },
   { name: "email",  fn: checkEmail      },
   { name: "storage",fn: checkStorage    },

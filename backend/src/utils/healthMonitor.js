@@ -1,6 +1,8 @@
 import pool, { getPoolHealth } from "../config/db.js";
 import { transporter, isMailConfigured } from "../config/mailer.js";
-import { verifyFileStorage } from "../config/upload.js";
+import { STORAGE_PATH } from "../config/upload.js";
+import fs from "fs";
+import path from "path";
 import logger from "./logger.js";
 
 const firingAlerts = new Map();
@@ -21,7 +23,10 @@ async function checkEmail() {
 }
 
 async function checkStorage() {
-  verifyFileStorage();
+  fs.accessSync(STORAGE_PATH, fs.constants.R_OK | fs.constants.W_OK);
+  const testFile = path.join(STORAGE_PATH, `.health-${Date.now()}`);
+  fs.writeFileSync(testFile, "ok");
+  fs.unlinkSync(testFile);
 }
 
 async function checkOtpTable() {

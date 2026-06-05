@@ -97,7 +97,8 @@ pool.on("connect", (client) => {
   });
 
   // Set connection-level parameters
-  client.query(`SET statement_timeout = ${poolConfig.statement_timeout}`);
+  client.query(`SET statement_timeout = ${poolConfig.statement_timeout}`)
+    .catch((err) => logger.error("Failed to set statement_timeout on connection", { "db.error": err.message }));
 });
 
 // Handle connection errors (individual client errors)

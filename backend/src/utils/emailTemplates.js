@@ -1,5 +1,15 @@
 // ─── Internal helpers ────────────────────────────────────────────────────────
 
+function escapeHtml(str) {
+  if (typeof str !== "string") return str ?? "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function baseLayout(accentColor, headerLabel, bodyHtml) {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -69,7 +79,7 @@ function commentBox(staffComment) {
   return `
     <div style="background-color:#f9fafb;border-left:4px solid #e5e7eb;padding:12px 16px;border-radius:0 4px 4px 0;margin:16px 0;">
       <p style="margin:0 0 4px;color:#6b7280;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Staff Comment</p>
-      <p style="margin:0;color:#374151;font-size:14px;">${staffComment}</p>
+      <p style="margin:0;color:#374151;font-size:14px;">${escapeHtml(staffComment)}</p>
     </div>`;
 }
 
@@ -141,7 +151,7 @@ export function studentWelcomeEmail({ fullName, email, password }) {
   const html = baseLayout(
     "#2563eb",
     "Welcome to DRMS",
-    `<h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:700;">Welcome, ${fullName}!</h2>
+    `<h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:700;">Welcome, ${escapeHtml(fullName)}!</h2>
      <p style="margin:0 0 4px;color:#6b7280;font-size:15px;">Your student account has been created and you're now part of the DRMS platform. Here are your login credentials:</p>
      ${credentialsBox(email, password)}
      <p style="margin:16px 0 0;color:#374151;font-size:14px;">Please log in and set a new password from your profile settings as soon as possible.</p>`,
@@ -154,7 +164,7 @@ export function staffWelcomeEmail({ fullName, email, password }) {
   const html = baseLayout(
     "#2563eb",
     "Welcome to DRMS",
-    `<h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:700;">Welcome, ${fullName}!</h2>
+    `<h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:700;">Welcome, ${escapeHtml(fullName)}!</h2>
      <p style="margin:0 0 4px;color:#6b7280;font-size:15px;">Your DRMS staff account has been created. Here are your login credentials:</p>
      ${credentialsBox(email, password)}
      <p style="margin:16px 0 0;color:#374151;font-size:14px;">Please log in and set a new password from your profile settings as soon as possible.</p>`,
@@ -178,7 +188,7 @@ export function projectReviewEmail({ title, status, staffComment }) {
      <table cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
        <tr><td style="padding-right:12px;vertical-align:middle;">${statusBadge(status)}</td></tr>
      </table>
-     <h3 style="margin:0 0 16px;color:#111827;font-size:18px;font-weight:600;">${title}</h3>
+     <h3 style="margin:0 0 16px;color:#111827;font-size:18px;font-weight:600;">${escapeHtml(title)}</h3>
      ${commentBox(staffComment)}`,
   );
   const text = `${opener}\n\nProject: ${title}${staffComment ? `\n\nStaff Comment: ${staffComment}` : ""}`;
@@ -198,7 +208,7 @@ export function achievementReviewEmail({ title, status, staffComment }) {
      <table cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
        <tr><td style="padding-right:12px;vertical-align:middle;">${statusBadge(status)}</td></tr>
      </table>
-     <h3 style="margin:0 0 16px;color:#111827;font-size:18px;font-weight:600;">${title}</h3>
+     <h3 style="margin:0 0 16px;color:#111827;font-size:18px;font-weight:600;">${escapeHtml(title)}</h3>
      ${commentBox(staffComment)}`,
   );
   const text = `${opener}\n\nAchievement: ${title}${staffComment ? `\n\nStaff Comment: ${staffComment}` : ""}`;

@@ -40,14 +40,19 @@ export default {
         const { indexes, doubles } = payload;
         if (
           !indexes?.service || !indexes?.environment ||
-          doubles?.total_requests == null || doubles?.failed_requests == null ||
+          doubles?.total_requests == null || doubles?.server_errors == null ||
           doubles?.p95_latency_ms == null || doubles?.auth_failures == null
         ) return new Response("Missing required fields", { status: 400 });
 
         env.DRMS_METRICS.writeDataPoint({
           indexes: [`${indexes.service}:${indexes.environment}`],
-          doubles: [doubles.total_requests, doubles.failed_requests,
-                    doubles.p95_latency_ms, doubles.auth_failures],
+          doubles: [
+            doubles.total_requests,   // double1
+            doubles.server_errors,    // double2 — 5xx only, used for SLO
+            doubles.p95_latency_ms,   // double3
+            doubles.auth_failures,    // double4
+            doubles.client_errors ?? 0, // double5 — 4xx, informational
+          ],
           blobs: [`${indexes.service}:${indexes.environment}`],
         });
 
@@ -70,9 +75,10 @@ export default {
             toStartOfInterval(timestamp, INTERVAL '${step}' MINUTE) AS t,
             blob1 AS service_env,
             SUM(double1) AS total_requests,
-            SUM(double2) AS failed_requests,
+            SUM(double2) AS server_errors,
             quantileWeighted(0.95)(double3, 1) AS p95_latency_ms,
-            SUM(double4) AS auth_failures
+            SUM(double4) AS auth_failures,
+            SUM(double5) AS client_errors
           FROM drms_metrics
           WHERE timestamp >= toDateTime(${from})
             AND timestamp <= toDateTime(${to})

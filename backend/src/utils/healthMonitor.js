@@ -44,11 +44,18 @@ async function postZenduty(message, alertType, entityId, summary) {
   const url = process.env.ZENDUTY_WEBHOOK_URL;
   if (!url) return;
   try {
-    await fetch(url, {
+    const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, alert_type: alertType, entity_id: entityId, summary }),
+      body: JSON.stringify({
+        message,
+        alert_type: alertType,
+        status: alertType === "info" ? "resolved" : "triggered",
+        entity_id: entityId,
+        summary,
+      }),
     });
+    logger.debug("health.zenduty.post", { entity_id: entityId, alert_type: alertType, "http.status": res.status });
   } catch (err) {
     logger.warn("health.zenduty.post.failed", { err, entity_id: entityId });
   }

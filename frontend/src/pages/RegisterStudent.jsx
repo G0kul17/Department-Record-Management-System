@@ -64,7 +64,6 @@ const RegisterStudent = () => {
             state: {
               email: formData.email,
               type: "register",
-              devOtp: resp?.devOtp,
             },
           }),
         1500

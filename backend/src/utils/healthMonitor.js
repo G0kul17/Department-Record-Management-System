@@ -55,7 +55,92 @@ async function checkStorage() {
   if (usedPct >= 90) throw new Error(`Disk usage at ${usedPct}% — uploads may fail`);
 }
 
-const CHECKS = [
+const RUNBOOKS = {
+  db: {
+    impact: "All API requests will fail — users cannot log in, load data, or submit anything.",
+    causes: [
+      "PostgreSQL connection pool exhausted (too many concurrent requests)",
+      "Database server entered read-only / recovery mode (disk full or replica failover)",
+      "PostgreSQL process crashed or was OOM-killed",
+    ],
+    steps: [
+      "1. SSH into VPS: check PostgreSQL status → `systemctl status postgresql`",
+      "2. Check DB logs → `journalctl -u postgresql -n 50`",
+      "3. Check disk space → `df -h` (full disk forces PG read-only)",
+      "4. Check pool stats → GET /pool-stats (requires admin JWT)",
+      "5. If pool exhausted: restart app → `pm2 restart drms`",
+      "6. If PG down: restart → `systemctl restart postgresql`",
+    ],
+  },
+  tables: {
+    impact: "API endpoints that touch missing tables will return 500 errors to users.",
+    causes: [
+      "Migration was partially applied or rolled back mid-way",
+      "Table was accidentally dropped (DROP TABLE)",
+      "Database was restored from an older backup missing recent migrations",
+      "Schema was recreated without running all migration scripts",
+    ],
+    steps: [
+      "1. Connect to DB → `psql -U $DB_USER -d $DB_NAME`",
+      "2. List tables → `\\dt` — identify which are missing",
+      "3. Check migration history → `SELECT * FROM schema_version ORDER BY version DESC;`",
+      "4. Re-run missing migrations → `psql -U $DB_USER -d $DB_NAME -f backend/migrations/001_initial_schema.sql`",
+      "5. Verify tables exist → `\\dt` again",
+      "6. Restart app → `pm2 restart drms`",
+    ],
+  },
+  email: {
+    impact: "OTP delivery will fail — users cannot register, log in (without active session), or reset passwords.",
+    causes: [
+      "EMAIL_PASS was rotated (Gmail App Password expired or regenerated)",
+      "EMAIL_USER / EMAIL_HOST env vars missing or wrong",
+      "Gmail account security settings blocked the connection",
+      "SMTP server is down or unreachable from VPS",
+      "VPS outbound port 587/465 blocked by firewall",
+    ],
+    steps: [
+      "1. Check env vars → `pm2 env drms | grep EMAIL`",
+      "2. Verify Gmail App Password is still valid → myaccount.google.com → Security → App Passwords",
+      "3. Test SMTP manually → `openssl s_client -connect smtp.gmail.com:465`",
+      "4. If password rotated: update EMAIL_PASS in /opt/drms/backend/.env → `pm2 reload drms --update-env`",
+      "5. Check VPS firewall → `ufw status` — ensure port 587/465 outbound is allowed",
+    ],
+  },
+  storage: {
+    impact: "File uploads (project proofs, certificates, photos) will fail. Existing files are unaffected.",
+    causes: [
+      "Disk usage reached 90%+ — no space left for new uploads",
+      "Upload directory permissions changed (chmod/chown)",
+      "Mount point unmounted or NFS/remote storage disconnected",
+      "Disk failure or filesystem error (read-only remount)",
+    ],
+    steps: [
+      "1. Check disk usage → `df -h` and `du -sh /opt/drms/uploads/*`",
+      "2. If disk full: clean old logs → `journalctl --vacuum-size=500M`, remove temp files",
+      "3. Check upload dir permissions → `ls -la /opt/drms/uploads`",
+      "4. Fix permissions if needed → `chmod 755 /opt/drms/uploads && chown drms:drms /opt/drms/uploads`",
+      "5. Check mount → `mount | grep uploads` (if using external storage)",
+      "6. After fix: app recovers automatically within 60s — no restart needed",
+    ],
+  },
+};
+
+function buildSummary(checkName, errorMessage) {
+  const r = RUNBOOKS[checkName];
+  if (!r) return errorMessage;
+  return [
+    `ERROR: ${errorMessage}`,
+    ``,
+    `IMPACT: ${r.impact}`,
+    ``,
+    `POSSIBLE CAUSES:`,
+    ...r.causes.map((c) => `  • ${c}`),
+    ``,
+    `RECOVERY STEPS:`,
+    ...r.steps,
+  ].join("\n");
+}
+
   { name: "db",     fn: checkDatabase   },
   { name: "tables", fn: checkCoreTables },
   { name: "email",  fn: checkEmail      },
@@ -98,7 +183,12 @@ export async function runHealthChecks() {
       if (!firingAlerts.get(name)) {
         firingAlerts.set(name, true);
         logger.error("health.check.failed", { "health.check": name, err });
-        await postZenduty(`DRMS [${name}] failed: ${err.message}`, "critical", `drms-${name}`, err.message);
+        await postZenduty(
+          `DRMS [${name}] failed: ${err.message}`,
+          "critical",
+          `drms-${name}`,
+          buildSummary(name, err.message),
+        );
       }
     }
   }

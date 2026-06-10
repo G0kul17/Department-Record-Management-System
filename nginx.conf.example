@@ -92,35 +92,6 @@ server {
     }
 
     # ========================================================================
-    # Uploaded Files (served directly by Nginx for better performance)
-    # ========================================================================
-    location /uploads/ {
-        alias /var/www/drms/backend/uploads/;
-        
-        # Security: Prevent execution of scripts in uploads
-        location ~* \.(php|jsp|asp|sh|cgi)$ {
-            deny all;
-        }
-        
-        # Cache uploaded files
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-    }
-
-    # ========================================================================
-    # Exported Files (for bulk exports)
-    # ========================================================================
-    location /exports/ {
-        alias /var/www/drms/backend/exports/;
-        
-        # Security: Prevent directory listing
-        autoindex off;
-        
-        # Short cache (these files are temporary)
-        expires 1h;
-    }
-
-    # ========================================================================
     # Frontend Static Files (React/Vite build)
     # ========================================================================
     location / {

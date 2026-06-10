@@ -195,6 +195,14 @@ export async function runHealthChecks() {
   }
 }
 
+export function getHealthStatus() {
+  const status = {};
+  for (const { name } of CHECKS) {
+    status[name] = firingAlerts.get(name) ? "failing" : "ok";
+  }
+  return status;
+}
+
 export function startHealthMonitor() {
   // One-time startup check: JWT_SECRET must be set or auth silently breaks
   if (!process.env.JWT_SECRET) {

@@ -28,7 +28,7 @@ import { requireRole } from "./middleware/roleAuth.js";
 import { verifyToken } from "./utils/tokenUtils.js";
 import { requestLogger } from "./middleware/requestLogger.js";
 import { startMetricsFlusher } from "./utils/metricsBuffer.js";
-import { startHealthMonitor } from "./utils/healthMonitor.js";
+import { startHealthMonitor, getHealthStatus } from "./utils/healthMonitor.js";
 import logger, { reqContext } from "./utils/logger.js";
 import fs from "fs";
 import path from "path";
@@ -87,23 +87,22 @@ if (ENABLE_CORS) {
 // simple route
 app.get("/", (req, res) => res.json({ message: "Auth RBAC OTP API" }));
 
-// Health check endpoint with database pool stats
-app.get("/health", async (req, res) => {
+// Health check endpoint — admin only
+app.get("/health", requireAuth, requireRole(["admin"]), async (req, res) => {
   try {
-    // Quick database ping
     const dbStart = Date.now();
     await pool.query("SELECT 1");
     const dbLatency = Date.now() - dbStart;
 
     const poolHealth = getPoolHealth();
+    const checks = getHealthStatus();
+    const allOk = Object.values(checks).every((s) => s === "ok");
 
-    res.json({
-      status: "ok",
+    res.status(allOk ? 200 : 503).json({
+      status: allOk ? "ok" : "degraded",
       timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      environment: process.env.NODE_ENV || "development",
+      checks,
       database: {
-        connected: true,
         latency: `${dbLatency}ms`,
         pool: {
           total: poolHealth.totalCount,
@@ -117,10 +116,8 @@ app.get("/health", async (req, res) => {
     res.status(503).json({
       status: "error",
       timestamp: new Date().toISOString(),
-      database: {
-        connected: false,
-        error: err.message,
-      },
+      checks: getHealthStatus(),
+      database: { connected: false },
     });
   }
 });

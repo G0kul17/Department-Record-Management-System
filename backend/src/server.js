@@ -87,8 +87,8 @@ if (ENABLE_CORS) {
 // simple route
 app.get("/", (req, res) => res.json({ message: "Auth RBAC OTP API" }));
 
-// Health check endpoint — admin only
-app.get("/health", requireAuth, requireRole(["admin"]), async (req, res) => {
+// Health check endpoint — internal only (not proxied through Nginx)
+app.get("/health", async (req, res) => {
   try {
     const dbStart = Date.now();
     await pool.query("SELECT 1");

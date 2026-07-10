@@ -154,13 +154,19 @@ pipeline {
                     //      in this block to avoid leaking secrets.
                     sh """
                         ssh ${REMOTE_USER}@${APP_HOST} 'bash -s' << 'MIGRATIONS'
-                            set -euo pipefail
+                            set -eo pipefail
                             echo "============================================"
                             echo " Running database migrations"
                             echo "============================================"
 
                             cd /opt/drms/backend
-                            . .env
+                            set -a; . .env; set +a
+
+                            if [ -z "\${DB_HOST:-}" ] || [ -z "\${DB_USER:-}" ] || [ -z "\${DB_NAME:-}" ]; then
+                                echo "ERROR: Missing DB credentials in /opt/drms/backend/.env"
+                                exit 1
+                            fi
+                            echo "DB target: \$DB_USER@\$DB_HOST/\$DB_NAME"
 
                             CURRENT=\$(psql -h "\$DB_HOST" -U "\$DB_USER" -d "\$DB_NAME" -t \\
                                 -c "SELECT COALESCE(MAX(version), 0) FROM schema_version;" \\
@@ -169,6 +175,10 @@ pipeline {
                             echo "Current schema version: \$CURRENT"
 
                             MIGRATIONS_DIR="/opt/drms/backend/releases/${BUILD_VERSION}/migrations"
+                            if [ ! -d "\$MIGRATIONS_DIR" ]; then
+                                echo "ERROR: Migrations directory not found: \$MIGRATIONS_DIR"
+                                exit 1
+                            fi
                             APPLIED=0
 
                             for f in "\$MIGRATIONS_DIR"/*.sql; do
@@ -291,7 +301,7 @@ FRONTEND_DEPLOY
                         echo "Backend: OK"
 
                         echo "Testing frontend..."
-                        if ! curl -sf https://${GATEWAY_HOST}/ > /dev/null 2>&1; then
+                        if ! curl -skf https://${GATEWAY_HOST}/ > /dev/null 2>&1; then
                             echo "ERROR: Frontend check failed!"
 
                             ssh ${REMOTE_USER}@${GATEWAY_HOST} 'bash -s' << 'FRONTEND_ROLLBACK'

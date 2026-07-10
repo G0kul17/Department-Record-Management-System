@@ -4,7 +4,6 @@ pipeline {
     environment {
         REPO_URL      = "https://github.com/G0kul17/Department-Record-Management-System.git"
         BRANCH        = "main"
-        BUILD_VERSION = "${env.BUILD_NUMBER}"
         APP_HOST      = "drms-app-01"
         GATEWAY_HOST  = "prod-gateway-01"
         REMOTE_USER   = "deploy"
@@ -23,6 +22,21 @@ pipeline {
     }
 
     stages {
+
+        // ----------------------------------------------------------------
+        // 0. SET VERSION — YYYY.M.D.BUILD
+        // ----------------------------------------------------------------
+        stage('Set Version') {
+            steps {
+                script {
+                    env.BUILD_VERSION = sh(
+                        script: "echo \$(date +%Y.%-m.%-d).${env.BUILD_NUMBER}",
+                        returnStdout: true
+                    ).trim()
+                    echo "Release version: ${env.BUILD_VERSION}"
+                }
+            }
+        }
 
         // ----------------------------------------------------------------
         // 1. SOURCE
@@ -132,17 +146,17 @@ pipeline {
                     sh """
                         ssh ${REMOTE_USER}@${APP_HOST} '
                             set -euo pipefail
-                            mkdir -p /opt/drms/backend/releases/${BUILD_VERSION}
+                            mkdir -p /opt/drms/backend/releases/${env.BUILD_VERSION}
                         '
                         scp -r backend_release/. \
-                            ${REMOTE_USER}@${APP_HOST}:/opt/drms/backend/releases/${BUILD_VERSION}/
+                            ${REMOTE_USER}@${APP_HOST}:/opt/drms/backend/releases/${env.BUILD_VERSION}/
                     """
 
                     // ── 6b. Install production dependencies ───────────
                     sh """
                         ssh ${REMOTE_USER}@${APP_HOST} '
                             set -euo pipefail
-                            cd /opt/drms/backend/releases/${BUILD_VERSION}
+                            cd /opt/drms/backend/releases/${env.BUILD_VERSION}
                             ln -sfn /opt/drms/backend/.env .env
                             npm ci --omit=dev
                             echo "Dependencies installed."
@@ -174,7 +188,7 @@ pipeline {
                             CURRENT=\$(echo "\$CURRENT" | tr -d "[:space:]")
                             echo "Current schema version: \$CURRENT"
 
-                            MIGRATIONS_DIR="/opt/drms/backend/releases/${BUILD_VERSION}/migrations"
+                            MIGRATIONS_DIR="/opt/drms/backend/releases/${env.BUILD_VERSION}/migrations"
                             if [ ! -d "\$MIGRATIONS_DIR" ]; then
                                 echo "ERROR: Migrations directory not found: \$MIGRATIONS_DIR"
                                 exit 1
@@ -208,13 +222,13 @@ MIGRATIONS
                         ssh ${REMOTE_USER}@${APP_HOST} 'bash -s' << 'ACTIVATE'
                             set -euo pipefail
                             echo "============================================"
-                            echo " Activating release ${BUILD_VERSION}"
+                            echo " Activating release ${env.BUILD_VERSION}"
                             echo "============================================"
 
                             PREVIOUS=\$(readlink -f /opt/drms/backend/current 2>/dev/null || echo "")
                             echo "Previous release: \${PREVIOUS:-(none — first deploy)}"
 
-                            ln -sfn /opt/drms/backend/releases/${BUILD_VERSION} /opt/drms/backend/current
+                            ln -sfn /opt/drms/backend/releases/${env.BUILD_VERSION} /opt/drms/backend/current
                             cd /opt/drms/backend/current
                             pm2 reload drms --update-env
 
@@ -253,7 +267,7 @@ MIGRATIONS
                             pm2 save
                             cd /opt/drms/backend/releases
                             ls -1dt */ | tail -n +6 | xargs -r rm -rf
-                            echo "Activation complete. Release ${BUILD_VERSION} is now live."
+                            echo "Activation complete. Release ${env.BUILD_VERSION} is now live."
 ACTIVATE
                     """
                 }
@@ -331,7 +345,7 @@ FRONTEND_ROLLBACK
             cleanWs()
         }
         success {
-            echo "Deployment successful. Release ${BUILD_VERSION} active."
+            echo "Deployment successful. Release ${env.BUILD_VERSION} active."
         }
         failure {
             echo "Deployment failed. Investigate logs immediately."

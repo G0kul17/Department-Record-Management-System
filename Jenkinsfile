@@ -57,9 +57,6 @@ pipeline {
 
         // ----------------------------------------------------------------
         // 3. BACKEND — UNIT TESTS + COVERAGE
-        //    Runs before build/deploy so a failing test aborts the pipeline
-        //    early. JUnit results and the HTML coverage report are always
-        //    published so failures are visible in the Jenkins UI.
         // ----------------------------------------------------------------
         stage('Backend Tests') {
             steps {
@@ -69,11 +66,9 @@ pipeline {
             }
             post {
                 always {
-                    // Test result trend graph (requires JUnit plugin)
                     junit allowEmptyResults: true,
                           testResults: 'backend/test-results/junit.xml'
 
-                    // HTML coverage report (requires HTML Publisher plugin)
                     publishHTML(target: [
                         allowMissing         : true,
                         alwaysLinkToLastBuild: true,
@@ -108,7 +103,6 @@ pipeline {
 
         // ----------------------------------------------------------------
         // 5. PACKAGE BACKEND
-        //    Strip dev files before shipping to the server.
         // ----------------------------------------------------------------
         stage('Prepare Backend Artifact') {
             steps {
@@ -127,45 +121,152 @@ pipeline {
 
         // ----------------------------------------------------------------
         // 6. DEPLOY BACKEND
+        //    Includes: SCP, npm ci, database migrations, health check,
+        //    and automatic rollback on failure.
         // ----------------------------------------------------------------
         stage('Deploy Backend') {
             steps {
                 sshagent(['drms-ssh']) {
+
+                    // ── 6a. Upload release to server ──────────────────
                     sh """
                         ssh ${REMOTE_USER}@${APP_HOST} '
-                            set -euxo pipefail
+                            set -euo pipefail
                             mkdir -p /opt/drms/backend/releases/${BUILD_VERSION}
                         '
                         scp -r backend_release/. \
                             ${REMOTE_USER}@${APP_HOST}:/opt/drms/backend/releases/${BUILD_VERSION}/
+                    """
+
+                    // ── 6b. Install production dependencies ───────────
+                    sh """
                         ssh ${REMOTE_USER}@${APP_HOST} '
-                            set -euxo pipefail
+                            set -euo pipefail
                             cd /opt/drms/backend/releases/${BUILD_VERSION}
                             ln -sfn /opt/drms/backend/.env .env
                             npm ci --omit=dev
+                            echo "Dependencies installed."
+                        '
+                    """
+
+                    // ── 6c. Run database migrations ──────────────────
+                    //      Sources .env for DB credentials; -x disabled
+                    //      in this block to avoid leaking secrets.
+                    sh """
+                        ssh ${REMOTE_USER}@${APP_HOST} 'bash -s' << 'MIGRATIONS'
+                            set -euo pipefail
+                            echo "============================================"
+                            echo " Running database migrations"
+                            echo "============================================"
+
+                            cd /opt/drms/backend
+                            . .env
+
+                            CURRENT=\$(psql -h "\$DB_HOST" -U "\$DB_USER" -d "\$DB_NAME" -t \\
+                                -c "SELECT COALESCE(MAX(version), 0) FROM schema_version;" \\
+                                2>/dev/null || echo "0")
+                            CURRENT=\$(echo "\$CURRENT" | tr -d "[:space:]")
+                            echo "Current schema version: \$CURRENT"
+
+                            MIGRATIONS_DIR="/opt/drms/backend/releases/${BUILD_VERSION}/migrations"
+                            APPLIED=0
+
+                            for f in "\$MIGRATIONS_DIR"/*.sql; do
+                                [ -f "\$f" ] || continue
+                                filename=\$(basename "\$f")
+                                version=\$(echo "\$filename" | sed -n 's/^0*\\([0-9][0-9]*\\)_.*/\\1/p')
+                                [ -z "\$version" ] && continue
+
+                                if [ "\$version" -gt "\$CURRENT" ]; then
+                                    echo "--> Applying: \$filename (version \$version)"
+                                    PGPASSWORD="\$DB_PASS" psql -h "\$DB_HOST" -U "\$DB_USER" \\
+                                        -d "\$DB_NAME" -f "\$f"
+                                    APPLIED=\$((APPLIED + 1))
+                                else
+                                    echo "    Skip (already applied): \$filename"
+                                fi
+                            done
+
+                            echo "============================================"
+                            echo " Migrations complete. Newly applied: \$APPLIED"
+                            echo "============================================"
+MIGRATIONS
+                    """
+
+                    // ── 6d. Activate release + health check + rollback ─
+                    sh """
+                        ssh ${REMOTE_USER}@${APP_HOST} 'bash -s' << 'ACTIVATE'
+                            set -euo pipefail
+                            echo "============================================"
+                            echo " Activating release ${BUILD_VERSION}"
+                            echo "============================================"
+
+                            PREVIOUS=\$(readlink -f /opt/drms/backend/current 2>/dev/null || echo "")
+                            echo "Previous release: \${PREVIOUS:-(none — first deploy)}"
+
                             ln -sfn /opt/drms/backend/releases/${BUILD_VERSION} /opt/drms/backend/current
                             cd /opt/drms/backend/current
                             pm2 reload drms --update-env
+
+                            echo ""
+                            echo "Waiting for health check (up to 30s)..."
+
+                            HEALTHY=false
+                            for i in \$(seq 1 15); do
+                                sleep 2
+                                if curl -sf http://localhost:5000/health > /dev/null 2>&1; then
+                                    HEALTHY=true
+                                    echo "  Health check PASSED (attempt \$i)"
+                                    break
+                                fi
+                                echo "  attempt \$i/15..."
+                            done
+
+                            if [ "\$HEALTHY" = "false" ]; then
+                                echo ""
+                                echo "============================================"
+                                echo " FATAL: Backend health check FAILED after 30s"
+                                echo "============================================"
+
+                                if [ -n "\$PREVIOUS" ] && [ -d "\$PREVIOUS" ]; then
+                                    echo "Rolling back to \$PREVIOUS ..."
+                                    ln -sfn "\$PREVIOUS" /opt/drms/backend/current
+                                    cd /opt/drms/backend/current
+                                    pm2 reload drms --update-env
+                                    echo "Rollback complete. Previous release restored."
+                                else
+                                    echo "No previous release available to roll back to!"
+                                fi
+                                exit 1
+                            fi
+
                             pm2 save
                             cd /opt/drms/backend/releases
                             ls -1dt */ | tail -n +6 | xargs -r rm -rf
-                        '
+                            echo "Activation complete. Release ${BUILD_VERSION} is now live."
+ACTIVATE
                     """
                 }
             }
         }
 
         // ----------------------------------------------------------------
-        // 7. DEPLOY FRONTEND
+        // 7. DEPLOY FRONTEND (with backup for rollback)
         // ----------------------------------------------------------------
         stage('Deploy Frontend') {
             steps {
                 sshagent(['drms-ssh']) {
                     sh """
-                        ssh ${REMOTE_USER}@${GATEWAY_HOST} '
-                            set -euxo pipefail
+                        ssh ${REMOTE_USER}@${GATEWAY_HOST} 'bash -s' << 'FRONTEND_DEPLOY'
+                            set -euo pipefail
+                            if [ -d /var/www/drms ]; then
+                                rm -rf /var/www/drms-backup
+                                cp -r /var/www/drms /var/www/drms-backup 2>/dev/null || true
+                                echo "Frontend backup saved to /var/www/drms-backup"
+                            fi
+                            mkdir -p /var/www/drms
                             rm -rf /var/www/drms/*
-                        '
+FRONTEND_DEPLOY
                         scp -r frontend/dist/. \
                             ${REMOTE_USER}@${GATEWAY_HOST}:/var/www/drms/
                     """
@@ -174,16 +275,43 @@ pipeline {
         }
 
         // ----------------------------------------------------------------
-        // 8. SMOKE TEST
+        // 8. SMOKE TEST (with frontend rollback on failure)
         // ----------------------------------------------------------------
-        stage('Basic Validation') {
+        stage('Smoke Test') {
             steps {
-                sh '''
-                    sleep 5
-                    curl -k -f https://prod-gateway-01/ > /dev/null
-                    sleep 5
-                    curl -k -f http://drms-app-01:5000/health > /dev/null
-                '''
+                sshagent(['drms-ssh']) {
+                    sh """
+                        sleep 5
+
+                        echo "Testing backend health..."
+                        if ! curl -sf http://${APP_HOST}:5000/health > /dev/null 2>&1; then
+                            echo "ERROR: Backend health check failed!"
+                            exit 1
+                        fi
+                        echo "Backend: OK"
+
+                        echo "Testing frontend..."
+                        if ! curl -sf https://${GATEWAY_HOST}/ > /dev/null 2>&1; then
+                            echo "ERROR: Frontend check failed!"
+
+                            ssh ${REMOTE_USER}@${GATEWAY_HOST} 'bash -s' << 'FRONTEND_ROLLBACK'
+                                set -euo pipefail
+                                if [ -d /var/www/drms-backup ] && ls -A /var/www/drms-backup > /dev/null 2>&1; then
+                                    echo "Rolling frontend back to backup..."
+                                    rm -rf /var/www/drms/*
+                                    cp -r /var/www/drms-backup/. /var/www/drms/
+                                    echo "Frontend restored from backup."
+                                else
+                                    echo "No frontend backup found to restore."
+                                fi
+FRONTEND_ROLLBACK
+                            exit 1
+                        fi
+                        echo "Frontend: OK"
+
+                        echo "All smoke tests passed."
+                    """
+                }
             }
         }
     }

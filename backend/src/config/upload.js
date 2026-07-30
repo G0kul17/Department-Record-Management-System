@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { fileTypeFromFile } from "file-type";
+import NodeClam from "clamscan";
 import dotenv from "dotenv";
 import logger from "../utils/logger.js";
 import { getTraceCtx } from "../utils/traceStore.js";
@@ -170,6 +171,37 @@ const DANGEROUS_BYTE_PATTERNS = [
   /^<svg[\s>]/i,
 ];
 
+// ============================================================================
+// ANTIVIRUS SCANNING (ClamAV via clamd)
+// ============================================================================
+// Lazily initialized on first use, NOT at module load -- a top-level await
+// here would mean the entire app fails to boot if clamd isn't accepting
+// connections at the exact moment this module loads (e.g. on a host reboot,
+// where systemd gives no guarantee the app starts after clamd). Scans go
+// through the clamd daemon over its local unix socket, not the clamscan
+// binary directly -- the daemon keeps virus signatures loaded in memory, so
+// a scan is milliseconds instead of the multi-second startup cost of
+// spawning clamscan per file. localFallback lets the clamscan binary pick
+// up the scan if the daemon is ever unreachable.
+//
+// Requires ClamAV installed at the OS level on whatever host this runs on
+// (clamd + clamav-freshclam packages, EPEL on RHEL/Rocky), with clamd
+// configured to listen on /run/clamd.scan/clamd.sock and the app's runtime
+// user in the socket's group. See deployment docs for setup steps.
+let clamscanPromise = null;
+function getClamscan() {
+  if (!clamscanPromise) {
+    clamscanPromise = new NodeClam().init({
+      clamdscan: {
+        socket: "/run/clamd.scan/clamd.sock",
+        timeout: 60000,
+        localFallback: true,
+      },
+    });
+  }
+  return clamscanPromise;
+}
+
 /**
  * Returns false if the saved file is dangerous (wrong/spoofed type, XSS risk).
  * @param {string} filePath - Absolute path to the saved file
@@ -197,6 +229,29 @@ async function isFileSafe(filePath, originalName) {
   // 3. Check detected MIME from magic bytes for known-dangerous binary formats
   const result = await fileTypeFromFile(filePath);
   if (result && BLOCKED_DETECTED_MIMES.has(result.mime)) return false;
+
+  // 4. Antivirus scan via ClamAV (clamd). Runs last since it's the most
+  // expensive check -- no point paying for a full scan on a file that's
+  // already rejected by the cheaper checks above. Fails closed: a scan
+  // error or "unable to scan" result (isInfected === null) is treated the
+  // same as an actual infection, not silently allowed through.
+  try {
+    const clamscan = await getClamscan();
+    const { isInfected, viruses } = await clamscan.isInfected(filePath);
+    if (isInfected !== false) {
+      logger.warn("file.upload.virus_scan_rejected", {
+        "file.name": originalName,
+        "file.viruses": viruses,
+      });
+      return false;
+    }
+  } catch (err) {
+    // Reset so the next upload gets a fresh init attempt instead of
+    // being stuck reusing this same rejected promise forever.
+    clamscanPromise = null;
+    logger.error("file.upload.virus_scan_error", { err });
+    return false;
+  }
 
   return true;
 }

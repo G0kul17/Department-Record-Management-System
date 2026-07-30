@@ -167,6 +167,15 @@ app.get("/api/files/:filename", (req, res) => {
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ message: "File not found" });
   }
+  // Force download for anything that is not meant to be rendered inline --
+  // defense in depth in case a file with an unexpected extension ever
+  // reaches disk despite the upload-time checks in config/upload.js.
+  const inlineExts = new Set([".pdf", ".png", ".jpg", ".jpeg", ".gif"]);
+  const ext = path.extname(filePath).toLowerCase();
+  if (!inlineExts.has(ext)) {
+    const safeName = path.basename(filePath);
+    res.setHeader("Content-Disposition", 'attachment; filename="' + safeName + '"');
+  }
   res.sendFile(filePath);
 });
 

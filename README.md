@@ -214,6 +214,15 @@ Department-Record-Management-System/
 - **npm**: 8.0.0 or higher
 - **PostgreSQL**: 12.0 or higher
 - **Email Account**: For SMTP notifications (Gmail, Outlook, etc.)
+- **ClamAV** (`clamd` running, reachable via unix socket): required for antivirus
+  scanning of uploaded files (see `src/config/upload.js`). On RHEL/Rocky:
+  `dnf install epel-release && dnf install clamd clamav clamav-freshclam`,
+  then enable the unix socket in `/etc/clamd.d/scan.conf`
+  (`LocalSocket /run/clamd.scan/clamd.sock`, `LocalSocketGroup virusgroup`,
+  `LocalSocketMode 660`), add the app's runtime user to `virusgroup`, run
+  `freshclam` once to pull the signature database, then
+  `systemctl enable --now clamav-freshclam clamd@scan`. Without this, every
+  upload fails closed (rejected, not silently allowed through).
 
 ### Installation
 

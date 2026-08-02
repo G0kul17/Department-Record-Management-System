@@ -1,13 +1,7 @@
 import pool from "../config/db.js";
 import bcrypt from "bcrypt";
 import { generateOTP, getExpiryDate } from "../utils/otpGenerator.js";
-import { enqueueMail } from "../utils/mailClient.js";
-import {
-  registrationOtpEmail,
-  loginUnverifiedOtpEmail,
-  loginSessionExpiredOtpEmail,
-  forgotPasswordOtpEmail,
-} from "../utils/emailTemplates.js";
+import { sendOTPEmail } from "../services/mailService.js";
 import { detectRole } from "../utils/roleUtils.js";
 import dotenv from "dotenv";
 import { signToken } from "../utils/tokenUtils.js";
@@ -23,7 +17,8 @@ dotenv.config();
 const OTP_EXPIRY_MIN = Number(process.env.OTP_EXPIRY_MIN || 5);
 const INVALID_LOGIN_MESSAGE = "Invalid credentials";
 // Precomputed bcrypt hash used to equalize login timing when email does not exist.
-const DUMMY_PASSWORD_HASH = "$2b$10$w8cfPEjAt5v9E8w2B0f9ku2xYQbQ4f4AXjQ3x8fNq7KP1h6JjA7fW";
+const DUMMY_PASSWORD_HASH =
+  "$2b$10$w8cfPEjAt5v9E8w2B0f9ku2xYQbQ4f4AXjQ3x8fNq7KP1h6JjA7fW";
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "")
   .split(",")
   .map((s) => s.trim().toLowerCase())
@@ -93,7 +88,8 @@ export async function register(req, res) {
       if (!userRow.is_verified) {
         const hashed = await bcrypt.hash(password, 10);
         // Also update role in case ADMIN_EMAILS was changed or this email should be admin
-        await tracedQuery(pool, 
+        await tracedQuery(
+          pool,
           "UPDATE users SET password_hash=$1, role=$2, profile_details=$3, full_name=$4 WHERE email=$5",
           [hashed, role, JSON.stringify(profileDetails), fullName, emailLower],
         );
@@ -107,7 +103,8 @@ export async function register(req, res) {
     if (!existing.length) {
       const hashed = await bcrypt.hash(password, 10);
       try {
-        await tracedQuery(pool, 
+        await tracedQuery(
+          pool,
           "INSERT INTO users (email, password_hash, role, profile_details, full_name) VALUES ($1, $2, $3, $4, $5)",
           [emailLower, hashed, role, JSON.stringify(profileDetails), fullName],
         );
@@ -126,17 +123,13 @@ export async function register(req, res) {
     await tracedQuery(pool, "DELETE FROM otp_verifications WHERE email=$1", [
       emailLower,
     ]);
-    await tracedQuery(pool, 
+    await tracedQuery(
+      pool,
       "INSERT INTO otp_verifications (email, otp_code, expires_at) VALUES ($1, $2, $3)",
       [emailLower, otp, expiresAt],
     );
 
-    // send email
-    enqueueMail({
-      to: emailLower,
-      subject: "Your verification OTP",
-      ...registrationOtpEmail({ otp, OTP_EXPIRY_MIN }),
-    });
+    await sendOTPEmail(emailLower, otp);
 
     return res.json({
       message: `OTP sent to ${emailLower}`,
@@ -146,7 +139,11 @@ export async function register(req, res) {
     logger.error("Auth register error", { err, ...reqContext(req) });
     const payload =
       process.env.NODE_ENV !== "production"
-        ? { message: "Server error", trace_id: req.correlationId, error: String(err.message || err) }
+        ? {
+            message: "Server error",
+            trace_id: req.correlationId,
+            error: String(err.message || err),
+          }
         : { message: "Server error", trace_id: req.correlationId };
     return res.status(500).json(payload);
   }
@@ -160,7 +157,8 @@ export async function verifyOTP(req, res) {
   const emailLower = String(email).trim().toLowerCase();
   const otpClean = String(otp).trim();
   try {
-    const { rows } = await tracedQuery(pool, 
+    const { rows } = await tracedQuery(
+      pool,
       "SELECT * FROM otp_verifications WHERE email=$1",
       [emailLower],
     );
@@ -169,37 +167,56 @@ export async function verifyOTP(req, res) {
     const otpRow = rows[0];
 
     if (otpRow.attempts >= 5) {
-      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
-      return res.status(429).json({ message: "Too many failed attempts. Please request a new OTP." });
+      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [
+        otpRow.id,
+      ]);
+      return res
+        .status(429)
+        .json({
+          message: "Too many failed attempts. Please request a new OTP.",
+        });
     }
 
     // Check expiry BEFORE checking the code so expired rows can never be
     // brute-forced: a wrong code would otherwise leave the row alive past
     // its expiry window with unlimited retry time.
     if (new Date() > otpRow.expires_at) {
-      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [
+        otpRow.id,
+      ]);
       return res.status(401).json({ message: "OTP expired" });
     }
 
     if (otpRow.otp_code.trim() !== otpClean) {
-      await tracedQuery(pool, "UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1", [otpRow.id]);
+      await tracedQuery(
+        pool,
+        "UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1",
+        [otpRow.id],
+      );
       return res.status(401).json({ message: "Invalid OTP" });
     }
 
     // mark verified and remove otp
-    await tracedQuery(pool, "UPDATE users SET is_verified=true WHERE email=$1", [
-      emailLower,
+    await tracedQuery(
+      pool,
+      "UPDATE users SET is_verified=true WHERE email=$1",
+      [emailLower],
+    );
+    await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [
+      otpRow.id,
     ]);
-    await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
 
     // return jwt
-    const { rows: users } = await tracedQuery(pool,
+    const { rows: users } = await tracedQuery(
+      pool,
       "SELECT id, email, role, profile_details FROM users WHERE email=$1",
       [emailLower],
     );
     const user = users[0];
     if (!user) {
-      return res.status(500).json({ message: "Server error", trace_id: req.correlationId });
+      return res
+        .status(500)
+        .json({ message: "Server error", trace_id: req.correlationId });
     }
     // If this email is listed in ADMIN_EMAILS, ensure role is admin both in DB and token
     if (ADMIN_EMAILS.includes(emailLower) && user.role !== "admin") {
@@ -213,7 +230,12 @@ export async function verifyOTP(req, res) {
       ipAddress: req.ip,
     });
     const token = signToken(
-      { id: user.id, email: user.email, role: user.role, sid: regSession.session_token },
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        sid: regSession.session_token,
+      },
       "6h",
     );
     const profile = user.profile_details || {};
@@ -233,7 +255,9 @@ export async function verifyOTP(req, res) {
     });
   } catch (err) {
     logger.error("Auth verifyOTP error", { err, ...reqContext(req) });
-    return res.status(500).json({ message: "Server error", trace_id: req.correlationId });
+    return res
+      .status(500)
+      .json({ message: "Server error", trace_id: req.correlationId });
   }
 }
 
@@ -244,9 +268,11 @@ export async function login(req, res) {
 
   const emailLower = email.toLowerCase();
   try {
-    const { rows } = await tracedQuery(pool, "SELECT * FROM users WHERE email=$1", [
-      emailLower,
-    ]);
+    const { rows } = await tracedQuery(
+      pool,
+      "SELECT * FROM users WHERE email=$1",
+      [emailLower],
+    );
     if (!rows.length) {
       // Run a dummy compare to make the missing-user path timing closer to real auth checks.
       await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
@@ -255,8 +281,7 @@ export async function login(req, res) {
 
     const user = rows[0];
     const match = await bcrypt.compare(password, user.password_hash || "");
-    if (!match)
-      return res.status(401).json({ message: INVALID_LOGIN_MESSAGE });
+    if (!match) return res.status(401).json({ message: INVALID_LOGIN_MESSAGE });
 
     if (!user.is_verified) {
       // User hasn't verified account yet: generate a fresh verification OTP and return it
@@ -265,16 +290,13 @@ export async function login(req, res) {
       await tracedQuery(pool, "DELETE FROM otp_verifications WHERE email=$1", [
         emailLower,
       ]);
-      await tracedQuery(pool, 
+      await tracedQuery(
+        pool,
         "INSERT INTO otp_verifications (email, otp_code, expires_at) VALUES ($1, $2, $3)",
         [emailLower, otp, expiresAt],
       );
 
-      enqueueMail({
-        to: emailLower,
-        subject: "Account Verification OTP",
-        ...loginUnverifiedOtpEmail({ otp, OTP_EXPIRY_MIN }),
-      });
+      await sendOTPEmail(emailLower, otp);
 
       return res.json({
         message: "Please verify your account via OTP",
@@ -289,13 +311,20 @@ export async function login(req, res) {
       const latestSession = activeSessions[0]; // ordered by last_accessed_at DESC
       // If this email is listed in ADMIN_EMAILS, ensure role is admin both in DB and token
       if (ADMIN_EMAILS.includes(emailLower) && user.role !== "admin") {
-        await tracedQuery(pool, "UPDATE users SET role='admin' WHERE email=$1", [
-          emailLower,
-        ]);
+        await tracedQuery(
+          pool,
+          "UPDATE users SET role='admin' WHERE email=$1",
+          [emailLower],
+        );
         user.role = "admin";
       }
       const token = signToken(
-        { id: user.id, email: user.email, role: user.role, sid: latestSession.session_token },
+        {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          sid: latestSession.session_token,
+        },
         "6h",
       );
       const profile = user.profile_details || {};
@@ -309,7 +338,8 @@ export async function login(req, res) {
       // Fetch student profile data if role is student
       let studentProfile = {};
       if (user.role === "student") {
-        const { rows: profileRows } = await tracedQuery(pool, 
+        const { rows: profileRows } = await tracedQuery(
+          pool,
           "SELECT register_number, contact_number, leetcode_url, hackerrank_url, codechef_url, github_url FROM student_profiles WHERE user_id=$1",
           [user.id],
         );
@@ -336,23 +366,24 @@ export async function login(req, res) {
     await tracedQuery(pool, "DELETE FROM otp_verifications WHERE email=$1", [
       emailLower,
     ]);
-    await tracedQuery(pool, 
+    await tracedQuery(
+      pool,
       "INSERT INTO otp_verifications (email, otp_code, expires_at) VALUES ($1, $2, $3)",
       [emailLower, otp, expiresAt],
     );
 
-    enqueueMail({
-      to: emailLower,
-      subject: "Login OTP",
-      ...loginSessionExpiredOtpEmail({ otp, OTP_EXPIRY_MIN }),
-    });
+    await sendOTPEmail(emailLower, otp);
 
     return res.json({ message: "Login OTP sent to email" });
   } catch (err) {
     logger.error("Auth login error", { err, ...reqContext(req) });
     const payload =
       process.env.NODE_ENV !== "production"
-        ? { message: "Server error", trace_id: req.correlationId, error: String(err.message || err) }
+        ? {
+            message: "Server error",
+            trace_id: req.correlationId,
+            error: String(err.message || err),
+          }
         : { message: "Server error", trace_id: req.correlationId };
     return res.status(500).json(payload);
   }
@@ -366,7 +397,8 @@ export async function loginVerifyOTP(req, res) {
   const emailLower = String(email).trim().toLowerCase();
   const otpClean = String(otp).trim();
   try {
-    const { rows } = await tracedQuery(pool, 
+    const { rows } = await tracedQuery(
+      pool,
       "SELECT * FROM otp_verifications WHERE email=$1",
       [emailLower],
     );
@@ -375,30 +407,47 @@ export async function loginVerifyOTP(req, res) {
     const otpRow = rows[0];
 
     if (otpRow.attempts >= 5) {
-      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
-      return res.status(429).json({ message: "Too many failed attempts. Please request a new OTP." });
+      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [
+        otpRow.id,
+      ]);
+      return res
+        .status(429)
+        .json({
+          message: "Too many failed attempts. Please request a new OTP.",
+        });
     }
 
     if (new Date() > otpRow.expires_at) {
-      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [
+        otpRow.id,
+      ]);
       return res.status(401).json({ message: "OTP expired" });
     }
 
     if (otpRow.otp_code.trim() !== otpClean) {
-      await tracedQuery(pool, "UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1", [otpRow.id]);
+      await tracedQuery(
+        pool,
+        "UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1",
+        [otpRow.id],
+      );
       return res.status(401).json({ message: "Invalid OTP" });
     }
 
-    await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+    await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [
+      otpRow.id,
+    ]);
 
     // issue token
-    const { rows: users } = await tracedQuery(pool,
+    const { rows: users } = await tracedQuery(
+      pool,
       "SELECT id, email, role, profile_details FROM users WHERE email=$1",
       [emailLower],
     );
     const user = users[0];
     if (!user) {
-      return res.status(500).json({ message: "Server error", trace_id: req.correlationId });
+      return res
+        .status(500)
+        .json({ message: "Server error", trace_id: req.correlationId });
     }
     // If this email is listed in ADMIN_EMAILS, ensure role is admin both in DB and token
     if (ADMIN_EMAILS.includes(emailLower) && user.role !== "admin") {
@@ -418,7 +467,8 @@ export async function loginVerifyOTP(req, res) {
     // Fetch student profile data if role is student
     let studentProfile = {};
     if (user.role === "student") {
-      const { rows: profileRows } = await tracedQuery(pool, 
+      const { rows: profileRows } = await tracedQuery(
+        pool,
         "SELECT register_number, contact_number, leetcode_url, hackerrank_url, codechef_url, github_url FROM student_profiles WHERE user_id=$1",
         [user.id],
       );
@@ -428,7 +478,12 @@ export async function loginVerifyOTP(req, res) {
     }
 
     const token = signToken(
-      { id: user.id, email: user.email, role: user.role, sid: session.session_token },
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        sid: session.session_token,
+      },
       "6h",
     );
     const profile = user.profile_details || {};
@@ -449,7 +504,9 @@ export async function loginVerifyOTP(req, res) {
     });
   } catch (err) {
     logger.error("Auth loginVerifyOTP error", { err, ...reqContext(req) });
-    return res.status(500).json({ message: "Server error", trace_id: req.correlationId });
+    return res
+      .status(500)
+      .json({ message: "Server error", trace_id: req.correlationId });
   }
 }
 
@@ -467,29 +524,39 @@ export async function forgotVerifyOTP(req, res) {
   const emailLower = String(email).trim().toLowerCase();
   const otpClean = String(otp).trim();
   try {
-    const { rows } = await tracedQuery(pool, 
+    const { rows } = await tracedQuery(
+      pool,
       "SELECT * FROM otp_verifications WHERE email=$1",
-      [emailLower]
+      [emailLower],
     );
     if (!rows.length) return res.status(401).json({ message: "Invalid OTP" });
 
     const otpRow = rows[0];
 
     if (otpRow.attempts >= 5) {
-      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
-      return res.status(429).json({ message: "Too many failed attempts. Please request a new OTP." });
+      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [
+        otpRow.id,
+      ]);
+      return res
+        .status(429)
+        .json({
+          message: "Too many failed attempts. Please request a new OTP.",
+        });
     }
 
     // Expiry before code — expired rows must not be brute-forced
     if (new Date() > otpRow.expires_at) {
-      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [
+        otpRow.id,
+      ]);
       return res.status(401).json({ message: "OTP expired" });
     }
 
     if (otpRow.otp_code.trim() !== otpClean) {
-      await tracedQuery(pool, 
+      await tracedQuery(
+        pool,
         "UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1",
-        [otpRow.id]
+        [otpRow.id],
       );
       return res.status(401).json({ message: "Invalid OTP" });
     }
@@ -498,7 +565,9 @@ export async function forgotVerifyOTP(req, res) {
     return res.json({ message: "OTP verified" });
   } catch (err) {
     logger.error("Auth forgot-verify error", { err, ...reqContext(req) });
-    return res.status(500).json({ message: "Server error", trace_id: req.correlationId });
+    return res
+      .status(500)
+      .json({ message: "Server error", trace_id: req.correlationId });
   }
 }
 
@@ -511,7 +580,8 @@ export async function initiateForgotPassword(req, res) {
     // Only allow verified accounts to reset their password.
     // Unverified accounts were never proven to own the email address, so
     // issuing a reset OTP for them would be a bypass of email verification.
-    const { rows } = await tracedQuery(pool, 
+    const { rows } = await tracedQuery(
+      pool,
       "SELECT id FROM users WHERE email=$1 AND is_verified=true",
       [emailLower],
     );
@@ -526,17 +596,13 @@ export async function initiateForgotPassword(req, res) {
       await tracedQuery(pool, "DELETE FROM otp_verifications WHERE email=$1", [
         emailLower,
       ]);
-      await tracedQuery(pool, 
+      await tracedQuery(
+        pool,
         "INSERT INTO otp_verifications (email, otp_code, expires_at) VALUES ($1, $2, $3)",
-        [emailLower, otp, expiresAt]
+        [emailLower, otp, expiresAt],
       );
 
-      enqueueMail({
-        to: emailLower,
-        subject: "Password Reset OTP",
-        ...forgotPasswordOtpEmail({ otp, OTP_EXPIRY_MIN }),
-      });
-
+      await sendOTPEmail(emailLower, otp);
     }
 
     return res.json(genericResponse);
@@ -544,7 +610,11 @@ export async function initiateForgotPassword(req, res) {
     logger.error("Auth forgot-password error", { err, ...reqContext(req) });
     const payload =
       process.env.NODE_ENV !== "production"
-        ? { message: "Server error", trace_id: req.correlationId, error: String(err.message || err) }
+        ? {
+            message: "Server error",
+            trace_id: req.correlationId,
+            error: String(err.message || err),
+          }
         : { message: "Server error", trace_id: req.correlationId };
     return res.status(500).json(payload);
   }
@@ -569,7 +639,8 @@ export async function resetPassword(req, res) {
   const emailLower = String(email).trim().toLowerCase();
   const otpClean = String(otp).trim();
   try {
-    const { rows } = await tracedQuery(pool, 
+    const { rows } = await tracedQuery(
+      pool,
       "SELECT * FROM otp_verifications WHERE email=$1",
       [emailLower],
     );
@@ -578,30 +649,45 @@ export async function resetPassword(req, res) {
     const otpRow = rows[0];
 
     if (otpRow.attempts >= 5) {
-      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
-      return res.status(429).json({ message: "Too many failed attempts. Please request a new OTP." });
+      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [
+        otpRow.id,
+      ]);
+      return res
+        .status(429)
+        .json({
+          message: "Too many failed attempts. Please request a new OTP.",
+        });
     }
 
     if (new Date() > otpRow.expires_at) {
-      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [
+        otpRow.id,
+      ]);
       return res.status(401).json({ message: "OTP expired" });
     }
 
     if (otpRow.otp_code.trim() !== otpClean) {
-      await tracedQuery(pool, "UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1", [otpRow.id]);
+      await tracedQuery(
+        pool,
+        "UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1",
+        [otpRow.id],
+      );
       return res.status(401).json({ message: "Invalid OTP" });
     }
 
     const hashed = await bcrypt.hash(newPassword, 10);
     // Only reset password for verified accounts — unverified users must go
     // through the registration + email-verification flow instead.
-    const { rows: updated } = await tracedQuery(pool, 
+    const { rows: updated } = await tracedQuery(
+      pool,
       "UPDATE users SET password_hash=$1 WHERE email=$2 AND is_verified=true RETURNING id",
       [hashed, emailLower],
     );
 
     // Consume the OTP regardless of outcome to prevent replay
-    await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [otpRow.id]);
+    await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [
+      otpRow.id,
+    ]);
 
     if (!updated.length) {
       return res.status(401).json({ message: "Invalid OTP" });
@@ -611,7 +697,9 @@ export async function resetPassword(req, res) {
     return res.json({ message: "Password updated" });
   } catch (err) {
     logger.error("Auth resetPassword error", { err, ...reqContext(req) });
-    return res.status(500).json({ message: "Server error", trace_id: req.correlationId });
+    return res
+      .status(500)
+      .json({ message: "Server error", trace_id: req.correlationId });
   }
 }
 
@@ -621,7 +709,8 @@ export async function getProfile(req, res) {
     const emailLower = (req.user?.email || "").toLowerCase();
     if (!emailLower) return res.status(401).json({ message: "Unauthorized" });
 
-    const { rows } = await tracedQuery(pool, 
+    const { rows } = await tracedQuery(
+      pool,
       "SELECT id, email, role, profile_details FROM users WHERE email=$1",
       [emailLower],
     );
@@ -647,7 +736,9 @@ export async function getProfile(req, res) {
     });
   } catch (err) {
     logger.error("Auth getProfile error", { err, ...reqContext(req) });
-    return res.status(500).json({ message: "Server error", trace_id: req.correlationId });
+    return res
+      .status(500)
+      .json({ message: "Server error", trace_id: req.correlationId });
   }
 }
 
@@ -661,7 +752,8 @@ export async function updateProfile(req, res) {
     const nameValue = name || fullName;
 
     // Get current profile_details
-    const { rows: current } = await tracedQuery(pool, 
+    const { rows: current } = await tracedQuery(
+      pool,
       "SELECT profile_details FROM users WHERE email=$1",
       [emailLower],
     );
@@ -684,15 +776,17 @@ export async function updateProfile(req, res) {
     const updatedProfile = { ...existingProfile, ...updates };
 
     if (nameValue !== undefined) {
-      await tracedQuery(pool, 
+      await tracedQuery(
+        pool,
         "UPDATE users SET profile_details=$1, full_name=$2 WHERE email=$3",
         [JSON.stringify(updatedProfile), nameValue || null, emailLower],
       );
     } else {
-      await tracedQuery(pool, "UPDATE users SET profile_details=$1 WHERE email=$2", [
-        JSON.stringify(updatedProfile),
-        emailLower,
-      ]);
+      await tracedQuery(
+        pool,
+        "UPDATE users SET profile_details=$1 WHERE email=$2",
+        [JSON.stringify(updatedProfile), emailLower],
+      );
     }
 
     return res.json({
@@ -701,7 +795,9 @@ export async function updateProfile(req, res) {
     });
   } catch (err) {
     logger.error("Auth updateProfile error", { err, ...reqContext(req) });
-    return res.status(500).json({ message: "Server error", trace_id: req.correlationId });
+    return res
+      .status(500)
+      .json({ message: "Server error", trace_id: req.correlationId });
   }
 }
 
@@ -720,7 +816,8 @@ export async function updateProfilePhoto(req, res) {
     const photoUrl = `${absBase}/uploads/${filename}`;
 
     // Get current profile_details
-    const { rows: current } = await tracedQuery(pool, 
+    const { rows: current } = await tracedQuery(
+      pool,
       "SELECT profile_details FROM users WHERE email=$1",
       [emailLower],
     );
@@ -737,15 +834,18 @@ export async function updateProfilePhoto(req, res) {
       profile_pic: photoUrl,
     };
 
-    await tracedQuery(pool, "UPDATE users SET profile_details=$1 WHERE email=$2", [
-      JSON.stringify(updatedProfile),
-      emailLower,
-    ]);
+    await tracedQuery(
+      pool,
+      "UPDATE users SET profile_details=$1 WHERE email=$2",
+      [JSON.stringify(updatedProfile), emailLower],
+    );
 
     return res.json({ message: "Photo updated", photoUrl });
   } catch (err) {
     logger.error("Auth updateProfilePhoto error", { err, ...reqContext(req) });
-    return res.status(500).json({ message: "Server error", trace_id: req.correlationId });
+    return res
+      .status(500)
+      .json({ message: "Server error", trace_id: req.correlationId });
   }
 }
 
@@ -758,6 +858,8 @@ export async function logout(req, res) {
     return res.json({ message: "Logged out successfully" });
   } catch (err) {
     logger.error("Auth logout error", { err, ...reqContext(req) });
-    return res.status(500).json({ message: "Server error", trace_id: req.correlationId });
+    return res
+      .status(500)
+      .json({ message: "Server error", trace_id: req.correlationId });
   }
 }

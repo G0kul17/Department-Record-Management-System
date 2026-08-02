@@ -11,6 +11,7 @@ export default function AdminQuickActions() {
 
   const goTo = (key) => () => {
     if (key === "achievements") return nav("/achievements");
+    if (key === "customAchievements") return nav("/admin/custom-achievements");
     if (key === "projects") return nav("/projects/upload");
     if (key === "verifyAchievements") return nav("/admin/verify-achievements");
     if (key === "verifyProjects") return nav("/admin/verify-projects");
@@ -25,7 +26,8 @@ export default function AdminQuickActions() {
     if (key === "exportRecords") return nav("/admin/reports");
     if (key === "bulkExport") return nav("/admin/bulk-export");
     if (key === "manageUsers") return nav("/admin/users");
-    if (key === "activityCoordinators") return nav("/admin/activity-coordinators");
+    if (key === "activityCoordinators")
+      return nav("/admin/activity-coordinators");
     return nav("/");
   };
 
@@ -124,6 +126,17 @@ export default function AdminQuickActions() {
               title="Activity Coordinators"
               desc="Map staff to activity types."
               color="purple"
+            />
+          </Card>
+          <Card
+            onClick={goTo("customAchievements")}
+            className="p-4 sm:p-6 glitter-card bulge-card"
+          >
+            <Tile
+              icon={<IconStar />}
+              title="Add Custom Achievements"
+              desc="Create new achievement titles for forms and mappings."
+              color="amber"
             />
           </Card>
         </div>
@@ -271,6 +284,24 @@ function IconDownload() {
   );
 }
 
+function IconStar() {
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+    >
+      <path
+        d="M12 3l2.9 6.1L21 10l-4.5 4.3L17.6 21 12 17.8 6.4 21l1.1-6.7L3 10l6.1-.9L12 3z"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function IconUsers() {
   return (
     <svg
@@ -315,6 +346,7 @@ function Tile({ icon, title, desc, color }) {
     fuchsia: "bg-fuchsia-100 text-fuchsia-600",
     purple: "bg-purple-100 text-purple-600",
     orange: "bg-orange-100 text-orange-600",
+    amber: "bg-amber-100 text-amber-600",
     indigo: "bg-indigo-100 text-indigo-600",
     cyan: "bg-cyan-100 text-cyan-600",
     red: "bg-red-100 text-red-600",

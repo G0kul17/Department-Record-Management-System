@@ -5,6 +5,7 @@ import SuccessModal from "../../components/ui/SuccessModal";
 import CustomSelect from "../../components/ui/CustomSelect";
 import UploadDropzone from "../../components/ui/UploadDropzone";
 import { getFileUrl } from "../../utils/fileUrl";
+import { loadAchievementTypes } from "../../utils/achievementTypes";
 
 export default function Achievements() {
   const { user } = useAuth();
@@ -29,6 +30,7 @@ export default function Achievements() {
   const [loadingMine, setLoadingMine] = useState(false);
   const [page, setPage] = useState(1);
   const [previewModal, setPreviewModal] = useState({ open: false, item: null });
+  const [achievementTypes, setAchievementTypes] = useState([]);
 
   const loadMine = async () => {
     setLoadingMine(true);
@@ -48,6 +50,17 @@ export default function Achievements() {
       loadMine();
     }
   }, [user]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const types = await loadAchievementTypes();
+      if (mounted) setAchievementTypes(types);
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     setPage(1);
@@ -190,16 +203,7 @@ export default function Achievements() {
               <CustomSelect
                 value={form.title}
                 onChange={(value) => setForm({ ...form, title: value })}
-                options={[
-                  "Hackathon",
-                  "Paper presentation",
-                  "Coding competition",
-                  "Conference presentation",
-                  "Journal publications",
-                  "NPTEL certificate",
-                  "Internship certificate",
-                  "Other MOOC courses",
-                ]}
+                options={achievementTypes}
                 placeholder="Select a title"
                 required
                 name="achievement_title"

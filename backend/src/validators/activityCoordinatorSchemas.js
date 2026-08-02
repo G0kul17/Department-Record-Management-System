@@ -7,3 +7,7 @@ export const createActivityCoordinatorSchema = Joi.object({
     .try(Joi.number().integer(), Joi.string().max(20))
     .required(),
 });
+
+export const createAchievementTypeSchema = Joi.object({
+  name: Joi.string().max(100).trim().required(),
+});

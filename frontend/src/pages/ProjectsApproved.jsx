@@ -46,6 +46,18 @@ export default function ProjectsApproved() {
     return name || emailFull || "Staff";
   };
 
+  const getApprovedByLabel = (project) =>
+    project.verified_by_fullname ||
+    project.verified_by_name ||
+    project.approved_by_fullname ||
+    project.approved_by_name ||
+    project.approved_by ||
+    project.approvedBy ||
+    project.approvedByName ||
+    project.verified_by_email ||
+    project.approved_by_email ||
+    "Staff";
+
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -262,10 +274,7 @@ export default function ProjectsApproved() {
                         Approved by
                       </div>
                       <div className="mt-1 break-words font-medium text-slate-900 dark:text-slate-100">
-                        {p.verified_by_name ||
-                          p.approved_by ||
-                          p.approvedByName ||
-                          "Staff"}
+                        {getApprovedByLabel(p)}
                       </div>
                     </div>
                   </div>
@@ -284,10 +293,7 @@ export default function ProjectsApproved() {
                         Approved by
                       </div>
                       <div className="mt-1 break-words text-sm font-medium text-slate-900 dark:text-slate-100">
-                        {p.verified_by_name ||
-                          p.approved_by ||
-                          p.approvedByName ||
-                          "Staff"}
+                        {getApprovedByLabel(p)}
                       </div>
                     </div>
                   </div>

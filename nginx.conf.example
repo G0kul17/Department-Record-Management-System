@@ -50,6 +50,28 @@ server {
     client_max_body_size 50M;
 
     # ========================================================================
+    # Real client IP (REQUIRED if this nginx sits behind another reverse
+    # proxy -- e.g. Nginx Proxy Manager, Cloudflare, a load balancer, an
+    # upstream CDN). Skip this block if this nginx is the actual internet
+    # edge and receives connections directly.
+    #
+    # Without this, $remote_addr / $binary_remote_addr is ALWAYS the
+    # upstream proxy's own IP for every request -- not just wrong in
+    # access logs, but silently breaks the rate limiting below: every
+    # real-world client gets bucketed together as one "IP", so one busy
+    # legitimate user can rate-limit every other user at the same time.
+    # Hit this for real in production (2026-08-04) once a rate limit was
+    # added in front of an upstream reverse proxy.
+    #
+    # set_real_ip_from must be the upstream proxy's OWN IP specifically --
+    # never trust this header from an untrusted/arbitrary peer, that lets
+    # anyone spoof their apparent IP and bypass the rate limit entirely.
+    # ========================================================================
+    # set_real_ip_from <your-upstream-proxy-ip>;
+    # real_ip_header X-Forwarded-For;
+    # real_ip_recursive on;
+
+    # ========================================================================
     # Backend API Proxying - /api routes
     # ========================================================================
     location /api/ {

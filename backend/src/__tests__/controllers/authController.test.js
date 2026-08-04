@@ -6,7 +6,8 @@ vi.mock("../../config/db.js", () => ({
   default: { query: vi.fn() },
 }));
 
-vi.mock("../../config/mailer.js", () => ({
+vi.mock("../../services/mailService.js", () => ({
+  sendOTPEmail: vi.fn(),
   sendMail: vi.fn(),
 }));
 
@@ -43,7 +44,7 @@ vi.mock("bcrypt", () => ({
 }));
 
 import pool from "../../config/db.js";
-import { sendMail } from "../../config/mailer.js";
+import { sendOTPEmail } from "../../services/mailService.js";
 import { signToken } from "../../utils/tokenUtils.js";
 import { createSession } from "../../utils/sessionUtils.js";
 import { verifyOTP, loginVerifyOTP } from "../../controllers/authController.js";
@@ -72,7 +73,7 @@ const FUTURE = new Date(Date.now() + 10 * 60 * 1000);
 
 beforeEach(() => {
   vi.clearAllMocks();
-  sendMail.mockResolvedValue(undefined);
+  sendOTPEmail.mockResolvedValue(undefined);
   createSession.mockResolvedValue({ session_token: "sess-abc" });
   signToken.mockReturnValue("signed.jwt.token");
 });
@@ -87,7 +88,9 @@ describe("verifyOTP", () => {
     await verifyOTP(req, res);
 
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ message: "Email and OTP required" });
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Email and OTP required",
+    });
   });
 
   it("returns 400 when otp is missing", async () => {
@@ -97,13 +100,17 @@ describe("verifyOTP", () => {
     await verifyOTP(req, res);
 
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ message: "Email and OTP required" });
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Email and OTP required",
+    });
   });
 
   it("returns 401 when no OTP record exists for the email", async () => {
     pool.query.mockResolvedValueOnce({ rows: [] }); // no OTP row
 
-    const req = makeReq({ body: { email: "ghost@example.com", otp: "000000" } });
+    const req = makeReq({
+      body: { email: "ghost@example.com", otp: "000000" },
+    });
     const res = makeRes();
 
     await verifyOTP(req, res);
@@ -169,12 +176,14 @@ describe("verifyOTP", () => {
     pool.query
       .mockResolvedValueOnce({
         rows: [{ id: 1, otp_code: "123456", expires_at: FUTURE, attempts: 0 }],
-      })                                        // SELECT otp_verifications
-      .mockResolvedValueOnce({ rowCount: 1 })  // UPDATE users SET is_verified=true
-      .mockResolvedValueOnce({ rowCount: 1 })  // DELETE otp_verifications
-      .mockResolvedValueOnce({ rows: [] });    // SELECT users → empty (bug fix target)
+      }) // SELECT otp_verifications
+      .mockResolvedValueOnce({ rowCount: 1 }) // UPDATE users SET is_verified=true
+      .mockResolvedValueOnce({ rowCount: 1 }) // DELETE otp_verifications
+      .mockResolvedValueOnce({ rows: [] }); // SELECT users → empty (bug fix target)
 
-    const req = makeReq({ body: { email: "vanished@example.com", otp: "123456" } });
+    const req = makeReq({
+      body: { email: "vanished@example.com", otp: "123456" },
+    });
     const res = makeRes();
 
     await verifyOTP(req, res);
@@ -192,8 +201,8 @@ describe("verifyOTP", () => {
       .mockResolvedValueOnce({
         rows: [{ id: 1, otp_code: "123456", expires_at: FUTURE, attempts: 0 }],
       })
-      .mockResolvedValueOnce({ rowCount: 1 })  // UPDATE is_verified
-      .mockResolvedValueOnce({ rowCount: 1 })  // DELETE otp
+      .mockResolvedValueOnce({ rowCount: 1 }) // UPDATE is_verified
+      .mockResolvedValueOnce({ rowCount: 1 }) // DELETE otp
       .mockResolvedValueOnce({
         rows: [
           {
@@ -203,7 +212,7 @@ describe("verifyOTP", () => {
             profile_details: {},
           },
         ],
-      });                                       // SELECT users
+      }); // SELECT users
 
     const req = makeReq({ body: { email: "user@example.com", otp: "123456" } });
     const res = makeRes();
@@ -211,7 +220,10 @@ describe("verifyOTP", () => {
     await verifyOTP(req, res);
 
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ message: "Verified", token: "signed.jwt.token" }),
+      expect.objectContaining({
+        message: "Verified",
+        token: "signed.jwt.token",
+      }),
     );
     expect(createSession).toHaveBeenCalledOnce();
   });
@@ -227,7 +239,9 @@ describe("loginVerifyOTP", () => {
     await loginVerifyOTP(req, res);
 
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ message: "Email and OTP required" });
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Email and OTP required",
+    });
   });
 
   it("returns 400 when otp is missing", async () => {
@@ -242,7 +256,9 @@ describe("loginVerifyOTP", () => {
   it("returns 401 when no OTP record exists", async () => {
     pool.query.mockResolvedValueOnce({ rows: [] });
 
-    const req = makeReq({ body: { email: "nobody@example.com", otp: "111111" } });
+    const req = makeReq({
+      body: { email: "nobody@example.com", otp: "111111" },
+    });
     const res = makeRes();
 
     await loginVerifyOTP(req, res);
@@ -303,11 +319,13 @@ describe("loginVerifyOTP", () => {
     pool.query
       .mockResolvedValueOnce({
         rows: [{ id: 2, otp_code: "123456", expires_at: FUTURE, attempts: 0 }],
-      })                                        // SELECT otp_verifications
-      .mockResolvedValueOnce({ rowCount: 1 })  // DELETE otp_verifications
-      .mockResolvedValueOnce({ rows: [] });    // SELECT users → empty (bug fix target)
+      }) // SELECT otp_verifications
+      .mockResolvedValueOnce({ rowCount: 1 }) // DELETE otp_verifications
+      .mockResolvedValueOnce({ rows: [] }); // SELECT users → empty (bug fix target)
 
-    const req = makeReq({ body: { email: "ghost@example.com", otp: "123456" } });
+    const req = makeReq({
+      body: { email: "ghost@example.com", otp: "123456" },
+    });
     const res = makeRes();
 
     await loginVerifyOTP(req, res);
@@ -325,7 +343,7 @@ describe("loginVerifyOTP", () => {
       .mockResolvedValueOnce({
         rows: [{ id: 2, otp_code: "123456", expires_at: FUTURE, attempts: 0 }],
       })
-      .mockResolvedValueOnce({ rowCount: 1 })  // DELETE otp
+      .mockResolvedValueOnce({ rowCount: 1 }) // DELETE otp
       .mockResolvedValueOnce({
         rows: [
           {
@@ -335,8 +353,8 @@ describe("loginVerifyOTP", () => {
             profile_details: {},
           },
         ],
-      })                                       // SELECT users
-      .mockResolvedValueOnce({ rows: [] });   // SELECT student_profiles
+      }) // SELECT users
+      .mockResolvedValueOnce({ rows: [] }); // SELECT student_profiles
 
     const req = makeReq({ body: { email: "user@example.com", otp: "123456" } });
     const res = makeRes();

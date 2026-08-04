@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import AttachmentPreview from "../components/AttachmentPreview";
 import { generateAcademicYears } from "../utils/academicYears";
 import { getFileUrl } from "../utils/fileUrl";
+import { loadAchievementTypes } from "../utils/achievementTypes";
 
 export default function AchievementsApproved() {
   const [items, setItems] = useState([]);
@@ -17,6 +18,7 @@ export default function AchievementsApproved() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [refreshId, setRefreshId] = useState(0);
+  const [achievementTypes, setAchievementTypes] = useState([]);
   const yearRef = useRef(null);
   const categoryRef = useRef(null);
 
@@ -40,12 +42,35 @@ export default function AchievementsApproved() {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [categoryOpen]);
 
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const types = await loadAchievementTypes();
+      if (mounted) setAchievementTypes(types);
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const getUploadedByLabel = (item) =>
     (item.user_email || item.student_email || "").trim() ||
     item.user_fullname ||
     item.studentName ||
     item.name ||
     "Student";
+
+  const getApprovedByLabel = (item) =>
+    item.verified_by_fullname ||
+    item.verified_by_name ||
+    item.approved_by_fullname ||
+    item.approved_by_name ||
+    item.approved_by ||
+    item.approvedBy ||
+    item.approvedByName ||
+    item.verified_by_email ||
+    item.approved_by_email ||
+    "Staff";
 
   useEffect(() => {
     let mounted = true;
@@ -251,16 +276,7 @@ export default function AchievementsApproved() {
                     >
                       All titles
                     </button>
-                    {[
-                      "Hackathon",
-                      "Paper presentation",
-                      "Coding competition",
-                      "Conference presentation",
-                      "Journal publications",
-                      "NPTEL certificate",
-                      "Internship certificate",
-                      "Other MOOC courses",
-                    ].map((label) => (
+                    {achievementTypes.map((label) => (
                       <button
                         key={label}
                         type="button"
@@ -422,11 +438,7 @@ export default function AchievementsApproved() {
                         Approved by
                       </div>
                       <div className="mt-1 break-words font-medium text-slate-900 dark:text-slate-100">
-                        {item.verified_by_name ||
-                          item.approved_by ||
-                          item.approvedBy ||
-                          item.approvedByName ||
-                          "Staff"}
+                        {getApprovedByLabel(item)}
                       </div>
                     </div>
                   </div>
@@ -445,18 +457,16 @@ export default function AchievementsApproved() {
                         Approved by
                       </div>
                       <div className="mt-1 break-words text-sm font-medium text-slate-900 dark:text-slate-100">
-                        {item.verified_by_name ||
-                          item.approved_by ||
-                          item.approvedBy ||
-                          item.approvedByName ||
-                          "Staff"}
+                        {getApprovedByLabel(item)}
                       </div>
                     </div>
                   </div>
 
-                  <p className="mt-4 break-words text-sm leading-6 text-slate-700 dark:text-slate-300 sm:text-base">
-                    {item.description || "-"}
-                  </p>
+                  {item.description && (
+                    <p className="mt-4 break-words text-sm leading-6 text-slate-700 dark:text-slate-300 sm:text-base">
+                      {item.description}
+                    </p>
+                  )}
 
                   {teamStr && (
                     <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:bg-slate-800/60 dark:text-slate-300">

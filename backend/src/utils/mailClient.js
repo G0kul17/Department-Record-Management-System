@@ -1,12 +1,12 @@
 // src/utils/mailClient.js
 //
-// Non-blocking mail dispatch. Starts the SMTP send in the background and
+// Non-blocking mail dispatch. Starts the Graph send in the background and
 // returns immediately so the HTTP request cycle is never held up by mail
-// delivery latency or a slow/unavailable SMTP server.
+// delivery latency or a slow/unavailable mail backend.
 //
 // Delivery errors are logged but never propagate to the caller.
 
-import { sendMail } from "../config/mailer.js";
+import { sendMail } from "../services/mailService.js";
 import logger from "./logger.js";
 import { getTraceCtx } from "./traceStore.js";
 

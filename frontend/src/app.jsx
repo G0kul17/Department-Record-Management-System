@@ -12,120 +12,121 @@ const ForgotPassword = React.lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = React.lazy(() => import("./pages/ResetPassword"));
 const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
 const StaffDashboard = React.lazy(() => import("./pages/staff/StaffDashboard"));
-const VerifyAchievements = React.lazy(() =>
-  import("./pages/staff/VerifyAchievements")
+const VerifyAchievements = React.lazy(
+  () => import("./pages/staff/VerifyAchievements"),
 );
 const VerifyProjects = React.lazy(() => import("./pages/staff/VerifyProjects"));
-const VerifyHackathonProgress = React.lazy(() =>
-  import("./pages/staff/VerifyHackathonProgress"),
+const VerifyHackathonProgress = React.lazy(
+  () => import("./pages/staff/VerifyHackathonProgress"),
 );
 const UploadEvents = React.lazy(() => import("./pages/staff/UploadEvents"));
-const ReportGenerator = React.lazy(() =>
-  import("./pages/staff/ReportGenerator")
+const ReportGenerator = React.lazy(
+  () => import("./pages/staff/ReportGenerator"),
 );
 // Admin wrappers
-const AdminProjectsManagement = React.lazy(() =>
-  import("./pages/admin/AdminProjectsManagement")
+const AdminProjectsManagement = React.lazy(
+  () => import("./pages/admin/AdminProjectsManagement"),
 );
-const AdminAchievementsManagement = React.lazy(() =>
-  import("./pages/admin/AdminAchievementsManagement")
+const AdminAchievementsManagement = React.lazy(
+  () => import("./pages/admin/AdminAchievementsManagement"),
 );
-const AdminEventsManagement = React.lazy(() =>
-  import("./pages/admin/AdminEventsManagement")
+const AdminEventsManagement = React.lazy(
+  () => import("./pages/admin/AdminEventsManagement"),
 );
-const AdminVerifyProjects = React.lazy(() =>
-  import("./pages/admin/AdminVerifyProjects")
+const AdminVerifyProjects = React.lazy(
+  () => import("./pages/admin/AdminVerifyProjects"),
 );
-const AdminVerifyAchievements = React.lazy(() =>
-  import("./pages/admin/AdminVerifyAchievements")
+const AdminVerifyAchievements = React.lazy(
+  () => import("./pages/admin/AdminVerifyAchievements"),
 );
-const AdminUploadEvents = React.lazy(() =>
-  import("./pages/admin/AdminUploadEvents")
+const AdminUploadEvents = React.lazy(
+  () => import("./pages/admin/AdminUploadEvents"),
 );
-const AdminReportGenerator = React.lazy(() =>
-  import("./pages/admin/AdminReportGenerator")
+const AdminReportGenerator = React.lazy(
+  () => import("./pages/admin/AdminReportGenerator"),
 );
-const AdminBulkExportPage = React.lazy(() =>
-  import("./pages/admin/AdminBulkExportPage")
+const AdminBulkExportPage = React.lazy(
+  () => import("./pages/admin/AdminBulkExportPage"),
 );
-const BulkExportPage = React.lazy(() =>
-  import("./pages/staff/BulkExportPage")
+const AdminCustomAchievements = React.lazy(
+  () => import("./pages/admin/AdminCustomAchievements"),
 );
-const TopAchieversAnnouncement = React.lazy(() =>
-  import("./pages/staff/TopAchieversAnnouncement")
+const BulkExportPage = React.lazy(() => import("./pages/staff/BulkExportPage"));
+const TopAchieversAnnouncement = React.lazy(
+  () => import("./pages/staff/TopAchieversAnnouncement"),
 );
-const StudentNotifications = React.lazy(() =>
-  import("./pages/student/StudentNotifications")
+const StudentNotifications = React.lazy(
+  () => import("./pages/student/StudentNotifications"),
 );
-const AdminUsersManagement = React.lazy(() =>
-  import("./pages/admin/AdminUsersManagement.jsx")
+const AdminUsersManagement = React.lazy(
+  () => import("./pages/admin/AdminUsersManagement.jsx"),
 );
-const AdminRoleUsersList = React.lazy(() =>
-  import("./pages/admin/AdminRoleUsersList")
+const AdminRoleUsersList = React.lazy(
+  () => import("./pages/admin/AdminRoleUsersList"),
 );
-const AdminStaffCoordinators = React.lazy(() =>
-  import("./pages/admin/AdminStaffCoordinators")
+const AdminStaffCoordinators = React.lazy(
+  () => import("./pages/admin/AdminStaffCoordinators"),
 );
 const Home = React.lazy(() => import("./pages/Home"));
 const QuickActions = React.lazy(() => import("./pages/QuickActions"));
-const AdminQuickActions = React.lazy(() =>
-  import("./pages/admin/AdminQuickActions")
+const AdminQuickActions = React.lazy(
+  () => import("./pages/admin/AdminQuickActions"),
 );
-const UploadExtracurricular = React.lazy(() =>
-  import("./pages/staff/StaffDataEntry")
+const UploadExtracurricular = React.lazy(
+  () => import("./pages/staff/StaffDataEntry"),
 );
-const AdminUploadExtracurricular = React.lazy(() =>
-  import("./pages/admin/AdminDataEntry")
+const AdminUploadExtracurricular = React.lazy(
+  () => import("./pages/admin/AdminDataEntry"),
 );
-const FacultyParticipation = React.lazy(() =>
-  import("./pages/staff/FacultyParticipation")
+const FacultyParticipation = React.lazy(
+  () => import("./pages/staff/FacultyParticipation"),
 );
-const AdminFacultyParticipation = React.lazy(() =>
-  import("./pages/admin/AdminFacultyParticipation")
+const AdminFacultyParticipation = React.lazy(
+  () => import("./pages/admin/AdminFacultyParticipation"),
 );
-const FacultyResearch = React.lazy(() =>
-  import("./pages/staff/FacultyResearch")
+const FacultyResearch = React.lazy(
+  () => import("./pages/staff/FacultyResearch"),
 );
-const AdminFacultyResearch = React.lazy(() =>
-  import("./pages/admin/AdminFacultyResearch")
+const AdminFacultyResearch = React.lazy(
+  () => import("./pages/admin/AdminFacultyResearch"),
 );
-const FacultyConsultancy = React.lazy(() =>
-  import("./pages/staff/FacultyConsultancy")
+const FacultyConsultancy = React.lazy(
+  () => import("./pages/staff/FacultyConsultancy"),
 );
-const AdminFacultyConsultancy = React.lazy(() =>
-  import("./pages/admin/AdminFacultyConsultancy")
+const AdminFacultyConsultancy = React.lazy(
+  () => import("./pages/admin/AdminFacultyConsultancy"),
 );
-const StudentsBatchUpload = React.lazy(() =>
-  import("./pages/staff/StudentsBatchUpload.jsx")
+const StudentsBatchUpload = React.lazy(
+  () => import("./pages/staff/StudentsBatchUpload.jsx"),
 );
-const AdminStudentsBatchUpload = React.lazy(() =>
-  import("./pages/admin/AdminStudentsBatchUpload.jsx")
+const AdminStudentsBatchUpload = React.lazy(
+  () => import("./pages/admin/AdminStudentsBatchUpload.jsx"),
 );
-const AdminStaffBatchUpload = React.lazy(() =>
-  import("./pages/admin/AdminStaffBatchUpload.jsx")
+const AdminStaffBatchUpload = React.lazy(
+  () => import("./pages/admin/AdminStaffBatchUpload.jsx"),
 );
-const Achievements = React.lazy(() =>
-  import("./pages/student/StudentsAchievements")
+const Achievements = React.lazy(
+  () => import("./pages/student/StudentsAchievements"),
 );
-const HackathonEntryandProgress = React.lazy(() =>
-  import("./pages/student/HackathonEntryandProgress")
+const HackathonEntryandProgress = React.lazy(
+  () => import("./pages/student/HackathonEntryandProgress"),
 );
-const ProjectUpload = React.lazy(() =>
-  import("./pages/student/StudentsProjectUpload")
+const ProjectUpload = React.lazy(
+  () => import("./pages/student/StudentsProjectUpload"),
 );
 const Events = React.lazy(() => import("./pages/student/StudentsEventsReg"));
 const ProjectsApproved = React.lazy(() => import("./pages/ProjectsApproved"));
-const AchievementsApproved = React.lazy(() =>
-  import("./pages/AchievementsApproved")
+const AchievementsApproved = React.lazy(
+  () => import("./pages/AchievementsApproved"),
 );
-const FacultyResearchApproved = React.lazy(() =>
-  import("./pages/FacultyResearchApproved")
+const FacultyResearchApproved = React.lazy(
+  () => import("./pages/FacultyResearchApproved"),
 );
-const FacultyConsultancyApproved = React.lazy(() =>
-  import("./pages/FacultyConsultancyApproved")
+const FacultyConsultancyApproved = React.lazy(
+  () => import("./pages/FacultyConsultancyApproved"),
 );
-const FacultyParticipationApproved = React.lazy(() =>
-  import("./pages/FacultyParticipationApproved")
+const FacultyParticipationApproved = React.lazy(
+  () => import("./pages/FacultyParticipationApproved"),
 );
 const ProjectDetail = React.lazy(() => import("./pages/ProjectDetail"));
 const AchievementDetail = React.lazy(() => import("./pages/AchievementDetail"));
@@ -462,6 +463,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminStaffCoordinators />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/custom-achievements"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminCustomAchievements />
               </ProtectedRoute>
             }
           />

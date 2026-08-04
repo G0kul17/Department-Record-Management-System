@@ -1,6 +1,7 @@
 import pool from "../config/db.js";
 import logger, { reqContext } from "../utils/logger.js";
 import { tracedQuery } from "../utils/tracing.js";
+import { invalidateAllUserSessions } from "../utils/sessionUtils.js";
 
 // GET /api/admin/stats
 // Returns total counts for admin dashboard usages
@@ -77,12 +78,21 @@ export async function updateUserRole(req, res) {
         .status(400)
         .json({ message: "Cannot change your own admin role" });
     }
-    const { rows } = await tracedQuery(pool, 
+    const { rows } = await tracedQuery(pool,
       "UPDATE users SET role=$1 WHERE id=$2 RETURNING id, email, role, COALESCE(NULLIF(full_name, ''), NULLIF(profile_details->>'full_name', ''), NULLIF(TRIM((profile_details->>'first_name') || ' ' || (profile_details->>'last_name')), '')) AS full_name, is_verified, created_at",
       [role, id]
     );
     if (!rows.length)
       return res.status(404).json({ message: "User not found" });
+
+    // The old role is baked into any JWT this user already holds
+    // (authController.js signs { role, ... } at login) and requireRole()
+    // trusts that claim directly without re-checking the DB. Without this,
+    // a demoted user keeps their old privileges via their still-valid
+    // token/session for up to its remaining TTL. Force them to
+    // re-authenticate so the new role takes effect immediately.
+    await invalidateAllUserSessions(id);
+
     return res.json({ user: rows[0] });
   } catch (err) {
     logger.error("Admin controller error", { err,

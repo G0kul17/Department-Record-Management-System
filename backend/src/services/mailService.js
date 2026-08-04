@@ -4,6 +4,7 @@ import { ConfidentialClientApplication } from "@azure/msal-node";
 import { Client } from "@microsoft/microsoft-graph-client";
 import logger from "../utils/logger.js";
 import { getTraceCtx } from "../utils/traceStore.js";
+import { loginSessionExpiredOtpEmail } from "../utils/emailTemplates.js";
 
 dotenv.config();
 
@@ -137,10 +138,13 @@ export async function sendMail({ to, subject, text, html }) {
 }
 
 export async function sendOTPEmail(to, otp) {
+  const OTP_EXPIRY_MIN = parseInt(process.env.OTP_EXPIRY_MIN, 10) || 5;
+  const { html, text } = loginSessionExpiredOtpEmail({ otp, OTP_EXPIRY_MIN });
   return sendMail({
     to,
-    subject: "Your OTP Verification",
-    text: `Your OTP is ${otp}`,
+    subject: "Login OTP",
+    html,
+    text,
   });
 }
 

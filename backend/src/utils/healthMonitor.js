@@ -5,6 +5,17 @@ import fs from "fs";
 import path from "path";
 import logger from "./logger.js";
 
+const IS_PRODUCTION = (process.env.NODE_ENV || "development") === "production";
+
+// Each check gets this long to finish before the health-check loop moves on
+// without it. Prevents one hung outbound call (Graph token request, a stuck
+// DB query) from silently blocking every check that runs after it in the
+// same cycle -- and blocking the next scheduled cycle too, since the loop
+// awaits each check in sequence. Note: this does not cancel the underlying
+// operation, it only stops it from blocking the loop -- the real request may
+// still be in flight in the background when the next cycle starts.
+const CHECK_TIMEOUT_MS = Number(process.env.HEALTH_CHECK_TIMEOUT_MS) || 8_000;
+
 const firingAlerts = new Map();
 
 // Core tables the app cannot function without
@@ -55,6 +66,29 @@ async function checkEmail() {
 }
 
 async function checkStorage() {
+  // In production STORAGE_PATH is expected to be a mounted filesystem (NFS,
+  // in the current deployment). If the mount drops, the path is still a
+  // perfectly ordinary local directory -- readable, writable, passes every
+  // check below identically -- so writes would silently land on local disk
+  // instead of the real shared/backed-up store. Catch that specifically by
+  // confirming the path is actually a mount boundary (different device than
+  // its parent), not just "some writable directory". Skipped outside
+  // production since local dev's STORAGE_PATH is deliberately a plain local
+  // ./uploads folder with no mount involved.
+  if (IS_PRODUCTION) {
+    const [pathStat, parentStat] = await Promise.all([
+      fs.promises.stat(STORAGE_PATH),
+      fs.promises.stat(path.dirname(STORAGE_PATH)),
+    ]);
+    if (pathStat.dev === parentStat.dev) {
+      throw new Error(
+        `${STORAGE_PATH} is not a mounted filesystem — the NFS mount is ` +
+          `down, uploads would silently write to local disk instead of the ` +
+          `real shared storage`,
+      );
+    }
+  }
+
   fs.accessSync(STORAGE_PATH, fs.constants.R_OK | fs.constants.W_OK);
   // Test actual write
   const testFile = path.join(STORAGE_PATH, `.health-${Date.now()}`);
@@ -65,6 +99,29 @@ async function checkStorage() {
   const usedPct = Math.round((1 - stats.bavail / stats.blocks) * 100);
   if (usedPct >= 90)
     throw new Error(`Disk usage at ${usedPct}% — uploads may fail`);
+}
+
+async function checkRootDisk() {
+  // Separate from checkStorage: STORAGE_PATH is a distinct mount from the
+  // app's own root filesystem in production, so a full root disk (logs,
+  // node_modules, piled-up releases/* from old deploys) would never trip
+  // the uploads-mount check above.
+  const stats = await fs.promises.statfs("/");
+  const usedPct = Math.round((1 - stats.bavail / stats.blocks) * 100);
+  if (usedPct >= 90)
+    throw new Error(
+      `Root disk usage at ${usedPct}% — app may fail to write logs, ` +
+        `deploy new releases, or crash outright`,
+    );
+}
+
+async function checkAuthSecret() {
+  if (!process.env.JWT_SECRET) {
+    throw new Error(
+      "JWT_SECRET is not set — token signing and verification will fail, " +
+        "all authentication is broken",
+    );
+  }
 }
 
 const RUNBOOKS = {
@@ -123,20 +180,63 @@ const RUNBOOKS = {
   },
   storage: {
     impact:
-      "File uploads (project proofs, certificates, photos) will fail. Existing files are unaffected.",
+      "File uploads (project proofs, certificates, photos) will fail, OR " +
+      "— if the failure is specifically 'not a mounted filesystem' — " +
+      "uploads may appear to succeed but are silently writing to local " +
+      "disk instead of the real shared/backed-up NFS storage.",
     causes: [
       "Disk usage reached 90%+ — no space left for new uploads",
       "Upload directory permissions changed (chmod/chown)",
-      "Mount point unmounted or NFS/remote storage disconnected",
+      "Mount point unmounted or NFS/remote storage disconnected (this is " +
+        "the 'not a mounted filesystem' error specifically)",
       "Disk failure or filesystem error (read-only remount)",
     ],
     steps: [
       "1. Check disk usage → `df -h` and `du -sh /opt/drms/uploads/*`",
-      "2. If disk full: clean old logs → `journalctl --vacuum-size=500M`, remove temp files",
-      "3. Check upload dir permissions → `ls -la /opt/drms/uploads`",
-      "4. Fix permissions if needed → `chmod 755 /opt/drms/uploads && chown drms:drms /opt/drms/uploads`",
-      "5. Check mount → `mount | grep uploads` (if using external storage)",
+      "2. Check it's actually mounted → `mount | grep uploads` — if it's " +
+        "missing, remount: `mount /opt/drms/uploads` (fstab entry already " +
+        "has _netdev)",
+      "3. If disk full: clean old logs → `journalctl --vacuum-size=500M`, remove temp files",
+      "4. Check upload dir permissions → `ls -la /opt/drms/uploads`",
+      "5. Fix permissions if needed → `chmod 755 /opt/drms/uploads && chown drms:drms /opt/drms/uploads`",
       "6. After fix: app recovers automatically within 60s — no restart needed",
+    ],
+  },
+  disk: {
+    impact:
+      "App may fail to write logs, fail to deploy new releases, or crash " +
+      "outright once root disk fills completely. Uploads are unaffected " +
+      "(separate mount) — this is about the app's own filesystem.",
+    causes: [
+      "Old releases/* directories piling up across deploys without cleanup",
+      "node_modules bloat from repeated installs",
+      "Runaway application or system logs",
+      "npm/yarn cache growth",
+    ],
+    steps: [
+      "1. Check disk usage → `df -h /`",
+      "2. Find what's using space → `du -sh /opt/drms/backend/releases/* | sort -h`",
+      "3. Remove old releases, keeping at least the last 2-3 → `rm -rf /opt/drms/backend/releases/<old-version>`",
+      "4. Clean logs if needed → `journalctl --vacuum-size=500M`",
+      "5. Confirm root disk usage dropped → `df -h /`",
+    ],
+  },
+  auth: {
+    impact:
+      "All authentication is broken — no one can log in, register, or " +
+      "have existing tokens verified. This is total-outage severity even " +
+      "though the app process itself stays up and 'online' in PM2.",
+    causes: [
+      "JWT_SECRET was removed or never set in /opt/drms/backend/.env",
+      "A deploy or `pm2 reload --update-env` picked up an env file missing it",
+    ],
+    steps: [
+      "1. Check it's set → `pm2 env drms | grep JWT_SECRET`",
+      "2. If missing, restore it in /opt/drms/backend/.env from the last " +
+        "known-good backup (see DRMS_DR_RUNBOOK.md) — do not generate a " +
+        "new one casually, it invalidates every existing session/token",
+      "3. Reload with the corrected env → `pm2 reload drms --update-env`",
+      "4. Confirm a real login works, not just that the check passes",
     ],
   },
 };
@@ -162,7 +262,24 @@ const CHECKS = [
   { name: "tables", fn: checkCoreTables },
   { name: "email", fn: checkEmail },
   { name: "storage", fn: checkStorage },
+  { name: "disk", fn: checkRootDisk },
+  { name: "auth", fn: checkAuthSecret },
 ];
+
+function runWithTimeout(fn) {
+  return Promise.race([
+    fn(),
+    new Promise((_, reject) =>
+      setTimeout(
+        () =>
+          reject(
+            new Error(`Health check timed out after ${CHECK_TIMEOUT_MS}ms`),
+          ),
+        CHECK_TIMEOUT_MS,
+      ),
+    ),
+  ]);
+}
 
 async function postZenduty(message, alertType, entityId, summary) {
   const url = process.env.ZENDUTY_WEBHOOK_URL;
@@ -192,7 +309,7 @@ async function postZenduty(message, alertType, entityId, summary) {
 export async function runHealthChecks() {
   for (const { name, fn } of CHECKS) {
     try {
-      await fn();
+      await runWithTimeout(fn);
       logger.debug("health.check.ok", { "health.check": name });
       if (firingAlerts.get(name)) {
         firingAlerts.set(name, false);
@@ -229,12 +346,9 @@ export function getHealthStatus() {
 }
 
 export function startHealthMonitor() {
-  // One-time startup check: JWT_SECRET must be set or auth silently breaks
-  if (!process.env.JWT_SECRET) {
-    logger.error("health.startup.jwt_secret_missing", {
-      message: "JWT_SECRET is not set — token signing will fail",
-    });
-  }
+  // JWT_SECRET presence is now the recurring, alerting "auth" check in
+  // CHECKS above (fires on every cycle via Zenduty, not just logged once at
+  // startup and never checked again).
 
   const interval = Number(process.env.HEALTH_CHECK_INTERVAL_MS) || 60_000;
   setInterval(() => {

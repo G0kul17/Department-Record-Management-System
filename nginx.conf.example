@@ -161,21 +161,29 @@ server {
 }
 
 # ============================================================================
-# Rate Limiting (Optional but Recommended)
+# Rate Limiting (Applied 2026-08-04 -- deployed to drms-prod-gateway-01)
 # ============================================================================
+# The app itself has no rate limiting on any endpoint (see the security
+# audit that found this). These zones were sitting here unused for a long
+# time before someone actually wired them into the live config -- if you're
+# copying this file for a fresh deploy, make sure the two directives below
+# are NOT left commented out this time.
 
 # Define rate limit zones
 limit_req_zone $binary_remote_addr zone=api_limit:10m rate=100r/m;
 limit_req_zone $binary_remote_addr zone=login_limit:10m rate=5r/m;
 
-# Apply rate limiting to API
-# Add to location /api/ block:
-# limit_req zone=api_limit burst=20 nodelay;
+# Apply rate limiting to general API traffic.
+# Add to the location /api/ block:
+#   limit_req zone=api_limit burst=20 nodelay;
 
-# Apply stricter rate limiting to auth endpoints
-# Create separate location block:
-# location /api/auth/login {
-#     limit_req zone=login_limit burst=5 nodelay;
-#     proxy_pass http://drms_backend;
-#     # ... other proxy settings
-# }
+# Apply stricter rate limiting to the WHOLE auth surface, not just /login --
+# register/verify/forgot/forgot-verify/reset are all OTP- or
+# credential-guessing targets too. Declare this location BEFORE the general
+# /api/ block (nginx prefix matching picks the longest match regardless of
+# declaration order, but keep it above for readability):
+#   location /api/auth/ {
+#       limit_req zone=login_limit burst=10 nodelay;
+#       proxy_pass http://drms_backend;
+#       # ... other proxy settings
+#   }

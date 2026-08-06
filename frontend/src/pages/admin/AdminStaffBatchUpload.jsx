@@ -120,8 +120,14 @@ export default function AdminStaffBatchUpload() {
                 fd.append("staff_file", file);
                 const resp = await apiClient.uploadFile("/staff-batch/upload", fd);
                 setResult(resp);
-                setMessage(resp.message || "Upload complete");
-                setShowSuccess(true);
+                if ((resp.created ?? 0) > 0) {
+                  setShowSuccess(true);
+                  setMessage("");
+                } else {
+                  setMessage(
+                    `All ${Array.isArray(resp.skipped) ? resp.skipped.length : 0} staff member(s) were skipped — their emails are already registered in the system.`
+                  );
+                }
               } catch (e) {
                 setMessage(e.message || "Upload failed");
                 const backendErrors = Array.isArray(e?.validationErrors)
@@ -197,10 +203,50 @@ export default function AdminStaffBatchUpload() {
         )}
 
         {result && (
-          <div className="text-xs text-slate-700 dark:text-slate-200">
-            <div>Created: {result.created ?? 0}</div>
+          <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm dark:border-slate-700 dark:bg-slate-800">
+            <div className="font-semibold text-slate-800 dark:text-slate-100 mb-2">Upload Summary</div>
+            <div className="flex flex-wrap gap-4">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-700 text-xs font-bold">{result.created ?? 0}</span>
+                <span className="text-slate-700 dark:text-slate-300">New accounts created</span>
+              </div>
+              {Array.isArray(result.skipped) && result.skipped.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 text-amber-700 text-xs font-bold">{result.skipped.length}</span>
+                  <span className="text-slate-700 dark:text-slate-300">Already registered (skipped)</span>
+                </div>
+              )}
+              {Array.isArray(result.mailFailures) && result.mailFailures.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-red-100 text-red-700 text-xs font-bold">{result.mailFailures.length}</span>
+                  <span className="text-slate-700 dark:text-slate-300">Welcome email failed</span>
+                </div>
+              )}
+            </div>
             {Array.isArray(result.skipped) && result.skipped.length > 0 && (
-              <div className="mt-1">Skipped: {result.skipped.length}</div>
+              <div className="mt-3">
+                <div className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-1">Skipped — email already exists in the system:</div>
+                <ul className="list-disc pl-5 space-y-0.5 text-xs text-amber-800 dark:text-amber-300">
+                  {result.skipped.map((s, i) => (
+                    <li key={i}>
+                      <span className="font-mono">{s.email}</span>
+                      {s.reason ? <span className="text-slate-500"> — {s.reason}</span> : null}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-2 text-xs text-slate-500">These staff members already have accounts. If you need to update their data, use the user management page.</p>
+              </div>
+            )}
+            {Array.isArray(result.mailFailures) && result.mailFailures.length > 0 && (
+              <div className="mt-3">
+                <div className="text-xs font-semibold text-red-700 dark:text-red-400 mb-1">Welcome emails failed to send:</div>
+                <ul className="list-disc pl-5 space-y-0.5 text-xs text-red-800 dark:text-red-300">
+                  {result.mailFailures.map((f, i) => (
+                    <li key={i}><span className="font-mono">{f.email}</span></li>
+                  ))}
+                </ul>
+                <p className="mt-2 text-xs text-slate-500">Accounts were created. Staff can log in using the reset password flow.</p>
+              </div>
             )}
           </div>
         )}

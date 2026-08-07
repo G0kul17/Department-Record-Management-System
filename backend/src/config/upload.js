@@ -197,10 +197,10 @@ const DANGEROUS_BYTE_PATTERNS = [
 // other three content-safety checks (extension blocklist, byte-pattern scan,
 // MIME detection from magic bytes) still run and cover the most common threats.
 // ============================================================================
-const CLAMSCAN_ENABLED = process.env.ENABLE_CLAMSCAN === "true";
+export const CLAMSCAN_ENABLED = process.env.ENABLE_CLAMSCAN === "true";
 
 let clamscanPromise = null;
-function getClamscan() {
+export function getClamscan() {
   if (!clamscanPromise) {
     clamscanPromise = new NodeClam().init({
       clamdscan: {

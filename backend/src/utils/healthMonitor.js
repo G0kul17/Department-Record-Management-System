@@ -1,6 +1,6 @@
 import pool, { getPoolHealth } from "../config/db.js";
 import { getAccessToken, isMailConfigured } from "../config/mailer.js";
-import { STORAGE_PATH } from "../config/upload.js";
+import { STORAGE_PATH, CLAMSCAN_ENABLED, getClamscan } from "../config/upload.js";
 import fs from "fs";
 import path from "path";
 import logger from "./logger.js";
@@ -113,6 +113,25 @@ async function checkRootDisk() {
       `Root disk usage at ${usedPct}% — app may fail to write logs, ` +
         `deploy new releases, or crash outright`,
     );
+}
+
+async function checkClamscan() {
+  // AV scanning is opt-in outside production (dev/CI hosts typically don't
+  // have clamd installed) -- nothing to verify there.
+  if (!IS_PRODUCTION) return;
+
+  if (!CLAMSCAN_ENABLED) {
+    throw new Error(
+      'ENABLE_CLAMSCAN is not set to "true" in production — uploaded files ' +
+        "are not being scanned for malware",
+    );
+  }
+
+  // getVersion() round-trips the clamd socket without scanning a real file --
+  // the cheapest way to confirm the daemon is actually reachable, not just
+  // that the env flag is on.
+  const clamscan = await getClamscan();
+  await clamscan.getVersion();
 }
 
 async function checkAuthSecret() {
@@ -239,6 +258,31 @@ const RUNBOOKS = {
       "4. Confirm a real login works, not just that the check passes",
     ],
   },
+  clamscan: {
+    impact:
+      "Uploaded files (proofs, certificates, avatars, event attachments, " +
+      "batch CSVs) are not being scanned for malware. An infected or " +
+      "malicious file could be stored and later downloaded by another user.",
+    causes: [
+      'ENABLE_CLAMSCAN is not set to "true" in production (missing from ' +
+        "/opt/drms/backend/.env, or a deploy picked up an env file without it)",
+      "clamd is not running on the host",
+      "clamd's socket /run/clamd.scan/clamd.sock is missing, or the app's " +
+        "runtime user lost its virusgroup socket access",
+      "ClamAV virus definitions are stale/corrupted and freshclam failed, " +
+        "causing clamd to refuse connections",
+    ],
+    steps: [
+      '1. Check the flag is set → `pm2 env drms | grep ENABLE_CLAMSCAN` (must be "true")',
+      "2. Check clamd is active → `systemctl status clamd@scan`",
+      "3. Check the socket exists → `ls -la /run/clamd.scan/clamd.sock`",
+      "4. Check the app's runtime user has socket access → `id deploy` (needs virusgroup)",
+      "5. If clamd is down, restart it → `systemctl restart clamd@scan`",
+      "6. If the flag was missing, add `ENABLE_CLAMSCAN=true` to " +
+        "/opt/drms/backend/.env, then → `pm2 reload drms --update-env`",
+      "7. Confirm recovery — next health cycle logs `health.check.recovered` for clamscan",
+    ],
+  },
 };
 
 function buildSummary(checkName, errorMessage) {
@@ -264,6 +308,7 @@ const CHECKS = [
   { name: "storage", fn: checkStorage },
   { name: "disk", fn: checkRootDisk },
   { name: "auth", fn: checkAuthSecret },
+  { name: "clamscan", fn: checkClamscan },
 ];
 
 function runWithTimeout(fn) {

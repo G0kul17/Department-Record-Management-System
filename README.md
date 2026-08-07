@@ -336,9 +336,6 @@ OTP_EXPIRY_MIN=5
 FILE_STORAGE_PATH=./uploads
 FILE_SIZE_LIMIT_MB=50
 
-# Allowed File Types
-ALLOWED_FILE_TYPES=application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/zip,application/vnd.android.package-archive,application/x-msdownload,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation
-
 # Server Port (optional)
 PORT=5000
 ```
@@ -1019,10 +1016,10 @@ Error: Invalid login
 #### 3. File Upload Error
 
 ```
-Error: File type not allowed
+Error: Invalid <field> file type
 ```
 
-**Solution**: Check `ALLOWED_FILE_TYPES` in `.env` and ensure file type is included.
+**Solution**: Each upload field (`proof`, `certificate`, `avatar`, `brochure`, etc.) has its own allowed file types hardcoded in `backend/src/config/upload.js`'s `fileFilter`. Check the rule for that field there.
 
 #### 4. Port Already in Use
 

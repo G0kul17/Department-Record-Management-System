@@ -308,10 +308,9 @@ FILE_STORAGE_PATH=./uploads
 
 # Maximum file upload size in megabytes
 FILE_SIZE_LIMIT_MB=50
-
-# Allowed upload MIME types (comma-separated)
-ALLOWED_FILE_TYPES=application/pdf,...
 ```
+
+Allowed file types are no longer env-configured — each upload field (`proof`, `certificate`, `avatar`, `brochure`, etc.) has its own hardcoded allowlist in `fileFilter` inside `backend/src/config/upload.js`.
 
 ---
 

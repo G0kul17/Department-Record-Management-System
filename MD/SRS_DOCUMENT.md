@@ -1562,7 +1562,6 @@ EMAIL_FROM=noreply@institution.edu
 # File Upload
 FILE_STORAGE_PATH=./uploads
 FILE_SIZE_LIMIT_MB=50
-ALLOWED_FILE_TYPES=pdf,jpg,jpeg,png
 
 # Session
 SESSION_EXPIRY_DAYS=90

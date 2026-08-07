@@ -47,10 +47,6 @@ STORAGE_PATH = path.resolve(STORAGE_PATH);
 
 const MAX_MB = Number(process.env.FILE_SIZE_LIMIT_MB || 50);
 const MAX_BYTES = MAX_MB * 1024 * 1024;
-const allowedTypes = (process.env.ALLOWED_FILE_TYPES || "")
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
 const proofAllowedMimes = new Set([
   "application/pdf",
   "image/png",
@@ -139,7 +135,10 @@ verifyFileStorage();
 // by spoofing the client-declared MIME type or file extension.
 // ============================================================================
 
-// Extensions that enable XSS or server-side execution when served statically
+// Extensions that enable XSS or server-side execution when served statically,
+// plus scripts and installers with no reliable magic-byte signature (many of
+// these are plain text, so BLOCKED_DETECTED_MIMES below can't catch them —
+// extension is the only signal available).
 const BLOCKED_EXTENSIONS = new Set([
   ".html", ".htm", ".xhtml",
   ".svg", ".svgz",
@@ -149,15 +148,44 @@ const BLOCKED_EXTENSIONS = new Set([
   ".asp", ".aspx", ".jsp", ".jspx",
   ".sh", ".bash", ".zsh",
   ".py", ".rb", ".pl", ".cgi",
+  // Windows scripts
+  ".bat", ".cmd", ".vbs", ".vbe", ".jse", ".wsf", ".wsh",
+  ".ps1", ".ps1xml", ".psc1", ".psm1", ".psd1",
+  ".hta", ".msc", ".reg",
+  // Executables and installers (also covered by magic bytes below where
+  // file-type can detect them; kept here too for formats it can't, and as a
+  // second layer against a mismatched/renamed extension)
+  ".exe", ".dll", ".sys", ".drv", ".ocx", ".cpl", ".scr", ".com", ".pif",
+  ".msi", ".msp", ".mst", ".msu", ".msix", ".appx",
+  ".jar", ".apk",
+  ".deb", ".rpm", ".dmg", ".pkg", ".run", ".bin",
+  // Shortcuts and disk images (used to smuggle payloads past extension/AV checks)
+  ".lnk", ".url", ".iso", ".img", ".vhd", ".vhdx",
 ]);
 
-// MIME types detected from magic bytes that are always rejected
+// MIME types detected from magic bytes that are always rejected.
+// Verified against the installed file-type@21.3.0's supportedMimeTypes —
+// that library's detected strings change between major versions, and three
+// entries here (x-executable, x-sharedlib, x-dex) were stale leftovers from
+// an older version that this version never actually emits, so those checks
+// were silently doing nothing. Re-verify this list after any file-type bump.
 const BLOCKED_DETECTED_MIMES = new Set([
-  "application/x-msdownload",  // Windows PE / EXE
-  "application/x-executable",
-  "application/x-elf",
-  "application/x-sharedlib",
-  "application/x-dex",         // Android DEX bytecode
+  "application/x-msdownload",              // Windows PE / EXE, DLL
+  "application/x-elf",                     // Linux ELF binaries/shared libs
+  "application/x-mach-binary",             // macOS Mach-O binaries
+  "application/vnd.android.package-archive", // APK
+  "application/java-archive",              // JAR
+  "application/x-rpm",                     // RPM package
+  "application/x-deb",                     // Debian package
+  "application/x-apple-diskimage",         // DMG
+  "application/x.ms.shortcut",             // Windows .lnk
+  // Macro-enabled Office documents — macros are executable code
+  "application/vnd.ms-word.document.macroenabled.12",
+  "application/vnd.ms-word.template.macroenabled.12",
+  "application/vnd.ms-excel.sheet.macroenabled.12",
+  "application/vnd.ms-excel.template.macroenabled.12",
+  "application/vnd.ms-powerpoint.presentation.macroenabled.12",
+  "application/vnd.ms-powerpoint.template.macroenabled.12",
 ]);
 
 // Byte-level patterns at the head of a file that indicate dangerous text content.
@@ -352,20 +380,10 @@ const storage = new SafeDiskStorage({
 });
 
 function fileFilter(req, file, cb) {
-  // Allow all file types for faculty participation proof field
+  // 'proof' is used for faculty-participation and achievement proof documents,
+  // as well as generic proof fields elsewhere — restrict all of them to PDFs
+  // and images only.
   if (file.fieldname === "proof") {
-    // Check if this is a faculty participation request
-    // If the route starts with /faculty-participations, allow all file types
-    if (req.baseUrl && req.baseUrl.includes("faculty-participations")) {
-      return cb(null, true); // Allow all file types for faculty participation
-    }
-
-    // Allow all file types for achievements
-    if (req.baseUrl && req.baseUrl.includes("achievements")) {
-      return cb(null, true); // Allow all file types for achievements
-    }
-
-    // Otherwise, for other proof fields, restrict to PDFs and images only
     const name = file.originalname || "";
     const ext = name.toLowerCase().split(".").pop();
     const extOk = ["pdf", "png", "jpg", "jpeg"].includes(ext);
@@ -373,18 +391,29 @@ function fileFilter(req, file, cb) {
     return cb(new Error("Invalid proof file type"), false);
   }
 
-  // Allow all file types for certificate field in achievements
+  // 'certificate' (achievements) — restrict to PDFs and images only.
   if (file.fieldname === "certificate") {
-    if (req.baseUrl && req.baseUrl.includes("achievements")) {
-      return cb(null, true); // Allow all file types for achievements
-    }
+    const name = file.originalname || "";
+    const ext = name.toLowerCase().split(".").pop();
+    const extOk = ["pdf", "png", "jpg", "jpeg"].includes(ext);
+    if (proofAllowedMimes.has(file.mimetype) || extOk) return cb(null, true);
     return cb(new Error("Invalid certificate file type"), false);
   }
 
-  // Allow all file types for event_photos field in achievements
+  // 'event_photos' (achievements) — images only.
   if (file.fieldname === "event_photos") {
-    if (req.baseUrl && req.baseUrl.includes("achievements")) {
-      return cb(null, true); // Allow all file types for achievements
+    const name = file.originalname || "";
+    const ext = name.toLowerCase().split(".").pop();
+    const allowedExts = new Set(["png", "jpg", "jpeg"]);
+    const allowedMimes = new Set([
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/x-png",
+      "image/pjpeg",
+    ]);
+    if (allowedMimes.has(file.mimetype) || allowedExts.has(ext)) {
+      return cb(null, true);
     }
     return cb(new Error("Invalid event photo file type"), false);
   }
@@ -533,10 +562,12 @@ function fileFilter(req, file, cb) {
     );
   }
 
-  // Otherwise respect global allowedTypes if provided; allow all if empty
-  if (!allowedTypes.length) return cb(null, true);
-  if (allowedTypes.includes(file.mimetype)) return cb(null, true);
-  return cb(new Error("File type not allowed"), false);
+  // No rule above matched this field. Every field actually wired up in the
+  // routes has an explicit rule, so reaching here means a new upload field
+  // was added without one — fail closed instead of silently accepting
+  // anything, and log so it's visible immediately.
+  logger.warn("file.upload.unrecognized_field", { "file.fieldname": file.fieldname });
+  return cb(new Error(`Uploads are not configured for field "${file.fieldname}"`), false);
 }
 
 export { STORAGE_PATH };

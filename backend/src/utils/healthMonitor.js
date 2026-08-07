@@ -14,7 +14,7 @@ const IS_PRODUCTION = (process.env.NODE_ENV || "development") === "production";
 // awaits each check in sequence. Note: this does not cancel the underlying
 // operation, it only stops it from blocking the loop -- the real request may
 // still be in flight in the background when the next cycle starts.
-const CHECK_TIMEOUT_MS = Number(process.env.HEALTH_CHECK_TIMEOUT_MS) || 8_000;
+const CHECK_TIMEOUT_MS = Number(process.env.HEALTH_CHECK_TIMEOUT_MS) || 16_000;
 
 const firingAlerts = new Map();
 

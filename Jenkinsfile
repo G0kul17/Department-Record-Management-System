@@ -176,6 +176,14 @@ pipeline {
                             cd /opt/drms/backend
                             set -a; . .env; set +a
 
+                            # Export PGPASSWORD so psql never prompts on stdin.
+                            # Without this, psql reads the password from stdin —
+                            # i.e. the REST of this heredoc script — consumes the
+                            # migration loop below, and the step silently exits 0
+                            # having applied NOTHING. This is how migrations
+                            # 006/010/011 were missed in production.
+                            export PGPASSWORD="\$DB_PASS"
+
                             if [ -z "\${DB_HOST:-}" ] || [ -z "\${DB_USER:-}" ] || [ -z "\${DB_NAME:-}" ]; then
                                 echo "ERROR: Missing DB credentials in /opt/drms/backend/.env"
                                 exit 1
@@ -184,9 +192,16 @@ pipeline {
 
                             CURRENT=\$(psql -h "\$DB_HOST" -U "\$DB_USER" -d "\$DB_NAME" -t \\
                                 -c "SELECT COALESCE(MAX(version), 0) FROM schema_version;" \\
-                                2>/dev/null || echo "0")
+                                </dev/null 2>/dev/null || echo "0")
                             CURRENT=\$(echo "\$CURRENT" | tr -d "[:space:]")
                             echo "Current schema version: \$CURRENT"
+
+                            # Never proceed silently: if the version lookup failed,
+                            # abort the deploy instead of skipping every migration.
+                            if [ -z "\$CURRENT" ]; then
+                                echo "ERROR: could not determine current schema version"
+                                exit 1
+                            fi
 
                             MIGRATIONS_DIR="/opt/drms/backend/releases/${env.BUILD_VERSION}/migrations"
                             if [ ! -d "\$MIGRATIONS_DIR" ]; then

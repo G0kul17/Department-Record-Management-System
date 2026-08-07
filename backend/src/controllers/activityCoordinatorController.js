@@ -1,5 +1,6 @@
 import pool from "../config/db.js";
 import logger, { reqContext } from "../utils/logger.js";
+import { tracedQuery } from "../utils/tracing.js";
 import {
   ActivityTypeValidationError,
   requireActivityTypeByName,

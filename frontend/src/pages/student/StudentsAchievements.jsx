@@ -305,6 +305,7 @@ export default function Achievements() {
                   onChange={(e) =>
                     setForm({ ...form, prize_amount: e.target.value })
                   }
+                  onWheel={(e) => e.target.blur()}
                   placeholder="0.00"
                 />
               </div>

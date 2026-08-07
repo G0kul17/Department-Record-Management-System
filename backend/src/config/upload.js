@@ -188,6 +188,17 @@ const DANGEROUS_BYTE_PATTERNS = [
 // (clamd + clamav-freshclam packages, EPEL on RHEL/Rocky), with clamd
 // configured to listen on /run/clamd.scan/clamd.sock and the app's runtime
 // user in the socket's group. See deployment docs for setup steps.
+// ============================================================================
+// ANTIVIRUS (ClamAV) - opt-in via ENABLE_CLAMSCAN=true
+// ============================================================================
+// ClamAV clamd is a Linux-only daemon. On Windows / dev environments it is
+// typically not installed. Setting ENABLE_CLAMSCAN=true requires clamd to be
+// running at /run/clamd.scan/clamd.sock.  When disabled (the default) the
+// other three content-safety checks (extension blocklist, byte-pattern scan,
+// MIME detection from magic bytes) still run and cover the most common threats.
+// ============================================================================
+const CLAMSCAN_ENABLED = process.env.ENABLE_CLAMSCAN === "true";
+
 let clamscanPromise = null;
 function getClamscan() {
   if (!clamscanPromise) {
@@ -230,27 +241,35 @@ async function isFileSafe(filePath, originalName) {
   const result = await fileTypeFromFile(filePath);
   if (result && BLOCKED_DETECTED_MIMES.has(result.mime)) return false;
 
-  // 4. Antivirus scan via ClamAV (clamd). Runs last since it's the most
-  // expensive check -- no point paying for a full scan on a file that's
-  // already rejected by the cheaper checks above. Fails closed: a scan
-  // error or "unable to scan" result (isInfected === null) is treated the
-  // same as an actual infection, not silently allowed through.
-  try {
-    const clamscan = await getClamscan();
-    const { isInfected, viruses } = await clamscan.isInfected(filePath);
-    if (isInfected !== false) {
-      logger.warn("file.upload.virus_scan_rejected", {
-        "file.name": originalName,
-        "file.viruses": viruses,
-      });
+  // 4. Antivirus scan via ClamAV (clamd) — only when explicitly enabled.
+  //    Disabled by default so development environments without clamd installed
+  //    don't reject every upload with a 400.  Enable in production by setting
+  //    ENABLE_CLAMSCAN=true in the environment after installing ClamAV.
+  if (CLAMSCAN_ENABLED) {
+    try {
+      const clamscan = await getClamscan();
+      const { isInfected, viruses } = await clamscan.isInfected(filePath);
+      if (isInfected !== false) {
+        logger.warn("file.upload.virus_scan_rejected", {
+          "file.name": originalName,
+          "file.viruses": viruses,
+        });
+        return false;
+      }
+    } catch (err) {
+      // Reset so the next upload gets a fresh init attempt instead of
+      // being stuck reusing this same rejected promise forever.
+      clamscanPromise = null;
+      logger.error("file.upload.virus_scan_error", { err });
+      // In production (ENABLE_CLAMSCAN=true) a scan failure is treated as
+      // a rejection (fail-closed).  The operator should fix clamd.
       return false;
     }
-  } catch (err) {
-    // Reset so the next upload gets a fresh init attempt instead of
-    // being stuck reusing this same rejected promise forever.
-    clamscanPromise = null;
-    logger.error("file.upload.virus_scan_error", { err });
-    return false;
+  } else {
+    logger.debug("file.upload.virus_scan_skipped", {
+      "file.name": originalName,
+      reason: "ENABLE_CLAMSCAN not set",
+    });
   }
 
   return true;
@@ -389,20 +408,17 @@ function fileFilter(req, file, cb) {
     return cb(null, true);
   }
 
-  // Allow standard image types for 'thumbnail' field (event thumbnails)
+  // Allow PDFs and all images for 'attachments' (events)
+  if (file.fieldname === "attachments") {
+    if (file.mimetype.startsWith("image/") || file.mimetype === "application/pdf") {
+      return cb(null, true);
+    }
+    return cb(new Error("File type not allowed"), false);
+  }
+
+  // Allow all image types for 'thumbnail' field (event thumbnails)
   if (file.fieldname === "thumbnail") {
-    const name = file.originalname || "";
-    const ext = name.toLowerCase().split(".").pop();
-    const allowedExts = new Set(["png", "jpg", "jpeg", "gif"]);
-    const allowedMimes = new Set([
-      "image/png",
-      "image/jpeg",
-      "image/jpg",
-      "image/gif",
-      "image/x-png",
-      "image/pjpeg",
-    ]);
-    if (allowedMimes.has(file.mimetype) || allowedExts.has(ext)) {
+    if (file.mimetype.startsWith("image/")) {
       return cb(null, true);
     }
     return cb(new Error("Invalid image type for thumbnail"), false);

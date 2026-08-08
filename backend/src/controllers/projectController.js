@@ -442,8 +442,10 @@ export async function listProjects(req, res) {
       req.query.verification_status === "approved" ||
       req.query.verification_status === "verified";
 
-    // If not authenticated, only show verified projects
-    if (!requesterId && !req.query.verification_status) {
+    // Unauthenticated callers can only ever see verified projects — this
+    // must not depend on which query params they happen to pass (e.g.
+    // ?verification_status=pending previously skipped this filter entirely).
+    if (!requesterId) {
       qb.addWhere(`p.verified = true`);
     } else if (verified === "true") {
       qb.addWhere(`p.verified = true`);
@@ -528,8 +530,10 @@ export async function listProjects(req, res) {
       }
     }
 
-    const limitRef = qb.addParam(Number(limit));
-    const offsetRef = qb.addParam(Number(offset));
+    const limitRef = qb.addParam(
+      Math.max(1, Math.min(200, parseInt(limit, 10) || 20)),
+    );
+    const offsetRef = qb.addParam(Math.max(0, parseInt(offset, 10) || 0));
     const { text, values } = qb.build(
       `ORDER BY p.created_at DESC LIMIT ${limitRef} OFFSET ${offsetRef}`,
     );
@@ -580,6 +584,11 @@ export async function getProjectDetails(req, res) {
           .status(403)
           .json({ message: "Not authorized to view this project" });
       }
+    } else if (requesterRole !== "admin") {
+      // Any other authenticated role (student, alumni) can view verified
+      // projects or their own — not other users' unverified/rejected ones.
+      whereClause += ` AND (p.verified = true OR p.created_by = $2)`;
+      params.push(requesterId);
     }
 
     const { rows } = await pool.query(

@@ -112,15 +112,19 @@ export const uploadDataFile = async (req, res) => {
     } else if (ext === ".xlsx") {
       parsedRows = parseExcel(filePath);
     } else {
+      fs.unlink(filePath, () => {});
       return res.status(400).json({ message: "Only CSV and Excel allowed" });
     }
 
     if (!parsedRows.length) {
+      fs.unlink(filePath, () => {});
       return res.status(400).json({ message: "No data found in file" });
     }
 
     const columns = Object.keys(parsedRows[0]);
 
+    // File is intentionally kept on disk past this point — saveUploadedData()
+    // below reads it again via stored_filename once the preview is confirmed.
     return res.json({
       preview: {
         columns,
@@ -137,6 +141,7 @@ export const uploadDataFile = async (req, res) => {
   } catch (err) {
     logger.error("Data upload controller error", { err,
       ...reqContext(req) });
+    if (req.file?.path) fs.unlink(req.file.path, () => {});
     res.status(500).json({ message: "Preview failed" });
   }
 };

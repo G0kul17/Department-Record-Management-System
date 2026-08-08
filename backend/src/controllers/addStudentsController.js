@@ -1,6 +1,7 @@
 import pool from "../config/db.js";
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import bcrypt from "bcrypt";
 import xlsx from "xlsx";
 import csvParser from "csv-parser";
@@ -204,7 +205,7 @@ export const uploadStudents = async (req, res) => {
         continue;
       }
 
-      const defaultPassword = Math.random().toString(36).slice(-8);
+      const defaultPassword = crypto.randomBytes(5).toString("hex");
       const hash = await bcrypt.hash(defaultPassword, 10);
 
       await tracedQuery(client, 

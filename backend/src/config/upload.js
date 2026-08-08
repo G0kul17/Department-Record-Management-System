@@ -191,12 +191,15 @@ const BLOCKED_DETECTED_MIMES = new Set([
 // Byte-level patterns at the head of a file that indicate dangerous text content.
 // file-type cannot detect text-based formats (HTML, SVG, PHP) from magic bytes,
 // so we scan the first 512 bytes of every uploaded file.
+// Deliberately unanchored: these test the already-bounded 512-byte header
+// (see isFileSafe below), not the exact start of it — a `^`-anchored version
+// is defeated by a single leading blank line, space, or BOM before the tag.
 const DANGEROUS_BYTE_PATTERNS = [
-  /^<!doctype\s+html/i,
-  /^<html[\s>]/i,
-  /^<script[\s>]/i,
-  /^<\?php/i,
-  /^<svg[\s>]/i,
+  /<!doctype\s+html/i,
+  /<html[\s>]/i,
+  /<script[\s>]/i,
+  /<\?php/i,
+  /<svg[\s>]/i,
 ];
 
 // ============================================================================
@@ -433,8 +436,9 @@ function fileFilter(req, file, cb) {
         false,
       );
     }
-    // For non-project routes (e.g., events), allow by default; rely on component accept
-    return cb(null, true);
+    // 'files' is only mounted on project routes today. Fail closed rather
+    // than allow-all for any future route that reuses this field name.
+    return cb(new Error("'files' uploads are only supported for projects"), false);
   }
 
   // Allow PDFs and all images for 'attachments' (events)
@@ -578,14 +582,18 @@ export const upload = multer({
   fileFilter,
 });
 
-// Special upload for faculty participation with 15MB limit and all file types
+// Special upload for faculty participation/research proof documents, with a
+// 15MB limit. Restricted to PDFs and images, same as the 'proof' rule in the
+// main fileFilter above — this is a separate multer instance for a higher
+// size limit, not a separate file-type policy.
 export const uploadFacultyProof = multer({
   storage,
   limits: { fileSize: 15 * 1024 * 1024 }, // 15MB limit
   fileFilter: (req, file, cb) => {
-    if (file.fieldname === "proof") {
-      return cb(null, true); // Allow all file types
-    }
-    return cb(null, true); // Allow all other fields as well for flexibility
+    const name = file.originalname || "";
+    const ext = name.toLowerCase().split(".").pop();
+    const extOk = ["pdf", "png", "jpg", "jpeg"].includes(ext);
+    if (proofAllowedMimes.has(file.mimetype) || extOk) return cb(null, true);
+    return cb(new Error("Invalid proof file type"), false);
   },
 });

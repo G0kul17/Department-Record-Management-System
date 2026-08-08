@@ -251,8 +251,10 @@ export async function listAchievements(req, res) {
       req.query.status === "approved" ||
       req.query.status === "verified";
 
-    // If not authenticated, only show verified achievements
-    if (!requesterId && !req.query.status) {
+    // Unauthenticated callers can only ever see verified achievements —
+    // this must not depend on which query params they happen to pass
+    // (e.g. ?status=pending previously skipped this filter entirely).
+    if (!requesterId) {
       qb.addWhere(`a.verified = true`);
     } else if (verified === "true") {
       qb.addWhere(`a.verified = true`);
@@ -338,8 +340,10 @@ export async function listAchievements(req, res) {
       qb.addWhere(`(${yearClauses.join(" OR ")})`);
     }
 
-    const limitRef = qb.addParam(Number(limit));
-    const offsetRef = qb.addParam(Number(offset));
+    const limitRef = qb.addParam(
+      Math.max(1, Math.min(200, parseInt(limit, 10) || 20)),
+    );
+    const offsetRef = qb.addParam(Math.max(0, parseInt(offset, 10) || 0));
     const { text, values } = qb.build(
       `ORDER BY a.created_at DESC LIMIT ${limitRef} OFFSET ${offsetRef}`,
     );
@@ -393,6 +397,11 @@ export async function getAchievementDetails(req, res) {
             .json({ message: "Not authorized to view this achievement" });
         }
       }
+    } else if (requesterRole !== "admin") {
+      // Any other authenticated role (student, alumni) can view verified
+      // achievements or their own — not other users' unverified/rejected ones.
+      whereClause += ` AND (a.verified = true OR a.user_id = $2)`;
+      params.push(requesterId);
     }
 
     const { rows } = await pool.query(

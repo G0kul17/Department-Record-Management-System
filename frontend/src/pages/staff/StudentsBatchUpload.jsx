@@ -54,6 +54,7 @@ export default function StudentsBatchUpload() {
         <div className="text-xs text-slate-600 dark:text-slate-300">
           Required columns (exact header names):
           <ul className="mt-1 list-disc pl-5 space-y-0.5">
+            <li>Full name</li>
             <li>First name</li>
             <li>Last name</li>
             <li>College mail</li>
@@ -133,6 +134,7 @@ export default function StudentsBatchUpload() {
               e.preventDefault();
               const headers = [
                 [
+                  "Full name",
                   "First name",
                   "Last name",
                   "College mail",

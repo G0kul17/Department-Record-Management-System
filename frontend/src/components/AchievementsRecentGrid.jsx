@@ -45,8 +45,8 @@ export default function AchievementsRecentGrid({ limit = 6 }) {
         <div className="text-sm text-slate-600 p-4">No achievements yet.</div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            {items.slice(0, limit).map((a, idx) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {items.slice(0, limit).map((a) => {
               const href = `/achievements/${a.id}`;
               const caption = a.title || a.name || "Achievement";
               const author = a.user_fullname || a.user_email || a.name || "";
@@ -56,34 +56,14 @@ export default function AchievementsRecentGrid({ limit = 6 }) {
                 a.event_photos_mime?.startsWith("image/") ? a.event_photos_filename : null,
               ].find(Boolean);
               const imgUrl = imageFilename ? getFileUrl(imageFilename) : null;
-              const spanClass =
-                idx === 0
-                  ? "col-span-12 md:col-span-7"
-                  : idx === 1
-                    ? "col-span-12 md:col-span-5"
-                    : idx === 2
-                      ? "col-span-12 md:col-span-5"
-                      : idx === 3
-                        ? "col-span-12 md:col-span-7"
-                        : "col-span-12 md:col-span-6";
               return (
                 <a
                   key={a.id}
                   href={href}
-                  className={`block rounded-2xl border bg-white shadow-sm hover:shadow-lg glitter-card ${spanClass}`}
-                  style={{
-                    borderColor: "var(--color-border)",
-                    transition: "box-shadow var(--dur-short) var(--ease-out)",
-                  }}
+                  className="block rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-lg transition-all duration-200 glitter-card bulge-card"
                 >
                   <div className="p-4">
-                    <div
-                      className="relative rounded-xl overflow-hidden flex items-center justify-center h-44"
-                      style={{
-                        backgroundColor: "var(--color-accent-soft)",
-                        border: "1px solid var(--color-border)",
-                      }}
-                    >
+                    <div className="relative rounded-xl overflow-hidden bg-gradient-to-br from-yellow-50 to-amber-100 flex items-center justify-center h-44">
                       {imgUrl ? (
                         <img
                           src={imgUrl}

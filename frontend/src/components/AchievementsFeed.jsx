@@ -131,8 +131,8 @@ export default function AchievementsFeed({
                             loading="lazy"
                           />
                         ) : (
-                          <div className="portrait-media w-full flex items-center justify-center" style={{ backgroundColor: "var(--color-accent-soft)", border: "1px solid var(--color-border)" }}>
-                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden style={{ color: "var(--color-ink-muted)" }}>
+                          <div className="portrait-media w-full bg-gradient-to-br from-yellow-50 to-amber-100 flex items-center justify-center">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden className="text-amber-400">
                               <path d="M8 21h8M12 17v4M5 3H3v5c0 2.21 1.79 4 4 4h10c2.21 0 4-1.79 4-4V3h-2M5 3h14M5 3v5M19 3v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                           </div>

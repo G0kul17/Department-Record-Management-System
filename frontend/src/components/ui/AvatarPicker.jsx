@@ -115,9 +115,9 @@ export default function AvatarPicker({ open, onClose }) {
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[var(--z-overlay)] flex items-center justify-center">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative z-[var(--z-overlay)] w-[92vw] max-w-md rounded-xl bg-white shadow-xl">
+      <div className="relative z-[10001] w-[92vw] max-w-md rounded-xl bg-white shadow-xl">
         <div className="flex items-center justify-between border-b p-4">
           <div className="text-sm font-semibold">Change Profile Photo</div>
           <button

@@ -3,9 +3,9 @@ import React from "react";
 export function Table({ children, className = "" }) {
   return (
     <div
-      className={`overflow-x-auto rounded-md border border-[var(--color-border)] bg-white shadow-sm ${className}`}
+      className={`overflow-x-auto rounded-md border border-gray-200 bg-white shadow-sm ${className}`}
     >
-      <table className="min-w-full text-sm tabular-nums [font-variant-numeric:tabular-nums]">{children}</table>
+      <table className="min-w-full text-sm">{children}</table>
     </div>
   );
 }

@@ -101,10 +101,7 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
   }, [limit, category]);
 
   return (
-    <div
-      className="rounded-xl border p-4 sm:p-6 shadow-lg"
-      style={{ backgroundColor: "var(--color-ink)", borderColor: "var(--color-border)" }}
-    >
+    <div className="rounded-xl border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 p-4 sm:p-6 shadow-lg">
       <div className="flex items-center gap-2 mb-4">
         <svg
           className="w-5 h-5 text-yellow-400"
@@ -125,12 +122,11 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
               type="button"
               key={opt.key}
               onClick={() => setCategory(opt.key)}
-              className={`rounded-full px-2.5 py-1 text-xs font-semibold border ${
+              className={`rounded-full px-2.5 py-1 text-xs font-semibold transition-colors border ${
                 category === opt.key
                   ? "bg-blue-600 text-white border-blue-600"
                   : "bg-slate-800 text-slate-200 border-slate-600 hover:border-slate-400"
               }`}
-              style={{ transition: "background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out)" }}
             >
               <span className="sm:hidden">{opt.short}</span>
               <span className="hidden sm:inline">{opt.label}</span>
@@ -148,35 +144,27 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
           {leaderboard.map((student, index) => (
             <div
               key={`${student.id}-${index}`}
-              className="flex items-center justify-between p-3 rounded-lg"
-              style={{
-                backgroundColor: "oklch(0.28 0.02 255)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                transition: "background-color var(--dur-short) var(--ease-out)",
-              }}
+              className="flex items-center justify-between p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors"
             >
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 <div className="flex-shrink-0">
                   {index === 0 && (
-                    <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 text-white font-bold text-sm shadow-lg tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>
+                    <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 text-white font-bold text-sm shadow-lg">
                       1
                     </div>
                   )}
                   {index === 1 && (
-                    <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br from-slate-300 to-slate-500 text-white font-bold text-sm shadow-lg tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>
+                    <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br from-slate-300 to-slate-500 text-white font-bold text-sm shadow-lg">
                       2
                     </div>
                   )}
                   {index === 2 && (
-                    <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-white font-bold text-sm shadow-lg tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>
+                    <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-white font-bold text-sm shadow-lg">
                       3
                     </div>
                   )}
                   {index > 2 && (
-                    <div
-                      className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-600 text-slate-200 font-semibold text-sm tabular-nums"
-                      style={{ fontVariantNumeric: "tabular-nums" }}
-                    >
+                    <div className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-600 text-slate-200 font-semibold text-sm">
                       {index + 1}
                     </div>
                   )}
@@ -199,10 +187,7 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
                   >
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
-                  <span
-                    className="text-xs font-bold text-blue-300 tabular-nums"
-                    style={{ fontVariantNumeric: "tabular-nums" }}
-                  >
+                  <span className="text-xs font-bold text-blue-300">
                     {student.achievement_count}
                   </span>
                 </div>

@@ -36,7 +36,7 @@ function AuthSplitLayout({
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden px-3 py-4 sm:px-6 sm:py-4 flex items-center justify-center" style={{ backgroundColor: "var(--color-paper)" }}>
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#f8fafc] to-[#f1f5f9] px-3 py-4 sm:px-6 sm:py-4 flex items-center justify-center">
 
       <div className="auth-card-rise relative mx-auto flex h-fit w-full max-w-6xl flex-col overflow-hidden rounded-[2rem] border border-white/30 bg-white/95 shadow-[0_35px_90px_rgba(2,6,23,0.68)] backdrop-blur-sm md:flex-row">
         <section

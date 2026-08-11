@@ -5,18 +5,10 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
   const [index, setIndex] = useState(0);
   const timerRef = useRef(null);
   const length = events.length;
-  const prefersReducedMotion =
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  function pauseTimer() {
-    if (timerRef.current) clearInterval(timerRef.current);
-  }
 
   function resetTimer() {
     if (timerRef.current) clearInterval(timerRef.current);
     if (!length) return;
-    if (prefersReducedMotion) return;
     timerRef.current = setInterval(() => {
       setIndex((i) => (i + 1) % length);
     }, intervalMs);
@@ -61,21 +53,12 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
 
   return (
     <div className="w-full max-w-[90%] sm:max-w-none mr-auto">
-      <div
-        className="relative overflow-hidden rounded-lg shadow-sm"
-        role="region"
-        aria-label="Events carousel"
-        aria-live="polite"
-        onMouseEnter={pauseTimer}
-        onMouseLeave={resetTimer}
-        onFocus={pauseTimer}
-        onBlur={resetTimer}
-      >
+      <div className="relative overflow-hidden rounded-lg shadow-sm">
         <div
           className="flex transition-transform duration-500"
           style={{ transform: `translateX(${-index * 100}%)` }}
         >
-          {events.map((ev, slideIndex) => {
+          {events.map((ev) => {
             const thumb =
               normalizeMediaUrl(ev.image) ||
               normalizeMediaUrl(ev.thumbnail) ||
@@ -101,40 +84,11 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
                         src={thumb}
                         alt={ev.title}
                         className="w-full h-auto max-h-[140px] sm:max-h-[240px] md:max-h-[420px] object-contain"
-                        loading={slideIndex === 0 ? "eager" : "lazy"}
-                        fetchPriority={slideIndex === 0 ? "high" : "low"}
-                        decoding={slideIndex === 0 ? "sync" : "async"}
-                        width="800"
-                        height="450"
-                        style={{ aspectRatio: "16 / 9" }}
+                        loading="lazy"
                       />
                     </div>
                   ) : (
-                    <div
-                      className="mt-2 sm:mt-3 h-24 sm:h-40 md:h-56 rounded-lg flex items-center justify-center"
-                      style={{
-                        backgroundColor: "var(--color-accent-soft)",
-                        border: "1px solid var(--color-border)",
-                      }}
-                      aria-hidden="true"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-8 w-8"
-                        style={{ color: "var(--color-ink-muted)" }}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={1.5}
-                        aria-hidden="true"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18.75zM3 12h18"
-                        />
-                      </svg>
-                    </div>
+                    <div className="mt-2 sm:mt-3 h-24 sm:h-40 md:h-56 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-100" />
                   )}
                 </a>
               </div>
@@ -198,8 +152,8 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
                   setIndex(i);
                   resetTimer();
                 }}
-                className={`w-2 h-2 rounded-full transition-[background-color,transform] duration-200 ${
-                  i === index ? "bg-[var(--color-accent)] scale-125" : "bg-slate-300"
+                className={`w-2 h-2 rounded-full transition-all ${
+                  i === index ? "bg-blue-600 scale-125" : "bg-slate-300"
                 }`}
                 aria-label={`Show event ${i + 1}`}
               />

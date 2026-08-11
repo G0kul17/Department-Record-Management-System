@@ -12,7 +12,11 @@ export const createEventSchema = Joi.object({
   venue: Joi.string().max(300).trim().required(),
   start_date: dateStr.required(),
   end_date: dateStr,
-  event_url: Joi.string().uri().max(500).trim(),
+  // Scheme restricted to http/https — plain .uri() accepts javascript:/data:
+  // URIs, which flow unmodified into <a href>/window.open() sinks in the
+  // frontend (VULN-0001). updateEventSchema forks this, so the restriction
+  // covers both create and update paths.
+  event_url: Joi.string().uri({ scheme: ["http", "https"] }).max(500).trim(),
   capacity: Joi.number().integer().min(1).max(100_000),
 });
 

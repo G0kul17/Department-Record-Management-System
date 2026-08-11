@@ -4,11 +4,13 @@ import Joi from "joi";
 const short = Joi.string().max(200).trim();
 const long = Joi.string().max(2000).trim();
 const dateStr = Joi.string().max(50).trim();
-const url = Joi.string().uri().max(500).trim();
+// Scheme restricted to http/https — plain .uri() accepts javascript:/data:
+// URIs, the same stored-XSS class fixed for github_url/event_url (VULN-0001).
+const url = Joi.string().uri({ scheme: ["http", "https"] }).max(500).trim();
 const optShort = Joi.string().max(200).trim().empty("");
 const optLong = Joi.string().max(2000).trim().empty("");
 const optDateStr = Joi.string().max(50).trim().empty("");
-const optUrl = Joi.string().uri().max(500).trim().empty("");
+const optUrl = Joi.string().uri({ scheme: ["http", "https"] }).max(500).trim().empty("");
 const optNumber = Joi.number().min(0).empty("");
 
 // ── Faculty Participation ────────────────────────────────────────────────────

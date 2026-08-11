@@ -83,23 +83,23 @@ export async function register(req, res) {
       [emailLower],
     );
     if (existing.length) {
-      // If user exists but isn't verified yet, allow updating the password hash
       const userRow = existing[0];
       if (!userRow.is_verified) {
-        const hashed = await bcrypt.hash(password, 10);
-        // Also update role in case ADMIN_EMAILS was changed or this email should be admin
-        await tracedQuery(
-          pool,
-          "UPDATE users SET password_hash=$1, role=$2, profile_details=$3, full_name=$4 WHERE email=$5",
-          [hashed, role, JSON.stringify(profileDetails), fullName, emailLower],
-        );
-        // continue flow to send fresh OTP
+        // A pending (unverified) record already exists for this email. Do
+        // NOT overwrite its password/role/profile from this new, unproven
+        // request — that let anyone re-submit registration for someone
+        // else's pending email and silently take over the account once the
+        // real user completed OTP verification (VULN-0003). The only
+        // legitimate action here is resending an OTP to the same address;
+        // fall through to OTP (re)issuance below without touching the
+        // stored credential.
       } else {
         return res.status(400).json({ message: "Email already registered" });
       }
     }
 
-    // If user didn't exist, create; if existed and unverified, we already updated password_hash above
+    // Only create a new user row when none exists yet. A pending row is left
+    // untouched — its stored password/role/profile are never modified here.
     if (!existing.length) {
       const hashed = await bcrypt.hash(password, 10);
       try {
@@ -117,7 +117,17 @@ export async function register(req, res) {
       }
     }
 
-    // generate OTP and save (clear any existing OTPs for this email first)
+    // Generate OTP and save. Preserve any existing failed-attempt count for
+    // this email across re-registration/resend instead of resetting it —
+    // otherwise repeated re-registration requests reset the lockout counter
+    // and extend the OTP brute-force window (VULN-0003 remediation #2).
+    const { rows: priorOtpRows } = await tracedQuery(
+      pool,
+      "SELECT attempts FROM otp_verifications WHERE email=$1",
+      [emailLower],
+    );
+    const priorAttempts = priorOtpRows[0]?.attempts ?? 0;
+
     const otp = generateOTP();
     const expiresAt = getExpiryDate(OTP_EXPIRY_MIN);
     await tracedQuery(pool, "DELETE FROM otp_verifications WHERE email=$1", [
@@ -125,8 +135,8 @@ export async function register(req, res) {
     ]);
     await tracedQuery(
       pool,
-      "INSERT INTO otp_verifications (email, otp_code, expires_at) VALUES ($1, $2, $3)",
-      [emailLower, otp, expiresAt],
+      "INSERT INTO otp_verifications (email, otp_code, expires_at, attempts) VALUES ($1, $2, $3, $4)",
+      [emailLower, otp, expiresAt, priorAttempts],
     );
 
     await sendOTPEmail(emailLower, otp);

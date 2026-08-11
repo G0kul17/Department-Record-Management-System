@@ -4,6 +4,23 @@ import path from "path";
 import fs from "fs";
 import logger, { reqContext } from "../utils/logger.js";
 import { QueryBuilder } from "../utils/queryBuilder.js";
+import { redactRows, redactFields } from "../utils/piiRedaction.js";
+
+// Report evidence (VULN-0002, and the mine=true bypass filed in the first
+// scan run) named student_name, mobile_number, and team member names as
+// leaked alongside the joined user_email/user_fullname — redact all of them
+// for anonymous callers, not just the joined account fields.
+const HACKATHON_PII_FIELDS = [
+  "user_email",
+  "user_fullname",
+  "mobile_number",
+  "student_name",
+  "team_leader_name",
+  "team_member_names",
+  "proof_file_id",
+  "proof_filename",
+  "verified_by_name",
+];
 
 const COORDINATOR_ACTIVITY_TYPES = [
   "hackathon entry progress",
@@ -402,14 +419,16 @@ export async function listHackathons(req, res) {
       qb.addWhere(`LOWER(h.verification_status) = LOWER(${qb.addParam(verification_status.trim())})`);
     }
 
-    // Staff can see all, students can only see their own and verified ones
+    // Staff can see all, students can only see their own and verified ones.
+    // Unauthenticated callers must always be restricted to verified records,
+    // regardless of what query params (e.g. mine=true) they happen to pass —
+    // that param must never bypass this filter on its own (see VULN-0001,
+    // first-run report).
     if (requesterRole !== "staff" && requesterRole !== "admin") {
-      if (!mine || mine !== "true") {
-        if (requesterId) {
-          qb.addWhere(`(h.verified = TRUE OR h.user_id = ${qb.addParam(requesterId)})`);
-        } else {
-          qb.addWhere("h.verified = TRUE");
-        }
+      if (!requesterId) {
+        qb.addWhere("h.verified = TRUE");
+      } else if (!mine || mine !== "true") {
+        qb.addWhere(`(h.verified = TRUE OR h.user_id = ${qb.addParam(requesterId)})`);
       }
     }
 
@@ -417,7 +436,8 @@ export async function listHackathons(req, res) {
     const suffix = `ORDER BY h.created_at DESC LIMIT ${Math.max(1, Math.min(200, parseInt(limit, 10) || 20))} OFFSET ${Math.max(0, parseInt(offset, 10) || 0)}`;
     const { text, values } = qb.build(suffix);
     const result = await pool.query(text, values);
-    return res.json({ hackathons: result.rows });
+    const hackathons = redactRows(result.rows, HACKATHON_PII_FIELDS, Boolean(requesterId));
+    return res.json({ hackathons });
   } catch (err) {
     logger.error("List hackathons error", { err, ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
@@ -527,7 +547,11 @@ export async function getHackathonDetails(req, res) {
       if (!mapped) return res.status(403).json({ message: "Access denied for this coordinator" });
     }
 
-    return res.json({ hackathon });
+    return res.json({
+      hackathon: requesterId
+        ? hackathon
+        : redactFields(hackathon, HACKATHON_PII_FIELDS),
+    });
   } catch (err) {
     logger.error("Get hackathon details error", { err, ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });

@@ -50,10 +50,10 @@ export default function QuickActions({ embedded = false }) {
             <button
               type="button"
               onClick={() => setActiveStaffTab("upload")}
-              className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+              className={`rounded-lg px-4 py-2 text-sm font-semibold transition-[background-color,border-color,color] duration-150 ${
                 activeStaffTab === "upload"
                   ? "bg-slate-900 text-white"
-                  : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100"
+                  : "bg-white text-slate-700 border border-[var(--color-border)] hover:bg-slate-100"
               }`}
             >
               Upload
@@ -61,10 +61,10 @@ export default function QuickActions({ embedded = false }) {
             <button
               type="button"
               onClick={() => setActiveStaffTab("verify")}
-              className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+              className={`rounded-lg px-4 py-2 text-sm font-semibold transition-[background-color,border-color,color] duration-150 ${
                 activeStaffTab === "verify"
                   ? "bg-slate-900 text-white"
-                  : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100"
+                  : "bg-white text-slate-700 border border-[var(--color-border)] hover:bg-slate-100"
               }`}
             >
               Verify
@@ -72,10 +72,10 @@ export default function QuickActions({ embedded = false }) {
             <button
               type="button"
               onClick={() => setActiveStaffTab("export")}
-              className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+              className={`rounded-lg px-4 py-2 text-sm font-semibold transition-[background-color,border-color,color] duration-150 ${
                 activeStaffTab === "export"
                   ? "bg-slate-900 text-white"
-                  : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100"
+                  : "bg-white text-slate-700 border border-[var(--color-border)] hover:bg-slate-100"
               }`}
             >
               Export
@@ -91,7 +91,7 @@ export default function QuickActions({ embedded = false }) {
               className="p-4 sm:p-6 glitter-card bulge-card"
             >
               <div className="flex items-center gap-3">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-accent-soft)] text-[var(--color-accent)] border border-[var(--color-border)]">
                   <svg
                     width="20"
                     height="20"
@@ -121,7 +121,7 @@ export default function QuickActions({ embedded = false }) {
               className="p-4 sm:p-6 glitter-card bulge-card"
             >
               <div className="flex items-center gap-3">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-accent-soft)] text-[var(--color-accent)] border border-[var(--color-border)]">
                   <svg
                     width="20"
                     height="20"
@@ -155,7 +155,7 @@ export default function QuickActions({ embedded = false }) {
               className="p-4 sm:p-6 glitter-card bulge-card"
             >
               <div className="flex items-center gap-3">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-accent-soft)] text-[var(--color-accent)] border border-[var(--color-border)]">
                   <svg
                     width="20"
                     height="20"
@@ -190,7 +190,7 @@ export default function QuickActions({ embedded = false }) {
                     className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white text-slate-700 border border-[var(--color-border)]">
                         <svg
                           width="20"
                           height="20"
@@ -218,7 +218,7 @@ export default function QuickActions({ embedded = false }) {
                     className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-accent-soft)] text-[var(--color-accent)] border border-[var(--color-border)]">
                         <svg
                           width="20"
                           height="20"
@@ -246,7 +246,7 @@ export default function QuickActions({ embedded = false }) {
                     className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white text-slate-700 border border-[var(--color-border)]">
                         <svg
                           width="20"
                           height="20"
@@ -281,7 +281,7 @@ export default function QuickActions({ embedded = false }) {
                     className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-accent-soft)] text-[var(--color-accent)] border border-[var(--color-border)]">
                         <svg
                           width="20"
                           height="20"
@@ -305,7 +305,7 @@ export default function QuickActions({ embedded = false }) {
                     className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white text-slate-700 border border-[var(--color-border)]">
                         <svg
                           width="20"
                           height="20"
@@ -330,7 +330,7 @@ export default function QuickActions({ embedded = false }) {
                     className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-accent-soft)] text-[var(--color-accent)] border border-[var(--color-border)]">
                         <svg
                           width="20"
                           height="20"
@@ -366,7 +366,7 @@ export default function QuickActions({ embedded = false }) {
                     className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white text-slate-700 border border-[var(--color-border)]">
                         <svg
                           width="20"
                           height="20"
@@ -400,7 +400,7 @@ export default function QuickActions({ embedded = false }) {
                     className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-white border border-slate-800">
                     <svg
                       width="20"
                       height="20"
@@ -428,7 +428,7 @@ export default function QuickActions({ embedded = false }) {
                     className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-white border border-slate-800">
                     <svg
                       width="20"
                       height="20"
@@ -456,7 +456,7 @@ export default function QuickActions({ embedded = false }) {
                     className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-white border border-slate-800">
                     <svg
                       width="20"
                       height="20"
@@ -489,7 +489,7 @@ export default function QuickActions({ embedded = false }) {
                     className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-accent-soft)] text-[var(--color-accent)] border border-[var(--color-border)]">
                     <svg
                       width="20"
                       height="20"
@@ -533,7 +533,7 @@ export default function QuickActions({ embedded = false }) {
                     className="p-4 sm:p-6 glitter-card bulge-card"
                   >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white text-slate-700 border border-[var(--color-border)]">
                     <svg
                       width="20"
                       height="20"
@@ -567,7 +567,7 @@ export default function QuickActions({ embedded = false }) {
                 className="p-4 sm:p-6 glitter-card bulge-card"
               >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 text-zinc-700">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-white text-slate-700 border border-[var(--color-border)]">
                     <svg
                       width="20"
                       height="20"

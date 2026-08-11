@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:wght@400;500;700&display=swap");
+@import "./tokens.css";
 
 @tailwind base;
 @tailwind components;
@@ -37,11 +37,11 @@
 }
 
 .bulge-card {
-  transition: transform 180ms ease, box-shadow 180ms ease;
+  transition: box-shadow var(--dur-short) var(--ease-out), transform 140ms var(--ease-out);
   will-change: transform;
 }
 .bulge-card:hover {
-  transform: translateY(-2px) scale(1.02);
+  transform: translateY(-1px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 @media (prefers-reduced-motion: reduce) {
@@ -49,19 +49,44 @@
     transition: none;
   }
   .bulge-card:hover {
-    transform: none;
+    transform: none !important;
+  }
+  .auth-panel-flow {
+    animation: none !important;
+  }
+  .auth-card-rise {
+    animation: none !important;
+  }
+  .chroma-card::before,
+  .chroma-card::after {
+    animation: none !important;
+  }
+  .blur-char {
+    animation: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    transform: none !important;
+  }
+  .animate-gradient-x,
+  .spinner {
+    animation: none !important;
   }
 }
 
-/* Custom styles */
+/* Base typography — DM Sans for body, Cormorant Garamond for display */
 body {
-  overflow-x: hidden;
+  overflow-x: clip;
   margin: 0;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
-    "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
 }
 
 * {
@@ -220,19 +245,19 @@ body {
 
 /* Global theming so all pages respond to dark mode */
 html {
-  overflow-x: hidden;
+  overflow-x: clip;
   color-scheme: light;
 }
 .dark {
   color-scheme: dark;
 }
 body {
-  background-color: #f8fafc; /* slate-50 */
-  color: #0f172a; /* slate-900/800 */
+  background-color: var(--color-paper);
+  color: var(--color-ink);
 }
 .dark body {
-  background-color: #0b1220; /* approx slate-950 */
-  color: #f1f5f9; /* slate-100 */
+  background-color: var(--color-paper);
+  color: var(--color-ink);
 }
 
 /* Generic layout helpers used in a few pages */
@@ -251,14 +276,14 @@ body {
 }
 .card {
   border-radius: 0.75rem;
-  border: 1px solid #e2e8f0; /* slate-200 */
-  background-color: #ffffff;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-paper-elevated);
   padding: 1.5rem;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 .dark .card {
-  border-color: #1f2937; /* slate-800 */
-  background-color: #0f172a; /* slate-900 */
+  border-color: var(--color-border);
+  background-color: var(--color-paper-elevated);
 }
 
 /* Utility overrides for pages that used light-only Tailwind utilities */
@@ -331,7 +356,7 @@ textarea::placeholder {
   /* Neutral card style: sheen and sparkles removed */
   position: relative;
   border-width: 2px;
-  border-color: #bfdbfe; /* blue-200 */
+  border-color: var(--color-border);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
 }
 .glitter-card::before,
@@ -354,50 +379,25 @@ textarea::placeholder {
   background-color: #f1f5f9; /* slate-100 backdrop while image loads */
 }
 
-/* High-visibility button text across the app */
-/* Applies to elements with a background color, but skips light backgrounds */
-button[class*="bg-"]:not([class*="bg-white"]):not([class*="bg-gray-50"]):not(
-    [class*="bg-slate-100"]
-  ):not([class*="bg-sky-100"]):not([class*="bg-yellow-100"]):not(
-    [class*="bg-red-100"]
-  ):not([class*="bg-green-100"]):not([class*="bg-slate-200"]),
-a[role="button"][class*="bg-"]:not([class*="bg-white"]):not(
-    [class*="bg-gray-50"]
-  ):not([class*="bg-slate-100"]):not([class*="bg-sky-100"]):not(
-    [class*="bg-yellow-100"]
-  ):not([class*="bg-red-100"]):not([class*="bg-green-100"]):not(
-    [class*="bg-slate-200"]
-  ),
-a[class*="bg-"]:not([class*="bg-white"]):not([class*="bg-gray-50"]):not(
-    [class*="bg-slate-100"]
-  ):not([class*="bg-sky-100"]):not([class*="bg-yellow-100"]):not(
-    [class*="bg-red-100"]
-  ):not([class*="bg-green-100"]):not([class*="bg-slate-200"]) {
-  color: #ffffff !important;
-  font-weight: 800;
-  letter-spacing: 0.2px;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.55), 0 0 2px rgba(0, 0, 0, 0.4),
-    0 0 6px rgba(0, 0, 0, 0.25);
-  -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.35);
-  -webkit-font-smoothing: auto;
-  -moz-osx-font-smoothing: auto;
+/* Token-based button contrast — no global !important hacks.
+   Colored buttons should use semantic classes (e.g. bg-accent text-white
+   or btn-primary) which already meet contrast. */
+.btn-accent {
+  background-color: var(--color-accent);
+  color: white;
+}
+.btn-accent:hover {
+  background-color: var(--color-accent-strong);
+}
+.btn-accent-soft {
+  background-color: var(--color-accent-soft);
+  color: var(--color-ink);
+  border: 1px solid var(--color-border);
 }
 
-/* Ensure default buttons without bg- utilities still have readable text */
+/* Default button weight without contrast hacks */
 button {
   font-weight: 600;
-}
-
-/* Strengthen visibility for any explicit white-text buttons */
-button[class*="text-white"],
-a[role="button"][class*="text-white"],
-a[class*="text-white"][class*="bg-"] {
-  color: #ffffff !important;
-  font-weight: 800;
-  letter-spacing: 0.2px;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.55), 0 0 2px rgba(0, 0, 0, 0.4),
-    0 0 6px rgba(0, 0, 0, 0.25);
-  -webkit-text-stroke: 0.6px rgba(0, 0, 0, 0.35);
 }
 
 /* Remove borders for generic buttons, but keep if a border class is specified (e.g., cards/back buttons) */

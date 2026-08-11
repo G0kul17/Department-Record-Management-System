@@ -48,9 +48,9 @@ export default function Toast({ message, type = "success", duration = 3000, onCl
       : "text-blue-600 dark:text-blue-300";
 
   return (
-    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 animate-in fade-in zoom-in duration-300">
+    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[var(--z-toast)] animate-in fade-in zoom-in duration-300">
       <div
-        className={`backdrop-blur-xl backdrop-filter border px-8 py-6 rounded-3xl shadow-2xl flex items-center gap-6 ${bgColor} ${borderColor} border-2 transform transition-all`}
+        className={`backdrop-blur-xl backdrop-filter border px-8 py-6 rounded-3xl shadow-2xl flex items-center gap-6 ${bgColor} ${borderColor} border-2 transform transition-[opacity,transform] duration-300`}
       >
         {/* Tick Icon */}
         <div className={`flex-shrink-0 ${iconColor}`}>

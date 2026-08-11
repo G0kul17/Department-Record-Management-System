@@ -533,7 +533,7 @@ export default function AchievementsApproved() {
                   <Link
                     to={`/achievements/${item.id}`}
                     state={{ achievement: item }}
-                    className="inline-flex w-full items-center justify-center rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 lg:w-auto"
+                    className="inline-flex w-full items-center justify-center rounded-full bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--color-accent-strong)] lg:w-auto"
                   >
                     View Details
                   </Link>

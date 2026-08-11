@@ -1,0 +1,36 @@
+/* Design tokens — single source of truth for surfaces, type, and motion */
+:root {
+  --color-paper: oklch(0.97 0.015 255);
+  --color-paper-elevated: oklch(1 0 0);
+  --color-ink: oklch(0.22 0.03 255);
+  --color-ink-muted: oklch(0.5 0.02 255);
+  --color-accent: oklch(0.55 0.2 255);
+  --color-accent-strong: oklch(0.48 0.22 255);
+  --color-accent-soft: oklch(0.96 0.03 255);
+  --color-border: oklch(0.92 0.01 255);
+
+  --font-display: "Cormorant Garamond", serif;
+  --font-body: "DM Sans", "Inter", sans-serif;
+
+  --z-nav: 40;
+  --z-dropdown: 50;
+  --z-sticky: 60;
+  --z-backdrop: 70;
+  --z-overlay: 80;
+  --z-toast: 90;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-short: 180ms;
+  --dur-med: 300ms;
+}
+
+.dark {
+  --color-paper: oklch(0.18 0.02 255);
+  --color-paper-elevated: oklch(0.22 0.03 255);
+  --color-ink: oklch(0.96 0.01 255);
+  --color-ink-muted: oklch(0.7 0.02 255);
+  --color-accent: oklch(0.62 0.18 255);
+  --color-accent-strong: oklch(0.55 0.2 255);
+  --color-accent-soft: oklch(0.24 0.04 255);
+  --color-border: oklch(0.28 0.02 255);
+}

@@ -124,12 +124,18 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="bg-slate-900 text-white shadow-md relative">
+    <nav
+      className="relative text-white shadow-sm"
+      style={{
+        backgroundColor: "var(--color-ink)",
+        borderBottom: "1px solid rgba(255,255,255,0.08)",
+      }}
+    >
       <div className="w-full px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
+          {/* Logo — wordmark left, edge-aligned nav structure */}
           <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-white">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-white border border-white/10">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -152,54 +158,64 @@ const Navbar = () => {
             </span>
           </Link>
 
-          {/* Desktop Navigation Links */}
-          {navLinks.length > 0 && (
-            <div className="hidden md:flex items-center gap-1">
-              {navLinks.map((link) => (
-                <button
-                  key={link.label}
-                  onClick={() => handleNavLinkClick(link)}
-                  className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
-                >
-                  {link.label}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Right side: controls */}
-          <div className="flex items-center gap-2 sm:gap-4">
-            {token ? (
-              <>
-                <NotificationsBell />
-                {/* Show name only on sm+ */}
-                {user && (
-                  <span className="hidden sm:inline-block text-sm rounded-full bg-white/20 px-3 py-1 max-w-[140px] truncate">
-                    {displayName}
-                  </span>
-                )}
-                <div className="relative flex items-center">
-                  <Avatar
-                    className="relative h-9 w-9 bg-white/20 text-white border border-white/30 cursor-pointer flex-shrink-0"
-                    title={displayName || "Profile"}
-                    onClick={() => setSidebarOpen(true)}
-                  >
-                    {photoUrl ? (
-                      <AvatarImage
-                        src={photoUrl}
-                        alt={displayName || "Profile"}
-                      />
-                    ) : null}
-                    <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
-                  </Avatar>
-                </div>
-                {/* Hamburger for mobile - only when logged in */}
-                {navLinks.length > 0 && (
+          {/* Right cluster: pill-style desktop nav + controls — edge-aligned, not centered */}
+          <div className="flex items-center gap-3">
+            {navLinks.length > 0 && (
+              <div className="hidden md:flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.06] p-1">
+                {navLinks.map((link) => (
                   <button
-                    className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg hover:bg-white/20 transition"
-                    onClick={() => setMobileMenuOpen((v) => !v)}
-                    aria-label="Toggle menu"
+                    key={link.label}
+                    onClick={() => handleNavLinkClick(link)}
+                    className="text-sm font-medium hover:bg-white/10 px-3 py-1.5 rounded-full"
+                    style={{
+                      transition: "background-color var(--dur-short) var(--ease-out)",
+                    }}
                   >
+                    {link.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-2 sm:gap-3">
+              {token ? (
+                <>
+                  <NotificationsBell />
+                  {/* Show name only on sm+ */}
+                  {user && (
+                    <span
+                      className="hidden sm:inline-block text-sm rounded-full bg-white/10 border border-white/10 px-3 py-1 max-w-[140px] truncate"
+                      style={{
+                        transition: "background-color var(--dur-short) var(--ease-out)",
+                      }}
+                    >
+                      {displayName}
+                    </span>
+                  )}
+                  <div className="relative flex items-center">
+                    <Avatar
+                      className="relative h-9 w-9 bg-white/10 text-white border border-white/10 cursor-pointer flex-shrink-0"
+                      title={displayName || "Profile"}
+                      onClick={() => setSidebarOpen(true)}
+                    >
+                      {photoUrl ? (
+                        <AvatarImage
+                          src={photoUrl}
+                          alt={displayName || "Profile"}
+                        />
+                      ) : null}
+                      <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
+                    </Avatar>
+                  </div>
+                  {/* Hamburger for mobile - only when logged in */}
+                  {navLinks.length > 0 && (
+                    <button
+                      className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg hover:bg-white/10"
+                      style={{
+                        transition: "background-color var(--dur-short) var(--ease-out)",
+                      }}
+                      onClick={() => setMobileMenuOpen((v) => !v)}
+                      aria-label="Toggle menu"
+                    >
                     {mobileMenuOpen ? (
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -242,19 +258,28 @@ const Navbar = () => {
                     <>
                       <Link
                         to="/login"
-                        className="px-3 py-2 rounded-lg transition font-medium bg-white/20 hover:bg-white/25 text-sm whitespace-nowrap"
+                        className="px-3 py-2 rounded-lg font-medium bg-white/10 hover:bg-white/15 border border-white/10 text-sm whitespace-nowrap"
+                        style={{
+                          transition: "background-color var(--dur-short) var(--ease-out)",
+                        }}
                       >
                         Login
                       </Link>
                       <Link
                         to="/register-student"
-                        className="hidden sm:inline-block px-3 py-2 bg-white/20 hover:bg-white/25 rounded-lg transition font-medium text-sm whitespace-nowrap"
+                        className="hidden sm:inline-block px-3 py-2 bg-white/10 hover:bg-white/15 rounded-lg border border-white/10 font-medium text-sm whitespace-nowrap"
+                        style={{
+                          transition: "background-color var(--dur-short) var(--ease-out)",
+                        }}
                       >
                         Register Student
                       </Link>
                       <Link
                         to="/register-staff"
-                        className="hidden sm:inline-block px-3 py-2 bg-white/20 hover:bg-white/25 rounded-lg transition font-medium text-sm whitespace-nowrap"
+                        className="hidden sm:inline-block px-3 py-2 bg-white/10 hover:bg-white/15 rounded-lg border border-white/10 font-medium text-sm whitespace-nowrap"
+                        style={{
+                          transition: "background-color var(--dur-short) var(--ease-out)",
+                        }}
                       >
                         Register Staff
                       </Link>
@@ -262,18 +287,29 @@ const Navbar = () => {
                   )}
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Mobile nav dropdown (only when logged in) */}
       {mobileMenuOpen && navLinks.length > 0 && (
-        <div className="md:hidden absolute left-0 right-0 top-16 z-[9997] max-h-[70vh] border-t border-white/10 bg-slate-900 px-2 pb-3 overflow-auto">
+        <div
+          className="md:hidden absolute left-0 right-0 top-16 max-h-[70vh] border-t px-2 pb-3 overflow-auto"
+          style={{
+            zIndex: "var(--z-dropdown)",
+            backgroundColor: "var(--color-ink)",
+            borderColor: "rgba(255,255,255,0.08)",
+          }}
+        >
           {navLinks.map((link) => (
             <button
               key={link.label}
               onClick={() => handleNavLinkClick(link)}
-              className="flex w-full items-center px-3 py-3 text-sm font-medium text-slate-200 hover:bg-white/10 rounded-lg transition"
+              className="flex w-full items-center px-3 py-3 text-sm font-medium text-slate-200 hover:bg-white/10 rounded-lg"
+              style={{
+                transition: "background-color var(--dur-short) var(--ease-out)",
+              }}
             >
               {link.label}
             </button>
@@ -292,10 +328,14 @@ const Navbar = () => {
         createPortal(
           <>
             <div
-              className="fixed inset-0 z-[9998] bg-black/30 backdrop-blur-sm"
+              className="fixed inset-0 bg-black/30"
+              style={{ zIndex: "var(--z-backdrop)" }}
               onClick={() => setSidebarOpen(false)}
             />
-            <div className="fixed left-2 right-2 top-16 z-[9999] w-auto max-h-[70vh] overflow-auto bg-white shadow-xl md:inset-auto md:right-4 md:top-16 md:w-72 md:max-w-[calc(100vw-2rem)] md:max-h-[80vh] md:rounded-xl md:border md:border-slate-200">
+            <div
+              className="fixed left-2 right-2 top-16 w-auto max-h-[70vh] overflow-auto bg-white shadow-xl md:inset-auto md:right-4 md:top-16 md:w-72 md:max-w-[calc(100vw-2rem)] md:max-h-[80vh] md:rounded-xl md:border md:border-slate-200"
+              style={{ zIndex: "var(--z-overlay)" }}
+            >
               <div className="flex items-center gap-3 border-b border-slate-200 p-4">
                 <Avatar className="h-10 w-10 bg-slate-100">
                   {photoUrl ? (

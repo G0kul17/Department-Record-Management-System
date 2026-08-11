@@ -163,32 +163,37 @@ export default function Home({ hideAtAGlance = false }) {
 
   return (
     <>
-      <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-white to-slate-50">
+      <div className="min-h-[calc(100vh-4rem)] bg-[var(--color-paper)]">
         {/* Hero Section */}
-        <div className="relative w-full overflow-hidden bg-slate-900 px-3 sm:px-4 md:px-6 lg:px-12 pt-8 sm:pt-14 md:pt-24 pb-8 sm:pb-16 md:pb-24">
-          {/* Ambient glow */}
-          <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            <div className="absolute -top-32 right-0 h-[200px] w-[200px] rounded-full bg-blue-600/10 blur-3xl sm:h-[360px] sm:w-[360px] md:h-[520px] md:w-[520px]" />
-            <div className="absolute -bottom-24 -left-24 h-[160px] w-[160px] rounded-full bg-indigo-600/10 blur-3xl sm:h-[280px] sm:w-[280px] md:h-[400px] md:w-[400px]" />
-          </div>
+        <div className="relative w-full overflow-hidden bg-slate-900 px-4 sm:px-6 lg:px-12 pt-10 sm:pt-14 md:pt-20 pb-8">
           <div className="relative grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-stretch">
-            <div className="md:col-span-2 text-center md:text-left space-y-5">
+            <div className="md:col-span-2 text-left space-y-5">
               <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-600/10 px-3 py-1 text-xs font-semibold text-blue-300 tracking-wide">
                 Department Records Management System
               </div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white leading-tight">
+              <h1
+                className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white leading-tight"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
                 <BlurText text="Sona College of Technology" />
               </h1>
 
-              <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto md:mx-0">
+              <p
+                className="text-base sm:text-lg text-slate-300 max-w-2xl mx-0 text-left"
+                style={{ fontFamily: "var(--font-body)" }}
+              >
                 Your central hub for achievements, projects, and community
                 engagement.
               </p>
 
-              <div className="pt-2 flex justify-center md:justify-start">
+              <div className="pt-2 flex justify-start">
                 <Button
                   onClick={goToQuickActions}
-                  className="px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold shadow-lg hover:shadow-xl"
+                  style={{
+                    backgroundColor: "var(--color-accent)",
+                    transition: "box-shadow 180ms var(--ease-out), transform 180ms var(--ease-out)",
+                  }}
                 >
                   <svg
                     width="18"
@@ -219,7 +224,7 @@ export default function Home({ hideAtAGlance = false }) {
             {/* At a Glance Card */}
             {user && !hideAtAGlance && (
               <div className="md:col-span-1">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6 shadow-xl h-full backdrop-blur-sm">
+                <div className="rounded-2xl border border-white/10 bg-slate-800 p-4 sm:p-6 shadow-xl h-full">
                   <h2 className="text-base font-bold text-slate-100 mb-4">
                     At a Glance
                   </h2>
@@ -228,7 +233,8 @@ export default function Home({ hideAtAGlance = false }) {
                   >
                     <button
                       onClick={() => nav("/projects/approved")}
-                      className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
+                      className="rounded-xl p-2 bg-white/5 hover:bg-white/10 text-left border border-white/10 hover:border-blue-400/60"
+                      style={{ transition: "background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out)" }}
                     >
                       <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight break-words">
                         Projects
@@ -245,7 +251,8 @@ export default function Home({ hideAtAGlance = false }) {
                     </button>
                     <button
                       onClick={() => nav("/achievements/approved")}
-                      className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
+                      className="rounded-xl p-2 bg-white/5 hover:bg-white/10 text-left border border-white/10 hover:border-blue-400/60"
+                      style={{ transition: "background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out)" }}
                     >
                       <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight break-words">
                         Achievements
@@ -258,7 +265,8 @@ export default function Home({ hideAtAGlance = false }) {
                       <>
                         <button
                           onClick={() => nav("/faculty-participation-approved")}
-                          className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
+                          className="rounded-xl p-2 bg-white/5 hover:bg-white/10 text-left border border-white/10 hover:border-blue-400/60"
+                          style={{ transition: "background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out)" }}
                         >
                           <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight break-words">
                             Participation
@@ -269,7 +277,8 @@ export default function Home({ hideAtAGlance = false }) {
                         </button>
                         <button
                           onClick={() => nav("/faculty-research-approved")}
-                          className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
+                          className="rounded-xl p-2 bg-white/5 hover:bg-white/10 text-left border border-white/10 hover:border-blue-400/60"
+                          style={{ transition: "background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out)" }}
                         >
                           <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight break-words">
                             Research
@@ -280,7 +289,8 @@ export default function Home({ hideAtAGlance = false }) {
                         </button>
                         <button
                           onClick={() => nav("/faculty-consultancy-approved")}
-                          className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
+                          className="rounded-xl p-2 bg-white/5 hover:bg-white/10 text-left border border-white/10 hover:border-blue-400/60"
+                          style={{ transition: "background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out)" }}
                         >
                           <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight break-words">
                             Consultancy
@@ -301,13 +311,10 @@ export default function Home({ hideAtAGlance = false }) {
         {/* Latest Events Section with Top Achievers on the right */}
         <div
           id="events"
-          className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pt-8 sm:pt-12 md:pt-16 pb-8 sm:pb-10"
+          className="w-full px-4 sm:px-6 lg:px-12 pt-10 pb-8"
         >
           <div className="mb-5 sm:mb-6">
-            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">
-              Latest
-            </p>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900" style={{ fontFamily: "var(--font-display)" }}>
               Events
             </h2>
           </div>
@@ -324,13 +331,10 @@ export default function Home({ hideAtAGlance = false }) {
         {/* Recent Projects Section */}
         <div
           id="projects"
-          className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-8 sm:pb-10"
+          className="w-full px-4 sm:px-6 lg:px-12 pt-2 pb-8"
         >
           <div className="mb-5 sm:mb-6">
-            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">
-              Recent
-            </p>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900" style={{ fontFamily: "var(--font-display)" }}>
               Projects
             </h2>
           </div>
@@ -340,13 +344,10 @@ export default function Home({ hideAtAGlance = false }) {
         {/* Recent Achievements grid (latest 6) */}
         <div
           id="achievements"
-          className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-8 sm:pb-10"
+          className="w-full px-4 sm:px-6 lg:px-12 pt-2 pb-10"
         >
           <div className="mb-5 sm:mb-6">
-            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">
-              Recent
-            </p>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900">
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900" style={{ fontFamily: "var(--font-display)" }}>
               Achievements
             </h2>
           </div>
@@ -357,17 +358,18 @@ export default function Home({ hideAtAGlance = false }) {
         {user?.role === "admin" && (
           <div
             id="visualization"
-            className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-12 sm:pb-16 bg-gradient-to-br from-slate-50 via-white to-slate-50"
+            className="w-full px-4 sm:px-6 lg:px-12 pt-6 pb-12 bg-[var(--color-paper)] border-t"
+            style={{ borderColor: "var(--color-border)" }}
           >
-            <div className="py-8 sm:py-12 md:py-16">
+            <div className="py-6">
               <div className="mb-8">
                 <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-1">
-                  Admin
+                  Overview
                 </p>
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900" style={{ fontFamily: "var(--font-display)" }}>
                   Analytics & Visualization
-                </h1>
-                <p className="mt-2 text-slate-500 text-base">
+                </h2>
+                <p className="mt-2 text-slate-500 text-base" style={{ fontFamily: "var(--font-body)" }}>
                   Visual overview of activities and trends
                 </p>
               </div>
@@ -542,7 +544,8 @@ export default function Home({ hideAtAGlance = false }) {
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 z-50 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 sm:p-4 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
+          className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 text-white rounded-full p-3 sm:p-4 shadow-lg hover:shadow-xl transform hover:scale-110"
+          style={{ zIndex: "var(--z-sticky)", backgroundColor: "var(--color-accent)", transition: "box-shadow var(--dur-short) var(--ease-out), transform var(--dur-short) var(--ease-out), background-color var(--dur-short) var(--ease-out)" }}
           aria-label="Scroll to top"
         >
           <svg
@@ -591,7 +594,8 @@ function StatCard({ label, value, icon, color, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="rounded-xl border border-slate-200 bg-white p-3 sm:p-5 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer text-left"
+      className="rounded-xl border border-slate-200 bg-white p-3 sm:p-5 shadow-md hover:shadow-lg cursor-pointer text-left"
+      style={{ transition: "box-shadow var(--dur-short) var(--ease-out)" }}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
@@ -599,7 +603,8 @@ function StatCard({ label, value, icon, color, onClick }) {
           <p className="text-xl sm:text-2xl font-bold mt-1">{value}</p>
         </div>
         <span
-          className={`material-icons text-2xl sm:text-4xl flex-shrink-0 ${iconColorClasses[color]}`}
+          className="text-2xl sm:text-4xl flex-shrink-0"
+          style={{ color: `var(--color-accent)` }}
         >
           {icon}
         </span>
@@ -612,7 +617,7 @@ function HorizontalBarChart({ title, data, color }) {
   const maxValue = Math.max(...data.map((d) => d.value), 1);
   const colors = ["#3b82f6", "#06b6d4", "#14b8a6", "#10b981", "#0ea5e9"];
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-md hover:shadow-lg transition-all duration-200">
+    <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-md hover:shadow-lg" style={{ transition: "box-shadow var(--dur-short) var(--ease-out)" }}>
       <h3 className="text-base sm:text-xl font-bold text-slate-800 mb-4 sm:mb-6">
         {title}
       </h3>
@@ -625,10 +630,11 @@ function HorizontalBarChart({ title, data, color }) {
             </div>
             <div className="w-full bg-slate-100 rounded-lg h-8 overflow-hidden">
               <div
-                className="h-full rounded-lg transition-all duration-500 flex items-center justify-end pr-3"
+                className="h-full rounded-lg flex items-center justify-end pr-3"
                 style={{
                   width: `${(item.value / maxValue) * 100}%`,
                   backgroundColor: colors[idx],
+                  transition: "width var(--dur-med) var(--ease-out)",
                 }}
               >
                 <span className="text-white text-xs font-bold">
@@ -649,7 +655,7 @@ function DonutChart({ title, data }) {
   let cumulativePercent = 0;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-md hover:shadow-lg transition-all duration-200">
+    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-md hover:shadow-lg" style={{ transition: "box-shadow var(--dur-short) var(--ease-out)" }}>
       <h3 className="text-lg sm:text-xl font-bold text-slate-800 mb-4">
         {title}
       </h3>
@@ -731,7 +737,7 @@ function DonutChart({ title, data }) {
 function BarChart({ title, data, color }) {
   const maxValue = Math.max(...data.map((d) => d.value), 1);
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-md hover:shadow-lg transition-all duration-200">
+    <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-md hover:shadow-lg" style={{ transition: "box-shadow var(--dur-short) var(--ease-out)" }}>
       <h3 className="text-base sm:text-xl font-bold text-slate-800 mb-4 sm:mb-5">
         {title}
       </h3>
@@ -744,10 +750,11 @@ function BarChart({ title, data, color }) {
             </div>
             <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
               <div
-                className={`h-full bg-${color}-500 rounded-full transition-all duration-500`}
+                className={`h-full bg-${color}-500 rounded-full`}
                 style={{
                   width: `${(item.value / maxValue) * 100}%`,
                   backgroundColor: "#a78bfa",
+                  transition: "width var(--dur-med) var(--ease-out)",
                 }}
               ></div>
             </div>
@@ -762,7 +769,7 @@ function VerticalBarChart({ title, data, color }) {
   const maxValue = Math.max(...data.map((d) => d.value), 1);
   const colors = ["#10b981", "#06b6d4"];
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-md hover:shadow-lg transition-all duration-200">
+    <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-md hover:shadow-lg" style={{ transition: "box-shadow var(--dur-short) var(--ease-out)" }}>
       <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-4">
         {title}
       </h3>
@@ -774,11 +781,12 @@ function VerticalBarChart({ title, data, color }) {
                 {item.value}
               </span>
               <div
-                className="rounded-t-lg transition-all duration-500"
+                className="rounded-t-lg"
                 style={{
                   width: "clamp(32px, 8vw, 50px)",
                   height: `${(item.value / maxValue) * 120}px`,
                   backgroundColor: colors[idx],
+                  transition: "height var(--dur-med) var(--ease-out)",
                 }}
               ></div>
             </div>
@@ -798,7 +806,7 @@ function PieChart({ title, data }) {
   let cumulativePercent = 0;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-md hover:shadow-lg transition-all duration-200">
+    <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-md hover:shadow-lg" style={{ transition: "box-shadow var(--dur-short) var(--ease-out)" }}>
       <h3 className="text-base sm:text-xl font-bold text-slate-800 mb-4 sm:mb-5">
         {title}
       </h3>

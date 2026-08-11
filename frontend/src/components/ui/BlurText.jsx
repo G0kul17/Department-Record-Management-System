@@ -21,6 +21,7 @@ export default function BlurText({
         <span
           key={i}
           className="blur-char"
+          aria-hidden="true"
           style={{ animationDelay: `${delay + i * step}ms` }}
         >
           {ch === " " ? "\u00A0" : ch}

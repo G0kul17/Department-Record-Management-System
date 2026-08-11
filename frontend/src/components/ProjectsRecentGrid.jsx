@@ -46,20 +46,36 @@ export default function ProjectsRecentGrid({ limit = 6 }) {
         <div className="text-sm text-slate-600 p-4">No projects yet.</div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {items.slice(0, limit).map((p) => {
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            {items.slice(0, limit).map((p, idx) => {
               const href = `/projects/${p.id}`;
               const caption = p.title || p.name || "Project";
               const author = p.uploader_full_name || p.uploader_email || p.name || "";
               const description = p.description || p.summary || "";
+              const spanClass =
+                idx === 0
+                  ? "col-span-12 md:col-span-7"
+                  : idx === 1
+                    ? "col-span-12 md:col-span-5"
+                    : "col-span-12 md:col-span-6";
               return (
                 <a
                   key={p.id}
                   href={href}
-                  className="block rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-lg transition-all duration-200 glitter-card bulge-card"
+                  className={`block rounded-2xl border bg-white shadow-sm hover:shadow-lg glitter-card ${spanClass}`}
+                  style={{
+                    borderColor: "var(--color-border)",
+                    transition: "box-shadow var(--dur-short) var(--ease-out)",
+                  }}
                 >
                   <div className="p-4">
-                    <div className="relative rounded-xl overflow-hidden bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center h-44">
+                    <div
+                      className="relative rounded-xl overflow-hidden flex items-center justify-center h-44"
+                      style={{
+                        backgroundColor: "var(--color-accent-soft)",
+                        border: "1px solid var(--color-border)",
+                      }}
+                    >
                       <div className="flex items-center justify-center w-full h-full text-cyan-400">
                         <svg
                           width="48"

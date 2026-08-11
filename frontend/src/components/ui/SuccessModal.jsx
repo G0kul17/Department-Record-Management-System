@@ -18,12 +18,12 @@ export default function SuccessModal({
   if (!open) return null;
 
   const modal = (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
+    <div className="fixed inset-0 z-[var(--z-overlay)] flex items-center justify-center">
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"
         onClick={onClose}
       />
-      <div className="relative z-[101] w-[90%] max-w-sm rounded-2xl border border-green-200 bg-white p-6 text-center shadow-xl dark:border-green-700 dark:bg-slate-900">
+      <div className="relative z-[var(--z-overlay)] w-[90%] max-w-sm rounded-2xl border border-green-200 bg-white p-6 text-center shadow-xl dark:border-green-700 dark:bg-slate-900">
         <div className="relative mx-auto mb-3 h-16 w-16">
           <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-30 animate-ping" />
           <span className="relative inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-700 shadow-sm dark:bg-green-900/40 dark:text-green-300">

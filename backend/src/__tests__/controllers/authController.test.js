@@ -47,7 +47,7 @@ import pool from "../../config/db.js";
 import { sendOTPEmail } from "../../services/mailService.js";
 import { signToken } from "../../utils/tokenUtils.js";
 import { createSession } from "../../utils/sessionUtils.js";
-import { verifyOTP, loginVerifyOTP } from "../../controllers/authController.js";
+import { verifyOTP, loginVerifyOTP, register } from "../../controllers/authController.js";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -365,5 +365,101 @@ describe("loginVerifyOTP", () => {
       expect.objectContaining({ token: "signed.jwt.token" }),
     );
     expect(createSession).toHaveBeenCalledOnce();
+  });
+});
+
+// ── register ───────────────────────────────────────────────────────────────────
+// Regression coverage for VULN-0003 (account takeover via pending-registration
+// password overwrite): re-registering an email that already has a pending
+// (unverified) record must never overwrite that record's stored credentials.
+
+describe("register", () => {
+  function validBody(overrides = {}) {
+    return {
+      email: "student@example.com",
+      password: "Passw0rd!",
+      name: "Student One",
+      ...overrides,
+    };
+  }
+
+  it("does not touch the users table when a pending registration already exists", async () => {
+    pool.query
+      .mockResolvedValueOnce({ rows: [{ id: 7, is_verified: false }] }) // SELECT existing
+      .mockResolvedValueOnce({ rows: [{ attempts: 0 }] }) // SELECT prior OTP attempts
+      .mockResolvedValueOnce({ rowCount: 1 }) // DELETE otp
+      .mockResolvedValueOnce({ rows: [] }); // INSERT otp
+
+    const req = makeReq({ body: validBody({ password: "AttackerPass1!" }) });
+    const res = makeRes();
+
+    await register(req, res);
+
+    const usersTableCalls = pool.query.mock.calls.filter(([sql]) =>
+      /UPDATE\s+users|INSERT\s+INTO\s+users/i.test(sql),
+    );
+    expect(usersTableCalls).toHaveLength(0);
+    expect(res.status).not.toHaveBeenCalledWith(500);
+    expect(sendOTPEmail).toHaveBeenCalledWith("student@example.com", "123456");
+  });
+
+  it("preserves the existing OTP failed-attempt count on re-registration instead of resetting it", async () => {
+    pool.query
+      .mockResolvedValueOnce({ rows: [{ id: 7, is_verified: false }] }) // SELECT existing
+      .mockResolvedValueOnce({ rows: [{ attempts: 3 }] }) // SELECT prior OTP attempts
+      .mockResolvedValueOnce({ rowCount: 1 }) // DELETE otp
+      .mockResolvedValueOnce({ rows: [] }); // INSERT otp
+
+    const req = makeReq({ body: validBody() });
+    const res = makeRes();
+
+    await register(req, res);
+
+    const insertOtpCall = pool.query.mock.calls.find(([sql]) =>
+      /INSERT INTO otp_verifications/i.test(sql),
+    );
+    expect(insertOtpCall).toBeDefined();
+    expect(insertOtpCall[1]).toEqual([
+      "student@example.com",
+      "123456",
+      expect.any(Date),
+      3,
+    ]);
+  });
+
+  it("rejects registration when the email is already verified", async () => {
+    pool.query.mockResolvedValueOnce({ rows: [{ id: 7, is_verified: true }] });
+
+    const req = makeReq({ body: validBody() });
+    const res = makeRes();
+
+    await register(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ message: "Email already registered" }),
+    );
+  });
+
+  it("creates a new user row when no existing record matches the email", async () => {
+    pool.query
+      .mockResolvedValueOnce({ rows: [] }) // SELECT existing -> none
+      .mockResolvedValueOnce({ rows: [] }) // INSERT users
+      .mockResolvedValueOnce({ rows: [] }) // SELECT prior OTP attempts -> none
+      .mockResolvedValueOnce({ rowCount: 0 }) // DELETE otp
+      .mockResolvedValueOnce({ rows: [] }); // INSERT otp
+
+    const req = makeReq({ body: validBody() });
+    const res = makeRes();
+
+    await register(req, res);
+
+    const insertUserCall = pool.query.mock.calls.find(([sql]) =>
+      /INSERT INTO users/i.test(sql),
+    );
+    expect(insertUserCall).toBeDefined();
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining("OTP sent") }),
+    );
   });
 });

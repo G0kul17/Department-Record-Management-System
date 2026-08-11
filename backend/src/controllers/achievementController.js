@@ -10,6 +10,20 @@ import {
   ActivityTypeValidationError,
   requireActivityTypeByName,
 } from "../utils/activityTypeUtils.js";
+import { redactRows, redactFields } from "../utils/piiRedaction.js";
+
+const ACHIEVEMENT_PII_FIELDS = [
+  "user_email",
+  "user_fullname",
+  "verified_by_fullname",
+  "verified_by_email",
+  "proof_file_id",
+  "certificate_file_id",
+  "event_photos_file_id",
+  "proof_filename",
+  "certificate_filename",
+  "event_photos_filename",
+];
 
 // create achievement (students)
 export async function createAchievement(req, res) {
@@ -349,7 +363,8 @@ export async function listAchievements(req, res) {
     );
 
     const { rows } = await tracedQuery(pool, text, values);
-    return res.json({ achievements: rows });
+    const achievements = redactRows(rows, ACHIEVEMENT_PII_FIELDS, Boolean(requesterId));
+    return res.json({ achievements });
   } catch (err) {
     logger.error("Achievement controller error", { err,
       ...reqContext(req) });
@@ -429,7 +444,10 @@ export async function getAchievementDetails(req, res) {
       params,
     );
     if (!rows.length) return res.status(404).json({ message: "Not found" });
-    return res.json({ achievement: rows[0] });
+    const achievement = requesterId
+      ? rows[0]
+      : redactFields(rows[0], ACHIEVEMENT_PII_FIELDS);
+    return res.json({ achievement });
   } catch (err) {
     logger.error("Achievement controller error", { err,
       ...reqContext(req) });

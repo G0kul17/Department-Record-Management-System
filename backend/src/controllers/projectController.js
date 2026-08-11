@@ -11,6 +11,19 @@ import {
   ActivityTypeValidationError,
   requireActivityTypeByName,
 } from "../utils/activityTypeUtils.js";
+import { redactRows, redactFields } from "../utils/piiRedaction.js";
+
+const PROJECT_PII_FIELDS = [
+  "uploader_email",
+  "uploader_full_name",
+  "uploader_role",
+  "user_email",
+  "user_fullname",
+  "verified_by_fullname",
+  "verified_by_email",
+];
+
+const PROJECT_FILE_PII_FIELDS = ["filename", "uploaded_by"];
 
 // Note: 'upload' is multer instance exported above
 // We'll expose middleware usage in routes.
@@ -539,7 +552,8 @@ export async function listProjects(req, res) {
     );
 
     const { rows } = await tracedQuery(pool, text, values);
-    return res.json({ projects: rows });
+    const projects = redactRows(rows, PROJECT_PII_FIELDS, Boolean(requesterId));
+    return res.json({ projects });
   } catch (err) {
     logger.error("Project controller error", { err,
       ...reqContext(req) });
@@ -626,6 +640,12 @@ export async function getProjectDetails(req, res) {
     // Compatibility fields for frontend
     project.user_email = project.uploader_email || null;
     project.user_fullname = project.uploader_full_name || null;
+
+    if (!requesterId) {
+      const redacted = redactFields(project, PROJECT_PII_FIELDS);
+      redacted.files = redactRows(project.files, PROJECT_FILE_PII_FIELDS, false);
+      return res.json({ project: redacted });
+    }
     return res.json({ project });
   } catch (err) {
     logger.error("Project controller error", { err,

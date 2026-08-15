@@ -1,3 +1,17 @@
+# DRMS CI
+# ============================================================================
+# Runs on GitHub-hosted runners only (ubuntu-latest). Safe for a PUBLIC
+# third-party-owned repo:
+#   * fork pull_request runs get NO secrets - DRMS_TEST_JWT_SECRET is
+#     optional (backend test setup provides a hardcoded test JWT), so CI
+#     passes without it
+#   * no self-hosted runner is used here - do NOT add one to this file
+#   * push: main runs are for maintainers only
+# Keep it that way: never require a secret here, and never route this
+# workflow through a self-hosted runner (untrusted PR paths would gain
+# code execution on it).
+# ============================================================================
+
 name: DRMS CI
 
 on:
@@ -37,6 +51,9 @@ jobs:
           NODE_ENV: test
           JWT_SECRET: ${{ secrets.DRMS_TEST_JWT_SECRET }}
           FILE_STORAGE_PATH: ${{ runner.temp }}/drms-uploads
+        # NOTE: on fork PRs DRMS_TEST_JWT_SECRET is empty - backend test
+        # setup (src/__tests__/setup.js) sets a fixed test JWT, so tests
+        # still pass. Do not make this secret required.
 
   frontend:
     name: Frontend build

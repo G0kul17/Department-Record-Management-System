@@ -8,10 +8,38 @@
 #               drms-production-deploy job, which is also manual-only
 #   approval  : environment: production - the required-reviewer gate is
 #               configured in the GitHub repository settings for the
-#               `production` environment (human step, not done here)
+#               `production` environment (owner/admin step, not done here)
 #   runner    : dedicated self-hosted lab runner labeled `drms-lab`
 #               (must be able to reach deploy@drms-app-01 and
 #                deploy@prod-gateway-01 on the 10.1.4.0/24 lab network)
+#
+# PUBLIC REPO / OWNERSHIP CONSTRAINT (IMPORTANT)
+# ----------------------------------------------------------------------------
+# The active DRMS repo (github.com/G0kul17/Department-Record-Management-System)
+# is PUBLIC and owned by a third party. This design therefore MUST NOT assume:
+#   * repository admin access (secrets, environments, branch protection)
+#   * self-hosted runner registration
+#   * production host credentials
+# Any of those require owner/admin enablement. Choose ONE of these models:
+#
+#   MODEL A - Owner/admin enablement (keep this file in the public repo)
+#     G0kul17 (or an admin they delegate) adds the secrets, creates the
+#     `production` environment with required reviewers, and registers the
+#     `drms-lab` runner. Do NOT proceed until that happens. Self-hosted
+#     runners on a public repo are dangerous (see SAFETY below) - only
+#     acceptable if the owner understands and accepts the risk and the
+#     runner is registered org-wide behind SSO/approval, not repo-scoped.
+#
+#   MODEL B - Private deployment-control repo (RECOMMENDED for public source)
+#     Keep ONLY ci.yml in the public repo. Move THIS workflow into a private
+#     repo the team controls (e.g. org/drms-deploy) that: (1) has the
+#     secrets + environment + `drms-lab` runner, (2) checks out the public
+#     repo at a pinned SHA/ref as a read-only dependency, and (3) deploys
+#     from there. The public repo never touches deploy machinery.
+#
+#   MODEL C - Repo transfer / organization
+#     Transfer the repo (or a fork) into an organization the team controls,
+#     then follow MODEL A inside that org where runner/secrets are managed.
 #
 # SAFETY INVARIANTS
 #   * dry_run=true (default): the deploy job only PRINTS the deployment plan.
@@ -19,18 +47,26 @@
 #   * dry_run=false: the deploy job FAILS CLOSED (exit 1) because the real
 #     deploy steps are intentionally not implemented yet. It is impossible
 #     to deploy with this workflow as written.
+#   * SELF-HOSTED RUNNER SAFETY: this workflow is workflow_dispatch ONLY.
+#     NEVER add pull_request or push triggers to this file: on a public repo
+#     a fork PR could otherwise run arbitrary code on the self-hosted runner.
+#     The runner must never be reachable from untrusted PR paths.
 #   * This file must not be changed to run real deploy steps until the
-#     prerequisites in the TODO section below are met.
+#     prerequisites in the TODO section below are met and an ownership
+#     model (A/B/C above) is in place.
 #
 # TODO (next slices, in order):
+#   0. Decide the ownership model (A owner-enable / B private control repo /
+#      C transfer). For a public third-party-owned repo, MODEL B is the
+#      safest: this file moves to a private control repo.
 #   1. Provision the GitHub Actions self-hosted runner with the `drms-lab`
 #      label inside the lab (e.g. on the Jenkins builder VM 192.168.122.41
 #      or a new VM with outbound HTTPS to github.com + SSH to drms-app-01 /
-#      prod-gateway-01). Add repo secrets:
+#      prod-gateway-01). Add repo/control-repo secrets:
 #        - DRMS_DEPLOY_SSH_KEY   (mirror of Jenkins credential `drms-ssh`)
 #        - DRMS_TEST_JWT_SECRET  (test-only JWT, already referenced by ci.yml)
-#   2. Create the `production` environment in repo settings and attach
-#      required reviewers (the approval gate this workflow is designed for).
+#   2. Create the `production` environment in settings and attach required
+#      reviewers (the approval gate this workflow is designed for).
 #   3. Implement the real deploy steps by porting Jenkinsfile stages 6-8:
 #      a) backend:  ssh deploy@drms-app-01 mkdir -p /opt/drms/backend/releases/<ver>
 #                   scp -r backend_release/. deploy@drms-app-01:/opt/drms/backend/releases/<ver>/
@@ -75,6 +111,9 @@ permissions:
 
 # One production deploy at a time; queue, never cancel (mirrors Jenkins
 # disableConcurrentBuilds).
+# NOTE: workflow_dispatch can only be triggered by users with write access
+# to the repo - fork PRs cannot reach this workflow or the self-hosted
+# runner. Do not add pull_request/push triggers to this file.
 concurrency:
   group: drms-production-deploy
   cancel-in-progress: false
@@ -160,12 +199,42 @@ jobs:
         with:
           ref: ${{ inputs.ref }}
 
+      - name: Refuse to deploy from a public repository (ownership guard)
+        # The active repo is public and third-party-owned. This step fails
+        # closed so the workflow cannot deploy from it no matter what else is
+        # enabled. Choose an ownership model first: MODEL A (owner enablement),
+        # MODEL B (private control repo - recommended), MODEL C (transfer).
+        if: ${{ github.repository_visibility == 'public' }}
+        run: |
+          echo "::error::Refusing to deploy: this repository is public (${GITHUB_REPOSITORY})."
+          echo "::error::Adopt MODEL A (owner enablement + explicit sign-off), MODEL B"
+          echo "::error::(private deployment-control repo), or MODEL C (transfer) first."
+          exit 1
+
+      - name: Require owner/admin enablement (secrets must exist)
+        # Explicitly NOT assuming secrets are configured. In a public
+        # third-party-owned repo they will not be - this step fails closed
+        # with instructions instead of silently proceeding.
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DRMS_DEPLOY_SSH_KEY }}
+        run: |
+          if [ -z "${DEPLOY_SSH_KEY:-}" ]; then
+            echo "::error::DRMS_DEPLOY_SSH_KEY is not configured. This workflow cannot deploy."
+            echo "::error::Choose an ownership model first:"
+            echo "::error::  A. Owner/admin enables secrets + environment + runner in this repo"
+            echo "::error::  B. Move this workflow to a private deployment-control repo (recommended)"
+            echo "::error::  C. Transfer the repo to an organization the team controls"
+            exit 1
+          fi
+          echo "Deployment enablement present (secret configured)."
+
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
 
       - name: Print deployment plan (dry run - no lab host touched)
+        # Only reachable after the enablement guard passes AND dry_run=true.
         if: ${{ inputs.dry_run }}
         run: |
           echo "============================================================"

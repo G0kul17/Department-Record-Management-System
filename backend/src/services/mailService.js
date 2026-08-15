@@ -140,6 +140,21 @@ export async function sendMail({ to, subject, text, html }) {
 export async function sendOTPEmail(to, otp) {
   const OTP_EXPIRY_MIN = parseInt(process.env.OTP_EXPIRY_MIN, 10) || 5;
   const { html, text } = loginSessionExpiredOtpEmail({ otp, OTP_EXPIRY_MIN });
+
+  // Development fake-mail mode is opt-in only. By default we still attempt
+  // real delivery so OTPs are not silently swallowed.
+  if (
+    process.env.NODE_ENV !== "production" &&
+    process.env.ENABLE_FAKE_MAIL === "true"
+  ) {
+    logger.warn("mail.send.skipped", {
+      "email.to": to,
+      "email.subject": "Login OTP",
+      reason: "development fake-mail mode enabled",
+    });
+    return { success: false, skipped: true };
+  }
+
   return sendMail({
     to,
     subject: "Login OTP",

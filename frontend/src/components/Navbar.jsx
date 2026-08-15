@@ -8,6 +8,18 @@ import AvatarPicker from "./ui/AvatarPicker";
 import NotificationsBell from "./NotificationsBell";
 import apiClient from "../api/axiosClient";
 import { getFileUrl } from "../utils/fileUrl";
+import {
+  FaPencilAlt,
+  FaBell,
+  FaSignOutAlt,
+  FaCalendarAlt,
+  FaLaptopCode,
+  FaTrophy,
+  FaChartLine,
+  FaLayerGroup,
+  FaChevronDown,
+  FaBolt,
+} from "react-icons/fa";
 
 const Navbar = () => {
   const { user, token, logout } = useAuth();
@@ -17,6 +29,7 @@ const Navbar = () => {
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const displayName = formatDisplayName(user);
+
   const photoUrl = (() => {
     const raw =
       (user &&
@@ -37,26 +50,6 @@ const Navbar = () => {
 
     return getFileUrl(value);
   })();
-  const completion = (() => {
-    if (user?.role === "student") {
-      const fields = [
-        user?.register_number,
-        user?.contact_number,
-        user?.leetcode_url,
-        user?.hackerrank_url,
-        user?.github_url,
-      ];
-      const filled = fields.filter(
-        (v) => typeof v === "string" && v.trim(),
-      ).length;
-      return Math.round((filled / fields.length) * 100);
-    }
-    const fields = [user?.fullName, user?.email, user?.phone, user?.rollNumber];
-    const filled = fields.filter(
-      (v) => typeof v === "string" && v.trim(),
-    ).length;
-    return Math.round((filled / fields.length) * 100);
-  })();
 
   async function handleLogout() {
     try {
@@ -68,44 +61,30 @@ const Navbar = () => {
     nav("/login");
   }
 
-  function goToDashboard() {
-    if (user.role === "admin") nav("/admin");
-    else if (user.role === "staff") nav("/");
-    else if (user.role === "student") nav("/");
-  }
-
-  // Navigation links per role
+  // Navigation links with rounded icon badge backgrounds per role
   const navLinks =
     token && user
       ? user.role === "admin"
         ? [
-            { label: "Events", section: "events", path: "/admin" },
-            { label: "Projects", section: "projects", path: "/admin" },
-            { label: "Achievements", section: "achievements", path: "/admin" },
-            {
-              label: "Visualization",
-              section: "visualization",
-              path: "/admin",
-            },
-            { label: "Notifications", section: null, path: "/notifications" },
+            { label: "Events", icon: FaCalendarAlt, iconBadgeBg: "bg-blue-600 shadow-md shadow-blue-500/30", iconColor: "text-white", section: "events", path: "/admin" },
+            { label: "Projects", icon: FaLaptopCode, iconBadgeBg: "bg-emerald-600 shadow-md shadow-emerald-500/30", iconColor: "text-white", section: "projects", path: "/admin" },
+            { label: "Achievements", icon: FaTrophy, iconBadgeBg: "bg-amber-500 shadow-md shadow-amber-500/30", iconColor: "text-white", section: "achievements", path: "/admin" },
+            { label: "Visualization", icon: FaChartLine, iconBadgeBg: "bg-purple-600 shadow-md shadow-purple-500/30", iconColor: "text-white", section: "visualization", path: "/admin" },
+            { label: "Notifications", icon: FaBell, iconBadgeBg: "bg-rose-500 shadow-md shadow-rose-500/30", iconColor: "text-white", section: null, path: "/notifications" },
           ]
         : user.role === "student"
           ? [
-              { label: "Events", section: "events", path: "/" },
-              { label: "Projects", section: "projects", path: "/" },
-              { label: "Achievements", section: "achievements", path: "/" },
-              { label: "Notifications", section: null, path: "/notifications" },
+              { label: "Events", icon: FaCalendarAlt, iconBadgeBg: "bg-blue-600 shadow-md shadow-blue-500/30", iconColor: "text-white", section: "events", path: "/" },
+              { label: "Projects", icon: FaLaptopCode, iconBadgeBg: "bg-emerald-600 shadow-md shadow-emerald-500/30", iconColor: "text-white", section: "projects", path: "/" },
+              { label: "Achievements", icon: FaTrophy, iconBadgeBg: "bg-amber-500 shadow-md shadow-amber-500/30", iconColor: "text-white", section: "achievements", path: "/" },
+              { label: "Notifications", icon: FaBell, iconBadgeBg: "bg-rose-500 shadow-md shadow-rose-500/30", iconColor: "text-white", section: null, path: "/notifications" },
             ]
           : user.role === "staff"
             ? [
-                { label: "Events", section: "events", path: "/" },
-                { label: "Projects", section: "projects", path: "/" },
-                { label: "Achievements", section: "achievements", path: "/" },
-                {
-                  label: "Notifications",
-                  section: null,
-                  path: "/notifications",
-                },
+                { label: "Events", icon: FaCalendarAlt, iconBadgeBg: "bg-blue-600 shadow-md shadow-blue-500/30", iconColor: "text-white", section: "events", path: "/" },
+                { label: "Projects", icon: FaLaptopCode, iconBadgeBg: "bg-emerald-600 shadow-md shadow-emerald-500/30", iconColor: "text-white", section: "projects", path: "/" },
+                { label: "Achievements", icon: FaTrophy, iconBadgeBg: "bg-amber-500 shadow-md shadow-amber-500/30", iconColor: "text-white", section: "achievements", path: "/" },
+                { label: "Notifications", icon: FaBell, iconBadgeBg: "bg-rose-500 shadow-md shadow-rose-500/30", iconColor: "text-white", section: null, path: "/notifications" },
               ]
             : []
       : [];
@@ -124,79 +103,82 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="bg-slate-900 text-white shadow-md relative">
-      <div className="w-full px-4">
+    <nav className="bg-slate-900 border-b border-slate-800 text-white shadow-lg sticky top-0 z-40">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-white">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="h-5 w-5"
-              >
-                <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z" opacity=".15" />
-                <path
-                  d="M20 7.5L12 12 4 7.5M12 12v9"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                />
-              </svg>
-            </span>
-            <span className="text-[15px] font-semibold tracking-tight">
-              DRMS
-            </span>
+          {/* Logo & Brand */}
+          <Link to="/" className="flex items-center gap-2.5 flex-shrink-0 group">
+            <img
+              src="/logo.png"
+              alt="DRMS Logo"
+              className="h-9 w-9 object-contain rounded-full shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform bg-slate-950 p-0.5 border border-slate-800"
+            />
+            <div className="flex items-center gap-1.5">
+              <span className="text-base font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
+                DRMS
+              </span>
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            </div>
           </Link>
 
-          {/* Desktop Navigation Links */}
+          {/* Center Navigation Floating Pill Bar */}
           {navLinks.length > 0 && (
-            <div className="hidden md:flex items-center gap-1">
-              {navLinks.map((link) => (
-                <button
-                  key={link.label}
-                  onClick={() => handleNavLinkClick(link)}
-                  className="text-sm font-medium hover:bg-white/20 px-3 py-2 rounded-lg transition"
-                >
-                  {link.label}
-                </button>
-              ))}
+            <div className="hidden md:flex items-center gap-1.5 bg-slate-800/90 backdrop-blur-md border border-slate-700/80 rounded-full px-2.5 py-1.5 shadow-inner">
+              {navLinks.map((link) => {
+                const IconComponent = link.icon;
+                return (
+                  <button
+                    key={link.label}
+                    onClick={() => handleNavLinkClick(link)}
+                    className="inline-flex items-center gap-2 text-xs font-extrabold text-slate-200 hover:text-white hover:bg-slate-700/80 pl-1.5 pr-3.5 py-1 rounded-full transition-all duration-150 cursor-pointer group"
+                  >
+                    <span className={`flex h-6 w-6 items-center justify-center rounded-full ${link.iconBadgeBg} shadow-xs group-hover:scale-110 transition-transform`}>
+                      <IconComponent className={`w-3 h-3 ${link.iconColor}`} />
+                    </span>
+                    <span>{link.label}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
 
           {/* Right side: controls */}
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-3">
             {token ? (
               <>
                 <NotificationsBell />
-                {/* Show name only on sm+ */}
-                {user && (
-                  <span className="hidden sm:inline-block text-sm rounded-full bg-white/20 px-3 py-1 max-w-[140px] truncate">
-                    {displayName}
-                  </span>
-                )}
-                <div className="relative flex items-center">
-                  <Avatar
-                    className="relative h-9 w-9 bg-white/20 text-white border border-white/30 cursor-pointer flex-shrink-0"
-                    title={displayName || "Profile"}
-                    onClick={() => setSidebarOpen(true)}
-                  >
+
+                {/* User Profile Pill Trigger */}
+                <button
+                  type="button"
+                  onClick={() => setSidebarOpen((prev) => !prev)}
+                  className="flex items-center gap-2.5 rounded-full bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700/80 pl-1.5 pr-3 py-1 text-xs font-extrabold text-slate-100 shadow-sm transition cursor-pointer group"
+                >
+                  <Avatar className="h-7 w-7 bg-blue-600/30 text-white border border-blue-400/40 flex-shrink-0">
                     {photoUrl ? (
                       <AvatarImage
                         src={photoUrl}
                         alt={displayName || "Profile"}
                       />
                     ) : null}
-                    <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
+                    <AvatarFallback className="font-extrabold text-[10px]">
+                      {getInitials(displayName)}
+                    </AvatarFallback>
                   </Avatar>
-                </div>
-                {/* Hamburger for mobile - only when logged in */}
+
+                  {user && (
+                    <span className="hidden sm:inline-block max-w-[120px] truncate">
+                      {displayName}
+                    </span>
+                  )}
+
+                  <FaChevronDown className="w-2.5 h-2.5 text-slate-400 group-hover:text-white transition-colors" />
+                </button>
+
+                {/* Hamburger for mobile */}
                 {navLinks.length > 0 && (
                   <button
-                    className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg hover:bg-white/20 transition"
+                    className="md:hidden flex items-center justify-center w-9 h-9 rounded-xl border border-slate-800 bg-slate-800/90 hover:bg-slate-700 transition"
                     onClick={() => setMobileMenuOpen((v) => !v)}
                     aria-label="Toggle menu"
                   >
@@ -235,26 +217,26 @@ const Navbar = () => {
                 )}
               </>
             ) : (
-              <div className="flex items-center gap-1 sm:gap-2">
+              <div className="flex items-center gap-2">
                 {location.pathname !== "/login" &&
                   location.pathname !== "/register-student" &&
                   location.pathname !== "/register-staff" && (
                     <>
                       <Link
                         to="/login"
-                        className="px-3 py-2 rounded-lg transition font-medium bg-white/20 hover:bg-white/25 text-sm whitespace-nowrap"
+                        className="px-4 py-2 rounded-xl transition font-bold bg-blue-600 hover:bg-blue-700 text-white text-xs shadow-md shadow-blue-500/20 whitespace-nowrap"
                       >
                         Login
                       </Link>
                       <Link
                         to="/register-student"
-                        className="hidden sm:inline-block px-3 py-2 bg-white/20 hover:bg-white/25 rounded-lg transition font-medium text-sm whitespace-nowrap"
+                        className="hidden sm:inline-block px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition font-bold text-xs whitespace-nowrap text-slate-200"
                       >
                         Register Student
                       </Link>
                       <Link
                         to="/register-staff"
-                        className="hidden sm:inline-block px-3 py-2 bg-white/20 hover:bg-white/25 rounded-lg transition font-medium text-sm whitespace-nowrap"
+                        className="hidden sm:inline-block px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl transition font-bold text-xs whitespace-nowrap text-slate-200"
                       >
                         Register Staff
                       </Link>
@@ -266,152 +248,117 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile nav dropdown (only when logged in) */}
+      {/* Mobile nav dropdown */}
       {mobileMenuOpen && navLinks.length > 0 && (
-        <div className="md:hidden absolute left-0 right-0 top-16 z-[9997] max-h-[70vh] border-t border-white/10 bg-slate-900 px-2 pb-3 overflow-auto">
-          {navLinks.map((link) => (
-            <button
-              key={link.label}
-              onClick={() => handleNavLinkClick(link)}
-              className="flex w-full items-center px-3 py-3 text-sm font-medium text-slate-200 hover:bg-white/10 rounded-lg transition"
-            >
-              {link.label}
-            </button>
-          ))}
+        <div className="md:hidden absolute left-0 right-0 top-16 z-[9997] max-h-[70vh] border-t border-slate-800 bg-slate-900 px-3 py-3 overflow-auto space-y-1">
+          {navLinks.map((link) => {
+            const IconComponent = link.icon;
+            return (
+              <button
+                key={link.label}
+                onClick={() => handleNavLinkClick(link)}
+                className="flex w-full items-center gap-3 px-3 py-2.5 text-xs font-bold text-slate-200 hover:bg-slate-800 rounded-xl transition"
+              >
+                <span className={`flex h-6 w-6 items-center justify-center rounded-full ${link.iconBadgeBg}`}>
+                  <IconComponent className={`w-3 h-3 ${link.iconColor}`} />
+                </span>
+                <span>{link.label}</span>
+              </button>
+            );
+          })}
           {user && (
-            <div className="mt-1 px-3 py-2 text-sm text-slate-400 border-t border-white/10">
+            <div className="mt-2 px-3 py-2 text-xs text-slate-400 border-t border-slate-800">
               Signed in as{" "}
-              <span className="text-slate-200 font-medium">{displayName}</span>
+              <span className="text-slate-200 font-bold">{displayName}</span>
             </div>
           )}
         </div>
       )}
 
-      {/* Sidebar overlay and panel rendered via portal at document.body */}
+      {/* Profile Popup Dropdown Card */}
       {sidebarOpen &&
         createPortal(
           <>
             <div
-              className="fixed inset-0 z-[9998] bg-black/30 backdrop-blur-sm"
+              className="fixed inset-0 z-[9998] bg-slate-950/20 backdrop-blur-xs"
               onClick={() => setSidebarOpen(false)}
             />
-            <div className="fixed left-2 right-2 top-16 z-[9999] w-auto max-h-[70vh] overflow-auto bg-white shadow-xl md:inset-auto md:right-4 md:top-16 md:w-72 md:max-w-[calc(100vw-2rem)] md:max-h-[80vh] md:rounded-xl md:border md:border-slate-200">
-              <div className="flex items-center gap-3 border-b border-slate-200 p-4">
-                <Avatar className="h-10 w-10 bg-slate-100">
-                  {photoUrl ? (
-                    <AvatarImage
-                      src={photoUrl}
-                      alt={displayName || "Profile"}
-                    />
-                  ) : null}
-                  <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-medium text-slate-900 truncate">
-                    {displayName}
-                  </span>
-                  {user?.role && (
-                    <span className="text-xs text-slate-500 capitalize">
-                      {user.role}
-                    </span>
-                  )}
+            <div className="fixed right-3 sm:right-6 top-16 z-[9999] w-[280px] rounded-2xl border border-slate-100 bg-white p-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150 space-y-3">
+              {/* Header: User Avatar, Name, Role & Change Photo button */}
+              <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Avatar className="h-11 w-11 bg-slate-100 border border-slate-200 flex-shrink-0">
+                    {photoUrl ? (
+                      <AvatarImage
+                        src={photoUrl}
+                        alt={displayName || "Profile"}
+                      />
+                    ) : null}
+                    <AvatarFallback className="font-extrabold text-slate-700">
+                      {getInitials(displayName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <h4 className="text-sm font-extrabold text-slate-900 truncate">
+                      {displayName}
+                    </h4>
+                    {user?.role && (
+                      <p className="text-xs font-semibold text-slate-400 capitalize">
+                        {user.role}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <div className="ml-auto flex-shrink-0">
-                  <button
-                    className="px-3 py-1 rounded-md text-xs bg-slate-100 hover:bg-slate-200"
-                    onClick={() => setAvatarModalOpen(true)}
-                  >
-                    Change Photo
-                  </button>
-                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSidebarOpen(false);
+                    setAvatarModalOpen(true);
+                  }}
+                  className="rounded-xl border border-slate-200 bg-slate-100 hover:bg-slate-200 px-2.5 py-1.5 text-[11px] font-bold text-slate-800 transition cursor-pointer flex-shrink-0"
+                >
+                  Change Photo
+                </button>
               </div>
-              <div className="p-2">
+
+              {/* Menu Options */}
+              <div className="space-y-1">
                 <Link
                   to="/profile"
                   onClick={() => setSidebarOpen(false)}
-                  className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-slate-700 hover:bg-slate-100 outline-none focus:outline-none focus:ring-0 border-0"
+                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    className="h-5 w-5"
-                  >
-                    <path
-                      d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      fill="none"
-                    />
-                    <path
-                      d="M20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
-                      fill="currentColor"
-                    />
-                  </svg>
+                  <FaPencilAlt className="w-4 h-4 text-slate-500" />
                   <span>Edit Profile</span>
                 </Link>
+
                 <Link
                   to="/notifications"
                   onClick={() => setSidebarOpen(false)}
-                  className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-slate-700 hover:bg-slate-100 outline-none focus:outline-none focus:ring-0 border-0"
+                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    className="h-5 w-5"
-                  >
-                    <path
-                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0018 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  <FaBell className="w-4 h-4 text-slate-500" />
                   <span>Notifications</span>
                 </Link>
+
                 <button
                   type="button"
-                  className="mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-left bg-red-600 text-white hover:bg-red-700 active:bg-red-800 outline-none focus:outline-none focus:ring-0 border-0"
                   onClick={() => {
                     setSidebarOpen(false);
                     handleLogout();
                   }}
+                  className="w-full flex items-center gap-3 rounded-xl px-4 py-2.5 bg-[#e11d48] hover:bg-[#be123c] text-white font-extrabold text-sm shadow-md shadow-rose-500/20 transition cursor-pointer mt-2"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    className="h-5 w-5 text-white"
-                  >
-                    <path
-                      d="M10 17l5-5-5-5"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M4 12h11"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M14 21H6a2 2 0 01-2-2V5a2 2 0 012-2h8"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <span className="font-semibold">Logout</span>
+                  <FaSignOutAlt className="w-4 h-4 text-white" />
+                  <span>Logout</span>
                 </button>
               </div>
             </div>
           </>,
           document.body,
         )}
+
       <AvatarPicker
         open={avatarModalOpen}
         onClose={() => setAvatarModalOpen(false)}

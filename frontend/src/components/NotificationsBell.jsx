@@ -1,9 +1,21 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import apiClient from "../api/axiosClient";
 import { useAuth } from "../hooks/useAuth";
 import { formatDisplayName } from "../utils/displayName";
 import Toast from "./Toast";
 import { getFileUrl } from "../utils/fileUrl";
+import {
+  FaBell,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaBullhorn,
+  FaCalendarAlt,
+  FaFileAlt,
+  FaExternalLinkAlt,
+  FaChevronRight,
+  FaInbox,
+} from "react-icons/fa";
 
 export default function NotificationsBell() {
   const { user } = useAuth();
@@ -58,7 +70,6 @@ export default function NotificationsBell() {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [open]);
 
-  // Background poll to show red dot when new items arrive
   useEffect(() => {
     let timer = null;
     async function checkNew() {
@@ -70,7 +81,6 @@ export default function NotificationsBell() {
         let maxTs = 0;
         let announcements = [];
         if (role === "staff") {
-          // For staff, new submissions awaiting approval
           const [pendingProj, pendingAch] = await Promise.all([
             apiClient.get(`/projects?verified=false&limit=20`),
             apiClient.get(
@@ -87,7 +97,6 @@ export default function NotificationsBell() {
           ];
           maxTs = Math.max(0, ...allPend.map(toCreatedTs));
         } else {
-          // For students, approvals of their own items (use verified_at)
           const [myProj, myAch] = await Promise.all([
             apiClient.get(`/projects?limit=20&mine=true`),
             apiClient.get(
@@ -224,7 +233,6 @@ export default function NotificationsBell() {
         // ignore polling errors
       }
     }
-    // initial check
     checkNew();
     timer = setInterval(checkNew, 30000);
     return () => {
@@ -265,7 +273,6 @@ export default function NotificationsBell() {
       const items = [];
 
       if (role === "staff") {
-        // Pending approvals summary for staff
         const [pendingProj, pendingAch] = await Promise.all([
           apiClient.get(`/projects?verified=false&limit=50`),
           apiClient.get(
@@ -317,7 +324,6 @@ export default function NotificationsBell() {
           });
         }
       } else {
-        // Student: show approvals of their own items in last week
         const [myProj, myAch] = await Promise.all([
           apiClient.get(`/projects?limit=20&mine=true`),
           apiClient.get(
@@ -335,8 +341,8 @@ export default function NotificationsBell() {
                 type: status === "approved" ? "approval" : "rejection",
                 title:
                   status === "approved"
-                    ? `Your project "${p.title}" was approved`
-                    : `Your project "${p.title}" was rejected`,
+                    ? `Project "${p.title}" was approved`
+                    : `Project "${p.title}" was rejected`,
                 comment: p.verification_comment || "",
                 by:
                   formatDisplayName({
@@ -360,8 +366,8 @@ export default function NotificationsBell() {
                 type: status === "approved" ? "approval" : "rejection",
                 title:
                   status === "approved"
-                    ? `Your achievement "${a.title}" was approved`
-                    : `Your achievement "${a.title}" was rejected`,
+                    ? `Achievement "${a.title}" was approved`
+                    : `Achievement "${a.title}" was rejected`,
                 comment: a.verification_comment || "",
                 by:
                   formatDisplayName({
@@ -402,10 +408,9 @@ export default function NotificationsBell() {
           }
         }
       } catch (e) {
-        // ignore announcements failure
+        // ignore
       }
 
-      // Always include recent public events
       const ev = await apiClient.get(`/events?order=latest&limit=10`);
       for (const e of ev.events || []) {
         items.push({
@@ -434,118 +439,120 @@ export default function NotificationsBell() {
       <button
         title="Notifications"
         onClick={toggleOpen}
-        className="relative inline-flex h-9 w-9 items-center justify-center rounded-lg transition hover:bg-white/10"
+        className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-slate-200 hover:text-white transition cursor-pointer shadow-sm"
       >
-        {/* bell icon */}
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          className="h-5 w-5"
-        >
-          <path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 002 2z" fill="currentColor" />
-          <path
-            d="M18 16v-5a6 6 0 10-12 0v5l-2 2h16l-2-2z"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          />
-        </svg>
+        <FaBell className="h-4 w-4 text-purple-400" />
         {dot && (
-          <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
+          <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-rose-500 ring-2 ring-slate-900 animate-pulse" />
         )}
       </button>
 
       {open && (
-        <div className="fixed right-3 top-[4.75rem] z-50 w-[min(22rem,calc(100vw-1.5rem))] origin-top-right overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl ring-1 ring-slate-900/5 sm:absolute sm:right-0 sm:top-full sm:mt-2 sm:w-80 sm:max-w-[calc(100vw-1rem)]">
-          <div className="border-b border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900">
-            Notifications
+        <div className="fixed right-3 top-16 z-50 w-[330px] rounded-2xl border border-slate-100 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-150 overflow-hidden space-y-1">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3.5 border-b border-slate-100 bg-white">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-100 text-purple-600">
+                <FaBell className="w-3.5 h-3.5" />
+              </span>
+              <span className="text-sm font-extrabold text-slate-900">
+                Notifications
+              </span>
+            </div>
+
+            {items.length > 0 && (
+              <span className="rounded-full bg-purple-50 border border-purple-200 px-2.5 py-0.5 text-[11px] font-extrabold text-purple-700">
+                {items.length} Recent
+              </span>
+            )}
           </div>
-          <div className="max-h-[70vh] space-y-1 overflow-y-auto p-2 sm:max-h-[28rem]">
+
+          {/* List Content */}
+          <div className="max-h-[340px] overflow-y-auto p-3 space-y-2">
             {loading ? (
-              <div className="rounded-xl bg-slate-50 px-3 py-3 text-sm text-slate-600">
-                Loading...
+              <div className="flex items-center justify-center gap-2 py-8 text-xs font-bold text-slate-500">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600" />
+                Loading notifications...
               </div>
             ) : items.length === 0 ? (
-              <div className="rounded-xl bg-slate-50 px-3 py-4 text-center text-sm text-slate-600">
-                No notifications
+              <div className="py-8 text-center flex flex-col items-center gap-2">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-50 text-purple-400">
+                  <FaInbox className="w-6 h-6" />
+                </span>
+                <p className="text-xs font-extrabold text-slate-800 mt-1">
+                  No notifications right now
+                </p>
+                <p className="text-[11px] text-slate-400 font-medium max-w-[200px]">
+                  You are all caught up on your event announcements and reviews!
+                </p>
               </div>
             ) : (
               items.map((n, idx) => {
-                const Wrapper = n.href ? "a" : "div";
-                const wrapperProps = n.href ? { href: n.href } : {};
+                const Wrapper = n.href ? Link : "div";
+                const wrapperProps = n.href ? { to: n.href, onClick: () => setOpen(false) } : {};
+
+                let IconComp = FaBell;
+                let iconColor = "bg-purple-50 text-purple-600 border-purple-100";
+                if (n.type === "approval") {
+                  IconComp = FaCheckCircle;
+                  iconColor = "bg-emerald-50 text-emerald-600 border-emerald-100";
+                } else if (n.type === "rejection") {
+                  IconComp = FaTimesCircle;
+                  iconColor = "bg-rose-50 text-rose-600 border-rose-100";
+                } else if (n.type === "announcement") {
+                  IconComp = FaBullhorn;
+                  iconColor = "bg-blue-50 text-blue-600 border-blue-100";
+                } else if (n.type === "event") {
+                  IconComp = FaCalendarAlt;
+                  iconColor = "bg-amber-50 text-amber-600 border-amber-100";
+                }
+
                 return (
                   <Wrapper
                     key={idx}
                     {...wrapperProps}
-                    className="block rounded-xl px-3 py-2 transition hover:bg-slate-100"
+                    className="group flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50/50 p-3 hover:bg-slate-100/80 hover:border-slate-200 transition-all duration-150 cursor-pointer text-left"
                   >
-                    <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="min-w-0 text-sm text-slate-800 sm:pr-3">
-                        {n.type === "event" ? (
-                          <span>
-                            Event:{" "}
-                            <span className="font-medium">{n.title}</span>
-                          </span>
-                        ) : n.type === "project" ? (
-                          <span>
-                            Project:{" "}
-                            <span className="font-medium">{n.title}</span>
-                          </span>
-                        ) : n.type === "achievement" ? (
-                          <span>
-                            Achievement:{" "}
-                            <span className="font-medium">{n.title}</span>
-                          </span>
-                        ) : n.type === "pending" ? (
-                          <span>
-                            <span className="font-medium">{n.title}</span>
-                          </span>
-                        ) : n.type === "approval" || n.type === "rejection" ? (
-                          <span>
-                            <span className="font-medium">{n.title}</span>
-                          </span>
-                        ) : n.type === "announcement" ? (
-                          <span>
-                            Announcement:{" "}
-                            <span className="font-medium">{n.title}</span>
-                          </span>
-                        ) : (
-                          <span className="font-medium">{n.title}</span>
-                        )}
-                        <div className="text-xs text-slate-500">{n.by || ""}</div>
-                        {n.description && n.type === "announcement" && (
-                          <div className="mt-1 text-xs text-slate-600">
-                            {n.description}
-                          </div>
-                        )}
-                        {n.message && n.type === "announcement" && (
-                          <div className="mt-1 text-xs text-slate-600">
-                            {n.message}
-                          </div>
-                        )}
-                        {n.comment && (
-                          <div className="mt-1 text-xs text-slate-600">
-                            Suggestion: {n.comment}
-                          </div>
-                        )}
-                        {n.type === "announcement" && n.href && (
-                          <div className="mt-1 text-xs text-blue-600">
-                            {n.brochure_name ? "Brochure: " : "Brochure"}
-                            {n.brochure_name || "Download"}
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-xs text-slate-500 whitespace-nowrap">
+                    <span className={`flex h-8 w-8 items-center justify-center rounded-xl border ${iconColor} shadow-xs flex-shrink-0 mt-0.5`}>
+                      <IconComp className="w-3.5 h-3.5" />
+                    </span>
+
+                    <div className="min-w-0 flex-1 space-y-0.5">
+                      <h4 className="text-xs font-extrabold text-slate-900 group-hover:text-purple-600 transition-colors line-clamp-1">
+                        {n.title}
+                      </h4>
+                      <p className="text-[11px] text-slate-500 font-semibold truncate">
+                        {n.by ? `From: ${n.by}` : "System Notification"}
+                      </p>
+                      {n.comment && (
+                        <p className="text-[11px] text-slate-600 font-medium line-clamp-1 italic">
+                          "{n.comment}"
+                        </p>
+                      )}
+                      <span className="text-[10px] text-slate-400 font-semibold block pt-0.5">
                         {timeAgo(n.created_at_ts)}
-                      </div>
+                      </span>
                     </div>
                   </Wrapper>
                 );
               })
             )}
           </div>
+
+          {/* Footer Action */}
+          <div className="p-2 border-t border-slate-100 bg-slate-50/60 text-center">
+            <Link
+              to="/notifications"
+              onClick={() => setOpen(false)}
+              className="inline-flex items-center justify-center gap-1.5 w-full py-2 text-xs font-extrabold text-purple-700 hover:text-purple-800 hover:bg-purple-50 rounded-xl transition"
+            >
+              <span>View All Notifications</span>
+              <FaChevronRight className="w-3 h-3" />
+            </Link>
+          </div>
         </div>
       )}
+
       <Toast
         message={toastMessage}
         type={toastType}

@@ -1,11 +1,13 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/axiosClient";
 import SuccessModal from "../../components/ui/SuccessModal";
-import BackButton from "../../components/BackButton";
 import UploadDropzone from "../../components/ui/UploadDropzone";
 import CustomSelect from "../../components/ui/CustomSelect";
+import { FaCloudUploadAlt, FaArrowLeft, FaEye, FaCheck } from "react-icons/fa";
 
 export default function AdminUploadExtracurricular() {
+  const nav = useNavigate();
   const [uploaderName, setUploaderName] = useState("");
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -80,9 +82,9 @@ export default function AdminUploadExtracurricular() {
         missing.length
           ? `Missing required headers for ${dataType.replace(
               "_",
-              " ",
+              " "
             )}: ${missing.join(", ")}`
-          : "Preview generated. Review and click Save.",
+          : "Preview generated. Review and click Save."
       );
     } catch (err) {
       setMessage(err.message || "Failed to generate preview");
@@ -118,139 +120,166 @@ export default function AdminUploadExtracurricular() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl p-4 sm:p-6">
-      <BackButton />
-      <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100">
-        Other Data Upload
-      </h1>
-      <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">
-        Upload CSV or Excel. Preview first, then save.
-      </p>
-
-      {message && (
-        <div className="mb-4 rounded border px-3 py-2 text-sm dark:border-slate-700">
-          {message}
-        </div>
-      )}
-
-      <form
-        onSubmit={handlePreview}
-        className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
-      >
+    <div className="min-h-[calc(100vh-4rem)] bg-[#f8fafc] w-full">
+      <div className="w-full px-4 sm:px-6 lg:px-10 py-4 sm:py-6 space-y-4">
+        {/* Top Navigation */}
         <div>
-          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-            Data Category <span className="text-red-600">*</span>
-          </label>
-          <CustomSelect
-            value={dataType}
-            onChange={(value) => setDataType(value)}
-            options={[
-              { value: "achievements", label: "Achievement" },
-              { value: "projects", label: "Projects" },
-              { value: "faculty_research", label: "Faculty Research" },
-              { value: "faculty_consultancy", label: "Faculty Consultancy" },
-              {
-                value: "faculty_participations",
-                label: "Faculty Participation",
-              },
-            ]}
-            placeholder="Select category"
-            required
-            name="data_category"
-          />
-          {dataType && (
-            <div className="mt-2 text-[11px] text-slate-600 dark:text-slate-300">
-              Required headers:{" "}
-              {REQUIRED_HEADERS[dataType]
-                .map((g) => g[0].replace(/_/g, " "))
-                .join(", ")}
-            </div>
-          )}
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-            Uploader Name <span className="text-red-600">*</span>
-          </label>
-          <input
-            type="text"
-            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-            value={uploaderName}
-            onChange={(e) => setUploaderName(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <UploadDropzone
-            label="Upload and attach files"
-            subtitle="Attachments will be a part of this project."
-            accept=".csv,.xlsx"
-            maxSizeMB={25}
-            selectedFile={file}
-            onFileSelected={(f) => setFile(f)}
-          />
-        </div>
-        <div className="flex gap-2">
-          <button className="rounded-md bg-[#87CEEB] px-4 py-2 text-sm font-semibold text-white shadow hover:opacity-90">
-            Generate Preview
-          </button>
           <button
-            type="button"
-            onClick={handleSave}
-            disabled={!preview || saving || headerErrors.length > 0}
-            className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-green-700 disabled:opacity-50"
+            onClick={() => nav("/admin/quick-actions")}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 shadow-xs hover:bg-slate-100 transition cursor-pointer"
           >
-            {saving ? "Saving..." : "Save"}
+            <FaArrowLeft className="w-3 h-3 text-slate-600" />
+            Back to Admin Quick Actions
           </button>
         </div>
-      </form>
 
-      {preview && (
-        <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900 overflow-auto">
-          {headerErrors.length > 0 && (
-            <div className="mb-3 rounded border border-red-200 bg-red-50 p-2 text-xs text-red-700">
-              Missing required headers: {headerErrors.join(", ")}
-            </div>
-          )}
-          <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">
-            Preview — Total rows: {preview.totalRows}
-          </h2>
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr>
-                {preview.columns.map((c) => (
-                  <th
-                    key={c}
-                    className="border-b px-2 py-1 text-left dark:border-slate-700"
-                  >
-                    {c}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {preview.rows.map((row, idx) => (
-                <tr key={idx}>
-                  {preview.columns.map((c) => (
-                    <td
-                      key={c}
-                      className="border-b px-2 py-1 dark:border-slate-800"
-                    >
-                      {String(row[c] ?? "")}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* Header Title Box */}
+        <div className="flex items-center gap-3.5 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm w-full">
+          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-100 text-sky-600 shadow-xs flex-shrink-0">
+            <FaCloudUploadAlt className="w-5 h-5" />
+          </span>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+              Other Data Upload
+            </h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Upload CSV or Excel data for achievements, projects, research, consultancy, or participations.
+            </p>
+          </div>
         </div>
-      )}
 
-      <SuccessModal
-        open={showSuccess}
-        title="Saved successfully"
-        subtitle="Your data has been saved."
-        onClose={() => setShowSuccess(false)}
-      />
+        <SuccessModal
+          open={showSuccess}
+          title="Data Saved Successfully"
+          subtitle="Your dataset records have been imported and saved into the system."
+          onClose={() => setShowSuccess(false)}
+        />
+
+        {message && (
+          <div className="rounded-xl border border-sky-200 bg-sky-50 p-3.5 text-xs font-bold text-sky-900 shadow-xs">
+            {message}
+          </div>
+        )}
+
+        <form
+          onSubmit={handlePreview}
+          className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-4 w-full"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wider mb-1">
+                Data Category <span className="text-sky-600">*</span>
+              </label>
+              <CustomSelect
+                value={dataType}
+                onChange={(value) => setDataType(value)}
+                options={[
+                  { value: "achievements", label: "Achievement" },
+                  { value: "projects", label: "Projects" },
+                  { value: "faculty_research", label: "Faculty Research" },
+                  { value: "faculty_consultancy", label: "Faculty Consultancy" },
+                  {
+                    value: "faculty_participations",
+                    label: "Faculty Participation",
+                  },
+                ]}
+                placeholder="Select dataset category"
+                required
+                name="data_category"
+              />
+              {dataType && REQUIRED_HEADERS[dataType] && (
+                <div className="mt-2 text-[11px] text-slate-500 font-semibold">
+                  Required headers:{" "}
+                  {REQUIRED_HEADERS[dataType]
+                    .map((g) => g[0].replace(/_/g, " "))
+                    .join(", ")}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wider mb-1">
+                Uploader Name <span className="text-sky-600">*</span>
+              </label>
+              <input
+                type="text"
+                className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-600 shadow-xs"
+                value={uploaderName}
+                onChange={(e) => setUploaderName(e.target.value)}
+                placeholder="e.g. Admin / Coordinator Name"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <UploadDropzone
+              label="Upload CSV or Excel File"
+              subtitle="Only .csv or .xlsx files allowed (Max 25MB)"
+              accept=".csv,.xlsx"
+              maxSizeMB={25}
+              selectedFile={file}
+              onFileSelected={(f) => setFile(f)}
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="submit"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-sky-300 bg-sky-50 px-5 py-2 text-xs font-extrabold text-sky-700 hover:bg-sky-100 transition cursor-pointer"
+            >
+              <FaEye className="w-3 h-3" />
+              Generate Preview
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={!preview || saving || headerErrors.length > 0}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 px-6 py-2 text-xs font-extrabold text-white shadow-md shadow-sky-500/20 transition disabled:opacity-50 cursor-pointer"
+            >
+              <FaCheck className="w-3 h-3" />
+              {saving ? "Saving..." : "Save Data"}
+            </button>
+          </div>
+        </form>
+
+        {preview && (
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-3 w-full">
+            {headerErrors.length > 0 && (
+              <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-extrabold text-rose-800">
+                Missing required headers: {headerErrors.join(", ")}
+              </div>
+            )}
+            <h2 className="text-xs font-extrabold text-slate-900">
+              Preview — Total Rows: {preview.totalRows}
+            </h2>
+            <div className="overflow-x-auto rounded-xl border border-slate-200">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-slate-100 text-slate-700 font-extrabold uppercase">
+                  <tr>
+                    {preview.columns.map((c) => (
+                      <th key={c} className="px-3 py-2.5 whitespace-nowrap border-b border-slate-200">
+                        {c}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {preview.rows.map((row, idx) => (
+                    <tr key={idx} className="hover:bg-sky-50/30 transition-colors">
+                      {preview.columns.map((c) => (
+                        <td key={c} className="px-3 py-2 whitespace-nowrap text-slate-800">
+                          {String(row[c] ?? "")}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

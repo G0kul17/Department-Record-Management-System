@@ -1,33 +1,37 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import apiClient from "../api/axiosClient";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AttachmentPreview from "../components/AttachmentPreview";
+import CustomSelect from "../components/ui/CustomSelect";
 import { generateAcademicYears } from "../utils/academicYears";
 import { getFileUrl } from "../utils/fileUrl";
+import {
+  FaFolderOpen,
+  FaArrowLeft,
+  FaSearch,
+  FaCheckCircle,
+  FaUser,
+  FaGithub,
+  FaFileAlt,
+  FaDownload,
+  FaEye,
+  FaChevronLeft,
+  FaChevronRight,
+  FaLaptopCode,
+} from "react-icons/fa";
 
 export default function ProjectsApproved() {
+  const nav = useNavigate();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [previewFile, setPreviewFile] = useState(null);
   const [q, setQ] = useState("");
   const [academicYear, setAcademicYear] = useState("");
-  const [yearOpen, setYearOpen] = useState(false);
-  // Status fixed to approved; UI control removed
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [refreshId, setRefreshId] = useState(0);
-  const yearRef = useRef(null);
 
   const academicYearOptions = useMemo(() => generateAcademicYears(), []);
-
-  useEffect(() => {
-    function onDocClick(e) {
-      if (!yearRef.current) return;
-      if (!yearRef.current.contains(e.target)) setYearOpen(false);
-    }
-    if (yearOpen) document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [yearOpen]);
 
   const getUploaderLabel = (project) => {
     const name =
@@ -83,375 +87,275 @@ export default function ProjectsApproved() {
   }, [q, academicYear, page, limit, refreshId]);
 
   return (
-    <div className="mx-auto max-w-7xl bg-slate-50 px-4 py-5 sm:px-6 lg:px-8 dark:bg-slate-950">
-      <div className="mx-auto max-w-4xl">
-        <div className="glitter-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-3 md:items-end">
-            <div className="md:col-span-1">
-              <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
-                Search
+    <div className="min-h-[calc(100vh-4rem)] bg-[#f8fafc] w-full">
+      <div className="w-full px-4 sm:px-6 lg:px-10 py-4 sm:py-6 space-y-4">
+        {/* Top Navigation */}
+        <div>
+          <button
+            onClick={() => nav("/")}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 shadow-xs hover:bg-slate-100 transition cursor-pointer"
+          >
+            <FaArrowLeft className="w-3 h-3 text-slate-600" />
+            Back to Home
+          </button>
+        </div>
+
+        {/* Title Header Box */}
+        <div className="flex items-center gap-3.5 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm w-full">
+          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 shadow-xs flex-shrink-0">
+            <FaLaptopCode className="w-5 h-5" />
+          </span>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+              Approved Projects
+            </h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Browse verified student and staff projects.
+            </p>
+          </div>
+        </div>
+
+        {/* Search & Academic Year Filter Card */}
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+            {/* Search Input */}
+            <div className="sm:col-span-8">
+              <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-1.5">
+                Search Projects
               </label>
               <div className="relative">
-                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    aria-hidden
-                  >
-                    <circle
-                      cx="11"
-                      cy="11"
-                      r="7"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    />
-                    <path
-                      d="M20 20l-3.5-3.5"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </span>
+                <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
+                  type="text"
                   value={q}
                   onChange={(e) => {
                     setQ(e.target.value);
                     setPage(1);
                   }}
-                  placeholder="Search projects..."
-                  className="w-full rounded-md border border-slate-300 py-1.5 pl-9 pr-12 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                  placeholder="Search projects by title, description, or student..."
+                  className="w-full rounded-xl border border-slate-300 pl-10 pr-4 py-2.5 text-sm font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-600 shadow-sm"
                 />
-                <button
-                  type="button"
-                  aria-label="Search"
-                  onClick={() => {
-                    setPage(1);
-                    setRefreshId(Date.now());
-                  }}
-                  className="absolute right-2 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-white shadow"
-                  style={{ backgroundColor: "#87CEEB" }}
-                >
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    aria-hidden
-                  >
-                    <circle
-                      cx="11"
-                      cy="11"
-                      r="7"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    />
-                    <path
-                      d="M20 20l-3.5-3.5"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </button>
               </div>
             </div>
 
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
+            {/* Academic Year Select */}
+            <div className="sm:col-span-4">
+              <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-1.5">
                 Academic Year
               </label>
-              <div className="relative" ref={yearRef}>
-                <button
-                  type="button"
-                  onClick={() => setYearOpen((prev) => !prev)}
-                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-left text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  {academicYear
-                    ? academicYearOptions.find((y) => y.value === academicYear)
-                        ?.label || academicYear
-                    : "All Years"}
-                </button>
-                {yearOpen && (
-                  <div className="absolute left-0 right-0 mt-2 max-h-56 overflow-auto rounded-md border border-slate-200 bg-white shadow-lg z-20">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAcademicYear("");
-                        setPage(1);
-                        setYearOpen(false);
-                      }}
-                      className={`w-full px-3 py-2 text-left text-sm text-black hover:text-black ${
-                        academicYear === ""
-                          ? "bg-sky-200"
-                          : "hover:bg-slate-100"
-                      }`}
-                    >
-                      All Years
-                    </button>
-                    {academicYearOptions.map((year) => (
-                      <button
-                        key={year.value}
-                        type="button"
-                        onClick={() => {
-                          setAcademicYear(year.value);
-                          setPage(1);
-                          setYearOpen(false);
-                        }}
-                        className={`w-full px-3 py-2 text-left text-sm text-black hover:text-black ${
-                          academicYear === year.value
-                            ? "bg-sky-200"
-                            : "hover:bg-slate-100"
-                        }`}
-                      >
-                        {year.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <CustomSelect
+                value={academicYear}
+                onChange={(value) => {
+                  setAcademicYear(value);
+                  setPage(1);
+                }}
+                options={academicYearOptions.map((year) => ({
+                  value: year.value,
+                  label: year.label,
+                }))}
+                placeholder="All Years"
+                buttonClassName="rounded-xl border-slate-300 py-2.5 text-slate-900 font-semibold"
+              />
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
-          Approved Projects
-        </h1>
-        <div className="text-sm text-slate-600 dark:text-slate-300">
-          {loading ? "Loading..." : `${projects.length} projects`}
+        {/* Count Summary */}
+        <div className="flex items-center justify-between px-1">
+          <p className="text-xs font-bold text-slate-500">
+            {loading ? "Loading..." : `Showing ${projects.length} verified projects`}
+          </p>
         </div>
-      </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-5">
-        {projects.map((p) => {
-          const files = (() => {
-            if (!p.files) return [];
-            try {
-              return typeof p.files === "string"
-                ? JSON.parse(p.files)
-                : p.files;
-            } catch {
-              return Array.isArray(p.files) ? p.files : [];
-            }
-          })();
+        {/* Projects List */}
+        {!loading && projects.length === 0 ? (
+          <div className="bg-white rounded-3xl border border-slate-200/90 p-12 text-center shadow-sm space-y-2">
+            <h3 className="text-base font-extrabold text-slate-900">
+              No approved projects found
+            </h3>
+            <p className="text-xs text-slate-500 font-medium">
+              Try adjusting your search query or academic year filter.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-6">
+            {projects.map((p) => {
+              const files = (() => {
+                if (!p.files) return [];
+                try {
+                  return typeof p.files === "string"
+                    ? JSON.parse(p.files)
+                    : p.files;
+                } catch {
+                  return Array.isArray(p.files) ? p.files : [];
+                }
+              })();
 
-          const team = p.team_members || p.teamMembers || p.team || [];
-          const teamStr = Array.isArray(team) ? team.join(", ") : team;
-          const approvedAt = p.verified_at || p.approvedAt || p.created_at;
+              const team = p.team_members || p.teamMembers || p.team || [];
+              const teamStr = Array.isArray(team) ? team.join(", ") : team;
+              const approvedAt = p.verified_at || p.approvedAt || p.created_at;
 
-          return (
-            <div
-              key={p.id}
-              className="glitter-card rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6"
-            >
-              <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <h3 className="break-words text-xl font-semibold text-slate-900 dark:text-slate-100 sm:text-2xl">
-                        {p.title}
-                      </h3>
-                      <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
-                        <span className="rounded-full bg-slate-100 px-3 py-1 dark:bg-slate-800">
+              return (
+                <div
+                  key={p.id}
+                  className="group rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm hover:shadow-md hover:shadow-blue-500/10 hover:border-blue-500 transition-all duration-200 space-y-4"
+                >
+                  <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1 space-y-3">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors">
+                          {p.title}
+                        </h3>
+                        <span className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-0.5 text-xs font-extrabold text-emerald-800 flex items-center gap-1">
+                          <FaCheckCircle className="w-3 h-3 text-emerald-600" />
                           Approved
                         </span>
-                        <span className="rounded-full bg-slate-100 px-3 py-1 dark:bg-slate-800">
-                          {approvedAt
-                            ? new Date(approvedAt).toLocaleString()
-                            : "-"}
-                        </span>
+                        {approvedAt && (
+                          <span className="text-xs font-bold text-slate-400">
+                            {new Date(approvedAt).toLocaleDateString("en-GB")}
+                          </span>
+                        )}
                       </div>
-                    </div>
 
-                    <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm dark:bg-slate-800/60 lg:hidden">
-                      <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        Approved by
-                      </div>
-                      <div className="mt-1 break-words font-medium text-slate-900 dark:text-slate-100">
-                        {getApprovedByLabel(p)}
-                      </div>
-                    </div>
-                  </div>
+                      <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
+                        {p.description || "No description provided."}
+                      </p>
 
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800/60">
-                      <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        Uploaded by
+                      {/* Uploader & Approver Pill Badges */}
+                      <div className="flex flex-wrap gap-3 text-xs pt-1">
+                        <div className="rounded-xl bg-slate-50 border border-slate-200/80 px-3 py-1.5 font-semibold text-slate-700 flex items-center gap-2">
+                          <FaUser className="w-3 h-3 text-blue-500" />
+                          <span>Uploaded by: <strong>{getUploaderLabel(p)}</strong></span>
+                        </div>
+                        <div className="rounded-xl bg-emerald-50/60 border border-emerald-200/80 px-3 py-1.5 font-semibold text-emerald-900 flex items-center gap-2">
+                          <FaCheckCircle className="w-3 h-3 text-emerald-600" />
+                          <span>Approved by: <strong>{getApprovedByLabel(p)}</strong></span>
+                        </div>
                       </div>
-                      <div className="mt-1 break-all text-sm font-medium text-slate-900 dark:text-slate-100">
-                        {getUploaderLabel(p)}
-                      </div>
-                    </div>
-                    <div className="rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800/60">
-                      <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        Approved by
-                      </div>
-                      <div className="mt-1 break-words text-sm font-medium text-slate-900 dark:text-slate-100">
-                        {getApprovedByLabel(p)}
-                      </div>
-                    </div>
-                  </div>
 
-                  <p className="mt-4 break-words text-sm leading-6 text-slate-700 dark:text-slate-300 sm:text-base">
-                    {p.description || "-"}
-                  </p>
+                      {/* GitHub Link */}
+                      {p.github_url && (
+                        <div className="inline-flex items-center gap-2 rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-1.5 text-xs font-bold text-slate-800">
+                          <FaGithub className="w-3.5 h-3.5 text-slate-900" />
+                          <span>Repo:</span>
+                          <a
+                            href={p.github_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-blue-600 underline truncate max-w-xs"
+                          >
+                            {p.github_url}
+                          </a>
+                        </div>
+                      )}
 
-                  {p.github_url && (
-                    <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-300">
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">
-                        GitHub:
-                      </span>{" "}
-                      <a
-                        href={p.github_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="break-all font-medium text-blue-700 hover:underline dark:text-blue-300"
-                      >
-                        {p.github_url}
-                      </a>
-                    </div>
-                  )}
+                      {/* Team Members */}
+                      {teamStr && (
+                        <div className="text-xs text-slate-600 font-medium">
+                          <strong className="text-slate-900">Team:</strong> {teamStr}
+                        </div>
+                      )}
 
-                  {teamStr && (
-                    <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">
-                        Team Members:
-                      </span>{" "}
-                      <span className="break-words">{teamStr}</span>
-                    </div>
-                  )}
+                      {/* Attachments */}
+                      {files.length > 0 && (
+                        <div className="pt-2 space-y-2">
+                          <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                            Attachments ({files.length})
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {files.map((f, i) => {
+                              const filename =
+                                f.filename ||
+                                f.file ||
+                                (typeof f === "string" ? f : undefined);
+                              const original =
+                                f.original_name || f.name || filename;
+                              const downloadUrl = getFileUrl(filename);
 
-                  {files.length > 0 && (
-                    <div className="mt-5">
-                      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        Attachments
-                      </div>
-                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                        {files.map((f, i) => {
-                          const filename =
-                            f.filename ||
-                            f.file ||
-                            (typeof f === "string" ? f : undefined);
-                          const original =
-                            f.original_name || f.name || filename;
-                          const downloadUrl = getFileUrl(filename);
-
-                          return (
-                            <div
-                              key={i}
-                              className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-700 dark:bg-slate-950/40 sm:flex-row sm:items-center sm:justify-between"
-                            >
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setPreviewFile({
-                                    filename,
-                                    original_name: original,
-                                  })
-                                }
-                                className="min-w-0 text-left text-sm font-medium text-blue-700 underline decoration-blue-300 underline-offset-2 dark:text-blue-300"
-                              >
-                                <span className="break-words">
-                                  {original || "Attachment"}
-                                </span>
-                              </button>
-                              {filename && (
-                                <a
-                                  href={downloadUrl}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  download
-                                  className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-blue-200 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                              return (
+                                <div
+                                  key={i}
+                                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold"
                                 >
-                                  Download
-                                </a>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setPreviewFile({
+                                        filename,
+                                        original_name: original,
+                                      })
+                                    }
+                                    className="text-blue-600 font-bold hover:underline inline-flex items-center gap-1.5"
+                                  >
+                                    <FaFileAlt className="w-3 h-3" />
+                                    {original || "Attachment"}
+                                  </button>
+                                  {filename && (
+                                    <a
+                                      href={downloadUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      download
+                                      className="text-slate-500 hover:text-blue-600 p-0.5"
+                                      title="Download file"
+                                    >
+                                      <FaDownload className="w-3 h-3" />
+                                    </a>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
+
+                    {/* Action Button */}
+                    <div className="flex-shrink-0">
+                      <Link
+                        to={`/projects/${p.id}`}
+                        state={{ project: p }}
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-5 py-2 text-xs shadow-md shadow-blue-500/20 transition"
+                      >
+                        <FaEye className="w-3.5 h-3.5" />
+                        View Details
+                      </Link>
+                    </div>
+                  </div>
                 </div>
+              );
+            })}
+          </div>
+        )}
 
-                <div className="flex flex-col gap-3 lg:w-48 lg:items-end">
-                  <Link
-                    to={`/projects/${p.id}`}
-                    state={{ project: p }}
-                    className="inline-flex w-full items-center justify-center rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 lg:w-auto"
-                  >
-                    View Details
-                  </Link>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="mt-8 flex items-center justify-center gap-4">
-        <button
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden
+        {/* Pagination Controls */}
+        <div className="flex items-center justify-center gap-3 pt-4">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 shadow-sm hover:bg-slate-100 disabled:opacity-50 transition cursor-pointer"
           >
-            <path
-              d="M15 6l-6 6 6 6"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          Prev
-        </button>
-        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          Page {page}
-        </span>
-        <button
-          onClick={() => setPage((p) => p + 1)}
-          disabled={!loading && projects.length < limit}
-          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 transition hover:bg-slate-100 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-        >
-          Next
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden
+            <FaChevronLeft className="w-3 h-3" /> Prev
+          </button>
+          <span className="text-xs font-bold text-slate-600">
+            Page {page}
+          </span>
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            disabled={!loading && projects.length < limit}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 shadow-sm hover:bg-slate-100 disabled:opacity-50 transition cursor-pointer"
           >
-            <path
-              d="M9 6l6 6-6 6"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
-      </div>
+            Next <FaChevronRight className="w-3 h-3" />
+          </button>
+        </div>
 
-      {previewFile && (
-        <AttachmentPreview
-          file={previewFile}
-          onClose={() => setPreviewFile(null)}
-        />
-      )}
+        {previewFile && (
+          <AttachmentPreview
+            file={previewFile}
+            onClose={() => setPreviewFile(null)}
+          />
+        )}
+      </div>
     </div>
   );
 }

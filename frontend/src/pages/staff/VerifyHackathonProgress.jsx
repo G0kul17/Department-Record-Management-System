@@ -1,9 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/axiosClient";
 import DataTableContainer from "../../components/ui/DataTableContainer";
 import DataRow from "../../components/ui/DataRow";
 import StatusBadge from "../../components/ui/StatusBadge";
 import { getFileUrl } from "../../utils/fileUrl";
+import { FaBolt, FaArrowLeft } from "react-icons/fa";
+import RecordLoader from "../../components/ui/RecordLoader";
 
 const progressOptions = [
   "Registered",
@@ -35,6 +38,7 @@ function isExpired(dateValue) {
 }
 
 export default function VerifyHackathonProgress() {
+  const nav = useNavigate();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState(null);
@@ -155,44 +159,73 @@ export default function VerifyHackathonProgress() {
   }, [view]);
 
   return (
-    <DataTableContainer
-      title="Verify Hackathon Progress"
-      subtitle="Review mapped hackathon entries, send deadline-based reminders, and update rounds/progress/prize."
-      filters={
-        <div className="flex items-center gap-2 flex-wrap">
-          {[
-            { key: "pending", label: "Pending" },
-            { key: "approved", label: "Approved" },
-            { key: "rejected", label: "Rejected" },
-            { key: "all", label: "All" },
-          ].map((f) => (
-            <button
-              key={f.key}
-              onClick={async () => {
-                setView(f.key);
-                await load(f.key);
-              }}
-              className={`rounded-md px-3 py-1.5 text-xs sm:text-sm font-medium transition-colors ${
-                view === f.key
-                  ? "bg-blue-600 text-white"
-                  : "bg-white text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
+    <div className="min-h-[calc(100vh-4rem)] bg-[#f8fafc] w-full">
+      {busyId && <RecordLoader text="Processing Hackathon Verification..." fullScreen={true} />}
+      <div className="w-full px-4 sm:px-6 lg:px-10 py-4 sm:py-6 space-y-4">
+        {/* Top Navigation */}
+        <div>
+          <button
+            onClick={() => nav("/quick-actions")}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 shadow-xs hover:bg-slate-100 transition cursor-pointer"
+          >
+            <FaArrowLeft className="w-3 h-3 text-slate-600" />
+            Back to Quick Actions
+          </button>
         </div>
-      }
-      actions={
-        <button
-          onClick={() => load(view)}
-          disabled={loading}
-          className="rounded-md bg-blue-600 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-        >
-          {loading ? "Refreshing..." : "Refresh"}
-        </button>
-      }
-    >
+
+        {/* Header Title Box */}
+        <div className="flex items-center gap-3.5 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm w-full">
+          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-amber-600 shadow-xs flex-shrink-0">
+            <FaBolt className="w-5 h-5" />
+          </span>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+              Verify Hackathon Progress
+            </h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Review mapped hackathon entries, send deadline-based reminders, and update rounds/progress/prize.
+            </p>
+          </div>
+        </div>
+
+        {/* Content Card */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-6 shadow-sm w-full">
+          <DataTableContainer
+            filters={
+              <div className="flex items-center gap-2 flex-wrap">
+                {[
+                  { key: "pending", label: "Pending" },
+                  { key: "approved", label: "Approved" },
+                  { key: "rejected", label: "Rejected" },
+                  { key: "all", label: "All" },
+                ].map((f) => (
+                  <button
+                    key={f.key}
+                    onClick={async () => {
+                      setView(f.key);
+                      await load(f.key);
+                    }}
+                    className={`rounded-xl px-3.5 py-1.5 text-xs font-extrabold transition-all cursor-pointer ${
+                      view === f.key
+                        ? "bg-amber-500 text-white shadow-xs"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            }
+            actions={
+              <button
+                onClick={() => load(view)}
+                disabled={loading}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 px-4 py-1.5 text-xs font-extrabold text-white shadow-xs transition disabled:opacity-50 cursor-pointer"
+              >
+                {loading ? "Refreshing..." : "Refresh"}
+              </button>
+            }
+          >
       {warningsInfo && (
         <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
           {warningsInfo}
@@ -422,5 +455,8 @@ export default function VerifyHackathonProgress() {
         </div>
       )}
     </DataTableContainer>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -758,7 +758,7 @@ export async function updateProfile(req, res) {
     const emailLower = (req.user?.email || "").toLowerCase();
     if (!emailLower) return res.status(401).json({ message: "Unauthorized" });
 
-    const { name, fullName, phone, rollNumber } = req.body || {};
+    const { name, fullName, phone, rollNumber, designation, department, employee_id, contact_number } = req.body || {};
     const nameValue = name || fullName;
 
     // Get current profile_details
@@ -778,6 +778,10 @@ export async function updateProfile(req, res) {
     if (nameValue !== undefined) updates.full_name = nameValue;
     if (phone !== undefined) updates.phone = phone;
     if (rollNumber !== undefined) updates.roll_number = rollNumber;
+    if (designation !== undefined) updates.designation = designation;
+    if (department !== undefined) updates.department = department;
+    if (employee_id !== undefined) updates.employee_id = employee_id;
+    if (contact_number !== undefined) updates.contact_number = contact_number;
 
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ message: "No fields to update" });

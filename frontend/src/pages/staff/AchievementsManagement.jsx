@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import apiClient from "../../api/axiosClient";
 import { getFileUrl } from "../../utils/fileUrl";
+import RecordLoader from "../../components/ui/RecordLoader";
 
 export default function AchievementsManagement() {
   const [items, setItems] = useState([]);
@@ -102,6 +103,7 @@ export default function AchievementsManagement() {
 
   return (
     <div className="glitter-card rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      {busyId && <RecordLoader text="Processing Achievement Verification..." fullScreen={true} />}
       {actionError && (
         <div className="mb-4 flex items-center justify-between rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/30 dark:text-red-200">
           <span>{actionError}</span>

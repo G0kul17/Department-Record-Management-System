@@ -14,6 +14,13 @@ import EventsCarousel from "../../components/EventsCarousel";
 import AchievementsRecentGrid from "../../components/AchievementsRecentGrid";
 import ProjectsRecentGrid from "../../components/ProjectsRecentGrid";
 import AchievementsLeaderboard from "../../components/AchievementsLeaderboard";
+import {
+  FaFolder,
+  FaTrophy,
+  FaUsers,
+  FaFlask,
+  FaBriefcase,
+} from "react-icons/fa";
 
 const StaffDashboard = () => {
   const { user } = useAuth();
@@ -226,63 +233,92 @@ function OverviewPanel({ user }) {
         </div>
 
         <div className="lg:col-span-1">
-          <div className="rounded-2xl border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 p-4 sm:p-6 shadow-xl h-full">
-            <h2 className="text-base font-bold text-slate-100 mb-4">
+          <div className="rounded-2xl border border-slate-700/60 bg-[#131b2e] p-5 shadow-2xl h-full backdrop-blur-md">
+            <h2 className="text-lg font-bold text-white mb-4 tracking-tight">
               At a Glance
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <button
                 onClick={() => navigate("/projects/approved")}
-                className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
+                className="group rounded-xl p-3.5 bg-[#1e2942]/90 hover:bg-[#253252] transition-all duration-200 text-left border border-slate-700/60 hover:border-blue-500/60 flex flex-col justify-between"
               >
-                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight break-words">
-                  Projects
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8.5 w-8.5 items-center justify-center rounded-lg bg-blue-600 text-white shadow-md flex-shrink-0">
+                    <FaFolder className="w-4 h-4" />
+                  </div>
+                  <div className="text-[11px] font-bold text-slate-200 uppercase tracking-wider whitespace-normal leading-tight">
+                    Projects
+                  </div>
                 </div>
-                <div className="mt-1 text-base font-extrabold text-slate-100">
+                <div className="mt-3 text-2xl font-extrabold text-white group-hover:text-blue-400 transition-colors">
                   {projCount === null ? "—" : projCount}
                 </div>
               </button>
+
               <button
                 onClick={() => navigate("/achievements/approved")}
-                className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
+                className="group rounded-xl p-3.5 bg-[#1e2942]/90 hover:bg-[#253252] transition-all duration-200 text-left border border-slate-700/60 hover:border-amber-500/60 flex flex-col justify-between"
               >
-                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight break-words">
-                  Achievements
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8.5 w-8.5 items-center justify-center rounded-lg bg-amber-500 text-white shadow-md flex-shrink-0">
+                    <FaTrophy className="w-4 h-4" />
+                  </div>
+                  <div className="text-[11px] font-bold text-slate-200 uppercase tracking-wider whitespace-normal leading-tight">
+                    Achievements
+                  </div>
                 </div>
-                <div className="mt-1 text-base font-extrabold text-slate-100">
+                <div className="mt-3 text-2xl font-extrabold text-white group-hover:text-amber-400 transition-colors">
                   {achCount === null ? "—" : achCount}
                 </div>
               </button>
+
               <button
-                onClick={() => navigate("/staff/faculty-participation")}
-                className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
+                onClick={() => navigate("/faculty-participation-approved")}
+                className="group rounded-xl p-3.5 bg-[#1e2942]/90 hover:bg-[#253252] transition-all duration-200 text-left border border-slate-700/60 hover:border-purple-500/60 flex flex-col justify-between cursor-pointer"
               >
-                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight break-words">
-                  Participation
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8.5 w-8.5 items-center justify-center rounded-lg bg-purple-600 text-white shadow-md flex-shrink-0">
+                    <FaUsers className="w-4 h-4" />
+                  </div>
+                  <div className="text-[11px] font-bold text-slate-200 uppercase tracking-wider whitespace-normal leading-tight">
+                    Participation
+                  </div>
                 </div>
-                <div className="mt-1 text-base font-extrabold text-slate-100">
+                <div className="mt-3 text-2xl font-extrabold text-white group-hover:text-purple-400 transition-colors">
                   {partCount === null ? "—" : partCount}
                 </div>
               </button>
+
               <button
-                onClick={() => navigate("/staff/faculty-research")}
-                className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
+                onClick={() => navigate("/faculty-research-approved")}
+                className="group rounded-xl p-3.5 bg-[#1e2942]/90 hover:bg-[#253252] transition-all duration-200 text-left border border-slate-700/60 hover:border-orange-500/60 flex flex-col justify-between cursor-pointer"
               >
-                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight break-words">
-                  Research
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8.5 w-8.5 items-center justify-center rounded-lg bg-orange-500 text-white shadow-md flex-shrink-0">
+                    <FaFlask className="w-4 h-4" />
+                  </div>
+                  <div className="text-[11px] font-bold text-slate-200 uppercase tracking-wider whitespace-normal leading-tight">
+                    Research
+                  </div>
                 </div>
-                <div className="mt-1 text-base font-extrabold text-slate-100">
+                <div className="mt-3 text-2xl font-extrabold text-white group-hover:text-orange-400 transition-colors">
                   {resCount === null ? "—" : resCount}
                 </div>
               </button>
+
               <button
-                onClick={() => navigate("/staff/faculty-consultancy")}
-                className="rounded-xl p-2 bg-white/5 hover:bg-white/10 transition-all duration-200 text-left border border-white/10 hover:border-blue-400/60"
+                onClick={() => navigate("/faculty-consultancy-approved")}
+                className="group rounded-xl p-3.5 bg-[#1e2942]/90 hover:bg-[#253252] transition-all duration-200 text-left border border-slate-700/60 hover:border-cyan-500/60 flex flex-col justify-between cursor-pointer"
               >
-                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider leading-tight break-words">
-                  Consultancy
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8.5 w-8.5 items-center justify-center rounded-lg bg-cyan-600 text-white shadow-md flex-shrink-0">
+                    <FaBriefcase className="w-4 h-4" />
+                  </div>
+                  <div className="text-[11px] font-bold text-slate-200 uppercase tracking-wider whitespace-normal leading-tight">
+                    Consultancy
+                  </div>
                 </div>
-                <div className="mt-1 text-base font-extrabold text-slate-100">
+                <div className="mt-3 text-2xl font-extrabold text-white group-hover:text-cyan-400 transition-colors">
                   {consCount === null ? "—" : consCount}
                 </div>
               </button>

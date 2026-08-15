@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import apiClient from "../../api/axiosClient";
 import SuccessModal from "../../components/ui/SuccessModal";
 import UploadDropzone from "../../components/ui/UploadDropzone";
+import RecordLoader from "../../components/ui/RecordLoader";
 
 export default function FacultyResearch() {
   const [form, setForm] = useState({
@@ -90,6 +91,7 @@ export default function FacultyResearch() {
 
   return (
     <div className="mx-auto max-w-4xl p-6">
+      {submitting && <RecordLoader text="Submitting Faculty Research..." fullScreen={true} />}
       <SuccessModal
         open={showSuccess}
         title="Saved successfully"
@@ -317,17 +319,14 @@ export default function FacultyResearch() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  Start Date{" "}
-                  {form.current_status !== "ongoing" && (
-                    <span className="text-red-600">*</span>
-                  )}
+                  Start Date <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="date"
                   className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
                   value={form.start_date}
                   onChange={update("start_date")}
-                  required={form.current_status !== "ongoing"}
+                  required
                 />
               </div>
               <div>

@@ -3,6 +3,7 @@ import apiClient from "../../api/axiosClient";
 import SuccessModal from "../../components/ui/SuccessModal";
 import BackButton from "../../components/BackButton";
 import UploadDropzone from "../../components/ui/UploadDropzone";
+import RecordLoader from "../../components/ui/RecordLoader";
 
 export default function AdminFacultyParticipation() {
   const [form, setForm] = useState({
@@ -110,6 +111,7 @@ export default function AdminFacultyParticipation() {
 
   return (
     <div className="mx-auto max-w-4xl p-6">
+      {submitting && <RecordLoader text="Submitting Faculty Participation..." fullScreen={true} />}
       <BackButton />
       <SuccessModal
         open={showSuccess}

@@ -1,36 +1,31 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import apiClient from "../api/axiosClient";
 import AttachmentPreview from "../components/AttachmentPreview";
+import CustomSelect from "../components/ui/CustomSelect";
+import { generateAcademicYears } from "../utils/academicYears";
+import {
+  FaUsers,
+  FaArrowLeft,
+  FaSearch,
+  FaFileAlt,
+  FaBuilding,
+  FaCalendarAlt,
+  FaChalkboardTeacher,
+} from "react-icons/fa";
 
 export default function FacultyParticipationApproved() {
+  const nav = useNavigate();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [previewFile, setPreviewFile] = useState(null);
   const [q, setQ] = useState("");
   const [academicYear, setAcademicYear] = useState("");
-  const [yearOpen, setYearOpen] = useState(false);
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [limit] = useState(12);
   const [total, setTotal] = useState(0);
-  const yearRef = useRef(null);
 
-  const yearOptions = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const years = [];
-    for (let y = currentYear; y >= currentYear - 15; y -= 1) {
-      years.push(String(y));
-    }
-    return years;
-  }, []);
-
-  useEffect(() => {
-    function onDocClick(e) {
-      if (!yearRef.current) return;
-      if (!yearRef.current.contains(e.target)) setYearOpen(false);
-    }
-    if (yearOpen) document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [yearOpen]);
+  const academicYearOptions = useMemo(() => generateAcademicYears(), []);
 
   useEffect(() => {
     let mounted = true;
@@ -70,389 +65,214 @@ export default function FacultyParticipationApproved() {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <div className="mx-auto max-w-6xl p-4 sm:p-6">
-      {/* Centered search below navbar */}
-      <div className="mx-auto max-w-3xl mb-8">
-        <div className="glitter-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
-            <div>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
-                Search
+    <div className="min-h-[calc(100vh-4rem)] bg-[#f8fafc] w-full">
+      <div className="w-full px-4 sm:px-6 lg:px-10 py-4 sm:py-6 space-y-4">
+        {/* Top Navigation */}
+        <div>
+          <button
+            onClick={() => nav("/")}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 shadow-xs hover:bg-slate-100 transition cursor-pointer"
+          >
+            <FaArrowLeft className="w-3 h-3 text-slate-600" />
+            Back to Home
+          </button>
+        </div>
+
+        {/* Header Title Box */}
+        <div className="flex items-center gap-3.5 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm w-full">
+          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-purple-600 shadow-xs flex-shrink-0">
+            <FaUsers className="w-5 h-5" />
+          </span>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+              Faculty Participations & FDP
+            </h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Verified faculty development programs, workshops, seminars, and certifications.
+            </p>
+          </div>
+        </div>
+
+        {/* Search & Filter Card */}
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-6 shadow-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+            {/* Search Input */}
+            <div className="sm:col-span-8 space-y-1.5">
+              <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+                Search Participations
               </label>
-              <div className="relative">
-                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    aria-hidden
-                  >
-                    <circle
-                      cx="11"
-                      cy="11"
-                      r="8"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    />
-                    <path
-                      d="m21 21-4.35-4.35"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </span>
+              <div className="relative flex items-center">
+                <FaSearch className="absolute left-3.5 text-slate-400 w-3.5 h-3.5" />
                 <input
+                  type="text"
                   value={q}
                   onChange={(e) => {
                     setQ(e.target.value);
                     setPage(1);
                   }}
                   placeholder="Search by faculty name, title, department, event type..."
-                  className="w-full rounded-md border border-slate-300 bg-slate-50 px-10 py-2 text-sm placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500"
+                  className="w-full rounded-xl border border-slate-300 pl-9 pr-3.5 py-2.5 text-sm font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-600 shadow-sm"
                 />
               </div>
             </div>
-            {/* Academic Year dropdown */}
-            <div>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+
+            {/* Academic Year Filter */}
+            <div className="sm:col-span-4 space-y-1.5">
+              <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">
                 Academic Year
               </label>
-              <div className="relative" ref={yearRef}>
-                <button
-                  type="button"
-                  onClick={() => setYearOpen((prev) => !prev)}
-                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-left text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  {academicYear || "All Years"}
-                </button>
-                {yearOpen && (
-                  <div className="absolute left-0 right-0 mt-2 max-h-56 overflow-auto rounded-md border border-slate-200 bg-white shadow-lg z-20">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAcademicYear("");
-                        setPage(1);
-                        setYearOpen(false);
-                      }}
-                      className={`w-full px-3 py-2 text-left text-sm text-black hover:text-black ${
-                        academicYear === ""
-                          ? "bg-sky-200"
-                          : "hover:bg-slate-100"
-                      }`}
-                    >
-                      All Years
-                    </button>
-                    {yearOptions.map((year) => (
-                      <button
-                        key={year}
-                        type="button"
-                        onClick={() => {
-                          setAcademicYear(year);
-                          setPage(1);
-                          setYearOpen(false);
-                        }}
-                        className={`w-full px-3 py-2 text-left text-sm text-black hover:text-black ${
-                          academicYear === year
-                            ? "bg-sky-200"
-                            : "hover:bg-slate-100"
-                        }`}
-                      >
-                        {year}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <CustomSelect
+                options={academicYearOptions}
+                value={academicYear}
+                onChange={(val) => {
+                  setAcademicYear(val);
+                  setPage(1);
+                }}
+                placeholder="All Years"
+              />
             </div>
           </div>
         </div>
+
+        {/* Count Indicator */}
+        <div className="flex items-center justify-between px-1">
+          <p className="text-xs font-bold text-slate-500">
+            Showing {items.length} of {total} records
+          </p>
+        </div>
+
+        {/* Loading State */}
+        {loading ? (
+          <div className="bg-white rounded-3xl border border-slate-200/90 p-12 text-center shadow-sm space-y-3">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto" />
+            <p className="text-xs font-bold text-slate-600">Loading participations...</p>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="bg-white rounded-3xl border border-slate-200/90 p-12 text-center shadow-sm space-y-2">
+            <h3 className="text-base font-extrabold text-slate-900">
+              No participation records found
+            </h3>
+            <p className="text-xs text-slate-500 font-medium">
+              {q ? "Try adjusting your search criteria" : "No approved faculty participations available yet."}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {items
+              .filter((item) => {
+                if (!academicYear) return true;
+                const itemYear =
+                  toYear(item.academic_year) || toYear(item.start_date) || "";
+                return itemYear.includes(academicYear.substring(0, 4));
+              })
+              .map((item) => (
+                <div
+                  key={item.id}
+                  className="group rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm hover:shadow-md hover:border-purple-400 hover:shadow-purple-500/10 transition-all duration-200 space-y-4 flex flex-col justify-between"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-purple-50 text-purple-600 border border-purple-100 flex-shrink-0 shadow-sm">
+                          <FaChalkboardTeacher className="w-5 h-5" />
+                        </span>
+                        <div>
+                          <h3 className="text-base font-extrabold text-slate-900 group-hover:text-purple-600 transition-colors line-clamp-1">
+                            {item.title || "Untitled Program"}
+                          </h3>
+                          <p className="text-xs font-bold text-slate-500">
+                            {item.faculty_name || "Faculty Member"} • {item.department || "IT Department"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className="rounded-full bg-purple-50 border border-purple-200 px-2.5 py-0.5 text-[11px] font-extrabold text-purple-700">
+                        {item.type_of_event || "Participation"}
+                      </span>
+                      {item.mode_of_training && (
+                        <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-700">
+                          {item.mode_of_training}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50/70 p-3 rounded-2xl border border-slate-100 font-semibold text-slate-600">
+                      {item.start_date && (
+                        <div>
+                          <span className="text-[10px] uppercase font-extrabold text-slate-400 block">Start Date</span>
+                          {new Date(item.start_date).toLocaleDateString()}
+                        </div>
+                      )}
+                      {item.end_date && (
+                        <div>
+                          <span className="text-[10px] uppercase font-extrabold text-slate-400 block">End Date</span>
+                          {new Date(item.end_date).toLocaleDateString()}
+                        </div>
+                      )}
+                      {item.conducted_by && (
+                        <div className="col-span-2">
+                          <span className="text-[10px] uppercase font-extrabold text-slate-400 block">Conducted By</span>
+                          {item.conducted_by}
+                        </div>
+                      )}
+                    </div>
+
+                    {item.details && (
+                      <p className="text-xs text-slate-600 font-medium line-clamp-2 leading-relaxed">
+                        {item.details}
+                      </p>
+                    )}
+                  </div>
+
+                  {item.proof_filename && (
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPreviewFile({
+                            filename: item.proof_filename,
+                            original_name:
+                              item.proof_original_name || item.proof_filename,
+                          })
+                        }
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 px-3 py-1.5 text-xs font-extrabold text-purple-700 transition cursor-pointer"
+                      >
+                        <FaFileAlt className="w-3.5 h-3.5" />
+                        View Proof Document
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 pt-4">
+            <button
+              onClick={() => setPage(Math.max(1, page - 1))}
+              disabled={page === 1}
+              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-extrabold text-slate-800 shadow-sm hover:bg-slate-100 disabled:opacity-50 transition cursor-pointer"
+            >
+              Previous
+            </button>
+            <span className="text-xs font-extrabold text-slate-600">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={() => setPage(Math.min(totalPages, page + 1))}
+              disabled={page === totalPages}
+              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-extrabold text-slate-800 shadow-sm hover:bg-slate-100 disabled:opacity-50 transition cursor-pointer"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Loading State */}
-      {loading && (
-        <div className="text-center py-12">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-          <p className="mt-4 text-slate-600 dark:text-slate-400">
-            Loading participations...
-          </p>
-        </div>
-      )}
-
-      {/* Items List */}
-      {!loading && items.length > 0 && (
-        <div className="space-y-6 mb-8">
-          {items
-            .filter((item) => {
-              if (!academicYear) return true;
-              const itemYear =
-                toYear(item.academic_year) || toYear(item.start_date) || "";
-              return itemYear === academicYear;
-            })
-            .map((item) => (
-              <div
-                key={item.id}
-                className="glitter-card rounded-xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow dark:border-slate-800 dark:bg-slate-900"
-              >
-                {/* Header */}
-                <div className="mb-4 border-b border-slate-200 dark:border-slate-700 pb-4">
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                    {item.title || "Untitled"}
-                  </h3>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                      {item.type_of_event || "N/A"}
-                    </span>
-                    {item.mode_of_training && (
-                      <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200">
-                        {item.mode_of_training}
-                      </span>
-                    )}
-                    {item.publications_type && (
-                      <span className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                        {item.publications_type}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Details Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  {item.faculty_name && (
-                    <div>
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                        Faculty Name
-                      </span>
-                      <p className="text-sm text-slate-900 dark:text-slate-100 font-medium">
-                        {item.faculty_name}
-                      </p>
-                    </div>
-                  )}
-                  {item.department && (
-                    <div>
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                        Department
-                      </span>
-                      <p className="text-sm text-slate-900 dark:text-slate-100">
-                        {item.department}
-                      </p>
-                    </div>
-                  )}
-                  {item.start_date && (
-                    <div>
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                        Start Date
-                      </span>
-                      <p className="text-sm text-slate-900 dark:text-slate-100">
-                        {new Date(item.start_date).toLocaleDateString()}
-                      </p>
-                    </div>
-                  )}
-                  {item.end_date && (
-                    <div>
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                        End Date
-                      </span>
-                      <p className="text-sm text-slate-900 dark:text-slate-100">
-                        {new Date(item.end_date).toLocaleDateString()}
-                      </p>
-                    </div>
-                  )}
-                  {item.conducted_by && (
-                    <div>
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                        Conducted By
-                      </span>
-                      <p className="text-sm text-slate-900 dark:text-slate-100">
-                        {item.conducted_by}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Publications Info (if available) */}
-                {(item.paper_title ||
-                  item.journal_name ||
-                  item.claiming_faculty_name) && (
-                  <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
-                      Publication Details
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {item.claiming_faculty_name && (
-                        <div>
-                          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                            Claiming Faculty
-                          </span>
-                          <p className="text-sm text-slate-900 dark:text-slate-100">
-                            {item.claiming_faculty_name}
-                          </p>
-                        </div>
-                      )}
-                      {item.paper_title && (
-                        <div className="md:col-span-2">
-                          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                            Paper Title
-                          </span>
-                          <p className="text-sm text-slate-900 dark:text-slate-100">
-                            {item.paper_title}
-                          </p>
-                        </div>
-                      )}
-                      {item.journal_name && (
-                        <div>
-                          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                            Journal/Conference
-                          </span>
-                          <p className="text-sm text-slate-900 dark:text-slate-100">
-                            {item.journal_name}
-                          </p>
-                        </div>
-                      )}
-                      {item.publication_indexing && (
-                        <div>
-                          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                            Indexing
-                          </span>
-                          <p className="text-sm text-slate-900 dark:text-slate-100">
-                            {item.publication_indexing}
-                          </p>
-                        </div>
-                      )}
-                      {item.impact_factor && (
-                        <div>
-                          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                            Impact Factor
-                          </span>
-                          <p className="text-sm text-slate-900 dark:text-slate-100">
-                            {item.impact_factor}
-                          </p>
-                        </div>
-                      )}
-                      {item.citations_count !== null &&
-                        item.citations_count !== undefined && (
-                          <div>
-                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                              Citations
-                            </span>
-                            <p className="text-sm text-slate-900 dark:text-slate-100">
-                              {item.citations_count}
-                            </p>
-                          </div>
-                        )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Description */}
-                {item.details && (
-                  <div className="mt-4">
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                      Details
-                    </span>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                      {item.details}
-                    </p>
-                  </div>
-                )}
-
-                {/* Footer with proof */}
-                {item.proof_filename && (
-                  <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                    <button
-                      onClick={() =>
-                        setPreviewFile({
-                          filename: item.proof_filename,
-                          original_name:
-                            item.proof_original_name || item.proof_filename,
-                        })
-                      }
-                      className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                    >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <polyline
-                          points="13 2 13 9 20 9"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      View Proof Document
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!loading && items.length === 0 && (
-        <div className="text-center py-16">
-          <svg
-            className="mx-auto h-16 w-16 text-slate-400 dark:text-slate-600 mb-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-          <p className="text-lg font-medium text-slate-900 dark:text-slate-100">
-            No participation records found
-          </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {q
-              ? "Try adjusting your search query"
-              : "No faculty participation records available yet"}
-          </p>
-        </div>
-      )}
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3 mt-8">
-          <button
-            onClick={() => setPage(Math.max(1, page - 1))}
-            disabled={page === 1}
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-          >
-            Previous
-          </button>
-          <span className="text-sm text-slate-600 dark:text-slate-400">
-            Page {page} of {totalPages} • {total} total records
-          </span>
-          <button
-            onClick={() => setPage(Math.min(totalPages, page + 1))}
-            disabled={page === totalPages}
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
-          >
-            Next
-          </button>
-        </div>
-      )}
-
-      {/* Attachment Preview Modal */}
       {previewFile && (
         <AttachmentPreview
           file={previewFile}

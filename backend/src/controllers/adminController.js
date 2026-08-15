@@ -123,3 +123,223 @@ export async function deleteUser(req, res) {
     return res.status(500).json({ message: "Server error" });
   }
 }
+
+// GET /api/admin/active-logs
+// Returns aggregated real-time upload and approval logs across all modules
+export async function getActiveLogs(req, res) {
+  try {
+    const { period, type } = req.query;
+
+    const query = `
+      SELECT * FROM (
+        -- 1. Project Submissions
+        SELECT 
+          'proj_up_' || p.id AS log_id,
+          'upload' AS action_type,
+          'Project' AS category,
+          p.title AS item_title,
+          p.created_by AS user_id,
+          COALESCE(NULLIF(u.full_name, ''), NULLIF(u.profile_details->>'full_name', ''), u.email) AS user_name,
+          u.email AS user_email,
+          u.role AS user_role,
+          p.created_at AS timestamp
+        FROM projects p
+        JOIN users u ON p.created_by = u.id
+
+        UNION ALL
+
+        -- 2. Project Approvals
+        SELECT 
+          'proj_app_' || p.id AS log_id,
+          'approval' AS action_type,
+          'Project Approval' AS category,
+          p.title AS item_title,
+          p.verified_by AS user_id,
+          COALESCE(NULLIF(u.full_name, ''), NULLIF(u.profile_details->>'full_name', ''), u.email) AS user_name,
+          u.email AS user_email,
+          u.role AS user_role,
+          COALESCE(p.verified_at, p.created_at) AS timestamp
+        FROM projects p
+        JOIN users u ON p.verified_by = u.id
+        WHERE p.verification_status = 'approved'
+
+        UNION ALL
+
+        -- 3. Achievement Submissions
+        SELECT 
+          'ach_up_' || a.id AS log_id,
+          'upload' AS action_type,
+          'Achievement' AS category,
+          a.title AS item_title,
+          a.user_id AS user_id,
+          COALESCE(NULLIF(u.full_name, ''), NULLIF(u.profile_details->>'full_name', ''), u.email) AS user_name,
+          u.email AS user_email,
+          u.role AS user_role,
+          a.created_at AS timestamp
+        FROM achievements a
+        JOIN users u ON a.user_id = u.id
+
+        UNION ALL
+
+        -- 4. Achievement Approvals
+        SELECT 
+          'ach_app_' || a.id AS log_id,
+          'approval' AS action_type,
+          'Achievement Approval' AS category,
+          a.title AS item_title,
+          a.verified_by AS user_id,
+          COALESCE(NULLIF(u.full_name, ''), NULLIF(u.profile_details->>'full_name', ''), u.email) AS user_name,
+          u.email AS user_email,
+          u.role AS user_role,
+          COALESCE(a.verified_at, a.created_at) AS timestamp
+        FROM achievements a
+        JOIN users u ON a.verified_by = u.id
+        WHERE a.verification_status = 'approved'
+
+        UNION ALL
+
+        -- 5. Faculty Research Submissions
+        SELECT 
+          'res_up_' || fr.id AS log_id,
+          'upload' AS action_type,
+          'Faculty Research' AS category,
+          fr.title AS item_title,
+          fr.created_by AS user_id,
+          COALESCE(NULLIF(u.full_name, ''), NULLIF(u.profile_details->>'full_name', ''), u.email) AS user_name,
+          u.email AS user_email,
+          u.role AS user_role,
+          fr.created_at AS timestamp
+        FROM faculty_research fr
+        JOIN users u ON fr.created_by = u.id
+
+        UNION ALL
+
+        -- 6. Faculty Consultancy Submissions
+        SELECT 
+          'cons_up_' || fc.id AS log_id,
+          'upload' AS action_type,
+          'Faculty Consultancy' AS category,
+          fc.agency AS item_title,
+          fc.created_by AS user_id,
+          COALESCE(NULLIF(u.full_name, ''), NULLIF(u.profile_details->>'full_name', ''), u.email) AS user_name,
+          u.email AS user_email,
+          u.role AS user_role,
+          fc.created_at AS timestamp
+        FROM faculty_consultancy fc
+        JOIN users u ON fc.created_by = u.id
+
+        UNION ALL
+
+        -- 7. Faculty Participation Submissions
+        SELECT 
+          'part_up_' || fp.id AS log_id,
+          'upload' AS action_type,
+          'Faculty Participation' AS category,
+          fp.title AS item_title,
+          fp.created_by AS user_id,
+          COALESCE(NULLIF(u.full_name, ''), NULLIF(u.profile_details->>'full_name', ''), u.email) AS user_name,
+          u.email AS user_email,
+          u.role AS user_role,
+          fp.created_at AS timestamp
+        FROM faculty_participations fp
+        JOIN users u ON fp.created_by = u.id
+
+        UNION ALL
+
+        -- 8. Department Event Submissions
+        SELECT 
+          'ev_up_' || e.id AS log_id,
+          'upload' AS action_type,
+          'Event' AS category,
+          e.title AS item_title,
+          e.organizer_id AS user_id,
+          COALESCE(NULLIF(u.full_name, ''), NULLIF(u.profile_details->>'full_name', ''), u.email) AS user_name,
+          u.email AS user_email,
+          u.role AS user_role,
+          e.created_at AS timestamp
+        FROM events e
+        JOIN users u ON e.organizer_id = u.id
+      ) logs
+      ORDER BY timestamp DESC
+      LIMIT 300
+    `;
+
+    const { rows } = await tracedQuery(pool, query);
+
+    let logs = rows;
+    if (period && period !== "all") {
+      const now = new Date();
+      logs = logs.filter((log) => {
+        const logDate = new Date(log.timestamp);
+        if (isNaN(logDate.getTime())) return true;
+        if (period === "day") {
+          return logDate.toDateString() === now.toDateString();
+        }
+        if (period === "week") {
+          const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          return logDate >= oneWeekAgo;
+        }
+        if (period === "month") {
+          return (
+            logDate.getMonth() === now.getMonth() &&
+            logDate.getFullYear() === now.getFullYear()
+          );
+        }
+        if (period === "year") {
+          return logDate.getFullYear() === now.getFullYear();
+        }
+        return true;
+      });
+    }
+
+    if (type && type !== "all") {
+      logs = logs.filter((l) => l.action_type === type);
+    }
+
+    return res.json({ logs });
+  } catch (err) {
+    logger.error("Active logs query error", { err, ...reqContext(req) });
+    return res.status(500).json({ message: "Server error fetching active logs" });
+  }
+}
+
+// GET /api/admin/users/:id/profile
+export async function getUserProfileById(req, res) {
+  const { id } = req.params;
+  try {
+    const userRes = await tracedQuery(
+      pool,
+      `SELECT id, email, role, 
+        COALESCE(NULLIF(full_name, ''), NULLIF(profile_details->>'full_name', ''), NULLIF(TRIM((profile_details->>'first_name') || ' ' || (profile_details->>'last_name')), '')) AS full_name,
+        profile_details, is_verified, created_at
+       FROM users WHERE id = $1`,
+      [id]
+    );
+
+    if (!userRes.rows.length) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const userData = userRes.rows[0];
+
+    let studentProfile = null;
+    if (userData.role === "student") {
+      const spRes = await tracedQuery(
+        pool,
+        `SELECT * FROM student_profiles WHERE user_id = $1`,
+        [id]
+      );
+      if (spRes.rows.length) {
+        studentProfile = spRes.rows[0];
+      }
+    }
+
+    return res.json({
+      user: userData,
+      studentProfile,
+    });
+  } catch (err) {
+    logger.error("Get user profile error", { err, ...reqContext(req) });
+    return res.status(500).json({ message: "Server error" });
+  }
+}

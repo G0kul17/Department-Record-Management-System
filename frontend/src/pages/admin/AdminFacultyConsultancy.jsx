@@ -3,6 +3,7 @@ import apiClient from "../../api/axiosClient";
 import SuccessModal from "../../components/ui/SuccessModal";
 import BackButton from "../../components/BackButton";
 import UploadDropzone from "../../components/ui/UploadDropzone";
+import RecordLoader from "../../components/ui/RecordLoader";
 
 export default function AdminFacultyConsultancy() {
   const [form, setForm] = useState({
@@ -34,9 +35,13 @@ export default function AdminFacultyConsultancy() {
     setMessage("");
     try {
       const fd = new FormData();
-      const payload = { ...form, agency: normalizedAgency };
+      const teamMembersStr = Array.isArray(form.teamMembers) && form.teamMembers.length > 0
+        ? form.teamMembers.filter(Boolean).join(", ")
+        : form.team_members || "";
+
+      const payload = { ...form, agency: normalizedAgency, team_members: teamMembersStr };
       Object.entries(payload).forEach(([k, v]) => {
-        if (k === "agency_custom") return;
+        if (k === "agency_custom" || k === "teamMembers" || k === "teamMembersCount") return;
         fd.append(k, v || "");
       });
       if (proof) fd.append("proof", proof);
@@ -63,6 +68,7 @@ export default function AdminFacultyConsultancy() {
 
   return (
     <div className="mx-auto max-w-4xl p-6">
+      {submitting && <RecordLoader text="Submitting Faculty Consultancy..." fullScreen={true} />}
       <BackButton />
       <SuccessModal
         open={showSuccess}

@@ -1,7 +1,30 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 import apiClient from "../../api/axiosClient";
 import exportToXlsxOrCsv from "../../utils/exportData";
-import BackButton from "../../components/BackButton";
+import {
+  FaFileExport,
+  FaArrowLeft,
+  FaDownload,
+  FaFilter,
+  FaCheck,
+  FaTimes,
+  FaTable,
+  FaSync,
+  FaTrophy,
+  FaRocket,
+  FaGraduationCap,
+  FaFlask,
+  FaBriefcase,
+  FaBolt,
+  FaFileExcel,
+  FaFileCsv,
+  FaCalendarAlt,
+  FaSearch,
+  FaCheckCircle,
+  FaClock,
+} from "react-icons/fa";
 
 const ACHIEVEMENT_TITLE_OPTIONS = [
   "Hackathon",
@@ -30,7 +53,7 @@ const FACULTY_PARTICIPATION_EVENT_TYPE_OPTIONS = [
   "Conference Publications",
 ];
 
-function Dropdown({ value, onChange, options, placeholder = "All", icon }) {
+function CustomDropdown({ value, onChange, options, placeholder = "All" }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -48,30 +71,31 @@ function Dropdown({ value, onChange, options, placeholder = "All", icon }) {
 
   return (
     <div className="relative" ref={ref}>
-      {icon && (
-        <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
-          {icon}
-        </span>
-      )}
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className={`w-full rounded-md border border-slate-300 bg-white py-2 text-left text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-          icon ? "pl-9 pr-3" : "px-3"
-        }`}
+        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-left text-xs font-semibold text-slate-800 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 shadow-xs flex items-center justify-between cursor-pointer"
       >
-        {selectedLabel}
+        <span className="truncate">{selectedLabel}</span>
+        <svg
+          className={`w-3.5 h-3.5 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+        </svg>
       </button>
       {open && (
-        <div className="absolute left-0 right-0 mt-2 max-h-56 overflow-auto rounded-md border border-slate-200 bg-white shadow-lg z-20">
+        <div className="absolute left-0 right-0 mt-1 max-h-56 overflow-auto rounded-xl border border-slate-200 bg-white shadow-lg z-30 py-1">
           <button
             type="button"
             onClick={() => {
               onChange("");
               setOpen(false);
             }}
-            className={`w-full px-3 py-2 text-left text-sm text-black hover:text-black ${
-              value === "" ? "bg-sky-200" : "hover:bg-slate-100"
+            className={`w-full px-3.5 py-2 text-left text-xs font-medium cursor-pointer ${
+              value === "" ? "bg-cyan-50 text-cyan-700 font-bold" : "hover:bg-slate-50 text-slate-700"
             }`}
           >
             {placeholder}
@@ -84,8 +108,8 @@ function Dropdown({ value, onChange, options, placeholder = "All", icon }) {
                 onChange(opt.value);
                 setOpen(false);
               }}
-              className={`w-full px-3 py-2 text-left text-sm text-black hover:text-black ${
-                value === opt.value ? "bg-sky-200" : "hover:bg-slate-100"
+              className={`w-full px-3.5 py-2 text-left text-xs font-medium cursor-pointer ${
+                value === opt.value ? "bg-cyan-50 text-cyan-700 font-bold" : "hover:bg-slate-50 text-slate-700"
               }`}
             >
               {opt.label}
@@ -98,33 +122,39 @@ function Dropdown({ value, onChange, options, placeholder = "All", icon }) {
 }
 
 export default function ReportGenerator() {
+  const nav = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const backTarget = isAdmin ? "/admin/quick-actions" : "/quick-actions";
+  const backText = isAdmin ? "Back to Admin Quick Actions" : "Back to Quick Actions";
   const [mode, setMode] = useState("achievements"); // achievements | projects | participation | research | consultancy | hackathons
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [exportFormat, setExportFormat] = useState("xlsx"); // xlsx | csv
 
   // filters
   const [issuer, setIssuer] = useState("");
   const [titleFilter, setTitleFilter] = useState("");
   const [student, setStudent] = useState("");
   const [verified, setVerified] = useState("");
-  const [userType, setUserType] = useState(""); // "student" | "staff" | ""
+  const [userType, setUserType] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [query, setQuery] = useState("");
+
+  const [previewRows, setPreviewRows] = useState([]);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       setLoading(true);
       try {
-        // For reports we want all user-entered records, not just verified ones
         let endpoint = "/achievements?limit=2000";
         if (mode === "projects") endpoint = "/projects?limit=2000";
-        if (mode === "participation")
-          endpoint = "/faculty-participations?limit=2000";
+        if (mode === "participation") endpoint = "/faculty-participations?limit=2000";
         if (mode === "research") endpoint = "/faculty-research?limit=2000";
-        if (mode === "consultancy")
-          endpoint = "/faculty-consultancy?limit=2000";
+        if (mode === "consultancy") endpoint = "/faculty-consultancy?limit=2000";
         if (mode === "hackathons") endpoint = "/hackathons?limit=2000";
 
         const data = await apiClient.get(endpoint);
@@ -132,21 +162,13 @@ export default function ReportGenerator() {
         if (mode === "achievements") setItems(data.achievements || []);
         else if (mode === "projects") setItems(data.projects || []);
         else if (mode === "participation")
-          setItems(
-            data.participation ||
-              data.participations ||
-              data.facultyParticipation ||
-              data.items ||
-              [],
-          );
+          setItems(data.participation || data.participations || data.facultyParticipation || data.items || []);
         else if (mode === "research")
-          setItems(data.research || data.facultyResearch || data.items || []);
+          setItems(data.data || data.research || data.facultyResearch || data.items || []);
         else if (mode === "consultancy")
-          setItems(
-            data.consultancies || data.facultyConsultancy || data.items || [],
-          );
+          setItems(data.data || data.consultancies || data.facultyConsultancy || data.items || []);
         else if (mode === "hackathons")
-          setItems(data.hackathons || data.items || []);
+          setItems(data.hackathons || data.items || data.data || []);
       } catch (err) {
         console.error(err);
         if (mounted) setItems([]);
@@ -158,72 +180,51 @@ export default function ReportGenerator() {
   }, [mode]);
 
   useEffect(() => {
-    // Prevent stale title filters from one dataset affecting another.
     setTitleFilter("");
+    setIssuer("");
+    setUserType("");
+    setVerified("");
+    setFromDate("");
+    setToDate("");
+    setQuery("");
+    setShowPreview(false);
   }, [mode]);
 
-  const issuerOptions = useMemo(() => {
-    const s = new Set();
-    items.forEach((it) => {
-      if (it.issuer) s.add(it.issuer);
-    });
-    return Array.from(s).sort();
-  }, [items]);
+  const datasetHub = [
+    { key: "achievements", title: "Achievements", icon: FaTrophy, color: "bg-amber-100 text-amber-600 border-amber-200", activeBg: "bg-amber-50 border-amber-500 ring-2 ring-amber-500/20" },
+    { key: "projects", title: "Projects", icon: FaRocket, color: "bg-blue-100 text-blue-600 border-blue-200", activeBg: "bg-blue-50 border-blue-500 ring-2 ring-blue-500/20" },
+    { key: "participation", title: "Faculty Participation", icon: FaGraduationCap, color: "bg-purple-100 text-purple-600 border-purple-200", activeBg: "bg-purple-50 border-purple-500 ring-2 ring-purple-500/20" },
+    { key: "research", title: "Faculty Research", icon: FaFlask, color: "bg-emerald-100 text-emerald-600 border-emerald-200", activeBg: "bg-emerald-50 border-emerald-500 ring-2 ring-emerald-500/20" },
+    { key: "consultancy", title: "Faculty Consultancy", icon: FaBriefcase, color: "bg-cyan-100 text-cyan-600 border-cyan-200", activeBg: "bg-cyan-50 border-cyan-500 ring-2 ring-cyan-500/20" },
+    { key: "hackathons", title: "Hackathons", icon: FaBolt, color: "bg-indigo-100 text-indigo-600 border-indigo-200", activeBg: "bg-indigo-50 border-indigo-500 ring-2 ring-indigo-500/20" },
+  ];
 
   const titleOptions = useMemo(() => {
     if (mode === "achievements") return ACHIEVEMENT_TITLE_OPTIONS;
-    if (mode === "participation")
-      return FACULTY_PARTICIPATION_EVENT_TYPE_OPTIONS;
+    if (mode === "participation") return FACULTY_PARTICIPATION_EVENT_TYPE_OPTIONS;
     return [];
   }, [mode]);
-
-  const datasetOptions = useMemo(
-    () => [
-      { value: "achievements", label: "Achievements" },
-      { value: "projects", label: "Projects" },
-      { value: "participation", label: "Faculty Participation" },
-      { value: "research", label: "Faculty Research" },
-      { value: "consultancy", label: "Faculty Consultancy" },
-      { value: "hackathons", label: "Hackathon Entry and Progress" },
-    ],
-    [],
-  );
 
   const userTypeOptions = useMemo(
     () => [
       { value: "student", label: "Student" },
       { value: "staff", label: "Staff" },
     ],
-    [],
+    []
   );
 
   const verifiedOptions = useMemo(
     () => [
-      { value: "true", label: "Verified" },
-      { value: "false", label: "Not Verified" },
+      { value: "true", label: "Verified Only" },
+      { value: "false", label: "Unverified / Pending" },
     ],
-    [],
+    []
   );
-
-  const studentOptions = useMemo(() => {
-    const s = new Set();
-    items.forEach((it) => {
-      const name =
-        it.studentName ||
-        it.user_fullname ||
-        it.user_name ||
-        it.student_name ||
-        it.uploader;
-      if (name) s.add(name);
-    });
-    return Array.from(s).sort();
-  }, [items]);
 
   const applyFilters = (list) => {
     return list.filter((it) => {
       if (titleFilter) {
-        if (mode === "achievements" && (it.title || "") !== titleFilter)
-          return false;
+        if (mode === "achievements" && (it.title || "") !== titleFilter) return false;
         if (
           mode === "participation" &&
           (it.type_of_event || it.event_type || "") !== titleFilter
@@ -231,7 +232,6 @@ export default function ReportGenerator() {
           return false;
       }
       if (issuer && (it.issuer || it.issuer_name) !== issuer) return false;
-      // Filter by user type (student/staff)
       if (userType) {
         const isStaff = Boolean(it.faculty_name);
         if (userType === "staff" && !isStaff) return false;
@@ -241,833 +241,629 @@ export default function ReportGenerator() {
         const status = (it.verification_status || "").toLowerCase();
         const isApproved = status === "approved" || Boolean(it.verified);
         if (verified === "true") {
-          // Show only approved
           if (!isApproved || status === "pending") return false;
         } else if (verified === "false") {
-          // Show only not approved (pending or unverified)
-          if (isApproved && status === "approved") return false;
+          if (isApproved && status !== "pending") return false;
         }
       }
-      if (query) {
-        const q = query.toLowerCase();
-        if (
-          !(
-            (it.title || "").toLowerCase().includes(q) ||
-            (it.description || "").toLowerCase().includes(q)
-          )
-        )
-          return false;
-      }
       if (fromDate) {
-        const d = new Date(
+        const itemDateStr =
+          it.duration_start_date ||
+          it.date_of_award ||
+          it.start_date ||
+          it.award_date ||
           it.created_at ||
-            it.verified_at ||
-            it.approvedAt ||
-            it.date ||
-            it.date_of_award,
-        );
-        if (isNaN(d)) return false;
-        if (d < new Date(fromDate)) return false;
+          it.createdAt;
+        if (itemDateStr) {
+          const itemTime = new Date(itemDateStr).getTime();
+          const fromTime = new Date(fromDate).getTime();
+          if (itemTime < fromTime) return false;
+        }
       }
       if (toDate) {
-        const d = new Date(
+        const itemDateStr =
+          it.duration_start_date ||
+          it.date_of_award ||
+          it.start_date ||
+          it.award_date ||
           it.created_at ||
-            it.verified_at ||
-            it.approvedAt ||
-            it.date ||
-            it.date_of_award,
-        );
-        if (isNaN(d)) return false;
-        if (d > new Date(toDate + "T23:59:59")) return false;
+          it.createdAt;
+        if (itemDateStr) {
+          const itemTime = new Date(itemDateStr).getTime();
+          const toTime = new Date(toDate).getTime() + 86400000;
+          if (itemTime > toTime) return false;
+        }
+      }
+      if (query.trim()) {
+        const q = query.toLowerCase();
+        const str = JSON.stringify(it).toLowerCase();
+        if (!str.includes(q)) return false;
       }
       return true;
     });
   };
 
-  const handleExport = async () => {
-    // If a preview is active use that set, otherwise compute from current items
-    let rows = [];
-    if (showPreview && previewRows && previewRows.length) {
-      rows = previewRows;
-    } else {
-      const filtered = applyFilters(items);
-      rows = filtered.map((it) => mapItemToRow(it, mode));
+  const filteredItems = useMemo(() => applyFilters(items), [items, titleFilter, issuer, userType, verified, fromDate, toDate, query, mode]);
+
+  const verifiedCount = useMemo(() => {
+    return filteredItems.filter((it) => {
+      const status = (it.verification_status || "").toLowerCase();
+      return status === "approved" || Boolean(it.verified);
+    }).length;
+  }, [filteredItems]);
+
+  const getColumnsForMode = (m) => {
+    switch (m) {
+      case "achievements":
+        return [
+          { key: "id", header: "ID" },
+          { key: "title", header: "Title" },
+          { key: "issuer", header: "Issuer" },
+          { key: "date_of_award", header: "Date of Award" },
+          { key: "recipient_name", header: "Recipient Name" },
+          { key: "description", header: "Description" },
+          { key: "uploaded_by", header: "Uploaded By" },
+          { key: "approved_at", header: "Approved At" },
+          { key: "approved_by", header: "Approved By" },
+          { key: "proof_file", header: "Proof File" },
+          { key: "created_at", header: "Created At" },
+          { key: "verified", header: "Verified" },
+          { key: "verification_status", header: "Verification Status" },
+        ];
+      case "projects":
+        return [
+          { key: "id", header: "ID" },
+          { key: "title", header: "Title" },
+          { key: "description", header: "Description" },
+          { key: "mentor_name", header: "Mentor Name" },
+          { key: "academic_year", header: "Academic Year" },
+          { key: "status", header: "Status" },
+          { key: "team_member_names", header: "Team Members" },
+          { key: "github_url", header: "GitHub URL" },
+          { key: "uploaded_by", header: "Uploaded By" },
+          { key: "created_at", header: "Created At" },
+          { key: "verified", header: "Verified" },
+          { key: "verification_status", header: "Verification Status" },
+        ];
+      case "participation":
+        return [
+          { key: "id", header: "ID" },
+          { key: "faculty_name", header: "Faculty Name" },
+          { key: "department", header: "Department" },
+          { key: "event_name", header: "Event Title" },
+          { key: "type_of_event", header: "Event Type" },
+          { key: "mode_of_training", header: "Mode" },
+          { key: "organizer", header: "Conducted By" },
+          { key: "start_date", header: "Start Date" },
+          { key: "end_date", header: "End Date" },
+          { key: "created_at", header: "Created At" },
+          { key: "verified", header: "Verified" },
+          { key: "verification_status", header: "Verification Status" },
+        ];
+      case "research":
+        return [
+          { key: "id", header: "ID" },
+          { key: "faculty_name", header: "Faculty Name" },
+          { key: "title", header: "Grant / Project Title" },
+          { key: "funded_type", header: "Funded Type" },
+          { key: "principal_investigator", header: "Principal Investigator" },
+          { key: "team_members", header: "Team Members" },
+          { key: "agency", header: "Funding Agency" },
+          { key: "amount", header: "Amount (₹)" },
+          { key: "current_status", header: "Status" },
+          { key: "duration", header: "Duration" },
+          { key: "start_date", header: "Start Date" },
+          { key: "end_date", header: "End Date" },
+          { key: "created_at", header: "Created At" },
+        ];
+      case "consultancy":
+        return [
+          { key: "id", header: "ID" },
+          { key: "faculty_name", header: "Faculty Name" },
+          { key: "agency", header: "Agency / Client" },
+          { key: "team_members", header: "Team Members" },
+          { key: "amount", header: "Amount (₹)" },
+          { key: "duration", header: "Duration" },
+          { key: "start_date", header: "Start Date" },
+          { key: "end_date", header: "End Date" },
+          { key: "created_at", header: "Created At" },
+        ];
+      case "hackathons":
+        return [
+          { key: "id", header: "ID" },
+          { key: "hackathon_name", header: "Hackathon Name" },
+          { key: "student_name", header: "Student Name" },
+          { key: "team_leader_name", header: "Team Leader" },
+          { key: "team_member_names", header: "Team Members" },
+          { key: "hosted_by", header: "Hosted By" },
+          { key: "location", header: "Location" },
+          { key: "no_of_rounds", header: "Rounds" },
+          { key: "progress", header: "Progress" },
+          { key: "prize", header: "Prize" },
+          { key: "duration_start_date", header: "Start Date" },
+          { key: "duration_end_date", header: "End Date" },
+          { key: "proof_file", header: "Proof File" },
+          { key: "created_at", header: "Created At" },
+          { key: "verified", header: "Verified" },
+          { key: "verification_status", header: "Verification Status" },
+        ];
+      default:
+        return [];
     }
-
-    const columns = getColumnsForMode(mode).filter((c) =>
-      selectedColumns.includes(c.key),
-    );
-
-    await exportToXlsxOrCsv(
-      `${mode}-report-${new Date().toISOString().slice(0, 10)}`,
-      rows,
-      columns,
-    );
   };
 
-  // Preview state populated by Apply
-  const [previewRows, setPreviewRows] = useState([]);
-  const [showPreview, setShowPreview] = useState(false);
-
-  // Column selection
   const allColumns = useMemo(() => getColumnsForMode(mode), [mode]);
-  const [selectedColumns, setSelectedColumns] = useState([]);
+  const [selectedColumns, setSelectedColumns] = useState(() => allColumns.map((c) => c.key));
+
   useEffect(() => {
     setSelectedColumns(allColumns.map((c) => c.key));
-  }, [mode, allColumns]);
+  }, [allColumns]);
 
   const toggleColumn = (key) => {
     setSelectedColumns((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
     );
   };
 
-  function getColumnsForMode(mode) {
-    if (mode === "projects") {
-      return [
-        { key: "id", header: "ID" },
-        { key: "title", header: "Title" },
-        { key: "description", header: "Description" },
-        { key: "mentor_name", header: "Mentor" },
-        { key: "academic_year", header: "Academic Year" },
-        { key: "team_member_names", header: "Team Members" },
-        { key: "team_members_count", header: "Team Count" },
-        { key: "github_url", header: "GitHub URL" },
-        { key: "created_by", header: "Created By" },
-        { key: "created_at", header: "Created At" },
-        { key: "verified", header: "Verified" },
-        { key: "verification_status", header: "Verification Status" },
-        { key: "verified_by", header: "Verified By" },
-        { key: "verified_at", header: "Verified At" },
-        { key: "files", header: "Files" },
-      ];
-    }
-    if (mode === "participation") {
-      return [
-        { key: "id", header: "ID" },
-        { key: "faculty_name", header: "Faculty Name" },
-        { key: "department", header: "Department" },
-        { key: "type_of_event", header: "Type of Event" },
-        { key: "mode_of_training", header: "Mode of Training" },
-        { key: "title", header: "Title" },
-        { key: "start_date", header: "Start Date" },
-        { key: "end_date", header: "End Date" },
-        { key: "place", header: "Place" },
-        { key: "proof_file", header: "Proof File" },
-        { key: "created_at", header: "Created At" },
-        { key: "verified", header: "Verified" },
-        { key: "verification_status", header: "Verification Status" },
-      ];
-    }
-    if (mode === "research") {
-      return [
-        { key: "id", header: "ID" },
-        { key: "funded_type", header: "Funded Type" },
-        { key: "principal_investigator", header: "Principal Investigator" },
-        { key: "team_member_names", header: "Team Members" },
-        { key: "title", header: "Title" },
-        { key: "agency", header: "Agency" },
-        { key: "current_status", header: "Current Status" },
-        { key: "duration", header: "Duration" },
-        { key: "start_date", header: "Start Date" },
-        { key: "end_date", header: "End Date" },
-        { key: "amount", header: "Amount" },
-        { key: "created_at", header: "Created At" },
-        { key: "verified", header: "Verified" },
-        { key: "verification_status", header: "Verification Status" },
-      ];
-    }
-    if (mode === "consultancy") {
-      return [
-        { key: "id", header: "ID" },
-        { key: "faculty_name", header: "Faculty Name" },
-        { key: "title", header: "Title" },
-        { key: "client", header: "Client" },
-        { key: "agency", header: "Agency" },
-        { key: "team_member_names", header: "Team Members" },
-        { key: "start_date", header: "Start Date" },
-        { key: "end_date", header: "End Date" },
-        { key: "amount", header: "Amount" },
-        { key: "proof_file", header: "Proof File" },
-        { key: "created_at", header: "Created At" },
-        { key: "verified", header: "Verified" },
-        { key: "verification_status", header: "Verification Status" },
-      ];
-    }
-    if (mode === "hackathons") {
-      return [
-        { key: "id", header: "ID" },
-        { key: "student_name", header: "Student Name" },
-        { key: "mobile_number", header: "Mobile Number" },
-        { key: "team_leader_name", header: "Team Leader" },
-        { key: "team_members_count", header: "Team Count" },
-        { key: "team_member_names", header: "Team Members" },
-        { key: "hackathon_name", header: "Hackathon Name" },
-        { key: "mentor", header: "Mentor" },
-        { key: "hosted_by", header: "Hosted By" },
-        { key: "location", header: "Location" },
-        { key: "duration_start_date", header: "Start Date" },
-        { key: "duration_end_date", header: "End Date" },
-        { key: "no_of_rounds", header: "No. of Rounds" },
-        { key: "progress", header: "Progress" },
-        { key: "prize", header: "Prize" },
-        { key: "proof_file", header: "Proof File" },
-        { key: "created_at", header: "Created At" },
-        { key: "verified", header: "Verified" },
-        { key: "verification_status", header: "Verification Status" },
-        { key: "verified_by", header: "Verified By" },
-        { key: "verified_at", header: "Verified At" },
-      ];
-    }
-    // achievements
-    return [
-      { key: "id", header: "ID" },
-      { key: "title", header: "Title" },
-      { key: "issuer", header: "Issuer" },
-      { key: "date_of_award", header: "Date of Award" },
-      { key: "name", header: "Recipient Name" },
-      { key: "description", header: "Description" },
-      { key: "student", header: "Uploaded By" },
-      { key: "approved_at", header: "Approved At" },
-      { key: "approved_by", header: "Approved By" },
-      { key: "proof_file", header: "Proof File" },
-      { key: "created_at", header: "Created At" },
-      { key: "verified", header: "Verified" },
-      { key: "verification_status", header: "Verification Status" },
-    ];
-  }
-
-  function mapItemToRow(it, mode) {
-    if (mode === "projects") {
-      const files = it.files || it.files_json || [];
-      const filesStr = Array.isArray(files)
-        ? files
-            .map(
-              (f) =>
-                f.original_name || f.name || f.filename || JSON.stringify(f),
-            )
-            .join(" | ")
-        : String(files || "");
-      return {
-        id: it.id,
-        title: it.title,
-        description: it.description || "",
-        mentor_name: it.mentor_name || "",
-        academic_year: it.academic_year || "",
-        team_member_names:
-          it.team_member_names || it.teamMembers || it.team_members || "",
-        team_members_count: it.team_members_count || it.teamMembersCount || "",
-        github_url: it.github_url || it.github || "",
-        created_by: it.created_by || it.user_id || "",
-        created_at: it.created_at || "",
-        verified: it.verified || false,
-        verification_status:
-          it.verification_status || (it.verified ? "approved" : "pending"),
-        verified_by: it.verified_by || "",
-        verified_at: it.verified_at || "",
-        files: filesStr,
-      };
-    }
-    if (mode === "participation") {
-      const proof = it.proof_name || it.proof_filename || it.proof || "";
-      return {
-        id: it.id,
-        faculty_name: it.faculty_name || it.name || it.user_fullname || "",
-        department: it.department || "",
-        type_of_event: it.type_of_event || it.event_type || "",
-        mode_of_training: it.mode_of_training || it.training_mode || "",
-        title: it.title || "",
-        start_date: it.start_date || "",
-        end_date: it.end_date || "",
-        place: it.place || "",
-        proof_file: proof,
-        created_at: it.created_at || "",
-        verified: it.verified || false,
-        verification_status:
-          it.verification_status || (it.verified ? "approved" : "pending"),
-      };
-    }
-    if (mode === "research") {
-      const proof = it.proof_name || it.proof_filename || it.proof || "";
-      return {
-        id: it.id,
-        funded_type: it.funded_type || "",
-        principal_investigator: it.principal_investigator || "",
-        team_member_names:
-          it.team_member_names || it.teamMembers || it.team_members || "",
-        title: it.title || "",
-        agency: it.agency || "",
-        current_status: it.current_status || "",
-        duration: it.duration || "",
-        start_date: it.start_date || "",
-        end_date: it.end_date || "",
-        amount: it.amount || "",
-        created_at: it.created_at || "",
-        verified: it.verified || false,
-        verification_status:
-          it.verification_status || (it.verified ? "approved" : "pending"),
-      };
-    }
-    if (mode === "consultancy") {
-      const proof = it.proof_name || it.proof_filename || it.proof || "";
-      return {
-        id: it.id,
-        faculty_name: it.faculty_name || it.name || it.user_fullname || "",
-        title: it.title || "",
-        client: it.client || it.company || "",
-        agency: it.agency || "",
-        team_member_names:
-          it.team_member_names || it.teamMembers || it.team_members || "",
-        start_date: it.start_date || "",
-        end_date: it.end_date || "",
-        amount: it.amount || "",
-        proof_file: proof,
-        created_at: it.created_at || "",
-        verified: it.verified || false,
-        verification_status:
-          it.verification_status || (it.verified ? "approved" : "pending"),
-      };
-    }
-    if (mode === "hackathons") {
-      const proof = it.proof_name || it.proof_filename || it.proof || "";
-      return {
-        id: it.id,
-        student_name: it.student_name || it.user_fullname || it.user_name || "",
-        mobile_number: it.mobile_number || "",
-        team_leader_name: it.team_leader_name || "",
-        team_members_count: it.team_members_count || "",
-        team_member_names:
-          it.team_member_names || it.teamMembers || it.team_members || "",
-        hackathon_name: it.hackathon_name || it.title || "",
-        mentor: it.mentor || "",
-        hosted_by: it.hosted_by || "",
-        location: it.location || "",
-        duration_start_date: it.duration_start_date || "",
-        duration_end_date: it.duration_end_date || "",
-        no_of_rounds: it.no_of_rounds || "",
-        progress: it.progress || "",
-        prize: it.prize || "",
-        proof_file: proof,
-        created_at: it.created_at || "",
-        verified: it.verified || false,
-        verification_status:
-          it.verification_status || (it.verified ? "approved" : "pending"),
-        verified_by:
-          it.verified_by_name ||
-          it.verified_by_fullname ||
-          it.verified_by ||
-          "",
-        verified_at: it.verified_at || "",
-      };
-    }
-    // achievements
-    const proof =
-      it.proof_name || it.proof_filename
-        ? it.proof_name || it.proof_filename
-        : "";
+  const mapItemToRow = (it, m) => {
     return {
-      id: it.id,
-      title: it.title,
-      issuer: it.issuer || "",
-      date_of_award: it.date_of_award || it.date || "",
-      name: it.name || it.user_fullname || it.user_name || "",
-      description: it.description || "",
-      student:
-        it.studentName ||
-        it.user_fullname ||
-        it.user_name ||
-        it.student_name ||
-        it.uploader ||
-        "",
-      approved_at: it.verified_at || it.approvedAt || it.created_at || "",
-      approved_by:
-        it.verified_by_name || it.approved_by || it.approvedByName || "",
-      proof_file: proof,
-      created_at: it.created_at || "",
-      verified: it.verified || false,
-      verification_status:
-        it.verification_status || (it.verified ? "approved" : "pending"),
+      id: it.id || "",
+      // achievements: title field; hackathons: hackathon_name; projects: title; participation: title (event)
+      title: it.title || it.hackathon_name || it.project_title || "",
+      hackathon_name: it.hackathon_name || "",
+      issuer: it.issuer || it.issuer_name || it.client_name || "",
+      date_of_award: it.date_of_award || it.award_date || "",
+      // achievements: name is the student's name field; fallback user_fullname
+      recipient_name: it.name || it.recipient_name || it.user_fullname || it.uploader || "",
+      // achievements have no description column — use event_name (competition/event name) as description
+      // projects have a real description column; participation has details field
+      description: it.description || it.event_name || it.details || "",
+      event_name: it.event_name || it.title || "",
+      uploaded_by: it.uploader_full_name || it.uploaded_by || it.uploader || it.user_fullname || "",
+      // DB field is verified_at, not approved_at
+      approved_at: it.verified_at || "",
+      // DB joined field is verified_by_fullname (achievements) or verified_by_name (hackathons)
+      approved_by: it.verified_by_fullname || it.verified_by_name || "",
+      // DB joined field is proof_name (original filename) or proof_filename (stored filename)
+      proof_file: it.proof_name || it.proof_filename || "",
+      created_at: it.created_at || it.createdAt || "",
+      domain: it.domain || "",
+      tech_stack: it.tech_stack || "",
+      project_type: it.project_type || "",
+      github_url: it.github_url || "",
+      demo_url: it.demo_url || "",
+      faculty_name: it.faculty_name || it.user_fullname || "",
+      type_of_event: it.type_of_event || it.event_type || "",
+      mode_of_training: it.mode_of_training || "",
+      department: it.department || "",
+      // participation: organizer is conducted_by
+      organizer: it.conducted_by || it.organizer || it.hosted_by || "",
+      hosted_by: it.hosted_by || "",
+      start_date: it.start_date || it.duration_start_date || "-",
+      end_date:
+        it.end_date ||
+        it.duration_end_date ||
+        ((it.current_status || it.status || "").toLowerCase() === "ongoing"
+          ? "Ongoing"
+          : "-"),
+      duration_start_date: it.duration_start_date || it.start_date || "-",
+      duration_end_date: it.duration_end_date || it.end_date || "-",
+      type: it.funded_type || it.type || "",
+      funded_type: it.funded_type || "",
+      principal_investigator: it.principal_investigator || "",
+      agency: it.agency || it.funding_agency || it.client_name || "",
+      current_status: it.current_status || it.status || "",
+      team_members: it.team_members || it.team_member_names || "",
+      duration: it.duration || "",
+      journal_conference: it.journal_conference || "",
+      publication_date: it.publication_date || "",
+      funding_agency: it.agency || it.funding_agency || "",
+      amount: it.amount || "",
+      client_name: it.agency || it.client_name || "",
+      project_title: it.title || it.project_title || "",
+      status: it.current_status || it.status || "",
+      // project-specific real DB fields
+      mentor_name: it.mentor_name || "",
+      academic_year: it.academic_year || "",
+      // hackathon fields — use actual DB column names
+      student_name: it.student_name || "",
+      team_leader_name: it.team_leader_name || "",
+      team_member_names: it.team_member_names || "",
+      location: it.location || "",
+      no_of_rounds: it.no_of_rounds ?? "",
+      progress: it.progress || "",
+      prize: it.prize || "",
+      // legacy aliases (kept for any remaining references)
+      team_name: it.team_leader_name || it.team_name || "",
+      rounds_completed: it.no_of_rounds ?? it.rounds_completed ?? "",
+      prize_won: it.prize || it.prize_won || "",
+      verified: Boolean(it.verified || (it.verification_status || "").toLowerCase() === "approved"),
+      verification_status: it.verification_status || (it.verified ? "approved" : "pending"),
     };
-  }
+  };
 
   const handleApply = () => {
-    const filtered = applyFilters(items);
-    const rows = filtered.map((it) => mapItemToRow(it, mode));
+    const rows = filteredItems.map((it) => mapItemToRow(it, mode));
     setPreviewRows(rows);
     setShowPreview(true);
   };
 
-  return (
-    <div className="mx-auto max-w-6xl p-6">
-      <BackButton />
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-          Export Records
-        </h1>
-        <div className="text-sm text-slate-600 dark:text-slate-300">
-          Generate Excel/CSV reports
-        </div>
-      </div>
+  const handleExport = () => {
+    const listToExport = filteredItems.map((it) => mapItemToRow(it, mode));
+    if (listToExport.length === 0) {
+      alert("No data available to export.");
+      return;
+    }
+    const modeCols = getColumnsForMode(mode);
+    const activeCols = modeCols.filter((c) => selectedColumns.includes(c.key));
 
-      <div className="mt-6 glitter-card bg-white dark:bg-slate-900 border dark:border-slate-700 rounded-xl p-5 shadow-sm">
-        {/* Row 1: Core filters */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-start">
-          {/* Dataset */}
+    const exportRows = listToExport.map((row) => {
+      const obj = {};
+      activeCols.forEach((c) => {
+        obj[c.header] = row[c.key] !== undefined ? row[c.key] : "";
+      });
+      return obj;
+    });
+
+    const filename = `${mode}_export_${new Date().toISOString().slice(0, 10)}`;
+    exportToXlsxOrCsv(exportRows, filename, exportFormat);
+  };
+
+  return (
+    <div className="min-h-[calc(100vh-4rem)] bg-[#f8fafc] w-full">
+      <div className="w-full px-4 sm:px-6 lg:px-10 py-4 sm:py-6 space-y-5">
+        {/* Top Navigation */}
+        <div>
+          <button
+            onClick={() => nav(backTarget)}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 shadow-xs hover:bg-slate-100 transition cursor-pointer"
+          >
+            <FaArrowLeft className="w-3 h-3 text-slate-600" />
+            {backText}
+          </button>
+        </div>
+
+        {/* Header Title Box */}
+        <div className="flex items-center gap-3.5 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm w-full">
+          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-100 text-cyan-600 shadow-xs flex-shrink-0">
+            <FaFileExport className="w-5 h-5" />
+          </span>
           <div>
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
-              Dataset
-            </label>
-            <div className="relative">
-              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+              Export Records Studio
+            </h1>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Filter, customize columns, preview live datasets, and export official reports in Excel or CSV.
+            </p>
+          </div>
+        </div>
+
+        {/* Interactive Dataset Hub Cards */}
+        <div className="space-y-2">
+          <label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+            Select Department Dataset
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {datasetHub.map((ds) => {
+              const IconComponent = ds.icon;
+              const isSelected = mode === ds.key;
+              return (
+                <button
+                  key={ds.key}
+                  onClick={() => setMode(ds.key)}
+                  className={`rounded-2xl border p-3.5 text-left transition-all duration-200 flex flex-col justify-between gap-3 cursor-pointer ${
+                    isSelected ? ds.activeBg : "bg-white border-slate-200/90 hover:border-cyan-300 hover:shadow-xs"
+                  }`}
                 >
-                  <path
-                    d="M4 6h16M6 12h12M10 18h4"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-              <Dropdown
-                value={mode}
-                onChange={setMode}
-                options={datasetOptions}
-                placeholder="All"
-                icon={
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    aria-hidden
-                  >
-                    <path
-                      d="M4 6h16M6 12h12M10 18h4"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                }
-              />
+                  <div className="flex items-center justify-between w-full">
+                    <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${ds.color} shadow-xs`}>
+                      <IconComponent className="w-4 h-4" />
+                    </span>
+                    {isSelected && <FaCheck className="w-3.5 h-3.5 text-cyan-600" />}
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-extrabold text-slate-900 leading-snug">
+                      {ds.title}
+                    </h3>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Main Controls Card */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-5">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+              <FaFilter className="w-3.5 h-3.5 text-cyan-600" />
+              Filter & Export Options
+            </h2>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-500">Format:</span>
+              <div className="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1">
+                <button
+                  onClick={() => setExportFormat("xlsx")}
+                  className={`inline-flex items-center gap-1 px-3 py-1 text-xs font-extrabold rounded-lg transition cursor-pointer ${
+                    exportFormat === "xlsx"
+                      ? "bg-emerald-600 text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <FaFileExcel className="w-3 h-3" />
+                  Excel (.xlsx)
+                </button>
+                <button
+                  onClick={() => setExportFormat("csv")}
+                  className={`inline-flex items-center gap-1 px-3 py-1 text-xs font-extrabold rounded-lg transition cursor-pointer ${
+                    exportFormat === "csv"
+                      ? "bg-cyan-600 text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <FaFileCsv className="w-3 h-3" />
+                  CSV (.csv)
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Title */}
-          <div>
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
-              Title
-            </label>
-            {mode === "achievements" || mode === "participation" ? (
-              <Dropdown
-                value={titleFilter}
-                onChange={setTitleFilter}
-                options={titleOptions.map((o) => ({ value: o, label: o }))}
-                placeholder="All"
-                icon={
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    aria-hidden
-                  >
-                    <path
-                      d="M3 5h18M6 10h12M10 15h4"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                }
-              />
-            ) : (
-              <div className="relative">
-                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    aria-hidden
-                  >
-                    <path
-                      d="M3 6h18M6 12h12M10 18h4"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </span>
+          {/* Filter Inputs Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div>
+              <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wider mb-1">
+                Category / Subtitle Filter
+              </label>
+              {mode === "achievements" || mode === "participation" ? (
+                <CustomDropdown
+                  value={titleFilter}
+                  onChange={setTitleFilter}
+                  options={titleOptions.map((o) => ({ value: o, label: o }))}
+                  placeholder="All Categories"
+                />
+              ) : (
                 <input
                   disabled
-                  placeholder="N/A"
-                  className="w-full rounded-md border border-slate-300 pl-9 pr-3 py-2 text-sm bg-slate-50 text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                  placeholder="All Categories (N/A)"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs bg-slate-50 text-slate-400 font-medium"
                 />
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* Student/Staff */}
-          <div>
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
-              Student/Staff
-            </label>
-            <div className="relative">
-              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden
-                >
-                  <path
-                    d="M12 12a4 4 0 100-8 4 4 0 000 8z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  />
-                  <path
-                    d="M4 20a8 8 0 0116 0"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-              <Dropdown
+            <div>
+              <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wider mb-1">
+                User Type Filter
+              </label>
+              <CustomDropdown
                 value={userType}
                 onChange={setUserType}
                 options={userTypeOptions}
-                placeholder="All"
-                icon={
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    aria-hidden
-                  >
-                    <path
-                      d="M12 12a4 4 0 100-8 4 4 0 000 8z"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    />
-                    <path
-                      d="M4 20a8 8 0 0116 0"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                }
+                placeholder="All Users (Student & Staff)"
               />
             </div>
-          </div>
 
-          {/* Verified */}
-          <div>
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
-              Verified
-            </label>
-            <div className="relative">
-              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden
-                >
-                  <path
-                    d="M20 6L9 17l-5-5"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-              <Dropdown
+            <div>
+              <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wider mb-1">
+                Verification Status
+              </label>
+              <CustomDropdown
                 value={verified}
                 onChange={setVerified}
                 options={verifiedOptions}
-                placeholder="All"
-                icon={
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    aria-hidden
-                  >
-                    <path
-                      d="M20 6L9 17l-5-5"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                }
+                placeholder="All Statuses"
               />
             </div>
-          </div>
-        </div>
 
-        {/* Row 2: Dates + search */}
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3 items-start">
-          <div className="relative">
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
-              From Date
-            </label>
-            <span className="pointer-events-none absolute left-3 bottom-3 md:bottom-2.5 text-slate-500">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden
-              >
-                <path
-                  d="M7 10h10M7 14h6"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
+            <div>
+              <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wider mb-1">
+                Search Keyword
+              </label>
+              <div className="relative">
+                <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search title, desc, name..."
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 pl-9 pr-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 shadow-xs"
                 />
-                <rect
-                  x="3"
-                  y="5"
-                  width="18"
-                  height="16"
-                  rx="2"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                />
-                <path
-                  d="M7 5V3M17 5V3"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </span>
-            <input
-              type="date"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-              className="w-full rounded-md border border-slate-300 pl-9 pr-3 py-2 text-sm bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-            />
-          </div>
-          <div className="relative">
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
-              To Date
-            </label>
-            <span className="pointer-events-none absolute left-3 bottom-3 md:bottom-2.5 text-slate-500">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden
-              >
-                <path
-                  d="M7 10h10M7 14h6"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-                <rect
-                  x="3"
-                  y="5"
-                  width="18"
-                  height="16"
-                  rx="2"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                />
-                <path
-                  d="M7 5V3M17 5V3"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </span>
-            <input
-              type="date"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-              className="w-full rounded-md border border-slate-300 pl-9 pr-3 py-2 text-sm bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
-              Search
-            </label>
-            <div className="relative">
-              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden
-                >
-                  <circle
-                    cx="11"
-                    cy="11"
-                    r="7"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  />
-                  <path
-                    d="M20 20l-3.5-3.5"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wider mb-1">
+                From Date
+              </label>
               <input
-                placeholder="Search title or desc"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="w-full rounded-md border border-slate-300 pl-9 pr-3 py-2 text-sm bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 shadow-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wider mb-1">
+                To Date
+              </label>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 shadow-xs"
               />
             </div>
           </div>
-        </div>
 
-        <div className="mt-5 flex items-center justify-end gap-3">
-          <button
-            onClick={() => {
-              setIssuer("");
-              setTitleFilter("");
-              setStudent("");
-              setVerified("");
-              setFromDate("");
-              setToDate("");
-              setQuery("");
-              setShowPreview(false);
-              setPreviewRows([]);
-              setSelectedColumns(allColumns.map((c) => c.key));
-            }}
-            className="px-3 py-1 text-sm border rounded bg-white dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-          >
-            Reset
-          </button>
-          <button
-            onClick={handleApply}
-            className="px-3 py-1 text-sm rounded-md border bg-white hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-          >
-            Apply
-          </button>
-          <button
-            onClick={handleExport}
-            className="px-3 py-1 text-sm rounded-md text-white shadow"
-            style={{ backgroundColor: "#87CEEB" }}
-          >
-            Export
-          </button>
-        </div>
-      </div>
-
-      <div className="mt-6">
-        <div className="text-sm text-slate-600 dark:text-slate-300">
-          Preview: {applyFilters(items).length} records match the current
-          filters
-        </div>
-        <div className="mt-3">
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Select Columns to Export
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setSelectedColumns(allColumns.map((c) => c.key))}
-                className="px-2 py-1 text-xs rounded-md border bg-white hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-              >
-                Select All
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedColumns([])}
-                className="px-2 py-1 text-xs rounded-md border bg-white hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-              >
-                Clear
-              </button>
-            </div>
-          </div>
-          <div className="glitter-card rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {allColumns.map((col) => (
-                <label
-                  key={col.key}
-                  className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300"
+          {/* Column Selector Box */}
+          <div className="rounded-xl border border-cyan-100 bg-cyan-50/50 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-extrabold text-cyan-900 flex items-center gap-1.5">
+                <FaTable className="w-3.5 h-3.5 text-cyan-600" />
+                Select Columns to Include in Export
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedColumns(allColumns.map((c) => c.key))}
+                  className="px-2.5 py-1 text-[11px] font-extrabold rounded-lg border border-cyan-200 bg-white text-cyan-700 hover:bg-cyan-100 transition cursor-pointer"
                 >
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4"
-                    style={{ accentColor: "#87CEEB" }}
-                    checked={selectedColumns.includes(col.key)}
-                    onChange={() => toggleColumn(col.key)}
-                  />
-                  <span>{col.header}</span>
-                </label>
-              ))}
+                  Select All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedColumns([])}
+                  className="px-2.5 py-1 text-[11px] font-extrabold rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {allColumns.map((col) => {
+                const isSelected = selectedColumns.includes(col.key);
+                return (
+                  <button
+                    key={col.key}
+                    type="button"
+                    onClick={() => toggleColumn(col.key)}
+                    className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-extrabold transition-all cursor-pointer border ${
+                      isSelected
+                        ? "bg-cyan-600 text-white border-cyan-600 shadow-xs"
+                        : "bg-white text-slate-600 border-slate-200 hover:border-cyan-300"
+                    }`}
+                  >
+                    {isSelected ? <FaCheck className="w-2.5 h-2.5" /> : <FaTimes className="w-2.5 h-2.5 text-slate-400" />}
+                    {col.header}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Action Bar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+            <div className="flex items-center gap-4 text-xs font-extrabold text-slate-700">
+              <span className="flex items-center gap-1 text-slate-900 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+                <FaTable className="w-3 h-3 text-cyan-600" />
+                {filteredItems.length} Records Found
+              </span>
+              <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
+                <FaCheckCircle className="w-3 h-3 text-emerald-600" />
+                {verifiedCount} Verified
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2.5 self-end sm:self-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  setIssuer("");
+                  setTitleFilter("");
+                  setStudent("");
+                  setVerified("");
+                  setFromDate("");
+                  setToDate("");
+                  setQuery("");
+                  setShowPreview(false);
+                  setPreviewRows([]);
+                  setSelectedColumns(allColumns.map((c) => c.key));
+                }}
+                className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+              >
+                Reset Filters
+              </button>
+
+              <button
+                type="button"
+                onClick={handleApply}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-cyan-300 bg-cyan-50 px-4 py-2 text-xs font-extrabold text-cyan-700 hover:bg-cyan-100 transition cursor-pointer"
+              >
+                <FaSync className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} />
+                {showPreview ? "Update Preview" : "Preview Table"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExport}
+                disabled={filteredItems.length === 0}
+                className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 px-6 py-2 text-xs font-extrabold text-white shadow-md shadow-cyan-500/20 transition disabled:opacity-50 cursor-pointer"
+              >
+                <FaDownload className="w-3.5 h-3.5" />
+                Export {exportFormat.toUpperCase()}
+              </button>
             </div>
           </div>
         </div>
 
+        {/* Live Table Preview */}
         {showPreview && (
-          <div className="mt-4 glitter-card overflow-auto border rounded bg-white dark:bg-slate-900 dark:border-slate-700">
-            <table className="min-w-full table-fixed border-collapse">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800">
-                  {getColumnsForMode(mode)
-                    .filter((c) => selectedColumns.includes(c.key))
-                    .map((col) => (
-                      <th
-                        key={col.key}
-                        className="p-2 text-left text-sm font-semibold border-b dark:border-slate-700 dark:text-slate-200"
-                      >
-                        {col.header}
-                      </th>
-                    ))}
-                </tr>
-              </thead>
-              <tbody>
-                {previewRows.map((r, idx) => (
-                  <tr
-                    key={r.id || idx}
-                    className={
-                      idx % 2 === 0
-                        ? "bg-white dark:bg-slate-900"
-                        : "bg-slate-50 dark:bg-slate-800"
-                    }
-                  >
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                <FaTable className="w-4 h-4 text-cyan-600" />
+                Live Data Preview ({previewRows.length} rows)
+              </h3>
+              <span className="text-xs text-slate-500 font-medium">
+                Showing selected {selectedColumns.length} columns
+              </span>
+            </div>
+
+            <div className="overflow-x-auto rounded-xl border border-slate-200">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 text-slate-700 font-extrabold uppercase tracking-wider border-b border-slate-200">
                     {getColumnsForMode(mode)
                       .filter((c) => selectedColumns.includes(c.key))
                       .map((col) => (
-                        <td
-                          key={col.key}
-                          className="p-2 text-sm border-b align-top dark:border-slate-700 dark:text-slate-200"
-                        >
-                          {r[col.key]}
-                        </td>
+                        <th key={col.key} className="px-4 py-3 whitespace-nowrap">
+                          {col.header}
+                        </th>
                       ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
+                  {previewRows.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={selectedColumns.length || 1}
+                        className="text-center py-8 text-slate-400 font-bold"
+                      >
+                        No records found matching the active filters.
+                      </td>
+                    </tr>
+                  ) : (
+                    previewRows.map((r, idx) => (
+                      <tr
+                        key={r.id || idx}
+                        className="hover:bg-cyan-50/40 transition-colors"
+                      >
+                        {getColumnsForMode(mode)
+                          .filter((c) => selectedColumns.includes(c.key))
+                          .map((col) => (
+                            <td key={col.key} className="px-4 py-2.5 max-w-xs truncate">
+                              {col.key === "verified" || col.key === "verification_status" ? (
+                                <span
+                                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                                    String(r[col.key]).toLowerCase() === "approved" || r[col.key] === true
+                                      ? "bg-emerald-100 text-emerald-700"
+                                      : "bg-amber-100 text-amber-700"
+                                  }`}
+                                >
+                                  {String(r[col.key])}
+                                </span>
+                              ) : (
+                                String(r[col.key] !== undefined ? r[col.key] : "")
+                              )}
+                            </td>
+                          ))}
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

@@ -1,10 +1,13 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/axiosClient";
 import SuccessModal from "../../components/ui/SuccessModal";
 import CustomSelect from "../../components/ui/CustomSelect";
 import UploadDropzone from "../../components/ui/UploadDropzone";
+import { FaBriefcase, FaArrowLeft } from "react-icons/fa";
 
 export default function FacultyConsultancy() {
+  const nav = useNavigate();
   const [form, setForm] = useState({
     faculty_name: "",
     team_members: "",
@@ -36,9 +39,13 @@ export default function FacultyConsultancy() {
     setMessage("");
     try {
       const fd = new FormData();
-      const payload = { ...form, agency: normalizedAgency };
+      const teamMembersStr = Array.isArray(form.teamMembers) && form.teamMembers.length > 0
+        ? form.teamMembers.filter(Boolean).join(", ")
+        : form.team_members || "";
+
+      const payload = { ...form, agency: normalizedAgency, team_members: teamMembersStr };
       Object.entries(payload).forEach(([k, v]) => {
-        if (k === "agency_custom") return;
+        if (k === "agency_custom" || k === "teamMembers" || k === "teamMembersCount") return;
         fd.append(k, v || "");
       });
       if (proof) fd.append("proof", proof);
@@ -64,19 +71,33 @@ export default function FacultyConsultancy() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl p-6">
-      <SuccessModal
-        open={showSuccess}
-        title="Saved successfully"
-        subtitle="Faculty consultancy has been added."
-        onClose={() => setShowSuccess(false)}
-      />
-      <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">
-        Faculty Consultancy
-      </h1>
-      <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">
-        Add consultancy engagements and proof.
-      </p>
+    <div className="min-h-[calc(100vh-4rem)] bg-[#f8fafc] w-full">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+        {/* Top Navigation */}
+        <div>
+          <button
+            onClick={() => nav("/quick-actions")}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-800 shadow-sm hover:bg-slate-100 transition cursor-pointer"
+          >
+            <FaArrowLeft className="w-3.5 h-3.5 text-slate-600" />
+            Back to Quick Actions
+          </button>
+        </div>
+
+        {/* Header Title Box */}
+        <div className="flex items-center gap-4 bg-white rounded-3xl p-6 border border-slate-200/90 shadow-sm">
+          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-600 shadow-sm flex-shrink-0">
+            <FaBriefcase className="w-6 h-6" />
+          </span>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Faculty Consultancy
+            </h1>
+            <p className="text-sm text-slate-500 font-medium mt-0.5">
+              Add consultancy engagements and proof details below.
+            </p>
+          </div>
+        </div>
 
       <form onSubmit={onSubmit} className="space-y-6">
         <section className="glitter-card rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
@@ -257,15 +278,16 @@ export default function FacultyConsultancy() {
           />
         </section>
 
-        <div className="flex justify-end">
+        <div className="flex justify-end pt-4">
           <button
             disabled={submitting}
-            className="inline-flex items-center rounded-md bg-[#87CEEB] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 px-6 py-2.5 text-xs font-extrabold text-white shadow-md shadow-cyan-500/20 transition disabled:opacity-60 cursor-pointer"
           >
-            {submitting ? "Submitting..." : "Submit"}
+            {submitting ? "Submitting..." : "Submit Consultancy"}
           </button>
         </div>
       </form>
+      </div>
     </div>
   );
 }

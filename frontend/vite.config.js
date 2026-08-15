@@ -7,5 +7,19 @@ export default defineConfig({
     port: 3000,
     host: true,
     strictPort: false,
+    watch: {
+      usePolling: true,
+      ignored: ["**/dist/**", "**/node_modules/**"],
+    },
+    proxy: {
+      "/api": {
+        target: "http://localhost:5000",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
 });
+// Vite proxy configuration
+
+

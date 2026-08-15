@@ -6,6 +6,8 @@ import {
   listUsers,
   updateUserRole,
   deleteUser,
+  getActiveLogs,
+  getUserProfileById,
 } from "../controllers/adminController.js";
 import { validate } from "../middleware/validate.js";
 import { updateRoleSchema } from "../validators/staffSchemas.js";
@@ -16,7 +18,9 @@ const router = express.Router();
 router.use(requireAuth, requireRole(["admin"]));
 
 router.get("/stats", getAdminStats);
+router.get("/active-logs", getActiveLogs);
 router.get("/users", listUsers);
+router.get("/users/:id/profile", getUserProfileById);
 router.patch("/users/:id", validate(updateRoleSchema), updateUserRole);
 router.delete("/users/:id", deleteUser);
 

@@ -61,6 +61,9 @@ const StudentNotifications = React.lazy(
 const AdminUsersManagement = React.lazy(
   () => import("./pages/admin/AdminUsersManagement.jsx"),
 );
+const AdminActiveLogs = React.lazy(
+  () => import("./pages/admin/AdminActiveLogs"),
+);
 const AdminRoleUsersList = React.lazy(
   () => import("./pages/admin/AdminRoleUsersList"),
 );
@@ -132,19 +135,12 @@ const ProjectDetail = React.lazy(() => import("./pages/ProjectDetail"));
 const AchievementDetail = React.lazy(() => import("./pages/AchievementDetail"));
 const Profile = React.lazy(() => import("./pages/Profile"));
 
-// Keep these as regular imports (always needed)
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./hooks/useAuth";
+import RecordLoader from "./components/ui/RecordLoader";
 
-// Loading fallback component
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="text-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-      <p className="text-gray-600">Loading...</p>
-    </div>
-  </div>
-);
+// Modern Loading fallback component
+const LoadingFallback = () => <RecordLoader text="Loading System..." fullScreen={true} />;
 
 function RoleRedirect() {
   const { user } = useAuth();
@@ -159,9 +155,21 @@ export default function App() {
   const path = (location?.pathname || "/").replace(/\/+$/, "") || "/";
   const hideBackButton =
     path === "/" ||
+    path === "/quick-actions" ||
+    path === "/profile" ||
+    path === "/notifications" ||
+    path.startsWith("/achievements") ||
+    path.startsWith("/projects") ||
+    path === "/hackathons" ||
+    path.startsWith("/events") ||
+    path.startsWith("/faculty") ||
     path.startsWith("/admin") ||
     path.startsWith("/staff") ||
-    path.startsWith("/student");
+    path.startsWith("/student") ||
+    path.startsWith("/verify") ||
+    path.startsWith("/upload") ||
+    path.startsWith("/top-achievers") ||
+    path.startsWith("/bulk-export");
   // Hide navbar from auth pages
   const authRoutes = [
     "/login",
@@ -338,7 +346,7 @@ export default function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
 
           <Route
-            path="/admin/*"
+            path="/admin"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminDashboard />
@@ -439,6 +447,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminUsersManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/active-logs"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminActiveLogs />
               </ProtectedRoute>
             }
           />

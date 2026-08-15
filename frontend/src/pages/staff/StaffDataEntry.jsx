@@ -1,9 +1,14 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/axiosClient";
 import SuccessModal from "../../components/ui/SuccessModal";
 import UploadDropzone from "../../components/ui/UploadDropzone";
+import CustomSelect from "../../components/ui/CustomSelect";
+import { FaCloudUploadAlt, FaArrowLeft } from "react-icons/fa";
+import RecordLoader from "../../components/ui/RecordLoader";
 
 export default function UploadExtracurricular() {
+  const nav = useNavigate();
   const [uploaderName, setUploaderName] = useState("");
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -116,13 +121,34 @@ export default function UploadExtracurricular() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl p-6">
-      <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">
-        Other Data upload
-      </h1>
-      <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">
-        Upload CSV or Excel. Preview first, then save.
-      </p>
+    <div className="min-h-[calc(100vh-4rem)] bg-[#f8fafc] w-full">
+      {saving && <RecordLoader text="Processing Batch Data Upload..." fullScreen={true} />}
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+        {/* Top Navigation */}
+        <div>
+          <button
+            onClick={() => nav("/quick-actions")}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-800 shadow-sm hover:bg-slate-100 transition cursor-pointer"
+          >
+            <FaArrowLeft className="w-3.5 h-3.5 text-slate-600" />
+            Back to Quick Actions
+          </button>
+        </div>
+
+        {/* Header Title Box */}
+        <div className="flex items-center gap-4 bg-white rounded-3xl p-6 border border-slate-200/90 shadow-sm">
+          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 shadow-sm flex-shrink-0">
+            <FaCloudUploadAlt className="w-6 h-6" />
+          </span>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Other Data Upload
+            </h1>
+            <p className="text-sm text-slate-500 font-medium mt-0.5">
+              Upload CSV or Excel files of activities, preview records, and save to department database.
+            </p>
+          </div>
+        </div>
 
       {message && (
         <div className="mb-4 rounded border px-3 py-2 text-sm dark:border-slate-700">
@@ -248,6 +274,7 @@ export default function UploadExtracurricular() {
         subtitle="Your data has been saved."
         onClose={() => setShowSuccess(false)}
       />
+      </div>
     </div>
   );
 }

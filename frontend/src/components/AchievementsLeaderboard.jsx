@@ -1,21 +1,23 @@
 import React, { useEffect, useMemo, useState } from "react";
 import apiClient from "../api/axiosClient";
 import { useAuth } from "../hooks/useAuth";
+import {
+  FaTrophy,
+  FaCrown,
+  FaStar,
+  FaRocket,
+  FaFlask,
+  FaBriefcase,
+  FaUsers,
+  FaAward,
+} from "react-icons/fa";
 
 const CATEGORY_OPTIONS = [
-  { key: "achievements", label: "Achievements", short: "Achieve" },
-  { key: "projects", label: "Projects", short: "Projects" },
-  { key: "faculty_research", label: "Faculty Research", short: "Research" },
-  {
-    key: "faculty_consultancy",
-    label: "Faculty Consultancy",
-    short: "Consult.",
-  },
-  {
-    key: "faculty_participation",
-    label: "Faculty Participation",
-    short: "Particip.",
-  },
+  { key: "achievements", label: "Achievements", short: "Achieve", icon: FaTrophy },
+  { key: "projects", label: "Projects", short: "Projects", icon: FaRocket },
+  { key: "faculty_research", label: "Faculty Research", short: "Research", icon: FaFlask },
+  { key: "faculty_consultancy", label: "Faculty Consultancy", short: "Consult", icon: FaBriefcase },
+  { key: "faculty_participation", label: "Faculty Participation", short: "Particip", icon: FaUsers },
 ];
 
 export default function AchievementsLeaderboard({ limit = 10 }) {
@@ -27,20 +29,20 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
   const userRole = (user?.role || "").toLowerCase();
   const canViewFacultyBoards = userRole === "staff" || userRole === "admin";
 
-  // Students should only see student categories; staff/admin can access all.
+  // Students see student categories; staff/admin see all.
   const availableCategories = useMemo(() => {
     if (!canViewFacultyBoards) {
       return CATEGORY_OPTIONS.filter(
-        (opt) => opt.key === "achievements" || opt.key === "projects",
+        (opt) => opt.key === "achievements" || opt.key === "projects"
       );
     }
     return CATEGORY_OPTIONS;
   }, [canViewFacultyBoards]);
 
-  // Reset category if it's not available
+  // Reset category if not available
   useEffect(() => {
     const isValidCategory = availableCategories.some(
-      (opt) => opt.key === category,
+      (opt) => opt.key === category
     );
     if (!isValidCategory) {
       setCategory("achievements");
@@ -50,7 +52,7 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
   const title = useMemo(() => {
     switch (category) {
       case "projects":
-        return "Top Student Project Submitters";
+        return "Top Project Submitters";
       case "faculty_research":
         return "Top Faculty Researchers";
       case "faculty_consultancy":
@@ -65,13 +67,13 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
   const subtitle = useMemo(() => {
     switch (category) {
       case "projects":
-        return "Most approved projects";
+        return "Most approved project entries";
       case "faculty_research":
         return "Most faculty research submissions";
       case "faculty_consultancy":
-        return "Most faculty consultancy submissions";
+        return "Most consultancy projects";
       case "faculty_participation":
-        return "Most faculty participation submissions";
+        return "Most faculty participations";
       default:
         return "Most approved achievements";
     }
@@ -84,7 +86,7 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
       try {
         const roleParam = category.startsWith("faculty_") ? "staff" : "student";
         const data = await apiClient.get(
-          `/achievements/leaderboard?type=${category}&limit=${limit}&role=${roleParam}`,
+          `/achievements/leaderboard?type=${category}&limit=${limit}&role=${roleParam}`
         );
         if (!mounted) return;
         setLeaderboard(data.leaderboard || []);
@@ -100,102 +102,227 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
     };
   }, [limit, category]);
 
-  return (
-    <div className="rounded-xl border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 p-4 sm:p-6 shadow-lg">
-      <div className="flex items-center gap-2 mb-4">
-        <svg
-          className="w-5 h-5 text-yellow-400"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-        </svg>
-        <h3 className="text-lg font-bold text-slate-100">{title}</h3>
-      </div>
-      <p className="text-xs text-slate-300 mb-4">{subtitle}</p>
+  // Organize top 3 for the Podium view
+  const top1 = leaderboard[0];
+  const top2 = leaderboard[1];
+  const top3 = leaderboard[2];
+  const restList = leaderboard.slice(3);
 
-      {availableCategories.length > 1 && (
-        <div className="mb-4 flex flex-wrap gap-1.5">
-          {availableCategories.map((opt) => (
-            <button
-              type="button"
-              key={opt.key}
-              onClick={() => setCategory(opt.key)}
-              className={`rounded-full px-2.5 py-1 text-xs font-semibold transition-colors border ${
-                category === opt.key
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-slate-800 text-slate-200 border-slate-600 hover:border-slate-400"
+  return (
+    <div className="relative rounded-3xl border border-indigo-500/30 bg-gradient-to-br from-[#0a0f28] via-[#0f172a] to-[#040817] p-4 sm:p-5 shadow-2xl overflow-hidden w-full h-full flex flex-col justify-between space-y-4">
+      {/* Background Glowing Ambient Orbs */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden select-none z-0">
+        <div className="absolute -top-24 right-10 h-48 w-48 rounded-full bg-amber-500/15 blur-2xl" />
+        <div className="absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-indigo-600/20 blur-2xl" />
+      </div>
+
+      <div className="relative z-10 flex-1 flex flex-col justify-between space-y-3.5">
+        {/* Header Section */}
+        <div className="flex items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 shadow-md shadow-amber-500/20 flex-shrink-0">
+              <FaTrophy className="w-4 h-4 text-slate-950" />
+            </span>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <h3 className="text-sm sm:text-base font-extrabold text-white tracking-tight">
+                  {title}
+                </h3>
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 border border-amber-400/30 px-2 py-0.2 text-[9px] font-extrabold text-amber-300 uppercase tracking-wider">
+                  <FaStar className="w-2 h-2 text-amber-400" />
+                  Hall of Fame
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 font-medium">
+                {subtitle}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Category Selector Tabs */}
+        {availableCategories.length > 1 && (
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {availableCategories.map((opt) => {
+              const Icon = opt.icon;
+              const isActive = category === opt.key;
+              return (
+                <button
+                  type="button"
+                  key={opt.key}
+                  onClick={() => setCategory(opt.key)}
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[11px] font-extrabold whitespace-nowrap transition-all cursor-pointer flex-shrink-0 ${
+                    isActive
+                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm shadow-blue-500/30 border border-blue-400/40"
+                      : "bg-slate-900/80 text-slate-400 border border-slate-800 hover:bg-slate-800 hover:text-white"
+                  }`}
+                >
+                  <Icon className={`w-3 h-3 ${isActive ? "text-amber-300" : "text-slate-400"}`} />
+                  <span>{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Content Body */}
+        {loading ? (
+          <div className="p-8 text-center space-y-2">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-400 mx-auto" />
+            <p className="text-[11px] font-bold text-slate-400">Loading rankings...</p>
+          </div>
+        ) : leaderboard.length === 0 ? (
+          <div className="p-8 text-center space-y-1.5 rounded-2xl bg-slate-900/60 border border-slate-800">
+            <FaAward className="w-8 h-8 text-slate-600 mx-auto" />
+            <p className="text-xs font-bold text-slate-400">No verified records found for this category yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Top 3 Compact Visual Podium Stage */}
+            <div
+              className={`grid gap-2.5 pt-2 items-end ${
+                top3
+                  ? "grid-cols-3"
+                  : top2
+                  ? "grid-cols-2 max-w-xs mx-auto"
+                  : "grid-cols-1 max-w-[200px] mx-auto"
               }`}
             >
-              <span className="sm:hidden">{opt.short}</span>
-              <span className="hidden sm:inline">{opt.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
+              {/* #2 Rank Card (Silver - Left on 3-col layout) */}
+              {top2 && (
+                <div className={top3 ? "order-2 sm:order-1" : "order-2"}>
+                  <div className="relative rounded-2xl border border-slate-400/30 bg-gradient-to-b from-slate-800/80 via-slate-900 to-slate-950 p-2.5 shadow-md text-center space-y-2 hover:border-slate-300/60 transition-all duration-200 group">
+                    <div className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-slate-200 to-slate-400 text-slate-950 text-[10px] font-black shadow-xs mx-auto">
+                      #2
+                    </div>
+                    <div className="relative mx-auto h-10 w-10 rounded-xl bg-slate-800 border border-slate-300/50 flex items-center justify-center text-white text-sm font-extrabold shadow-xs group-hover:scale-105 transition-transform">
+                      {(top2.name || "U")[0].toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="text-xs font-extrabold text-white truncate px-1">
+                        {top2.name || "Unknown"}
+                      </h4>
+                      <p className="text-[10px] text-slate-400 truncate mt-0.5 px-1">
+                        {top2.email}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-800 border border-slate-400/30 px-2 py-0.5 text-[10px] font-black text-slate-200 shadow-xs">
+                        <FaStar className="w-2.5 h-2.5 text-slate-300" />
+                        {top2.achievement_count}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
-      {loading ? (
-        <div className="text-sm text-slate-300 py-4">Loading...</div>
-      ) : leaderboard.length === 0 ? (
-        <div className="text-sm text-slate-300 py-4">No records yet.</div>
-      ) : (
-        <div className="space-y-3">
-          {leaderboard.map((student, index) => (
-            <div
-              key={`${student.id}-${index}`}
-              className="flex items-center justify-between p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors"
-            >
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="flex-shrink-0">
-                  {index === 0 && (
-                    <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 text-white font-bold text-sm shadow-lg">
-                      1
+              {/* #1 Rank Card (Gold Crown - Center - Highest Elevation) */}
+              {top1 && (
+                <div className={top3 ? "order-1 sm:order-2 -mt-3" : "order-1"}>
+                  <div className="relative rounded-2xl border-2 border-amber-400/70 bg-gradient-to-b from-amber-500/20 via-slate-900 to-slate-950 p-3 shadow-[0_0_20px_rgba(245,158,11,0.2)] text-center space-y-2 hover:border-amber-300 transition-all duration-200 group">
+                    {/* Floating Gold Crown Icon */}
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-950 px-2.5 py-0.5 rounded-full text-[9px] font-black flex items-center gap-1 shadow-md">
+                      <FaCrown className="w-2.5 h-2.5 text-slate-950" />
+                      1st
                     </div>
-                  )}
-                  {index === 1 && (
-                    <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br from-slate-300 to-slate-500 text-white font-bold text-sm shadow-lg">
-                      2
+
+                    <div className="relative mx-auto mt-1.5 h-12 w-12 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-600 p-0.5 shadow-md group-hover:scale-105 transition-transform">
+                      <div className="h-full w-full rounded-[10px] bg-slate-950 flex items-center justify-center text-amber-300 text-base font-black">
+                        {(top1.name || "U")[0].toUpperCase()}
+                      </div>
                     </div>
-                  )}
-                  {index === 2 && (
-                    <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-white font-bold text-sm shadow-lg">
-                      3
+
+                    <div className="min-w-0">
+                      <h4 className="text-xs font-black text-amber-300 truncate px-1">
+                        {top1.name || "Unknown"}
+                      </h4>
+                      <p className="text-[10px] text-slate-300 truncate mt-0.5 font-medium px-1">
+                        {top1.email}
+                      </p>
                     </div>
-                  )}
-                  {index > 2 && (
-                    <div className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-600 text-slate-200 font-semibold text-sm">
-                      {index + 1}
+
+                    <div>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/20 border border-amber-400/50 px-2.5 py-0.5 text-[10px] font-black text-amber-300 shadow-xs">
+                        <FaTrophy className="w-2.5 h-2.5 text-amber-400" />
+                        {top1.achievement_count}
+                      </span>
                     </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-slate-100 text-sm truncate">
-                    {student.name || "Unknown"}
-                  </div>
-                  <div className="text-xs text-slate-300 truncate">
-                    {student.email}
                   </div>
                 </div>
-              </div>
-              <div className="flex-shrink-0 ml-2">
-                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-500/20">
-                  <svg
-                    className="w-3 h-3 text-blue-300"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                  <span className="text-xs font-bold text-blue-300">
-                    {student.achievement_count}
-                  </span>
+              )}
+
+              {/* #3 Rank Card (Bronze - Right on desktop) */}
+              {top3 && (
+                <div className="order-3 sm:order-3">
+                  <div className="relative rounded-2xl border border-amber-700/40 bg-gradient-to-b from-amber-800/20 via-slate-900 to-slate-950 p-2.5 shadow-md text-center space-y-2 hover:border-amber-600/60 transition-all duration-200 group">
+                    <div className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-amber-600 to-amber-800 text-white text-[10px] font-black shadow-xs mx-auto">
+                      #3
+                    </div>
+                    <div className="relative mx-auto h-10 w-10 rounded-xl bg-slate-800 border border-amber-700/50 flex items-center justify-center text-amber-400 text-sm font-extrabold shadow-xs group-hover:scale-105 transition-transform">
+                      {(top3.name || "U")[0].toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="text-xs font-extrabold text-white truncate px-1">
+                        {top3.name || "Unknown"}
+                      </h4>
+                      <p className="text-[10px] text-slate-400 truncate mt-0.5 px-1">
+                        {top3.email}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-800 border border-amber-700/30 px-2 py-0.5 text-[10px] font-black text-amber-400 shadow-xs">
+                        <FaStar className="w-2.5 h-2.5 text-amber-500" />
+                        {top3.achievement_count}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
-          ))}
-        </div>
-      )}
+
+            {/* Ranks 4+ List Section */}
+            {restList.length > 0 && (
+              <div className="space-y-1.5 pt-2 border-t border-slate-800/80">
+                <h4 className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-1">
+                  Other Achievers
+                </h4>
+                <div className="space-y-1.5">
+                  {restList.map((student, index) => {
+                    const rankNum = index + 4;
+                    return (
+                      <div
+                        key={`${student.id}-${index}`}
+                        className="flex items-center justify-between p-2 rounded-xl bg-slate-900/80 border border-slate-800 hover:bg-slate-800/80 transition-all duration-200"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-lg bg-slate-800 text-slate-400 text-[10px] font-black flex-shrink-0">
+                            #{rankNum}
+                          </span>
+                          <div className="min-w-0">
+                            <div className="font-bold text-white text-xs truncate">
+                              {student.name || "Unknown"}
+                            </div>
+                            <div className="text-[10px] text-slate-400 truncate">
+                              {student.email}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex-shrink-0 ml-2">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-blue-500/10 border border-blue-400/20 px-2 py-0.5 text-[10px] font-extrabold text-blue-300">
+                            <FaStar className="w-2 h-2 text-blue-400" />
+                            {student.achievement_count}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/axiosClient";
-import BackButton from "../../components/BackButton";
-import Card from "../../components/ui/Card";
 import CustomSelect from "../../components/ui/CustomSelect";
+import { FaTasks, FaArrowLeft, FaSync, FaPlus, FaTrashAlt, FaSearch } from "react-icons/fa";
 
 export default function AdminStaffCoordinators() {
+  const nav = useNavigate();
   const [mappings, setMappings] = useState([]);
   const [staffList, setStaffList] = useState([]);
   const [activityTypes, setActivityTypes] = useState([]);
@@ -28,7 +29,7 @@ export default function AdminStaffCoordinators() {
       ]);
       const maps = mapRes.mappings || mapRes || [];
       const staff = (staffRes.users || []).filter(
-        (u) => u.role === "staff" || u.role === "admin",
+        (u) => u.role === "staff" || u.role === "admin"
       );
       const types = typesRes.activityTypes || typesRes || [];
       setMappings(maps);
@@ -57,7 +58,7 @@ export default function AdminStaffCoordinators() {
         activityType: activityType.trim(),
         staffId: Number(staffId),
       });
-      setSuccess("Coordinator added");
+      setSuccess("Coordinator added successfully");
       setShowModal(false);
       setActivityType("");
       setStaffId("");
@@ -93,154 +94,174 @@ export default function AdminStaffCoordinators() {
   });
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-slate-50 dark:bg-slate-950 py-6 sm:py-10">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <BackButton />
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-            Staff Coordinators Mapping
-          </h1>
-          <p className="text-slate-600 dark:text-slate-300">
-            Map staff to achievement/project activity types (e.g., hackathon,
-            paper presentation, coding competition).
-          </p>
+    <div className="min-h-[calc(100vh-4rem)] bg-[#f8fafc] w-full">
+      <div className="w-full px-4 sm:px-6 lg:px-10 py-4 sm:py-6 space-y-4">
+        {/* Top Navigation */}
+        <div>
+          <button
+            onClick={() => nav("/admin/quick-actions")}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 shadow-xs hover:bg-slate-100 transition cursor-pointer"
+          >
+            <FaArrowLeft className="w-3 h-3 text-slate-600" />
+            Back to Admin Quick Actions
+          </button>
+        </div>
+
+        {/* Header Title Box */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm w-full">
+          <div className="flex items-center gap-3.5">
+            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-purple-600 shadow-xs flex-shrink-0">
+              <FaTasks className="w-5 h-5" />
+            </span>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+                Activity Coordinators
+              </h1>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Map staff members to specific achievement & event activity types.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={load}
+              disabled={loading}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-purple-200 bg-purple-50 px-3.5 py-2 text-xs font-extrabold text-purple-700 hover:bg-purple-100 transition cursor-pointer"
+            >
+              <FaSync className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+
+            <button
+              onClick={() => setShowModal(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 px-5 py-2 text-xs font-extrabold text-white shadow-md shadow-purple-500/20 transition cursor-pointer"
+            >
+              <FaPlus className="w-3 h-3" />
+              Add Coordinator
+            </button>
+          </div>
         </div>
 
         {error && (
-          <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/40 dark:text-red-300">
+          <div className="rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-xs font-bold text-rose-800 shadow-xs">
             {error}
           </div>
         )}
         {success && (
-          <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/40 dark:text-green-300">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-xs font-bold text-emerald-800 shadow-xs">
             {success}
           </div>
         )}
 
-        <div className="mb-6 flex flex-wrap items-end gap-3">
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-              Search by activity or staff
-            </label>
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Hackathon, Paper, Staff name/email"
-              className="w-full rounded border px-3 py-2 text-sm bg-white dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-            />
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-4 w-full">
+          {/* Search Filter Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-slate-100">
+            <div className="relative w-full sm:w-80">
+              <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search activity, staff name or email..."
+                className="w-full rounded-xl border border-slate-300 pl-9 pr-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-600 shadow-xs"
+              />
+            </div>
+            <span className="text-xs font-extrabold text-slate-500">
+              {filtered.length} Coordinators Mapped
+            </span>
           </div>
-          {query && (
-            <button
-              onClick={() => setQuery("")}
-              className="rounded-md px-3 py-2 text-sm border bg-white dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-            >
-              Reset
-            </button>
-          )}
-          <button
-            onClick={() => setShowModal(true)}
-            className="btn btn-primary btn-sm"
-          >
-            + Add Coordinator
-          </button>
-          <button
-            onClick={load}
-            disabled={loading}
-            className="rounded-md px-4 py-2 text-sm font-semibold text-white bg-slate-600 hover:bg-slate-700 disabled:opacity-50"
-          >
-            {loading ? "Refreshing..." : "Refresh"}
-          </button>
-        </div>
 
-        {loading && !mappings.length ? (
-          <div className="text-center py-8 text-slate-600 dark:text-slate-400">
-            Loading coordinators...
-          </div>
-        ) : filtered.length === 0 ? (
-          <Card className="p-8 text-center">
-            <p className="text-slate-600 dark:text-slate-400">
-              {mappings.length === 0
-                ? "No coordinators assigned yet. Click 'Add Coordinator' to get started."
-                : "No matches found for your search."}
-            </p>
-          </Card>
-        ) : (
-          <div className="grid gap-3">
-            {filtered.map((m) => (
-              <Card key={m.id} className="p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                      {m.activity_type || "(unspecified)"}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {loading && !mappings.length ? (
+              <div className="col-span-full text-center py-8 text-xs font-bold text-slate-400">
+                Loading coordinator mappings...
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="col-span-full text-center py-8 text-xs font-bold text-slate-400">
+                No activity coordinators mapped yet.
+              </div>
+            ) : (
+              filtered.map((m) => (
+                <div
+                  key={m.id}
+                  className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 hover:bg-white hover:shadow-xs hover:border-purple-300 transition-all flex items-center justify-between gap-3"
+                >
+                  <div className="min-w-0">
+                    <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider truncate">
+                      {m.activity_type || "(Unspecified)"}
+                    </h3>
+                    <p className="text-xs font-bold text-purple-700 mt-0.5 truncate">
+                      {m.staff_name}
                     </p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">
-                      {m.staff_name} ({m.staff_email})
+                    <p className="text-[11px] text-slate-500 font-medium truncate">
+                      {m.staff_email}
                     </p>
                   </div>
                   <button
                     onClick={() => handleDelete(m.id)}
-                    className="rounded-md px-3 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700"
+                    className="inline-flex items-center gap-1 rounded-lg bg-rose-600 hover:bg-rose-700 px-3 py-1.5 text-[11px] font-extrabold text-white shadow-xs transition cursor-pointer flex-shrink-0"
                   >
+                    <FaTrashAlt className="w-2.5 h-2.5" />
                     Remove
                   </button>
                 </div>
-              </Card>
-            ))}
+              ))
+            )}
           </div>
-        )}
+        </div>
 
         {showModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl p-6 w-full max-w-md">
-              <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-4">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md border border-slate-200 space-y-4">
+              <h2 className="text-lg font-extrabold text-slate-900 pb-2 border-b border-slate-100">
                 Assign Staff Coordinator
               </h2>
 
-              <div className="mb-4">
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Activity Type
-                </label>
-                <div className="flex gap-2">
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wider mb-1">
+                    Activity Type
+                  </label>
                   <CustomSelect
-                    className="flex-1"
+                    className="w-full"
                     value={activityType}
                     onChange={(value) => setActivityType(value)}
                     options={[
                       ...activityTypes,
-                      { value: "__custom", label: "+ Custom" },
+                      { value: "__custom", label: "+ Custom Activity" },
                     ]}
-                    placeholder="Select activity"
-                    buttonClassName="rounded"
-                    menuClassName="w-full max-w-full"
+                    placeholder="Select activity type"
+                    buttonClassName="rounded-xl border-slate-300 text-xs font-semibold py-2"
+                  />
+                  {activityType === "__custom" && (
+                    <input
+                      autoFocus
+                      onChange={(e) => setActivityType(e.target.value)}
+                      placeholder="Type custom activity name..."
+                      className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                    />
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wider mb-1">
+                    Select Staff Member
+                  </label>
+                  <CustomSelect
+                    className="w-full"
+                    value={staffId}
+                    onChange={(value) => setStaffId(value)}
+                    options={staffList.map((s) => ({
+                      value: String(s.id),
+                      label: `${s.full_name} (${s.email})`,
+                    }))}
+                    placeholder="Select staff member"
+                    buttonClassName="rounded-xl border-slate-300 text-xs font-semibold py-2"
                   />
                 </div>
-                {activityType === "__custom" && (
-                  <input
-                    autoFocus
-                    onChange={(e) => setActivityType(e.target.value)}
-                    placeholder="Type a new activity"
-                    className="mt-2 w-full rounded border px-3 py-2 text-sm bg-white dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
-                  />
-                )}
               </div>
 
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Staff Member
-                </label>
-                <CustomSelect
-                  value={staffId}
-                  onChange={(value) => setStaffId(value)}
-                  options={staffList.map((s) => ({
-                    value: String(s.id),
-                    label: `${s.full_name} (${s.email})`,
-                  }))}
-                  placeholder="Select staff"
-                  buttonClassName="rounded"
-                />
-              </div>
-
-              <div className="flex gap-3">
+              <div className="flex gap-2.5 pt-2">
                 <button
                   onClick={() => {
                     setShowModal(false);
@@ -248,16 +269,16 @@ export default function AdminStaffCoordinators() {
                     setStaffId("");
                     setError(null);
                   }}
-                  className="flex-1 rounded-md px-4 py-2 text-sm font-semibold bg-slate-200 dark:bg-slate-800 dark:text-slate-100 hover:bg-slate-300 dark:hover:bg-slate-700"
+                  className="flex-1 rounded-xl px-4 py-2.5 text-xs font-extrabold bg-slate-100 text-slate-700 hover:bg-slate-200 transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAdd}
                   disabled={submitting || !activityType.trim() || !staffId}
-                  className="flex-1 rounded-md px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                  className="flex-1 rounded-xl px-4 py-2.5 text-xs font-extrabold text-white bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-500/20 transition disabled:opacity-50 cursor-pointer"
                 >
-                  {submitting ? "Adding..." : "Add"}
+                  {submitting ? "Adding..." : "Assign Coordinator"}
                 </button>
               </div>
             </div>

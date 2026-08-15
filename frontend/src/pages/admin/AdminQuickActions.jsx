@@ -1,23 +1,37 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
-import BackButton from "../../components/BackButton";
-import Card from "../../components/ui/Card";
-import PageHeader from "../../components/ui/PageHeader";
+import {
+  FaBolt,
+  FaArrowLeft,
+  FaSearch,
+  FaCloudUploadAlt,
+  FaUserTie,
+  FaUserGraduate,
+  FaCalendarAlt,
+  FaFileExport,
+  FaDownload,
+  FaUserCog,
+  FaTasks,
+  FaStar,
+  FaChevronRight,
+  FaInfoCircle,
+  FaShieldAlt,
+  FaHistory,
+} from "react-icons/fa";
 
 export default function AdminQuickActions() {
   const nav = useNavigate();
-  const { user } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const goTo = (key) => () => {
+    if (key === "activeLogs") return nav("/admin/active-logs");
     if (key === "achievements") return nav("/achievements");
     if (key === "customAchievements") return nav("/admin/custom-achievements");
     if (key === "projects") return nav("/projects/upload");
     if (key === "verifyAchievements") return nav("/admin/verify-achievements");
     if (key === "verifyProjects") return nav("/admin/verify-projects");
     if (key === "staffEvents") return nav("/admin/upload-events");
-    if (key === "facultyParticipation")
-      return nav("/admin/faculty-participation");
+    if (key === "facultyParticipation") return nav("/admin/faculty-participation");
     if (key === "facultyResearch") return nav("/admin/faculty-research");
     if (key === "facultyConsultancy") return nav("/admin/faculty-consultancy");
     if (key === "uploadExtra") return nav("/admin/upload-extra-curricular");
@@ -26,343 +40,165 @@ export default function AdminQuickActions() {
     if (key === "exportRecords") return nav("/admin/reports");
     if (key === "bulkExport") return nav("/admin/bulk-export");
     if (key === "manageUsers") return nav("/admin/users");
-    if (key === "activityCoordinators")
-      return nav("/admin/activity-coordinators");
+    if (key === "activityCoordinators") return nav("/admin/activity-coordinators");
     return nav("/");
   };
 
+  const adminActions = [
+    {
+      key: "activeLogs",
+      title: "Active System Logs",
+      desc: "Real-time track of uploads, approvals, and user profiles",
+      icon: FaHistory,
+      iconBg: "bg-indigo-100 text-indigo-600",
+    },
+    {
+      key: "studentsBatch",
+      title: "Add Students Batch",
+      desc: "Upload CSV/Excel to add students in bulk",
+      icon: FaUserGraduate,
+      iconBg: "bg-fuchsia-100 text-fuchsia-600",
+    },
+    {
+      key: "staffBatch",
+      title: "Staff Batch Upload",
+      desc: "Upload CSV/Excel to create staff accounts in bulk",
+      icon: FaUserTie,
+      iconBg: "bg-violet-100 text-violet-600",
+    },
+    {
+      key: "uploadExtra",
+      title: "Other Data Upload",
+      desc: "Upload CSV/Excel of activities and save",
+      icon: FaCloudUploadAlt,
+      iconBg: "bg-sky-100 text-sky-600",
+    },
+    {
+      key: "staffEvents",
+      title: "Upload Events",
+      desc: "Create and manage department events",
+      icon: FaCalendarAlt,
+      iconBg: "bg-indigo-100 text-indigo-600",
+    },
+    {
+      key: "exportRecords",
+      title: "Export Records",
+      desc: "Generate Excel/CSV reports for projects and achievements",
+      icon: FaFileExport,
+      iconBg: "bg-cyan-100 text-cyan-600",
+    },
+    {
+      key: "bulkExport",
+      title: "Bulk Export Data",
+      desc: "Download complete database backup in Excel format",
+      icon: FaDownload,
+      iconBg: "bg-blue-100 text-blue-600",
+    },
+    {
+      key: "manageUsers",
+      title: "Manage Users",
+      desc: "View, change roles, or remove registered users",
+      icon: FaUserCog,
+      iconBg: "bg-rose-100 text-rose-600",
+    },
+    {
+      key: "activityCoordinators",
+      title: "Activity Coordinators",
+      desc: "Map staff to activity types and permissions",
+      icon: FaTasks,
+      iconBg: "bg-purple-100 text-purple-600",
+    },
+    {
+      key: "customAchievements",
+      title: "Add Custom Achievements",
+      desc: "Create new achievement titles for forms and mappings",
+      icon: FaStar,
+      iconBg: "bg-amber-100 text-amber-600",
+    },
+  ];
+
+  const filteredActions = adminActions.filter(
+    (act) =>
+      act.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      act.desc.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-slate-50">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-12">
-        <BackButton />
-        <PageHeader
-          title="Quick Actions"
-          subtitle="Manage and verify department submissions."
-        />
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-          <Card
-            onClick={goTo("studentsBatch")}
-            className="p-4 sm:p-6 glitter-card bulge-card"
+    <div className="min-h-[calc(100vh-4rem)] bg-[#f8fafc] w-full">
+      <div className="w-full px-4 sm:px-6 lg:px-10 py-4 sm:py-6 space-y-4">
+        {/* Header Navigation */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <button
+            onClick={() => nav("/")}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 shadow-xs hover:bg-slate-100 transition cursor-pointer self-start"
           >
-            <Tile
-              icon={<IconUpload />}
-              title="Add Students Batch"
-              desc="Upload CSV/Excel to add students in bulk."
-              color="fuchsia"
+            <FaArrowLeft className="w-3 h-3 text-slate-600" />
+            Back to Home
+          </button>
+
+          {/* Search Bar */}
+          <div className="relative w-full sm:w-80">
+            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search admin actions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-full border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 shadow-sm"
             />
-          </Card>
-          <Card
-            onClick={goTo("staffBatch")}
-            className="p-4 sm:p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconUpload />}
-              title="Staff Batch Upload"
-              desc="Upload CSV/Excel to create staff accounts in bulk."
-              color="violet"
-            />
-          </Card>
-          <Card
-            onClick={goTo("uploadExtra")}
-            className="p-4 sm:p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconUpload />}
-              title="Other Data Upload"
-              desc="Upload CSV/Excel of activities and save."
-              color="sky"
-            />
-          </Card>
-          <Card
-            onClick={goTo("staffEvents")}
-            className="p-4 sm:p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconCalendar />}
-              title="Upload Events"
-              desc="Create and manage department events."
-              color="indigo"
-            />
-          </Card>
-          <Card
-            onClick={goTo("exportRecords")}
-            className="p-4 sm:p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconUpload />}
-              title="Export Records"
-              desc="Generate Excel/CSV reports."
-              color="cyan"
-            />
-          </Card>
-          <Card
-            onClick={goTo("bulkExport")}
-            className="p-4 sm:p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconDownload />}
-              title="Bulk Export Data"
-              desc="Download complete database backup."
-              color="blue"
-            />
-          </Card>
-          <Card
-            onClick={goTo("manageUsers")}
-            className="p-4 sm:p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconUsers />}
-              title="Manage Users"
-              desc="View, change roles, or remove users."
-              color="red"
-            />
-          </Card>
-          <Card
-            onClick={goTo("activityCoordinators")}
-            className="p-4 sm:p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconList />}
-              title="Activity Coordinators"
-              desc="Map staff to activity types."
-              color="purple"
-            />
-          </Card>
-          <Card
-            onClick={goTo("customAchievements")}
-            className="p-4 sm:p-6 glitter-card bulge-card"
-          >
-            <Tile
-              icon={<IconStar />}
-              title="Add Custom Achievements"
-              desc="Create new achievement titles for forms and mappings."
-              color="amber"
-            />
-          </Card>
+          </div>
+        </div>
+
+        {/* Page Title Card */}
+        <div className="flex items-center gap-4 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm">
+          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-500/20 flex-shrink-0">
+            <FaBolt className="w-6 h-6" />
+          </span>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Admin Quick Actions
+            </h1>
+            <p className="text-sm text-slate-500 font-medium mt-0.5">
+              Manage users, batch uploads, coordinators, and system data.
+            </p>
+          </div>
+        </div>
+
+        {/* Action Cards Container */}
+        <div className="bg-[#f0f6ff]/80 rounded-3xl border border-blue-100/80 p-5 sm:p-6 shadow-sm space-y-4">
+          <h2 className="text-base sm:text-lg font-bold text-blue-600 flex items-center gap-2">
+            <FaShieldAlt className="w-4 h-4 text-blue-600" />
+            Admin Operations
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {filteredActions.map((act) => (
+              <button
+                key={act.key}
+                onClick={goTo(act.key)}
+                className="group rounded-2xl border border-slate-200/90 bg-white p-4 text-left shadow-sm hover:shadow-md hover:border-blue-400 transition-all duration-200 flex items-center justify-between gap-3 cursor-pointer w-full"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span
+                    className={`flex h-11 w-11 items-center justify-center rounded-2xl ${act.iconBg} shadow-sm flex-shrink-0 group-hover:scale-105 transition-transform`}
+                  >
+                    <act.icon className="w-5 h-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
+                      {act.title}
+                    </h3>
+                    <p className="text-xs text-slate-500 line-clamp-2 mt-0.5 font-medium leading-relaxed">
+                      {act.desc}
+                    </p>
+                  </div>
+                </div>
+                <FaChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+              </button>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
-// Minimal inline SVG icon components reused from QuickActions
-function IconCheck() {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-    >
-      <path d="M20 6l-11 11-5-5" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-function IconWindow() {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-    >
-      <rect x="3" y="4" width="18" height="14" rx="2" strokeWidth="2" />
-      <path d="M3 10h18" strokeWidth="2" />
-    </svg>
-  );
-}
-function IconList() {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-    >
-      <path d="M4 6h16M4 12h10M4 18h8" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-function IconChat() {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-    >
-      <path
-        d="M21 15a4 4 0 01-4 4H8l-5 3V7a4 4 0 014-4h10a4 4 0 014 4v8z"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-function IconCalendar() {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-    >
-      <rect x="3" y="4" width="18" height="18" rx="2" strokeWidth="2" />
-      <path d="M16 2v4M8 2v4M3 10h18" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-function IconUpload() {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-    >
-      <path
-        d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <polyline
-        points="7 10 12 15 17 10"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <line
-        x1="12"
-        y1="15"
-        x2="12"
-        y2="3"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function IconDownload() {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-    >
-      <path
-        d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <polyline
-        points="7 10 12 15 17 10"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <line
-        x1="12"
-        y1="15"
-        x2="12"
-        y2="3"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function IconStar() {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-    >
-      <path
-        d="M12 3l2.9 6.1L21 10l-4.5 4.3L17.6 21 12 17.8 6.4 21l1.1-6.7L3 10l6.1-.9L12 3z"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function IconUsers() {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-    >
-      <path
-        d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="9" cy="7" r="4" strokeWidth="2" />
-      <path
-        d="M22 21v-2a4 4 0 00-3-3.87"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M16 3.13a4 4 0 010 7.75"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-// Small helper to render tile content consistently inside Card
-function Tile({ icon, title, desc, color }) {
-  const colorMap = {
-    blue: "bg-blue-100 text-blue-600",
-    sky: "bg-sky-100 text-sky-600",
-    green: "bg-green-100 text-green-600",
-    teal: "bg-teal-100 text-teal-600",
-    emerald: "bg-emerald-100 text-emerald-600",
-    violet: "bg-violet-100 text-violet-600",
-    fuchsia: "bg-fuchsia-100 text-fuchsia-600",
-    purple: "bg-purple-100 text-purple-600",
-    orange: "bg-orange-100 text-orange-600",
-    amber: "bg-amber-100 text-amber-600",
-    indigo: "bg-indigo-100 text-indigo-600",
-    cyan: "bg-cyan-100 text-cyan-600",
-    red: "bg-red-100 text-red-600",
-  };
-  const badge = colorMap[color] || colorMap.blue;
-  return (
-    <div>
-      <div className="flex items-center gap-3">
-        <span
-          className={`inline-flex h-10 w-10 items-center justify-center rounded-md ${badge}`}
-        >
-          {icon}
-        </span>
-        <h3 className="text-lg font-semibold text-slate-800">{title}</h3>
-      </div>
-      <p className="mt-2 text-slate-600">{desc}</p>
     </div>
   );
 }

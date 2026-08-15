@@ -1,37 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="16" failures="0" errors="0" time="1.111">
-    <testsuite name="src/__tests__/controllers/authController.test.js" timestamp="2026-07-04T08:35:40.317Z" hostname="GOKULNATHAN" tests="16" failures="0" errors="0" skipped="0" time="0.028743">
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 400 when email is missing" time="0.007336">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 400 when otp is missing" time="0.001901">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 401 when no OTP record exists for the email" time="0.0019217">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 429 when the OTP has exceeded 5 attempts" time="0.0007216">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 401 when the OTP is expired" time="0.0011164">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 401 and increments attempts when OTP code is wrong" time="0.0014334">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 500 when user row is missing after successful OTP verification (bug fix)" time="0.003162">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 200 with a JWT and session token on successful verification" time="0.0010807">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 400 when email is missing" time="0.001144">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 400 when otp is missing" time="0.0004734">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 401 when no OTP record exists" time="0.0005451">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 429 when too many failed OTP attempts" time="0.0005798">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 401 when OTP is expired" time="0.0006018">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 401 for a wrong OTP code" time="0.0006841">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 500 when user row is missing after OTP deletion (bug fix)" time="0.001525">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 200 with JWT on successful login OTP verification" time="0.0010791">
+<testsuites name="vitest tests" tests="1" failures="0" errors="0" time="1.677">
+    <testsuite name="src/__tests__/services/mailService.test.js" timestamp="2026-08-15T08:43:04.151Z" hostname="GOKULNATHAN" tests="1" failures="0" errors="0" skipped="0" time="0.702942">
+        <testcase classname="src/__tests__/services/mailService.test.js" name="mailService &gt; skips OTP email delivery only when fake-mail mode is enabled" time="0.7000252">
+            <system-out>
+[dotenv@17.2.3] injecting env (21) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+
+            </system-out>
         </testcase>
     </testsuite>
 </testsuites>

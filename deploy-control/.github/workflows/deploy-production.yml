@@ -1,0 +1,236 @@
+# ============================================================================
+# DRMS Deploy Control - PRIVATE repo (DRAFT FOR REVIEW)
+# ============================================================================
+# DESTINATION: a PRIVATE deployment-control repo (e.g. org/drms-deploy) the
+# team owns. This file is stored in deploy-control/.github/workflows/ so it
+# is INERT here in the public repo (GitHub only activates .github/workflows/
+# at the repo root) and can be lifted wholesale into the private repo.
+#
+# PURPOSE
+#   workflow_dispatch (operator picks a release) -> HOSTED verification job
+#   (no secrets, no runner) -> production environment approval -> deploy on
+#   the dedicated lab self-hosted runner (drms-lab).
+#
+# SECURITY MODEL (see artifact-flow-security-assessment)
+#   * The public DRMS repo is UNTRUSTED. The artifact is treated as DATA on
+#     the privileged runner: download -> verify -> ship to hosts. NEVER
+#     checkout the public repo on the runner; NEVER npm ci or run scripts
+#     from the public repo on the runner.
+#   * Trust anchor = human-approved commit SHA + digest from a COMMITTED
+#     manifest in THIS repo (never fetched from the untrusted release).
+#   * dry_run=true (default): verify + print plan, touch no host.
+#   * dry_run=false: FAILS CLOSED (exit 1) until the real deploy steps are
+#     implemented in a later slice. It is impossible to deploy as written.
+#
+# TODO (next slices; requires owner/admin enablement of the private repo)
+#   1. Create the private control repo + `production` environment with
+#      required reviewers; add secrets (DRMS_DEPLOY_SSH_KEY etc.).
+#   2. Provision the `drms-lab` self-hosted runner in the lab.
+#   3. Implement the deploy job: port Jenkinsfile stages 6-8 (backend
+#      release dir + .env symlink, PGPASSWORD-safe migrations, symlink
+#      current + pm2 reload drms + health check + auto-rollback, frontend
+#      backup/scp, smoke test) as control-repo-owned scripts.
+#   4. Wire real SBOM/provenance verification (attest-build-provenance).
+# ============================================================================
+
+name: DRMS Deploy Control
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to deploy (e.g. prod-stable-v2026.8.15.1)'
+        required: true
+        type: string
+      expected_sha256:
+        description: >-
+          Expected artifact sha256. If empty, the committed manifest
+          releases/<tag>.sha256 in THIS repo is used. Mismatch fails closed.
+        required: false
+        type: string
+      expected_commit:
+        description: >-
+          Expected commit SHA the artifact must have been built from (from
+          MANIFEST.json inside the artifact). If empty, only the digest is
+          checked. Strongly recommended once the release build is trusted.
+        required: false
+        type: string
+      dry_run:
+        description: >-
+          Verify and print the deploy plan only; never touch lab hosts.
+          Set false ONLY after the deploy steps are implemented.
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: drms-deploy-prod
+  cancel-in-progress: false
+
+env:
+  PUBLIC_REPO: G0kul17/Department-Record-Management-System
+
+jobs:
+  verify:
+    name: Verify release artifact (hosted, no secrets)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+      artifact_name: ${{ steps.resolve.outputs.artifact_name }}
+      sha256: ${{ steps.resolve.outputs.sha256 }}
+      commit_sha: ${{ steps.resolve.outputs.commit_sha }}
+    steps:
+      - name: Check out control repo (for committed manifest)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Resolve release metadata
+        id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${{ inputs.release_tag }}"
+          echo "Resolving release ${TAG} from ${PUBLIC_REPO}"
+
+          # Release must exist and point at a real commit.
+          REL=$(gh api "repos/${PUBLIC_REPO}/releases/tags/${TAG}" --jq '.')
+          COMMIT=$(echo "$REL" | jq -r '.target_commitish')
+          echo "commit_sha=$COMMIT" >> "$GITHUB_OUTPUT"
+
+          # Download artifact + checksum (public repo, no auth needed beyond token).
+          rm -rf ./download && mkdir -p ./download
+          gh release download "$TAG" \
+            -R "${PUBLIC_REPO}" \
+            -p 'drms-*.tar.gz' -p 'drms-*.tar.gz.sha256' \
+            -D ./download
+          ARTIFACT=$(ls ./download/drms-*.tar.gz | head -1)
+          echo "artifact_name=$(basename "$ARTIFACT")" >> "$GITHUB_OUTPUT"
+          echo "version=$(basename "$ARTIFACT" .tar.gz | sed 's/^drms-//')" >> "$GITHUB_OUTPUT"
+
+          # Trust anchor: expected digest MUST come from a committed manifest
+          # in THIS repo or the explicit workflow input - never from the
+          # untrusted release itself.
+          EXPECTED="${{ inputs.expected_sha256 }}"
+          if [ -z "$EXPECTED" ]; then
+            MANIFEST="releases/${TAG}.sha256"
+            if [ ! -f "$MANIFEST" ]; then
+              echo "::error::No expected sha256 given and committed manifest $MANIFEST not found."
+              echo "::error::Refusing to verify against a digest fetched from the untrusted release."
+              exit 1
+            fi
+            EXPECTED=$(tr -d '[:space:]' < "$MANIFEST")
+          fi
+
+          ACTUAL=$(cut -d' ' -f1 "./download/$(basename "$ARTIFACT").sha256" 2>/dev/null || sha256sum "$ARTIFACT" | cut -d' ' -f1)
+          echo "expected=$EXPECTED"
+          echo "actual  =$ACTUAL"
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "::error::sha256 mismatch: expected $EXPECTED got $ACTUAL"
+            exit 1
+          fi
+          echo "sha256=$ACTUAL" >> "$GITHUB_OUTPUT"
+          echo "Digest OK: ${ACTUAL}"
+
+          # Commit check: the artifact must have been built from the expected
+          # commit (MANIFEST.json inside the tarball). This is the provenance
+          # anchor - a digest alone does not prove the code is the approved one.
+          MANIFEST_FILE=$(tar -tzf "$ARTIFACT" | grep '/MANIFEST.json$' | head -1)
+          if [ -z "$MANIFEST_FILE" ]; then
+            echo "::error::MANIFEST.json not found inside artifact - cannot verify commit."
+            exit 1
+          fi
+          MANIFEST_COMMIT=$(tar -xzf "$ARTIFACT" -O "$MANIFEST_FILE" | jq -r '.commit')
+          echo "manifest commit = ${MANIFEST_COMMIT:-<missing>}"
+          EXPECTED_COMMIT="${{ inputs.expected_commit }}"
+          if [ -n "$EXPECTED_COMMIT" ] && [ "$EXPECTED_COMMIT" != "$MANIFEST_COMMIT" ]; then
+            echo "::error::commit mismatch: expected $EXPECTED_COMMIT artifact built from $MANIFEST_COMMIT"
+            exit 1
+          fi
+          echo "commit_sha=${MANIFEST_COMMIT}" >> "$GITHUB_OUTPUT"
+
+          # TODO (later slice): verify SBOM + SLSA provenance assets
+          # (drms-*.sbom.json / drms-*.provenance.json) via
+          # actions/attest-build-provenance consumption before approving.
+
+      - name: Upload verified artifact for deploy job
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: drms-verified-release
+          path: ./download
+          if-no-files-found: error
+
+      - name: Print verification summary
+        run: |
+          echo "Verified: ${{ steps.resolve.outputs.version }}"
+          echo "Artifact: ${{ steps.resolve.outputs.artifact_name }}"
+          echo "Commit  : ${{ steps.resolve.outputs.commit_sha }}"
+          echo "sha256  : ${{ steps.resolve.outputs.sha256 }}"
+
+  deploy:
+    name: Deploy to production (TODO boundary - dry run only)
+    # Dedicated lab self-hosted runner; the runner does not exist yet and is
+    # NOT registered here - this is the skeleton for the private repo.
+    runs-on: [self-hosted, linux, x64, drms-lab]
+    needs: verify
+    # Approval gate: `production` environment with required reviewers,
+    # created by the private repo owner/admin.
+    environment: production
+    timeout-minutes: 30
+    steps:
+      - name: Check out CONTROL repo only (never the public repo)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Download verified artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: drms-verified-release
+          path: ./download
+
+      - name: Re-verify digest on the runner (defense in depth)
+        run: |
+          set -euo pipefail
+          ARTIFACT=$(ls ./download/drms-*.tar.gz | head -1)
+          ACTUAL=$(sha256sum "$ARTIFACT" | cut -d' ' -f1)
+          EXPECTED="${{ needs.verify.outputs.sha256 }}"
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "::error::sha256 mismatch on runner: expected $EXPECTED got $ACTUAL"
+            exit 1
+          fi
+          echo "Runner digest OK: $ACTUAL"
+          echo "Deploying version: ${{ needs.verify.outputs.version }} (commit ${{ needs.verify.outputs.commit_sha }})"
+
+      - name: Print deploy plan (dry run - no lab host touched)
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "============================================================"
+          echo " DRMS PRODUCTION DEPLOY PLAN - DRY RUN (nothing executed)"
+          echo "============================================================"
+          echo "Version : ${{ needs.verify.outputs.version }}"
+          echo "Commit  : ${{ needs.verify.outputs.commit_sha }}"
+          echo "sha256  : ${{ needs.verify.outputs.sha256 }}"
+          echo ""
+          echo "Planned steps (NOT implemented yet - control-repo scripts ported"
+          echo "from Jenkinsfile stages 6-8):"
+          echo "  1. backend : scp artifact -> deploy@drms-app-01:/opt/drms/backend/releases/<ver>/"
+          echo "               (prebuilt node_modules inside artifact - no npm on host)"
+          echo "  2. migrate : source .env; export PGPASSWORD; apply migrations/NNN_*.sql"
+          echo "               where NNN > MAX(schema_version) (PR #141 fix preserved)"
+          echo "  3. activate: ln -sfn releases/<ver> current; pm2 reload drms --update-env;"
+          echo "               health check http://localhost:5000/health; auto-rollback; pm2 save"
+          echo "  4. frontend: backup /var/www/drms -> /var/www/drms-backup;"
+          echo "               scp frontend/dist -> deploy@prod-gateway-01:/var/www/drms/"
+          echo "  5. smoke   : curl backend /health + https frontend; frontend rollback on failure"
+          echo ""
+          echo "No lab host was touched."
+
+      - name: Deploy steps - NOT IMPLEMENTED (fails closed)
+        if: ${{ !inputs.dry_run }}
+        run: |
+          echo "::error::Real deployment steps are intentionally not implemented yet (skeleton slice)."
+          echo "::error::Implement the deploy job as control-repo-owned scripts before setting dry_run=false."
+          echo "::error::Never execute code from the public repo on this runner."
+          exit 1

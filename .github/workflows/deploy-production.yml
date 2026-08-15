@@ -1,0 +1,267 @@
+# ============================================================================
+# DRMS Production Deploy - GitHub Actions migration (REVERSIBLE SLICE)
+# ============================================================================
+# STATUS: DESIGN / TODO BOUNDARY - this workflow intentionally does NOT
+# deploy. It wires up the target production deploy shape:
+#
+#   trigger   : workflow_dispatch (manual) - mirrors Jenkins'
+#               drms-production-deploy job, which is also manual-only
+#   approval  : environment: production - the required-reviewer gate is
+#               configured in the GitHub repository settings for the
+#               `production` environment (owner/admin step, not done here)
+#   runner    : dedicated self-hosted lab runner labeled `drms-lab`
+#               (must be able to reach deploy@drms-app-01 and
+#                deploy@prod-gateway-01 on the 10.1.4.0/24 lab network)
+#
+# PUBLIC REPO / OWNERSHIP CONSTRAINT (IMPORTANT)
+# ----------------------------------------------------------------------------
+# The active DRMS repo (github.com/G0kul17/Department-Record-Management-System)
+# is PUBLIC and owned by a third party. This design therefore MUST NOT assume:
+#   * repository admin access (secrets, environments, branch protection)
+#   * self-hosted runner registration
+#   * production host credentials
+# Any of those require owner/admin enablement. Choose ONE of these models:
+#
+#   MODEL A - Owner/admin enablement (keep this file in the public repo)
+#     G0kul17 (or an admin they delegate) adds the secrets, creates the
+#     `production` environment with required reviewers, and registers the
+#     `drms-lab` runner. Do NOT proceed until that happens. Self-hosted
+#     runners on a public repo are dangerous (see SAFETY below) - only
+#     acceptable if the owner understands and accepts the risk and the
+#     runner is registered org-wide behind SSO/approval, not repo-scoped.
+#
+#   MODEL B - Private deployment-control repo (RECOMMENDED for public source)
+#     Keep ONLY ci.yml in the public repo. Move THIS workflow into a private
+#     repo the team controls (e.g. org/drms-deploy) that: (1) has the
+#     secrets + environment + `drms-lab` runner, (2) checks out the public
+#     repo at a pinned SHA/ref as a read-only dependency, and (3) deploys
+#     from there. The public repo never touches deploy machinery.
+#
+#   MODEL C - Repo transfer / organization
+#     Transfer the repo (or a fork) into an organization the team controls,
+#     then follow MODEL A inside that org where runner/secrets are managed.
+#
+# SAFETY INVARIANTS
+#   * dry_run=true (default): the deploy job only PRINTS the deployment plan.
+#     No ssh/scp/pm2/psql is executed; no lab host is touched.
+#   * dry_run=false: the deploy job FAILS CLOSED (exit 1) because the real
+#     deploy steps are intentionally not implemented yet. It is impossible
+#     to deploy with this workflow as written.
+#   * SELF-HOSTED RUNNER SAFETY: this workflow is workflow_dispatch ONLY.
+#     NEVER add pull_request or push triggers to this file: on a public repo
+#     a fork PR could otherwise run arbitrary code on the self-hosted runner.
+#     The runner must never be reachable from untrusted PR paths.
+#   * This file must not be changed to run real deploy steps until the
+#     prerequisites in the TODO section below are met and an ownership
+#     model (A/B/C above) is in place.
+#
+# TODO (next slices, in order):
+#   0. Decide the ownership model (A owner-enable / B private control repo /
+#      C transfer). For a public third-party-owned repo, MODEL B is the
+#      safest: this file moves to a private control repo.
+#   1. Provision the GitHub Actions self-hosted runner with the `drms-lab`
+#      label inside the lab (e.g. on the Jenkins builder VM 192.168.122.41
+#      or a new VM with outbound HTTPS to github.com + SSH to drms-app-01 /
+#      prod-gateway-01). Add repo/control-repo secrets:
+#        - DRMS_DEPLOY_SSH_KEY   (mirror of Jenkins credential `drms-ssh`)
+#        - DRMS_TEST_JWT_SECRET  (test-only JWT, already referenced by ci.yml)
+#   2. Create the `production` environment in settings and attach required
+#      reviewers (the approval gate this workflow is designed for).
+#   3. Implement the real deploy steps by porting Jenkinsfile stages 6-8:
+#      a) backend:  ssh deploy@drms-app-01 mkdir -p /opt/drms/backend/releases/<ver>
+#                   scp -r backend_release/. deploy@drms-app-01:/opt/drms/backend/releases/<ver>/
+#                   ssh: ln -sfn /opt/drms/backend/.env .env; npm ci --omit=dev
+#      b) migrate:  source /opt/drms/backend/.env; export PGPASSWORD;
+#                   apply migrations/NNN_*.sql where NNN > MAX(schema_version)
+#                   (keep the stdin/heredoc + PGPASSWORD fix from PR #141)
+#      c) activate: ln -sfn releases/<ver> /opt/drms/backend/current;
+#                   pm2 reload drms --update-env; health check localhost:5000;
+#                   auto rollback to previous release on failure; pm2 save;
+#                   prune releases beyond last 5
+#      d) frontend: ssh deploy@prod-gateway-01 backup /var/www/drms ->
+#                   /var/www/drms-backup; scp frontend/dist/. ->
+#                   deploy@prod-gateway-01:/var/www/drms/
+#      e) smoke:    curl backend /health + https frontend; roll back
+#                   frontend from backup on failure
+#   4. When proven, disable Jenkins jobs drms-production-deploy and
+#      drms-staging-deploy (do not delete until rollback confidence).
+# ============================================================================
+
+name: DRMS Production Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: >-
+          Print the deployment plan and exit without touching any lab host.
+          Set to false ONLY after the deploy steps are implemented (it fails
+          closed otherwise).
+        required: false
+        default: true
+        type: boolean
+      ref:
+        description: 'Git ref (branch/tag/SHA) to deploy. Defaults to main.'
+        required: false
+        default: 'main'
+        type: string
+
+permissions:
+  contents: read
+
+# One production deploy at a time; queue, never cancel (mirrors Jenkins
+# disableConcurrentBuilds).
+# NOTE: workflow_dispatch can only be triggered by users with write access
+# to the repo - fork PRs cannot reach this workflow or the self-hosted
+# runner. Do not add pull_request/push triggers to this file.
+concurrency:
+  group: drms-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build & test deploy artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Set release version (YYYY.M.D.<run>)
+        id: version
+        run: echo "version=$(date +%Y.%-m.%-d).${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      - name: Backend unit tests + coverage
+        working-directory: backend
+        run: |
+          npm ci
+          npm run test:coverage
+        env:
+          CI: 'true'
+          NODE_ENV: test
+          JWT_SECRET: ${{ secrets.DRMS_TEST_JWT_SECRET }}
+          FILE_STORAGE_PATH: ${{ runner.temp }}/drms-uploads
+
+      - name: Prepare backend release artifact
+        run: |
+          rm -rf backend_release
+          mkdir backend_release
+          cp -r backend/. backend_release/
+          rm -rf backend_release/node_modules backend_release/coverage backend_release/test-results
+          echo "Backend release artifact:"
+          ls backend_release | head -20
+
+      - name: Upload backend release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: drms-backend-release
+          path: backend_release
+          if-no-files-found: error
+
+      - name: Build frontend (production)
+        working-directory: frontend
+        run: |
+          npm ci
+          echo "VITE_API_BASE_URL=/api" > .env.production
+          npm run build
+          ls -la dist | head -10
+        env:
+          CI: 'true'
+
+      - name: Upload frontend dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: drms-frontend-dist
+          path: frontend/dist
+          if-no-files-found: error
+
+  deploy:
+    name: Deploy to production (TODO boundary - dry-run only)
+    # Dedicated self-hosted lab runner label. The runner does not exist yet;
+    # this job will stay queued until one is provisioned with this label.
+    runs-on: [self-hosted, linux, x64, drms-lab]
+    needs: build
+    # Approval gate: create the `production` environment in repo settings
+    # and attach required reviewers. Until then, GitHub auto-creates the
+    # environment on first use WITHOUT protection rules - do not rely on it.
+    environment: production
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Refuse to deploy from a public repository (ownership guard)
+        # The active repo is public and third-party-owned. This step fails
+        # closed so the workflow cannot deploy from it no matter what else is
+        # enabled. Choose an ownership model first: MODEL A (owner enablement),
+        # MODEL B (private control repo - recommended), MODEL C (transfer).
+        if: ${{ github.repository_visibility == 'public' }}
+        run: |
+          echo "::error::Refusing to deploy: this repository is public (${GITHUB_REPOSITORY})."
+          echo "::error::Adopt MODEL A (owner enablement + explicit sign-off), MODEL B"
+          echo "::error::(private deployment-control repo), or MODEL C (transfer) first."
+          exit 1
+
+      - name: Require owner/admin enablement (secrets must exist)
+        # Explicitly NOT assuming secrets are configured. In a public
+        # third-party-owned repo they will not be - this step fails closed
+        # with instructions instead of silently proceeding.
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DRMS_DEPLOY_SSH_KEY }}
+        run: |
+          if [ -z "${DEPLOY_SSH_KEY:-}" ]; then
+            echo "::error::DRMS_DEPLOY_SSH_KEY is not configured. This workflow cannot deploy."
+            echo "::error::Choose an ownership model first:"
+            echo "::error::  A. Owner/admin enables secrets + environment + runner in this repo"
+            echo "::error::  B. Move this workflow to a private deployment-control repo (recommended)"
+            echo "::error::  C. Transfer the repo to an organization the team controls"
+            exit 1
+          fi
+          echo "Deployment enablement present (secret configured)."
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Print deployment plan (dry run - no lab host touched)
+        # Only reachable after the enablement guard passes AND dry_run=true.
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "============================================================"
+          echo " DRMS PRODUCTION DEPLOY - DRY RUN (nothing executed)"
+          echo "============================================================"
+          echo "Release version : ${{ needs.build.outputs.version }}"
+          echo "Git ref         : ${{ inputs.ref }} (${{ github.sha }})"
+          echo "Artifacts       : $(find artifacts -type f | wc -l) file(s)"
+          echo ""
+          echo "Planned steps (NOT implemented yet - port of Jenkinsfile stages 6-8):"
+          echo "  1. backend : scp backend release -> deploy@drms-app-01:/opt/drms/backend/releases/<ver>/"
+          echo "               ln -sfn /opt/drms/backend/.env .env; npm ci --omit=dev"
+          echo "  2. migrate : source .env; export PGPASSWORD; apply migrations/NNN_*.sql"
+          echo "               where NNN > MAX(schema_version) (PR #141 fix preserved)"
+          echo "  3. activate: ln -sfn releases/<ver> current; pm2 reload drms --update-env;"
+          echo "               health check http://localhost:5000/health; auto-rollback; pm2 save"
+          echo "  4. frontend: backup /var/www/drms -> /var/www/drms-backup;"
+          echo "               scp frontend/dist -> deploy@prod-gateway-01:/var/www/drms/"
+          echo "  5. smoke   : curl backend /health + https frontend; frontend rollback on failure"
+          echo ""
+          echo "No lab host was touched. Re-run with dry_run=false only after"
+          echo "the deploy steps are implemented and the runner is provisioned."
+
+      - name: Real deploy - NOT IMPLEMENTED (fails closed)
+        if: ${{ !inputs.dry_run }}
+        run: |
+          echo "::error::Real deployment steps are intentionally not implemented yet (reversible slice)."
+          echo "::error::This workflow must not deploy until the deploy job is ported from Jenkinsfile stages 6-8."
+          echo "::error::Re-run with dry_run=true, or implement the deploy steps first."
+          exit 1

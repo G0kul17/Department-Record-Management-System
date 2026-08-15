@@ -1,0 +1,237 @@
+# ============================================================================
+# DRMS Release Build - PUBLIC repo
+# ============================================================================
+# Builds and packages an IMMUTABLE release artifact consumed by the PRIVATE
+# deployment-control repo. This workflow runs entirely on GitHub-hosted
+# runners (ubuntu-latest) and contains NO deployment logic and NO secrets.
+#
+# SAFETY FOR FORKS / PUBLIC REPO
+#   * Trigger: tag push `prod-stable-v*` (base repo only) or manual
+#     workflow_dispatch (requires write access). Fork PRs can never trigger
+#     this workflow, so no code from an untrusted PR runs here.
+#   * No self-hosted runner, no secrets, no deployment commands.
+#   * `contents: write` is required ONLY to publish the GitHub Release
+#     assets (the artifact + checksum + SBOM + provenance).
+#
+# ARTIFACT CONTRACT (consumed by private deploy-control repo)
+#   Release asset  : drms-<version>.tar.gz   (prebuilt backend incl.
+#                    production node_modules, frontend dist, MANIFEST.json)
+#   Release asset  : drms-<version>.tar.gz.sha256
+#   Release asset  : drms-<version>.sbom.json        (placeholder today)
+#   Release asset  : drms-<version>.provenance.json  (placeholder today)
+#   Tag            : prod-stable-v<version>  (immutable trigger)
+# ============================================================================
+
+name: DRMS Release Build
+
+on:
+  push:
+    tags:
+      - 'prod-stable-v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: >-
+          Release version (e.g. 2026.8.15.1). Defaults to the tag suffix
+          (prod-stable-v<version>) when triggered by a tag push.
+        required: false
+        type: string
+
+permissions:
+  contents: write   # publish GitHub Release assets only
+
+concurrency:
+  group: drms-release-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and package release artifact
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out source at tag
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Resolve version
+        id: version
+        run: |
+          set -euo pipefail
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          elif [[ "$GITHUB_REF_NAME" == prod-stable-v* ]]; then
+            VERSION="${GITHUB_REF_NAME#prod-stable-v}"
+          else
+            # workflow_dispatch from a branch (not a tag) without an explicit
+            # version is an error - never derive a version from a branch name.
+            echo "::error::No version input and not triggered by a prod-stable-v* tag (ref=$GITHUB_REF_NAME)"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      # ---- Backend: tests + PREBUILT production dependencies -------------
+      - name: Backend - install deps
+        working-directory: backend
+        run: npm ci
+
+      - name: Backend - run unit tests
+        working-directory: backend
+        run: npm run test:coverage
+        env:
+          CI: 'true'
+          NODE_ENV: test
+          FILE_STORAGE_PATH: ${{ runner.temp }}/drms-uploads
+          # DRMS_TEST_JWT_SECRET is optional: test setup (src/__tests__/setup.js)
+          # provides a fixed test JWT, so this stays fork-safe.
+
+      - name: Backend - install production deps (prebuilt bundle)
+        working-directory: backend
+        run: |
+          npm ci --omit=dev
+          echo "Production dependencies prebuilt (no npm ci on deploy hosts)."
+
+      # ---- Frontend: production build ------------------------------------
+      - name: Set up Node.js (frontend)
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Frontend - install deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Frontend - build
+        working-directory: frontend
+        run: |
+          echo "VITE_API_BASE_URL=/api" > .env.production
+          npm run build
+          test -d dist && ls dist | head -5
+
+      # ---- Package immutable artifact ------------------------------------
+      - name: Package release artifact
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
+          REL_DIR="drms-release-$VERSION"
+          rm -rf "$REL_DIR"
+          mkdir -p "$REL_DIR"
+
+          # Backend: source + prebuilt node_modules (production only) + migrations.
+          # NOTE: node_modules is already prod-only (`npm ci --omit=dev` above),
+          # so the artifact ships a prebuilt bundle - deploy hosts never run npm.
+          cp -r backend "$REL_DIR/backend"
+          rm -rf "$REL_DIR/backend/coverage" "$REL_DIR/backend/test-results" 2>/dev/null || true
+          rm -rf "$REL_DIR/backend/node_modules/.cache" 2>/dev/null || true
+
+          # Frontend: dist only (source is in the repo, no need to ship it)
+          mkdir -p "$REL_DIR/frontend"
+          cp -r frontend/dist "$REL_DIR/frontend/dist"
+
+          # MANIFEST (human-readable provenance of the artifact)
+          cat > "$REL_DIR/MANIFEST.json" <<'EOF'
+          {
+            "name": "drms",
+            "version": "VERSION_PLACEHOLDER",
+            "commit": "COMMIT_PLACEHOLDER",
+            "tag": "TAG_PLACEHOLDER",
+            "built_at": "BUILT_AT_PLACEHOLDER",
+            "builder": "GitHub Actions (ubuntu-latest)"
+          }
+          EOF
+          sed -i "s/VERSION_PLACEHOLDER/$VERSION/; s|COMMIT_PLACEHOLDER|${{ github.sha }}|; s|TAG_PLACEHOLDER|${{ github.ref_name }}|; s|BUILT_AT_PLACEHOLDER|$(date -u +%Y-%m-%dT%H:%M:%SZ)|" "$REL_DIR/MANIFEST.json"
+
+          # Immutable tarball + checksum
+          tar -czf "drms-$VERSION.tar.gz" "$REL_DIR"
+          sha256sum "drms-$VERSION.tar.gz" > "drms-$VERSION.tar.gz.sha256"
+          echo "Artifact ready:"
+          ls -la "drms-$VERSION.tar.gz"
+          cat "drms-$VERSION.tar.gz.sha256"
+
+      # ---- SBOM + provenance (placeholders - wire real generators later) --
+      - name: Generate SBOM placeholder
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
+          cat > "drms-$VERSION.sbom.json" <<'EOF'
+          {
+            "bomFormat": "CycloneDX",
+            "specVersion": "1.5",
+            "serialNumber": "urn:uuid:PLACEHOLDER",
+            "version": 1,
+            "metadata": {
+              "component": { "type": "application", "name": "drms", "version": "VERSION_PLACEHOLDER" },
+              "timestamp": "PLACEHOLDER"
+            },
+            "components": [],
+            "TODO": "Replace with real SBOM (e.g. cyclonedx-npm / osv-scanner) in a later slice"
+          }
+          EOF
+          sed -i "s/VERSION_PLACEHOLDER/$VERSION/; s/PLACEHOLDER/$(date -u +%Y-%m-%dT%H:%M:%SZ)/" "drms-$VERSION.sbom.json"
+          echo "SBOM placeholder written."
+
+      - name: Generate provenance placeholder
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
+          cat > "drms-$VERSION.provenance.json" <<'EOF'
+          {
+            "_type": "https://in-toto.io/Statement/v0.1",
+            "subject": [{
+              "name": "drms-VERSION_PLACEHOLDER.tar.gz",
+              "digest": { "sha256": "SHA256_PLACEHOLDER" }
+            }],
+            "predicateType": "https://slsa.dev/provenance/v0.2",
+            "predicate": {
+              "builder": { "id": "https://github.com/G0kul17/Department-Record-Management-System/.github/workflows/release-build.yml" },
+              "buildType": "https://github.com/actions/attest-build-provenance",
+              "invocation": {
+                "configSource": {
+                  "uri": "git+https://github.com/G0kul17/Department-Record-Management-System.git",
+                  "digest": { "gitCommit": "COMMIT_PLACEHOLDER" }
+                }
+              },
+              "metadata": { "buildStartedOn": "PLACEHOLDER" }
+            },
+            "TODO": "Replace with real sigstore attestation (actions/attest-build-provenance) in a later slice"
+          }
+          EOF
+          SHA=$(cut -d' ' -f1 "drms-$VERSION.tar.gz.sha256")
+          sed -i "s/VERSION_PLACEHOLDER/$VERSION/; s/SHA256_PLACEHOLDER/$SHA/; s|COMMIT_PLACEHOLDER|${{ github.sha }}|; s/PLACEHOLDER/$(date -u +%Y-%m-%dT%H:%M:%SZ)/" "drms-$VERSION.provenance.json"
+          echo "Provenance placeholder written."
+
+      # ---- Publish GitHub Release ----------------------------------------
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="prod-stable-v$VERSION"
+          ASSETS=(
+            "drms-$VERSION.tar.gz"
+            "drms-$VERSION.tar.gz.sha256"
+            "drms-$VERSION.sbom.json"
+            "drms-$VERSION.provenance.json"
+          )
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG exists - uploading assets."
+            gh release upload "$TAG" "${ASSETS[@]}" --clobber
+          else
+            echo "Creating release $TAG"
+            gh release create "$TAG" "${ASSETS[@]}" \
+              --title "DRMS Release $VERSION" \
+              --notes "Immutable release artifact for $VERSION (commit ${{ github.sha }}). Verified and deployed via the private deployment-control repo."
+          fi
+          echo "Release published: https://github.com/${{ github.repository }}/releases/tag/$TAG"

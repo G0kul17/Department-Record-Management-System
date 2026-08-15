@@ -71,6 +71,10 @@ jobs:
             exit 1
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          # Effective release tag: same for tag-triggered (prod-stable-v<VERSION>
+          # equals the pushed tag) and manual runs (workflow_dispatch). Using
+          # GITHUB_REF_NAME directly would store 'main' on manual runs.
+          echo "tag=prod-stable-v$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -150,7 +154,7 @@ jobs:
             "builder": "GitHub Actions (ubuntu-latest)"
           }
           EOF
-          sed -i "s/VERSION_PLACEHOLDER/$VERSION/; s|COMMIT_PLACEHOLDER|${{ github.sha }}|; s|TAG_PLACEHOLDER|${{ github.ref_name }}|; s|BUILT_AT_PLACEHOLDER|$(date -u +%Y-%m-%dT%H:%M:%SZ)|" "$REL_DIR/MANIFEST.json"
+          sed -i "s/VERSION_PLACEHOLDER/$VERSION/; s|COMMIT_PLACEHOLDER|${{ github.sha }}|; s|TAG_PLACEHOLDER|${{ steps.version.outputs.tag }}|; s|BUILT_AT_PLACEHOLDER|$(date -u +%Y-%m-%dT%H:%M:%SZ)|" "$REL_DIR/MANIFEST.json"
 
           # Immutable tarball + checksum
           tar -czf "drms-$VERSION.tar.gz" "$REL_DIR"
@@ -218,7 +222,7 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${{ steps.version.outputs.version }}"
-          TAG="prod-stable-v$VERSION"
+          TAG="${{ steps.version.outputs.tag }}"
           ASSETS=(
             "drms-$VERSION.tar.gz"
             "drms-$VERSION.tar.gz.sha256"

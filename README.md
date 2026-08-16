@@ -1414,3 +1414,9 @@ If you encounter any issues or have questions:
 ---
 
 **Built with ❤️ for efficient department management**
+
+---
+
+## 🚀 Deployment Automation
+
+Production releases tagged `prod-stable-v*` are built by GitHub Actions and automatically deployed to the lab production environment. (Pipeline end-to-end test 2026.8.16.2.)

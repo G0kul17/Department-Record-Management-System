@@ -24,6 +24,7 @@ import {
   FaUsers,
   FaInfoCircle,
   FaPaperPlane,
+  FaTimes,
 } from "react-icons/fa";
 import RecordLoader from "../../components/ui/RecordLoader";
 
@@ -51,6 +52,7 @@ export default function ProjectUpload() {
   const [page, setPage] = useState(1);
   const [activeTab, setActiveTab] = useState("all");
   const [previewModal, setPreviewModal] = useState({ open: false, item: null });
+  const [dupModal, setDupModal] = useState({ open: false, existingProject: null });
 
   const loadProjects = async (retainExisting = false) => {
     setLoadingProjects(true);
@@ -118,8 +120,11 @@ export default function ProjectUpload() {
       if (form.description) fd.append("description", form.description);
       fd.append("mentor_name", form.mentor_name);
       if (form.academic_year) fd.append("academic_year", form.academic_year);
-      if (form.status) fd.append("status", form.status);
-      if (form.github_url) fd.append("github_url", form.github_url);
+      if (form.github_url) {
+        let gh = form.github_url.trim();
+        if (!/^https?:\/\//i.test(gh)) gh = `https://${gh}`;
+        fd.append("github_url", gh);
+      }
       if (form.team_members_count)
         fd.append("team_members_count", String(form.team_members_count).trim());
       if (Array.isArray(form.team_members) && form.team_members.length)
@@ -173,7 +178,14 @@ export default function ProjectUpload() {
       await loadProjects(true);
     } catch (e) {
       setSuccess(false);
-      if (e.message && e.message.includes("team has already uploaded")) {
+      const resData = e.responseData;
+      if (resData && resData.existingProject) {
+        setDupModal({
+          open: true,
+          existingProject: resData.existingProject,
+        });
+        setMessage("");
+      } else if (e.message && e.message.includes("team has already uploaded")) {
         setMessage(
           "⚠️ Your team has already uploaded this project. GitHub URL must be unique."
         );
@@ -195,6 +207,83 @@ export default function ProjectUpload() {
           subtitle="Your project has been uploaded."
           onClose={() => setShowSuccess(false)}
         />
+
+        {/* Duplicate GitHub Project Alert Modal */}
+        {dupModal.open && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 animate-fade-in">
+            <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xl w-full max-w-md overflow-hidden animate-scale-up">
+              {/* Modal Header */}
+              <div className="bg-amber-500 text-white p-5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-white/20 text-white">
+                    <FaInfoCircle className="w-5 h-5" />
+                  </span>
+                  <div>
+                    <h3 className="text-base font-extrabold tracking-tight">
+                      Project Already Uploaded
+                    </h3>
+                    <p className="text-xs text-amber-100 font-medium">
+                      Duplicate GitHub Repository Detected
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setDupModal({ open: false, existingProject: null })}
+                  className="rounded-full bg-amber-600/60 p-2 text-white hover:bg-amber-600 transition cursor-pointer"
+                >
+                  <FaTimes className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 space-y-4 text-xs">
+                <p className="font-semibold text-slate-700 leading-relaxed">
+                  Your project repository has already been uploaded by team member{" "}
+                  <strong className="text-slate-900 font-black underline">
+                    {dupModal.existingProject?.uploader_name || "a team member"}
+                  </strong>.
+                </p>
+
+                <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 space-y-2.5">
+                  <div>
+                    <span className="text-[10px] font-extrabold text-amber-700 uppercase tracking-wider block">
+                      Uploaded Project Title
+                    </span>
+                    <p className="font-extrabold text-slate-900 text-sm mt-0.5">
+                      {dupModal.existingProject?.title || "Untitled Project"}
+                    </p>
+                  </div>
+
+                  {dupModal.existingProject?.team_members && (
+                    <div>
+                      <span className="text-[10px] font-extrabold text-amber-700 uppercase tracking-wider block">
+                        Registered Team Members
+                      </span>
+                      <p className="font-semibold text-slate-800 mt-0.5 leading-normal">
+                        {dupModal.existingProject.team_members}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <FaInfoCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                  <span>Each GitHub repository can only be uploaded once per project team.</span>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="bg-slate-50 p-4 border-t border-slate-100 flex justify-end">
+                <button
+                  onClick={() => setDupModal({ open: false, existingProject: null })}
+                  className="rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold px-6 py-2.5 text-xs shadow-md transition cursor-pointer"
+                >
+                  Got It
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Top Navigation */}
         <div>
@@ -385,8 +474,10 @@ export default function ProjectUpload() {
                       const n = Math.max(1, Math.min(10, parseInt(raw || "", 10) || 0));
                       const next = [...(form.team_members || [])];
                       if (n > next.length) {
-                        while (next.length < n)
-                          next.push({ name: "", role: "Team Member" });
+                        while (next.length < n) {
+                          const defaultRole = next.length === 0 ? "Team Leader" : "Team Member";
+                          next.push({ name: "", role: defaultRole });
+                        }
                       } else if (n < next.length) {
                         next.length = n;
                       }
@@ -409,6 +500,70 @@ export default function ProjectUpload() {
                 </div>
               </div>
             </div>
+
+            {/* Dynamic Team Member Name & Role Inputs */}
+            {form.team_members && form.team_members.length > 0 && (
+              <div className="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/90 animate-fade-in">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+                    Team Member Details ({form.team_members.length})
+                  </label>
+                  <span className="text-[11px] font-bold text-slate-400">
+                    Enter full names & designations
+                  </span>
+                </div>
+
+                <div className="space-y-2.5">
+                  {form.team_members.map((member, idx) => (
+                    <div
+                      key={idx}
+                      className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center bg-white p-3 rounded-xl border border-slate-200 shadow-2xs"
+                    >
+                      <div className="sm:col-span-1 text-xs font-black text-blue-600 text-center sm:text-left">
+                        #{idx + 1}
+                      </div>
+
+                      {/* Name input */}
+                      <div className="sm:col-span-6">
+                        <input
+                          type="text"
+                          required
+                          placeholder={`Member ${idx + 1} Full Name *`}
+                          value={member.name || ""}
+                          onChange={(e) => {
+                            const next = [...form.team_members];
+                            next[idx] = { ...next[idx], name: e.target.value };
+                            setForm({ ...form, team_members: next });
+                          }}
+                          className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-600"
+                        />
+                      </div>
+
+                      {/* Role select dropdown */}
+                      <div className="sm:col-span-5">
+                        <CustomSelect
+                          value={member.role || (idx === 0 ? "Team Leader" : "Team Member")}
+                          onChange={(val) => {
+                            const next = [...form.team_members];
+                            next[idx] = { ...next[idx], role: val };
+                            setForm({ ...form, team_members: next });
+                          }}
+                          options={[
+                            { value: "Team Leader", label: "Team Leader" },
+                            { value: "Team Member", label: "Team Member" },
+                            { value: "Developer", label: "Developer" },
+                            { value: "Designer", label: "Designer" },
+                            { value: "Tester", label: "Tester" },
+                          ]}
+                          placeholder="Select Role"
+                          buttonClassName="rounded-xl border-slate-300 py-2 text-xs font-semibold text-slate-900"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Documents Section */}
             <div className="pt-2">
@@ -594,7 +749,7 @@ export default function ProjectUpload() {
                         <div className="flex flex-col items-end gap-2 flex-shrink-0">
                           <button
                             type="button"
-                            onClick={() => setPreviewModal({ open: true, item: p })}
+                            onClick={() => nav(`/projects/${p.id}`, { state: { project: p } })}
                             className="inline-flex items-center gap-1.5 rounded-xl border border-[#bae6fd] bg-[#f0f9ff] hover:bg-[#e0f2fe] text-[#0284c7] px-3.5 py-1 text-xs font-extrabold shadow-sm transition cursor-pointer"
                           >
                             <FaEye className="w-3 h-3 text-[#0284c7]" />

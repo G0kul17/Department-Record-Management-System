@@ -142,7 +142,7 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
 
         {/* Category Selector Tabs */}
         {availableCategories.length > 1 && (
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex flex-wrap items-center gap-1.5">
             {availableCategories.map((opt) => {
               const Icon = opt.icon;
               const isActive = category === opt.key;
@@ -151,14 +151,15 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
                   type="button"
                   key={opt.key}
                   onClick={() => setCategory(opt.key)}
-                  className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[11px] font-extrabold whitespace-nowrap transition-all cursor-pointer flex-shrink-0 ${
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[11px] font-extrabold transition-all cursor-pointer ${
                     isActive
                       ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm shadow-blue-500/30 border border-blue-400/40"
                       : "bg-slate-900/80 text-slate-400 border border-slate-800 hover:bg-slate-800 hover:text-white"
                   }`}
                 >
                   <Icon className={`w-3 h-3 ${isActive ? "text-amber-300" : "text-slate-400"}`} />
-                  <span>{opt.label}</span>
+                  <span className="sm:hidden">{opt.short}</span>
+                  <span className="hidden sm:inline">{opt.label}</span>
                 </button>
               );
             })}

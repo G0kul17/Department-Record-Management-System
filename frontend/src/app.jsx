@@ -528,6 +528,14 @@ export default function App() {
             }
           />
           <Route
+            path="/admin/hackathon-progress"
+            element={
+              <ProtectedRoute allowedRoles={["staff", "admin"]}>
+                <VerifyHackathonProgress />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/upload-events"
             element={
               <ProtectedRoute allowedRoles={["staff", "admin"]}>

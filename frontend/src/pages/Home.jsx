@@ -548,8 +548,7 @@ export default function Home({ hideAtAGlance = false }) {
           className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-8 sm:pb-10"
         >
           {/* Section header */}
-          <div className="flex items-center justify-between mb-5 sm:mb-6">
-            <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 mb-5 sm:mb-6">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
                 <FaFolder className="w-4 h-4" />
               </span>
@@ -557,14 +556,6 @@ export default function Home({ hideAtAGlance = false }) {
                 Recent Projects
               </h2>
             </div>
-            <a
-              href="/projects/approved"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700 transition"
-            >
-              View all projects
-              <FaChevronRight className="w-3 h-3" />
-            </a>
-          </div>
           <ProjectsRecentGrid limit={6} />
         </div>
 
@@ -574,8 +565,7 @@ export default function Home({ hideAtAGlance = false }) {
           className="w-full px-3 sm:px-4 md:px-6 lg:px-12 pb-12 sm:pb-16"
         >
           {/* Section header */}
-          <div className="flex items-center justify-between mb-5 sm:mb-6">
-            <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 mb-5 sm:mb-6">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
                 <FaTrophy className="w-4 h-4" />
               </span>
@@ -583,14 +573,6 @@ export default function Home({ hideAtAGlance = false }) {
                 Recent Achievements
               </h2>
             </div>
-            <a
-              href="/achievements/approved"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700 transition"
-            >
-              View all achievements
-              <FaChevronRight className="w-3 h-3" />
-            </a>
-          </div>
           <AchievementsRecentGrid limit={6} />
         </div>
 

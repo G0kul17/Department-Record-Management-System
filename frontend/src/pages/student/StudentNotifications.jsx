@@ -52,92 +52,142 @@ export default function StudentNotifications() {
     if (storedAllAt) setClearedAllAt(storedAllAt);
   }, [user?.id]);
 
+  const [pendingStaffNotifs, setPendingStaffNotifs] = useState([]);
+
   useEffect(() => {
     let mounted = true;
     (async () => {
       setLoading(true);
       try {
-        const [ann, proj, ach] = await Promise.all([
-          apiClient.get(`/announcements/mine?limit=100`),
-          apiClient.get(`/projects?limit=50&mine=true`),
-          apiClient.get(
-            `/achievements?limit=50${user?.id ? `&user_id=${user.id}` : ""}`,
-          ),
-        ]);
+        const role = (user?.role || "").toLowerCase();
 
-        if (!mounted) return;
+        if (role === "staff" || role === "admin") {
+          const [ann, pendingProj, pendingAch, pendingHack] = await Promise.all([
+            apiClient.get(`/announcements/mine?limit=100`).catch(() => ({ announcements: [] })),
+            apiClient.get(`/projects?verified=false&limit=50`).catch(() => ({ projects: [] })),
+            apiClient.get(`/achievements?verified=false&status=pending&limit=200`).catch(() => ({ achievements: [] })),
+            apiClient.get(`/hackathons/coordinator/queue?status=pending&limit=50`).catch(() => ({ hackathons: [] })),
+          ]);
 
-        setAnnouncements(ann.announcements || []);
+          if (!mounted) return;
 
-        const approvedProj = (proj.projects || []).filter(
-          (p) => (p.verification_status || "").toLowerCase() === "approved",
-        );
-        const approvedAch = (ach.achievements || []).filter(
-          (a) => (a.verification_status || "").toLowerCase() === "approved",
-        );
-        const rejectedProj = (proj.projects || []).filter(
-          (p) => (p.verification_status || "").toLowerCase() === "rejected",
-        );
-        const rejectedAch = (ach.achievements || []).filter(
-          (a) => (a.verification_status || "").toLowerCase() === "rejected",
-        );
+          setAnnouncements(ann.announcements || []);
 
-        const approvals = [
-          ...approvedProj.map((p) => ({
-            type: "project_approved",
-            title: p.title,
-            item_id: p.id,
-            status: "approved",
-            comment: p.verification_comment || "",
-            by_name: p.verified_by_fullname || p.verified_by_email || "Staff",
-            timestamp: new Date(
-              p.verified_at || p.updated_at || p.created_at,
-            ).getTime(),
-          })),
-          ...approvedAch.map((a) => ({
-            type: "achievement_approved",
-            title: a.title,
-            item_id: a.id,
-            status: "approved",
-            comment: a.verification_comment || "",
-            by_name: a.verified_by_fullname || a.verified_by_email || "Staff",
-            timestamp: new Date(
-              a.verified_at || a.updated_at || a.created_at,
-            ).getTime(),
-          })),
-        ].sort((x, y) => y.timestamp - x.timestamp);
+          const staffPending = [
+            ...(pendingProj.projects || []).map((p) => ({
+              type: "pending_project",
+              title: `Project "${p.title}" awaiting verification`,
+              item_id: p.id,
+              by_name: p.uploader_full_name || p.uploader_email || "Student",
+              timestamp: new Date(p.created_at).getTime(),
+              href: role === "admin" ? `/admin/verify-projects` : `/verify-projects`,
+            })),
+            ...(pendingAch.achievements || []).map((a) => ({
+              type: "pending_achievement",
+              title: `Achievement "${a.title}" awaiting verification`,
+              item_id: a.id,
+              by_name: a.user_fullname || a.user_email || "Student",
+              timestamp: new Date(a.created_at).getTime(),
+              href: role === "admin" ? `/admin/verify-achievements` : `/verify-achievements`,
+            })),
+            ...(pendingHack.hackathons || []).map((h) => ({
+              type: "pending_hackathon",
+              title: `Hackathon "${h.hackathon_name}" progress awaiting verification`,
+              item_id: h.id,
+              by_name: h.student_name || h.team_leader_name || h.user_fullname || "Student",
+              timestamp: new Date(h.created_at).getTime(),
+              href: `/verify-hackathon-progress`,
+            })),
+          ].sort((x, y) => y.timestamp - x.timestamp);
 
-        const rejections = [
-          ...rejectedProj.map((p) => ({
-            type: "project_rejected",
-            title: p.title,
-            item_id: p.id,
-            status: "rejected",
-            comment: p.verification_comment || "",
-            by_name: p.verified_by_fullname || p.verified_by_email || "Staff",
-            timestamp: new Date(
-              p.verified_at || p.updated_at || p.created_at,
-            ).getTime(),
-          })),
-          ...rejectedAch.map((a) => ({
-            type: "achievement_rejected",
-            title: a.title,
-            item_id: a.id,
-            status: "rejected",
-            comment: a.verification_comment || "",
-            by_name: a.verified_by_fullname || a.verified_by_email || "Staff",
-            timestamp: new Date(
-              a.verified_at || a.updated_at || a.created_at,
-            ).getTime(),
-          })),
-        ].sort((x, y) => y.timestamp - x.timestamp);
+          setPendingStaffNotifs(staffPending);
+          setApprovalNotifs([]);
+          setRejectionNotifs([]);
+        } else {
+          const [ann, proj, ach] = await Promise.all([
+            apiClient.get(`/announcements/mine?limit=100`),
+            apiClient.get(`/projects?limit=50&mine=true`),
+            apiClient.get(
+              `/achievements?limit=50${user?.id ? `&user_id=${user.id}` : ""}`,
+            ),
+          ]);
 
-        setApprovalNotifs(approvals);
-        setRejectionNotifs(rejections);
+          if (!mounted) return;
+
+          setAnnouncements(ann.announcements || []);
+
+          const approvedProj = (proj.projects || []).filter(
+            (p) => (p.verification_status || "").toLowerCase() === "approved",
+          );
+          const approvedAch = (ach.achievements || []).filter(
+            (a) => (a.verification_status || "").toLowerCase() === "approved",
+          );
+          const rejectedProj = (proj.projects || []).filter(
+            (p) => (p.verification_status || "").toLowerCase() === "rejected",
+          );
+          const rejectedAch = (ach.achievements || []).filter(
+            (a) => (a.verification_status || "").toLowerCase() === "rejected",
+          );
+
+          const approvals = [
+            ...approvedProj.map((p) => ({
+              type: "project_approved",
+              title: p.title,
+              item_id: p.id,
+              status: "approved",
+              comment: p.verification_comment || "",
+              by_name: p.verified_by_fullname || p.verified_by_email || "Staff",
+              timestamp: new Date(
+                p.verified_at || p.updated_at || p.created_at,
+              ).getTime(),
+            })),
+            ...approvedAch.map((a) => ({
+              type: "achievement_approved",
+              title: a.title,
+              item_id: a.id,
+              status: "approved",
+              comment: a.verification_comment || "",
+              by_name: a.verified_by_fullname || a.verified_by_email || "Staff",
+              timestamp: new Date(
+                a.verified_at || a.updated_at || a.created_at,
+              ).getTime(),
+            })),
+          ].sort((x, y) => y.timestamp - x.timestamp);
+
+          const rejections = [
+            ...rejectedProj.map((p) => ({
+              type: "project_rejected",
+              title: p.title,
+              item_id: p.id,
+              status: "rejected",
+              comment: p.verification_comment || "",
+              by_name: p.verified_by_fullname || p.verified_by_email || "Staff",
+              timestamp: new Date(
+                p.verified_at || p.updated_at || p.created_at,
+              ).getTime(),
+            })),
+            ...rejectedAch.map((a) => ({
+              type: "achievement_rejected",
+              title: a.title,
+              item_id: a.id,
+              status: "rejected",
+              comment: a.verification_comment || "",
+              by_name: a.verified_by_fullname || a.verified_by_email || "Staff",
+              timestamp: new Date(
+                a.verified_at || a.updated_at || a.created_at,
+              ).getTime(),
+            })),
+          ].sort((x, y) => y.timestamp - x.timestamp);
+
+          setPendingStaffNotifs([]);
+          setApprovalNotifs(approvals);
+          setRejectionNotifs(rejections);
+        }
       } catch (err) {
         console.error("Failed to load notifications", err);
         if (!mounted) return;
         setAnnouncements([]);
+        setPendingStaffNotifs([]);
         setApprovalNotifs([]);
         setRejectionNotifs([]);
       } finally {
@@ -246,8 +296,17 @@ export default function StudentNotifications() {
     return !isCleared(notifId) && !isClearedByTimestamp(notifTs);
   });
 
+  const visiblePendingStaff = pendingStaffNotifs.filter((notif) => {
+    const notifId = `pending-${notif.type}-${notif.item_id}`;
+    const notifTs = notif.timestamp || 0;
+    return !isCleared(notifId) && !isClearedByTimestamp(notifTs);
+  });
+
   const totalCount =
-    visibleAnnouncements.length + visibleApprovals.length + visibleRejections.length;
+    visibleAnnouncements.length +
+    visibleApprovals.length +
+    visibleRejections.length +
+    visiblePendingStaff.length;
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-[#f8fafc] w-full">
@@ -321,6 +380,75 @@ export default function StudentNotifications() {
           </div>
         ) : (
           <div className="space-y-8">
+            {/* 0. Staff Pending Verification Actions */}
+            {visiblePendingStaff.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-xs font-extrabold text-amber-600 uppercase tracking-wider">
+                  <FaBell className="w-4 h-4 text-amber-600 animate-pulse" />
+                  <span>Pending Verification Actions ({visiblePendingStaff.length})</span>
+                </div>
+
+                <div className="space-y-3">
+                  {visiblePendingStaff.map((notif) => {
+                    const notifId = `pending-${notif.type}-${notif.item_id}`;
+
+                    return (
+                      <div
+                        key={notifId}
+                        className="group rounded-3xl border border-amber-200/90 bg-amber-50/40 p-5 shadow-sm hover:shadow-md hover:shadow-amber-500/10 hover:border-amber-400 transition-all duration-200 space-y-3"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div
+                            className="flex items-start gap-3.5 flex-1 cursor-pointer min-w-0"
+                            onClick={() => nav(notif.href)}
+                          >
+                            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-sm flex-shrink-0">
+                              <FaBell className="w-4 h-4" />
+                            </span>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h4 className="text-sm sm:text-base font-extrabold text-slate-900 group-hover:text-amber-700 transition-colors">
+                                  {notif.title}
+                                </h4>
+                                <span className="rounded-full bg-amber-100 border border-amber-300 px-2.5 py-0.5 text-[11px] font-extrabold text-amber-800">
+                                  Pending Action
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-500 font-semibold mt-1">
+                                Submitted by: <strong className="text-slate-700">{notif.by_name}</strong> • {formatDate(notif.timestamp)}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => clearNotification(notifId)}
+                              className="p-1.5 text-amber-600 hover:text-amber-800 transition"
+                              title="Clear notification"
+                            >
+                              <FaTrashAlt className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="pt-2">
+                          <Link
+                            to={notif.href}
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 text-xs font-extrabold shadow-sm transition"
+                          >
+                            <FaExternalLinkAlt className="w-3 h-3" />
+                            Go to Verification Page
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* 1. Announcements */}
             {visibleAnnouncements.length > 0 && (
               <div className="space-y-4">
@@ -446,7 +574,7 @@ export default function StudentNotifications() {
                         <div className="flex items-start justify-between gap-3">
                           <div
                             className="flex items-start gap-3.5 flex-1 cursor-pointer min-w-0"
-                            onClick={() => toggleExpanded(notifId)}
+                            onClick={() => nav(linkHref)}
                           >
                             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-sm flex-shrink-0">
                               <FaCheckCircle className="w-5 h-5" />
@@ -540,7 +668,7 @@ export default function StudentNotifications() {
                         <div className="flex items-start justify-between gap-3">
                           <div
                             className="flex items-start gap-3.5 flex-1 cursor-pointer min-w-0"
-                            onClick={() => toggleExpanded(notifId)}
+                            onClick={() => nav(linkHref)}
                           >
                             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-500 text-white shadow-sm flex-shrink-0">
                               <FaTimesCircle className="w-5 h-5" />

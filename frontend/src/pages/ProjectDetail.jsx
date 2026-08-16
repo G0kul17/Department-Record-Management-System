@@ -2,6 +2,19 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import apiClient from "../api/axiosClient";
 import { getFileUrl } from "../utils/fileUrl";
+import {
+  FaArrowLeft,
+  FaLaptopCode,
+  FaCheckCircle,
+  FaClock,
+  FaUser,
+  FaUsers,
+  FaGithub,
+  FaCalendarAlt,
+  FaPaperclip,
+  FaExternalLinkAlt,
+  FaFileAlt,
+} from "react-icons/fa";
 
 export default function ProjectDetail() {
   const { id } = useParams();
@@ -12,7 +25,6 @@ export default function ProjectDetail() {
 
   useEffect(() => {
     let mounted = true;
-
     (async () => {
       setLoading(true);
       try {
@@ -20,7 +32,6 @@ export default function ProjectDetail() {
         if (passed && String(passed.id) === String(id)) {
           setProject(passed);
         }
-
         const res = await apiClient.get(`/projects/${id}`);
         if (!mounted) return;
         setProject(res.project || res.data?.project || res || null);
@@ -31,30 +42,23 @@ export default function ProjectDetail() {
         if (mounted) setLoading(false);
       }
     })();
-
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [id, location?.state]);
 
-  if (loading) return <div className="p-6">Loading...</div>;
+  const uploadedBy =
+    project?.uploader_full_name ||
+    project?.user_fullname ||
+    project?.user_email ||
+    project?.uploader_email ||
+    "-";
 
-  if (!project)
-    return (
-      <div className="p-6">
-        <button onClick={() => nav(-1)} className="mb-4 text-sm underline">
-          ← Back
-        </button>
-        <h3 className="text-xl">Project not found</h3>
-      </div>
-    );
+  const approvedBy =
+    project?.verified_by_fullname ||
+    project?.verified_by_name ||
+    project?.approved_by_fullname ||
+    "-";
 
-  const uploadedBy = project.user_email || project.uploader_email || "-";
-  const team =
-    project.team_members ||
-    project.teamMembers ||
-    project.team_member_names ||
-    project.team;
+  const team = project?.team_members || project?.teamMembers || project?.team;
   const teamStr = Array.isArray(team) ? team.join(", ") : team;
 
   const attachments = (() => {
@@ -72,107 +76,200 @@ export default function ProjectDetail() {
       const filename =
         file?.filename || file?.file || (typeof file === "string" ? file : undefined);
       if (!filename) return null;
-
       const original = file?.original_name || file?.name || filename;
       const mime =
         file?.mime_type ||
         (original?.toLowerCase().endsWith(".pdf") ? "application/pdf" : "");
       const url = getFileUrl(filename);
       const isImage =
-        mime?.startsWith("image/") || (filename && /\.(png|jpe?g|gif|webp)$/i.test(filename));
-
-      return {
-        key: `${filename}-${index}`,
-        original,
-        url,
-        isImage,
-      };
+        mime?.startsWith("image/") ||
+        (filename && /\.(png|jpe?g|gif|webp)$/i.test(filename));
+      return { key: `${filename}-${index}`, original, url, isImage };
     })
     .filter(Boolean);
 
+  const status = project?.verification_status || project?.status || "pending";
+  const isApproved = status === "approved";
+
+  if (loading) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] bg-[#f8fafc] flex items-center justify-center">
+        <div className="text-center space-y-3">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto" />
+          <p className="text-sm font-semibold text-slate-500">Loading project...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!project) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] bg-[#f8fafc] flex flex-col items-center justify-center gap-4 p-6">
+        <FaLaptopCode className="w-12 h-12 text-slate-300" />
+        <h3 className="text-lg font-extrabold text-slate-700">Project not found</h3>
+        <button
+          onClick={() => nav("/projects/approved")}
+          className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 shadow-xs hover:bg-slate-100 transition cursor-pointer"
+        >
+          <FaArrowLeft className="w-3 h-3" /> Back to Approved Projects
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="mx-auto min-h-[calc(100vh-4rem)] max-w-5xl bg-slate-50 px-4 py-5 dark:bg-slate-950 sm:px-6 lg:px-8">
-      <div className="glitter-card rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6 lg:p-8">
-        <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 dark:border-slate-800 sm:gap-5 sm:pb-6">
-          <div className="space-y-2">
-            <div className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold tracking-wide text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
-              Project Preview
+    <div className="min-h-[calc(100vh-4rem)] bg-[#f8fafc] w-full">
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-5 space-y-5">
+
+        {/* Back Button */}
+        <button
+          onClick={() => nav("/projects/approved")}
+          className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 shadow-xs hover:bg-slate-100 transition cursor-pointer"
+        >
+          <FaArrowLeft className="w-3 h-3 text-slate-600" />
+          Back to Approved Projects
+        </button>
+
+        {/* Header Card */}
+        <div className="rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-7 shadow-sm space-y-4">
+          {/* Top row: icon + title + status */}
+          <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 shadow-xs flex-shrink-0">
+              <FaLaptopCode className="w-5 h-5" />
+            </span>
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-blue-50 border border-blue-200 px-3 py-0.5 text-xs font-extrabold text-blue-700">
+                  Project
+                </span>
+                {isApproved ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-0.5 text-xs font-extrabold text-emerald-700">
+                    <FaCheckCircle className="w-3 h-3 text-emerald-600" />
+                    Approved
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-3 py-0.5 text-xs font-extrabold text-amber-700">
+                    <FaClock className="w-3 h-3 text-amber-500" />
+                    Pending
+                  </span>
+                )}
+                {project.activity_type && (
+                  <span className="rounded-full bg-slate-100 border border-slate-200 px-3 py-0.5 text-xs font-semibold text-slate-600">
+                    {project.activity_type}
+                  </span>
+                )}
+              </div>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-tight break-words">
+                {project.title}
+              </h1>
+              {project.description && (
+                <p className="text-sm text-slate-600 leading-relaxed break-words">
+                  {project.description}
+                </p>
+              )}
             </div>
-            <h1 className="break-words text-2xl font-bold leading-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
-              {project.title}
-            </h1>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <div className="rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800/60">
-              <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Uploaded
-              </div>
-              <div className="mt-1 text-sm font-medium text-slate-800 dark:text-slate-100">
-                {project.created_at ? new Date(project.created_at).toLocaleString() : "-"}
-              </div>
-            </div>
-            <div className="rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800/60">
-              <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Uploaded By
-              </div>
-              <div className="mt-1 break-all text-sm font-medium text-slate-800 dark:text-slate-100">
-                {uploadedBy}
+          {/* Info grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+            {/* Uploaded by */}
+            <div className="flex items-start gap-3 rounded-2xl bg-slate-50 border border-slate-100 px-4 py-3">
+              <FaUser className="w-3.5 h-3.5 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="min-w-0">
+                <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Uploaded By</div>
+                <div className="mt-0.5 text-sm font-semibold text-slate-800 break-all">{uploadedBy}</div>
               </div>
             </div>
-            <div className="rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800/60 sm:col-span-2 xl:col-span-1">
-              <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Team Members
+
+            {/* Approved by */}
+            {approvedBy !== "-" && (
+              <div className="flex items-start gap-3 rounded-2xl bg-emerald-50 border border-emerald-100 px-4 py-3">
+                <FaCheckCircle className="w-3.5 h-3.5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                <div className="min-w-0">
+                  <div className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-500">Approved By</div>
+                  <div className="mt-0.5 text-sm font-semibold text-emerald-900 break-words">{approvedBy}</div>
+                </div>
               </div>
-              <div className="mt-1 break-words text-sm font-medium text-slate-800 dark:text-slate-100">
-                {teamStr || "-"}
+            )}
+
+            {/* Upload date */}
+            {project.created_at && (
+              <div className="flex items-start gap-3 rounded-2xl bg-slate-50 border border-slate-100 px-4 py-3">
+                <FaCalendarAlt className="w-3.5 h-3.5 text-slate-500 mt-0.5 flex-shrink-0" />
+                <div className="min-w-0">
+                  <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Uploaded On</div>
+                  <div className="mt-0.5 text-sm font-semibold text-slate-800">
+                    {new Date(project.created_at).toLocaleDateString("en-GB", {
+                      day: "numeric", month: "short", year: "numeric",
+                    })}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Team members */}
+            {teamStr && (
+              <div className="flex items-start gap-3 rounded-2xl bg-slate-50 border border-slate-100 px-4 py-3">
+                <FaUsers className="w-3.5 h-3.5 text-purple-500 mt-0.5 flex-shrink-0" />
+                <div className="min-w-0">
+                  <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Team Members</div>
+                  <div className="mt-0.5 text-sm font-semibold text-slate-800 break-words">{teamStr}</div>
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* GitHub Link */}
+          {project.github_url && (
+            <div className="flex items-start gap-3 rounded-2xl bg-slate-900 border border-slate-800 px-4 py-3">
+              <FaGithub className="w-4 h-4 text-white mt-0.5 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Repository</div>
+                <a
+                  href={project.github_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-0.5 text-sm font-semibold text-blue-400 hover:text-blue-300 underline break-all inline-flex items-start gap-1"
+                >
+                  {project.github_url}
+                  <FaExternalLinkAlt className="w-2.5 h-2.5 mt-1 flex-shrink-0" />
+                </a>
+              </div>
+            </div>
+          )}
         </div>
 
-        <p className="mt-5 max-w-3xl break-words text-sm leading-7 text-slate-700 dark:text-slate-300 sm:text-base">
-          {project.description || "-"}
-        </p>
-
-        {project.github_url && (
-          <div className="mt-5 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-300">
-            <span className="font-semibold text-slate-900 dark:text-slate-100">
-              GitHub:
-            </span>{" "}
-            <a
-              href={project.github_url}
-              target="_blank"
-              rel="noreferrer"
-              className="break-all font-medium text-blue-700 hover:underline dark:text-blue-300"
-            >
-              {project.github_url}
-            </a>
-          </div>
-        )}
-
+        {/* Attachments */}
         {attachmentCards.length > 0 && (
-          <div className="mt-8 space-y-4">
-            <h4 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-              Attachments
-            </h4>
+          <div className="rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-sm space-y-4">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
+                <FaPaperclip className="w-3.5 h-3.5" />
+              </span>
+              <h2 className="text-sm font-extrabold uppercase tracking-widest text-slate-800">
+                Attachments ({attachmentCards.length})
+              </h2>
+            </div>
             <div className="grid gap-4 sm:grid-cols-2">
               {attachmentCards.map((file) => (
                 <div
                   key={file.key}
-                  className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/40"
+                  className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50"
                 >
-                  <div className="border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-                    <div className="break-words text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      {file.original || "Attachment"}
+                  <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FaFileAlt className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                      <span className="text-xs font-semibold text-slate-800 break-words truncate">
+                        {file.original || "Attachment"}
+                      </span>
                     </div>
                     <a
                       href={file.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-1 inline-flex break-all text-xs font-medium text-blue-700 hover:underline dark:text-blue-300"
+                      className="flex-shrink-0 rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-bold text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition"
                     >
-                      Open file
+                      Open
                     </a>
                   </div>
                   <div className="p-4">
@@ -180,10 +277,10 @@ export default function ProjectDetail() {
                       <img
                         src={file.url}
                         alt={file.original || "attachment"}
-                        className="max-h-80 w-full rounded-xl border border-slate-200 bg-white object-contain dark:border-slate-700 dark:bg-slate-950"
+                        className="max-h-72 w-full rounded-xl border border-slate-200 bg-white object-contain"
                       />
                     ) : (
-                      <div className="break-all rounded-xl bg-white px-4 py-3 text-sm text-slate-700 shadow-sm ring-1 ring-inset ring-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700">
+                      <div className="rounded-xl bg-white border border-slate-200 px-4 py-3 text-xs text-slate-600 font-medium break-all">
                         {file.original || "Attachment"}
                       </div>
                     )}

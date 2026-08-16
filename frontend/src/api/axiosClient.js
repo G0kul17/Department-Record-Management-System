@@ -171,7 +171,10 @@ class ApiClient {
     const data = await parseBody();
 
     if (!response.ok) {
-      const msg = (data && data.message) || "Upload failed";
+      let msg = (data && data.message) || "Upload failed";
+      if (data && Array.isArray(data.errors) && data.errors.length) {
+        msg = `Validation failed: ${data.errors.map((e) => e.message).join(", ")}`;
+      }
       // Friendly mapping for common upload errors
       const isDataUpload = endpoint.includes("/data-uploads");
       let finalMsg = msg;

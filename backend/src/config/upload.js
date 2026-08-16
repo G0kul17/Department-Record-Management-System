@@ -421,6 +421,15 @@ function fileFilter(req, file, cb) {
     return cb(new Error("Invalid event photo file type"), false);
   }
 
+  // 'srs_document' (projects) — restrict to PDFs only
+  if (file.fieldname === "srs_document") {
+    const name = file.originalname || "";
+    const ext = path.extname(name).toLowerCase();
+    const isPdf = file.mimetype === "application/pdf" || ext === ".pdf";
+    if (isPdf) return cb(null, true);
+    return cb(new Error("Only PDF files are allowed for SRS document"), false);
+  }
+
   // 'files' is used by projects to upload ZIPs; scope ZIP-only rule to project routes
   if (file.fieldname === "files") {
     const isProjectRoute = (req.baseUrl || "").includes("projects");

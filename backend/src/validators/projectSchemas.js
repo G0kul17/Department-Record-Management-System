@@ -9,6 +9,9 @@ export const createProjectSchema = Joi.object({
   status: Joi.string().valid("ongoing", "completed", "submitted").trim().allow("", null),
   team_members_count: Joi.number().integer().min(1).max(100).allow("", null),
   team_member_names: Joi.string().max(1000).trim().allow("", null),
-  github_url: Joi.string().max(500).trim().required(),
+  // Scheme restricted to http/https — plain .uri() accepts javascript:/data:
+  // URIs (VULN-0001). The controller additionally enforces the github.com
+  // domain specifically for this field.
+  github_url: Joi.string().uri({ scheme: ["http", "https"] }).max(500).trim().required(),
   activity_type: Joi.string().max(100).trim().allow("", null),
 });

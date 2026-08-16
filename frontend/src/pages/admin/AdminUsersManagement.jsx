@@ -99,7 +99,7 @@ export default function AdminUsersManagement() {
         </div>
 
         {/* Header Title Box */}
-        <div className="flex items-center justify-between gap-4 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm w-full">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm w-full">
           <div className="flex items-center gap-3.5">
             <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-100 text-rose-600 shadow-xs flex-shrink-0">
               <FaUserCog className="w-5 h-5" />
@@ -114,7 +114,7 @@ export default function AdminUsersManagement() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={load}
               disabled={loading}

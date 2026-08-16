@@ -95,8 +95,8 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
       <div className="relative rounded-3xl border border-slate-200/90 bg-white shadow-sm overflow-hidden flex-1 flex flex-col justify-between">
         {/* Main card: image left + details right */}
         <div className="flex flex-col sm:flex-row gap-0 flex-1">
-          {/* Image panel */}
-          <div className="sm:w-2/5 flex-shrink-0 bg-slate-50 flex items-center justify-center min-h-[180px] sm:min-h-[260px] overflow-hidden">
+          {/* Image panel — relative so arrows always stay inside the image */}
+          <div className="relative sm:w-2/5 flex-shrink-0 bg-slate-50 flex items-center justify-center min-h-[180px] sm:min-h-[260px] overflow-hidden">
             {thumb ? (
               <img
                 src={thumb}
@@ -108,6 +108,25 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
               <div className="w-full h-full min-h-[180px] sm:min-h-[260px] bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
                 <FaCalendarAlt className="w-12 h-12 text-blue-300" />
               </div>
+            )}
+            {/* Prev / Next arrows — always inside the image area */}
+            {length > 1 && (
+              <>
+                <button
+                  onClick={prev}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-md hover:bg-white transition cursor-pointer"
+                  aria-label="Previous event"
+                >
+                  <FaChevronLeft className="h-3 w-3 text-slate-700" />
+                </button>
+                <button
+                  onClick={next}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md hover:bg-white transition cursor-pointer"
+                  aria-label="Next event"
+                >
+                  <FaChevronRight className="h-3 w-3 text-slate-700" />
+                </button>
+              </>
             )}
           </div>
 
@@ -176,25 +195,7 @@ export default function EventsCarousel({ events = [], intervalMs = 4000 }) {
           </div>
         </div>
 
-        {/* Prev / Next arrows */}
-        {length > 1 && (
-          <>
-            <button
-              onClick={prev}
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-md hover:bg-white transition cursor-pointer"
-              aria-label="Previous event"
-            >
-              <FaChevronLeft className="h-3 w-3 text-slate-700" />
-            </button>
-            <button
-              onClick={next}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md hover:bg-white transition cursor-pointer"
-              aria-label="Next event"
-            >
-              <FaChevronRight className="h-3 w-3 text-slate-700" />
-            </button>
-          </>
-        )}
+
 
         {/* Dot indicators inside card footer */}
         {length > 1 && (

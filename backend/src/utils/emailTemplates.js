@@ -63,6 +63,10 @@ function credentialsBox(email, password) {
     <div style="background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:20px;margin:24px 0;">
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr style="border-bottom:1px solid #e5e7eb;">
+          <td style="padding:10px 0;color:#6b7280;font-size:13px;width:40%;vertical-align:top;">Portal URL</td>
+          <td style="padding:10px 0;color:#2563eb;font-size:14px;font-weight:700;"><a href="https://drms.portit.in" target="_blank" style="color:#2563eb;text-decoration:none;">drms.portit.in</a></td>
+        </tr>
+        <tr style="border-bottom:1px solid #e5e7eb;">
           <td style="padding:10px 0;color:#6b7280;font-size:13px;width:40%;vertical-align:top;">Email Address</td>
           <td style="padding:10px 0;color:#111827;font-size:14px;font-weight:600;">${email}</td>
         </tr>
@@ -154,9 +158,12 @@ export function studentWelcomeEmail({ fullName, email, password }) {
     `<h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:700;">Welcome, ${escapeHtml(fullName)}!</h2>
      <p style="margin:0 0 4px;color:#6b7280;font-size:15px;">Your student account has been created and you're now part of the DRMS platform. Here are your login credentials:</p>
      ${credentialsBox(email, password)}
-     <p style="margin:16px 0 0;color:#374151;font-size:14px;">Please log in and set a new password from your profile settings as soon as possible.</p>`,
+     <div style="text-align:center;margin:24px 0 16px;">
+       <a href="https://drms.portit.in" target="_blank" style="background-color:#2563eb;color:#ffffff;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;display:inline-block;">Log in to DRMS Portal (drms.portit.in)</a>
+     </div>
+     <p style="margin:16px 0 0;color:#374151;font-size:14px;">Please log in at <a href="https://drms.portit.in" style="color:#2563eb;font-weight:600;">drms.portit.in</a> and set a new password from your profile settings as soon as possible.</p>`,
   );
-  const text = `Hello ${fullName},\n\nYour student account has been created and you're now part of the DRMS platform.\n\nEmail: ${email}\nTemporary Password: ${password}\n\nPlease log in and set a new password from your profile settings.\n\nRegards,\nDepartment Admin`;
+  const text = `Hello ${fullName},\n\nYour student account has been created and you're now part of the DRMS platform.\n\nLogin Portal: https://drms.portit.in\nEmail: ${email}\nTemporary Password: ${password}\n\nPlease log in at https://drms.portit.in and set a new password from your profile settings.\n\nRegards,\nDepartment Admin`;
   return { html, text };
 }
 
@@ -167,9 +174,12 @@ export function staffWelcomeEmail({ fullName, email, password }) {
     `<h2 style="margin:0 0 8px;color:#111827;font-size:22px;font-weight:700;">Welcome, ${escapeHtml(fullName)}!</h2>
      <p style="margin:0 0 4px;color:#6b7280;font-size:15px;">Your DRMS staff account has been created. Here are your login credentials:</p>
      ${credentialsBox(email, password)}
-     <p style="margin:16px 0 0;color:#374151;font-size:14px;">Please log in and set a new password from your profile settings as soon as possible.</p>`,
+     <div style="text-align:center;margin:24px 0 16px;">
+       <a href="https://drms.portit.in" target="_blank" style="background-color:#2563eb;color:#ffffff;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;display:inline-block;">Log in to DRMS Portal (drms.portit.in)</a>
+     </div>
+     <p style="margin:16px 0 0;color:#374151;font-size:14px;">Please log in at <a href="https://drms.portit.in" style="color:#2563eb;font-weight:600;">drms.portit.in</a> and set a new password from your profile settings as soon as possible.</p>`,
   );
-  const text = `Hello ${fullName},\n\nYour DRMS staff account has been created.\n\nEmail: ${email}\nTemporary Password: ${password}\n\nPlease log in and set a new password from your profile settings.\n\nRegards,\nDepartment Admin`;
+  const text = `Hello ${fullName},\n\nYour DRMS staff account has been created.\n\nLogin Portal: https://drms.portit.in\nEmail: ${email}\nTemporary Password: ${password}\n\nPlease log in at https://drms.portit.in and set a new password from your profile settings.\n\nRegards,\nDepartment Admin`;
   return { html, text };
 }
 

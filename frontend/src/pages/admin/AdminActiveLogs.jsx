@@ -157,13 +157,15 @@ export default function AdminActiveLogs() {
     });
   };
 
-  const formatDepartment = (profileDetails = {}, studentProfile = {}) => {
-    const rawDept = (profileDetails.department || studentProfile.department || "").trim();
+  const formatDepartment = (profileDetails, studentProfile) => {
+    const pd = profileDetails || {};
+    const sp = studentProfile || {};
+    const rawDept = (pd.department || sp.department || "").trim();
     const rawCourse = (
-      profileDetails.course ||
-      studentProfile.course ||
-      profileDetails.branch ||
-      studentProfile.branch ||
+      pd.course ||
+      sp.course ||
+      pd.branch ||
+      sp.branch ||
       ""
     ).trim();
 

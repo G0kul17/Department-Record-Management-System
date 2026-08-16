@@ -142,7 +142,7 @@ export async function createProject(req, res) {
     if (gh) {
       const { rows: githubDup } = await tracedQuery(
         pool,
-        "SELECT id, title, team_member_names, created_by FROM projects WHERE LOWER(TRIM(github_url)) = LOWER(TRIM($1))",
+        "SELECT p.id, p.title, p.team_member_names, p.created_by, u.full_name AS uploader_name, u.email AS uploader_email FROM projects p LEFT JOIN users u ON u.id = p.created_by WHERE LOWER(TRIM(p.github_url)) = LOWER(TRIM($1))",
         [gh],
       );
       if (githubDup.length) {
@@ -157,6 +157,7 @@ export async function createProject(req, res) {
             id: existingProject.id,
             title: existingProject.title,
             team_members: existingProject.team_member_names,
+            uploader_name: existingProject.uploader_name || existingProject.uploader_email || "A team member",
           },
         });
       }

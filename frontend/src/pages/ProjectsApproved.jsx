@@ -235,14 +235,14 @@ export default function ProjectsApproved() {
 
                       {/* GitHub Link */}
                       {p.github_url && (
-                        <div className="inline-flex items-center gap-2 rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-1.5 text-xs font-bold text-slate-800">
-                          <FaGithub className="w-3.5 h-3.5 text-slate-900" />
-                          <span>Repo:</span>
+                        <div className="flex items-start gap-2 rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-1.5 text-xs font-bold text-slate-800 min-w-0 overflow-hidden">
+                          <FaGithub className="w-3.5 h-3.5 text-slate-900 flex-shrink-0 mt-0.5" />
+                          <span className="flex-shrink-0">Repo:</span>
                           <a
                             href={p.github_url}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-blue-600 underline truncate max-w-xs"
+                            className="text-blue-600 underline break-all min-w-0 flex-1"
                           >
                             {p.github_url}
                           </a>

@@ -81,21 +81,31 @@ export default function NotificationsBell() {
         let maxTs = 0;
         let announcements = [];
         if (role === "staff") {
-          const [pendingProj, pendingAch] = await Promise.all([
-            apiClient.get(`/projects?verified=false&limit=20`),
-            apiClient.get(
-              `/achievements?verified=false&status=pending&limit=50`,
-            ),
+          const [pendingProj, pendingAch, pendingHack] = await Promise.all([
+            apiClient.get(`/projects?verified=false&limit=20`).catch(() => ({ projects: [] })),
+            apiClient.get(`/achievements?verified=false&status=pending&limit=50`).catch(() => ({ achievements: [] })),
+            apiClient.get(`/hackathons/coordinator/queue?status=pending&limit=50`).catch(() => ({ hackathons: [] })),
           ]);
           const toCreatedTs = (item) => {
             const t = new Date(item?.created_at);
             return isNaN(t.getTime()) ? 0 : t.getTime();
           };
-          const allPend = [
-            ...(pendingProj.projects || []),
-            ...(pendingAch.achievements || []),
-          ];
+          const projList = pendingProj.projects || [];
+          const achList = pendingAch.achievements || [];
+          const hackList = pendingHack.hackathons || [];
+          const allPend = [...projList, ...achList, ...hackList];
           maxTs = Math.max(0, ...allPend.map(toCreatedTs));
+
+          const lastToast = Number(localStorage.getItem(lastToastKey) || 0);
+          if (allPend.length > 0 && maxTs > lastToast && maxTs >= weekAgo) {
+            const counts = [];
+            if (projList.length) counts.push(`${projList.length} project(s)`);
+            if (achList.length) counts.push(`${achList.length} achievement(s)`);
+            if (hackList.length) counts.push(`${hackList.length} hackathon entry(s)`);
+            const msg = `🔔 Pending verification: ${counts.join(", ")} awaiting your approval.`;
+            showToast(msg, "info");
+            localStorage.setItem(lastToastKey, String(maxTs));
+          }
         } else {
           const [myProj, myAch] = await Promise.all([
             apiClient.get(`/projects?limit=20&mine=true`),
@@ -273,16 +283,17 @@ export default function NotificationsBell() {
       const items = [];
 
       if (role === "staff") {
-        const [pendingProj, pendingAch] = await Promise.all([
-          apiClient.get(`/projects?verified=false&limit=50`),
-          apiClient.get(
-            `/achievements?verified=false&status=pending&limit=200`,
-          ),
+        const [pendingProj, pendingAch, pendingHack] = await Promise.all([
+          apiClient.get(`/projects?verified=false&limit=50`).catch(() => ({ projects: [] })),
+          apiClient.get(`/achievements?verified=false&status=pending&limit=200`).catch(() => ({ achievements: [] })),
+          apiClient.get(`/hackathons/coordinator/queue?status=pending&limit=50`).catch(() => ({ hackathons: [] })),
         ]);
         const projList = pendingProj.projects || [];
         const achList = pendingAch.achievements || [];
+        const hackList = pendingHack.hackathons || [];
         const projCount = projList.length;
         const achCount = achList.length;
+        const hackCount = hackList.length;
         const latestPendTs = (list) =>
           Math.max(0, ...list.map((x) => normalizeDate(x.created_at)));
         if (projCount > 0) {
@@ -321,6 +332,20 @@ export default function NotificationsBell() {
               role === "admin"
                 ? `/admin/verify-achievements`
                 : `/verify-achievements`,
+          });
+        }
+        if (hackCount > 0) {
+          items.push({
+            type: "pending",
+            title: `${hackCount} hackathon entry progress${
+              hackCount > 1 ? "es" : ""
+            } awaiting verification`,
+            by:
+              hackCount === 1
+                ? hackList[0].student_name || hackList[0].team_leader_name || ""
+                : "",
+            created_at_ts: latestPendTs(hackList),
+            href: `/verify-hackathon-progress`,
           });
         }
       } else {
@@ -418,7 +443,7 @@ export default function NotificationsBell() {
           title: e.title,
           by: "Staff",
           created_at_ts: normalizeDate(e.created_at),
-          href: `/events`,
+          href: `/events/${e.id}`,
         });
       }
       const filtered = items.filter((i) => (i.created_at_ts || 0) >= weekAgo);

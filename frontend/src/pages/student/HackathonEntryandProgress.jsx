@@ -39,16 +39,16 @@ import {
 import RecordLoader from "../../components/ui/RecordLoader";
 
 const progressOptions = [
+  "Completed",
+  "Finalist",
+  "Not shortlisted",
   "Registered",
   "Round 1 Qualified",
   "Round 2 Qualified",
   "Round 3 Qualified",
-  "Finalist",
-  "Winner",
   "Runner-up",
   "Shortlisted",
-  "Completed",
-  "Not shortlisted",
+  "Winner",
 ];
 
 export default function HackathonEntryandProgress() {

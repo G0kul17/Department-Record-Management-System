@@ -93,9 +93,9 @@ export default function Achievements() {
     setMessage("");
     setSuccess(false);
     try {
-      if (!certificate || !eventPhotos || !proof) {
+      if (!certificate || !eventPhotos) {
         throw new Error(
-          "Please upload certificate, event photos, and thumbnail proofs."
+          "Please upload certificate and event photos."
         );
       }
 
@@ -353,7 +353,7 @@ export default function Achievements() {
                   Upload Documents
                 </h3>
                 <p className="text-xs text-slate-500 font-medium">
-                  All files are mandatory
+                  Certificate and Event Photos are mandatory
                 </p>
               </div>
 
@@ -378,7 +378,6 @@ export default function Achievements() {
 
                 <FilePickerCard
                   title="Thumbnail"
-                  required
                   badgeBg="bg-amber-100 text-amber-600"
                   icon={FaImage}
                   selectedFile={proof}

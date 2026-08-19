@@ -25,6 +25,7 @@ import {
   FaCheckCircle,
   FaClock,
 } from "react-icons/fa";
+import { calculateDuration } from "../../utils/duration";
 
 const ACHIEVEMENT_TITLE_OPTIONS = [
   "Hackathon",
@@ -38,19 +39,22 @@ const ACHIEVEMENT_TITLE_OPTIONS = [
 ];
 
 const FACULTY_PARTICIPATION_EVENT_TYPE_OPTIONS = [
-  "FDP",
-  "Webinar",
-  "Seminar",
-  "Online Certification",
-  "NPTEL Online Certification",
-  "NPTEL - FDP",
-  "Conference",
-  "Workshop",
-  "Hackathon",
-  "STTP",
-  "Professional Development Course",
-  "Journal Publications",
+  "Certification",
+  "Conference Presentation",
   "Conference Publications",
+  "FDP",
+  "Hackathon",
+  "Industrial Training",
+  "Journal Publications",
+  "NPTEL - FDP",
+  "NPTEL Certification",
+  "Professional Development Course",
+  "Resource Person",
+  "Reviewer",
+  "Seminar",
+  "STTP",
+  "Webinar",
+  "Workshop",
 ];
 
 function CustomDropdown({ value, onChange, options, placeholder = "All" }) {
@@ -100,7 +104,16 @@ function CustomDropdown({ value, onChange, options, placeholder = "All" }) {
           >
             {placeholder}
           </button>
-          {options.map((opt) => (
+          {[...options].sort((a, b) => {
+            const isCustomA = a.value === "__custom__" || String(a.label || a.value).toLowerCase() === "other" || String(a.label || a.value).toLowerCase() === "others";
+            const isCustomB = b.value === "__custom__" || String(b.label || b.value).toLowerCase() === "other" || String(b.label || b.value).toLowerCase() === "others";
+            if (isCustomA && !isCustomB) return 1;
+            if (!isCustomA && isCustomB) return -1;
+
+            const labelA = String(a.label !== undefined ? a.label : a.value);
+            const labelB = String(b.label !== undefined ? b.label : b.value);
+            return labelA.localeCompare(labelB, undefined, { numeric: true, sensitivity: "base" });
+          }).map((opt) => (
             <button
               key={opt.value}
               type="button"
@@ -454,7 +467,11 @@ export default function ReportGenerator() {
       agency: it.agency || it.funding_agency || it.client_name || "",
       current_status: it.current_status || it.status || "",
       team_members: it.team_members || it.team_member_names || "",
-      duration: it.duration || "",
+      duration:
+        it.duration ||
+        (it.start_date && it.end_date
+          ? calculateDuration(it.start_date, it.end_date)
+          : ""),
       journal_conference: it.journal_conference || "",
       publication_date: it.publication_date || "",
       funding_agency: it.agency || it.funding_agency || "",

@@ -20,6 +20,17 @@ export default function CustomSelect({
     typeof opt === "string" ? { value: opt, label: opt } : opt,
   );
 
+  const sortedOptions = [...normalizedOptions].sort((a, b) => {
+    const isCustomA = a.value === "__custom__" || String(a.label || a.value).toLowerCase() === "other" || String(a.label || a.value).toLowerCase() === "others";
+    const isCustomB = b.value === "__custom__" || String(b.label || b.value).toLowerCase() === "other" || String(b.label || b.value).toLowerCase() === "others";
+    if (isCustomA && !isCustomB) return 1;
+    if (!isCustomA && isCustomB) return -1;
+
+    const labelA = String(a.label !== undefined ? a.label : a.value);
+    const labelB = String(b.label !== undefined ? b.label : b.value);
+    return labelA.localeCompare(labelB, undefined, { numeric: true, sensitivity: "base" });
+  });
+
   const selectedLabel =
     normalizedOptions.find((opt) => opt.value === value)?.label ||
     value ||
@@ -75,7 +86,7 @@ export default function CustomSelect({
           >
             {placeholder}
           </button>
-          {normalizedOptions.map((opt) => (
+          {sortedOptions.map((opt) => (
             <button
               key={opt.value}
               type="button"

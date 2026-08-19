@@ -61,11 +61,6 @@ export async function createAchievement(req, res) {
     const certificateFile = files.certificate ? files.certificate[0] : null;
     const eventPhotosFile = files.event_photos ? files.event_photos[0] : null;
 
-    // Require proof file upload
-    if (!proofFile) {
-      return res.status(400).json({ message: "proof file required" });
-    }
-
     // Accept all file types - no validation
 
     // duplicate check for same user — must run before any file writes
@@ -118,7 +113,10 @@ export async function createAchievement(req, res) {
         return ins.rows[0].id;
       };
 
-      const proofFileId = await insertFileRecord(proofFile, "proof");
+      let proofFileId = null;
+      if (proofFile) {
+        proofFileId = await insertFileRecord(proofFile, "proof");
+      }
       let certificateFileId = null;
       if (certificateFile) {
         certificateFileId = await insertFileRecord(certificateFile, "certificate");

@@ -5,6 +5,8 @@ import SuccessModal from "../../components/ui/SuccessModal";
 import CustomSelect from "../../components/ui/CustomSelect";
 import UploadDropzone from "../../components/ui/UploadDropzone";
 import { FaFlask, FaArrowLeft } from "react-icons/fa";
+import { calculateDuration } from "../../utils/duration";
+import StaffNameInput from "../../components/ui/StaffNameInput";
 
 export default function FacultyResearch() {
   const nav = useNavigate();
@@ -31,7 +33,16 @@ export default function FacultyResearch() {
   const [errorDetails, setErrorDetails] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const update = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const update = (k) => (e) => {
+    const val = e.target.value;
+    setForm((prev) => {
+      const next = { ...prev, [k]: val };
+      if (k === "start_date" || k === "end_date") {
+        next.duration = calculateDuration(next.start_date, next.end_date);
+      }
+      return next;
+    });
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -157,12 +168,12 @@ export default function FacultyResearch() {
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
                 Faculty Name <span className="text-red-600">*</span>
               </label>
-              <input
-                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-                value={form.faculty_name}
-                onChange={update("faculty_name")}
-                required
-              />
+               <StaffNameInput
+                 className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                 value={form.faculty_name}
+                 onChange={update("faculty_name")}
+                 required
+               />
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
@@ -328,38 +339,34 @@ export default function FacultyResearch() {
                 Duration <span className="text-red-600">*</span>
               </label>
               <input
-                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 cursor-not-allowed"
                 value={form.duration}
-                onChange={update("duration")}
+                readOnly
+                placeholder="Calculated automatically"
                 required
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  Start Date <span className="text-red-600">*</span>
+                  Start Date
                 </label>
                 <input
                   type="date"
                   className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
                   value={form.start_date}
                   onChange={update("start_date")}
-                  required
                 />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  End Date{" "}
-                  {form.current_status !== "ongoing" && (
-                    <span className="text-red-600">*</span>
-                  )}
+                  End Date
                 </label>
                 <input
                   type="date"
                   className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
                   value={form.end_date}
                   onChange={update("end_date")}
-                  required={form.current_status !== "ongoing"}
                 />
               </div>
             </div>

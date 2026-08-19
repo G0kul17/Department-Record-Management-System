@@ -4,6 +4,7 @@ import SuccessModal from "../../components/ui/SuccessModal";
 import BackButton from "../../components/BackButton";
 import UploadDropzone from "../../components/ui/UploadDropzone";
 import RecordLoader from "../../components/ui/RecordLoader";
+import StaffNameInput from "../../components/ui/StaffNameInput";
 
 export default function AdminFacultyParticipation() {
   const [form, setForm] = useState({
@@ -153,12 +154,12 @@ export default function AdminFacultyParticipation() {
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
                 Faculty Name <span className="text-red-600">*</span>
               </label>
-              <input
-                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-                value={form.faculty_name}
-                onChange={update("faculty_name")}
-                required
-              />
+               <StaffNameInput
+                 className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                 value={form.faculty_name}
+                 onChange={update("faculty_name")}
+                 required
+               />
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
@@ -171,11 +172,11 @@ export default function AdminFacultyParticipation() {
                 required
               >
                 <option value="">Select Department</option>
-                <option value="B.Tech Information Technology">
-                  B.Tech Information Technology
-                </option>
                 <option value="B.Tech Artificial Intelligence and Data Science">
                   B.Tech Artificial Intelligence and Data Science
+                </option>
+                <option value="B.Tech Information Technology">
+                  B.Tech Information Technology
                 </option>
               </select>
             </div>
@@ -209,29 +210,22 @@ export default function AdminFacultyParticipation() {
                 required
               >
                 <option value="">Select Type</option>
+                <option value="Certification">Certification</option>
+                <option value="Conference Presentation">Conference Presentation</option>
+                <option value="Conference Publications">Conference Publications</option>
                 <option value="FDP">FDP</option>
-                <option value="Webinar">Webinar</option>
-                <option value="Seminar">Seminar</option>
-                <option value="Online Certification">
-                  Online Certification
-                </option>
-                <option value="NPTEL Online Certification">
-                  NPTEL Online Certification
-                </option>
-                <option value="NPTEL - FDP">NPTEL - FDP</option>
-                <option value="Conference">Conference</option>
-                <option value="Workshop">Workshop</option>
                 <option value="Hackathon">Hackathon</option>
+                <option value="Industrial Training">Industrial Training</option>
+                <option value="Journal Publications">Journal Publications</option>
+                <option value="NPTEL - FDP">NPTEL - FDP</option>
+                <option value="NPTEL Certification">NPTEL Certification</option>
+                <option value="Professional Development Course">Professional Development Course</option>
+                <option value="Resource Person">Resource Person</option>
+                <option value="Reviewer">Reviewer</option>
+                <option value="Seminar">Seminar</option>
                 <option value="STTP">STTP</option>
-                <option value="Professional Development Course">
-                  Professional Development Course
-                </option>
-                <option value="Journal Publications">
-                  Journal Publications
-                </option>
-                <option value="Conference Publications">
-                  Conference Publications
-                </option>
+                <option value="Webinar">Webinar</option>
+                <option value="Workshop">Workshop</option>
               </select>
             </div>
             {form.type_of_event === "Journal Publications" && (
@@ -261,15 +255,15 @@ export default function AdminFacultyParticipation() {
                         onChange={update("publication_indexing")}
                       >
                         <option value="">Select</option>
-                        <option value="Scopus Journal">Scopus Journal</option>
                         <option value="Scopus Book chapter">
                           Scopus Book chapter
                         </option>
-                        <option value="Web of Science (SCI)">
-                          Web of Science (SCI)
-                        </option>
+                        <option value="Scopus Journal">Scopus Journal</option>
                         <option value="Web of Science (ESCI)">
                           Web of Science (ESCI)
+                        </option>
+                        <option value="Web of Science (SCI)">
+                          Web of Science (SCI)
                         </option>
                       </select>
                     </div>
@@ -423,8 +417,8 @@ export default function AdminFacultyParticipation() {
                         onChange={update("indexed_in_db")}
                       >
                         <option value="">Select</option>
-                        <option value="Yes">Yes</option>
                         <option value="No">No</option>
+                        <option value="Yes">Yes</option>
                       </select>
                     </div>
                     <div className="md:col-span-2">
@@ -471,12 +465,12 @@ export default function AdminFacultyParticipation() {
                         onChange={update("joint_publication_with")}
                       >
                         <option value="">Select</option>
-                        <option value="Industry">Industry</option>
-                        <option value="Top 100 NIRF">Top 100 NIRF</option>
                         <option value="Central Govt">Central Govt</option>
+                        <option value="Industry">Industry</option>
                         <option value="International University">
                           International University
                         </option>
+                        <option value="Top 100 NIRF">Top 100 NIRF</option>
                       </select>
                     </div>
                     <div>
@@ -499,8 +493,8 @@ export default function AdminFacultyParticipation() {
                         onChange={update("coauthors_students")}
                       >
                         <option value="">No</option>
-                        <option value="IT">IT</option>
                         <option value="ADS">ADS</option>
+                        <option value="IT">IT</option>
                       </select>
                     </div>
                   </div>
@@ -534,15 +528,15 @@ export default function AdminFacultyParticipation() {
                         onChange={update("publication_indexing")}
                       >
                         <option value="">Select</option>
-                        <option value="Scopus Journal">Scopus Journal</option>
                         <option value="Scopus Book chapter">
                           Scopus Book chapter
                         </option>
-                        <option value="Web of Science (SCI)">
-                          Web of Science (SCI)
-                        </option>
+                        <option value="Scopus Journal">Scopus Journal</option>
                         <option value="Web of Science (ESCI)">
                           Web of Science (ESCI)
+                        </option>
+                        <option value="Web of Science (SCI)">
+                          Web of Science (SCI)
                         </option>
                       </select>
                     </div>
@@ -696,8 +690,8 @@ export default function AdminFacultyParticipation() {
                         onChange={update("indexed_in_db")}
                       >
                         <option value="">Select</option>
-                        <option value="Yes">Yes</option>
                         <option value="No">No</option>
+                        <option value="Yes">Yes</option>
                       </select>
                     </div>
                     <div className="md:col-span-2">
@@ -744,12 +738,12 @@ export default function AdminFacultyParticipation() {
                         onChange={update("joint_publication_with")}
                       >
                         <option value="">Select</option>
-                        <option value="Industry">Industry</option>
-                        <option value="Top 100 NIRF">Top 100 NIRF</option>
                         <option value="Central Govt">Central Govt</option>
+                        <option value="Industry">Industry</option>
                         <option value="International University">
                           International University
                         </option>
+                        <option value="Top 100 NIRF">Top 100 NIRF</option>
                       </select>
                     </div>
                     <div>
@@ -772,8 +766,8 @@ export default function AdminFacultyParticipation() {
                         onChange={update("coauthors_students")}
                       >
                         <option value="">No</option>
-                        <option value="IT">IT</option>
                         <option value="ADS">ADS</option>
+                        <option value="IT">IT</option>
                       </select>
                     </div>
                   </div>
@@ -790,8 +784,8 @@ export default function AdminFacultyParticipation() {
                 required
               >
                 <option value="">Select Mode</option>
-                <option value="Online">Online</option>
                 <option value="Offline">Offline</option>
+                <option value="Online">Online</option>
               </select>
             </div>
             <div>

@@ -150,11 +150,11 @@ const RegisterStudent = () => {
                 className="border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select Department</option>
-                <option value="B.Tech Information Technology">
-                  B.Tech Information Technology
-                </option>
                 <option value="B.Tech Artificial Intelligence and Data Science">
                   B.Tech Artificial Intelligence and Data Science
+                </option>
+                <option value="B.Tech Information Technology">
+                  B.Tech Information Technology
                 </option>
               </select>
             </div>
@@ -171,8 +171,8 @@ const RegisterStudent = () => {
               >
                 <option value="">Select Course</option>
                 <option value="B.Tech">B.Tech</option>
-                <option value="M.Tech">M.Tech</option>
                 <option value="MCA">MCA</option>
+                <option value="M.Tech">M.Tech</option>
               </select>
             </div>
             <div className="flex flex-col">

@@ -13,6 +13,7 @@ import {
   FaUsers,
   FaCalendarAlt,
 } from "react-icons/fa";
+import { calculateDuration } from "../utils/duration";
 
 export default function FacultyConsultancyApproved() {
   const nav = useNavigate();
@@ -204,10 +205,10 @@ export default function FacultyConsultancyApproved() {
                         ₹{Number(item.amount).toLocaleString()}
                       </div>
                     )}
-                    {item.duration && (
+                    {(item.duration || (item.start_date && item.end_date)) && (
                       <div>
                         <span className="text-[10px] uppercase font-extrabold text-slate-400 block">Duration</span>
-                        {item.duration}
+                        {item.duration || calculateDuration(item.start_date, item.end_date)}
                       </div>
                     )}
                   </div>

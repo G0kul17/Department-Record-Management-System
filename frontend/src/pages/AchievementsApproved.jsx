@@ -3,6 +3,7 @@ import apiClient from "../api/axiosClient";
 import { Link, useNavigate } from "react-router-dom";
 import AttachmentPreview from "../components/AttachmentPreview";
 import CustomSelect from "../components/ui/CustomSelect";
+import ShareableProofLink from "../components/ShareableProofLink";
 import { generateAcademicYears } from "../utils/academicYears";
 import { getFileUrl } from "../utils/fileUrl";
 import { loadAchievementTypes } from "../utils/achievementTypes";
@@ -373,16 +374,19 @@ export default function AchievementsApproved() {
                                     {original || "Proof File"}
                                   </button>
                                   {filename && (
-                                    <a
-                                      href={downloadUrl}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      download
-                                      className="text-slate-500 hover:text-blue-600 p-0.5"
-                                      title="Download file"
-                                    >
-                                      <FaDownload className="w-3 h-3" />
-                                    </a>
+                                    <>
+                                      <a
+                                        href={downloadUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        download
+                                        className="text-slate-500 hover:text-blue-600 p-0.5"
+                                        title="Download file"
+                                      >
+                                        <FaDownload className="w-3 h-3" />
+                                      </a>
+                                      <ShareableProofLink type="achievement" id={item.id} filename={filename} className="ml-1" />
+                                    </>
                                   )}
                                 </div>
                               );

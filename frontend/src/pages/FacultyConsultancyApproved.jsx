@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import apiClient from "../api/axiosClient";
 import AttachmentPreview from "../components/AttachmentPreview";
 import CustomSelect from "../components/ui/CustomSelect";
+import ShareableProofLink from "../components/ShareableProofLink";
 import { generateAcademicYears } from "../utils/academicYears";
 import {
   FaBriefcase,
@@ -215,7 +216,7 @@ export default function FacultyConsultancyApproved() {
                 </div>
 
                 {item.proof_filename && (
-                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
                     <button
                       type="button"
                       onClick={() =>
@@ -230,6 +231,7 @@ export default function FacultyConsultancyApproved() {
                       <FaFileAlt className="w-3.5 h-3.5" />
                       View Consultancy Proof
                     </button>
+                    <ShareableProofLink type="consultancy" id={item.id} filename={item.proof_filename} />
                   </div>
                 )}
               </div>

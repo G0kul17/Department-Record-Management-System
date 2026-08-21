@@ -1,4 +1,6 @@
 // Environment-driven API base URL (Vite exposes env vars as import.meta.env)
+import pRetry from 'p-retry';
+
 const API_BASE_URL =
   (typeof import.meta !== "undefined" &&
     import.meta.env &&
@@ -31,27 +33,56 @@ class ApiClient {
     return headers;
   }
 
+  // Generates a random UUID (fallback for older browsers)
+  generateIdempotencyKey() {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    return '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, c =>
+      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+    );
+  }
+
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
+    
+    // Auto-attach Idempotency-Key for mutation requests
+    const isMutation = ['POST', 'PUT', 'PATCH'].includes(options.method?.toUpperCase());
+    const extraHeaders = {};
+    if (isMutation) {
+      extraHeaders['Idempotency-Key'] = this.generateIdempotencyKey();
+    }
+
     const config = {
       ...options,
       headers: {
         ...this.getAuthHeaders(),
+        ...extraHeaders,
         ...options.headers,
       },
     };
 
     try {
-      const response = await fetch(url, config);
+      const response = await pRetry(async () => {
+        const res = await fetch(url, config);
+        // Only retry on transient server errors (502, 503, 504)
+        if (res.status >= 502 && res.status <= 504) {
+          throw new Error(`Transient server error: ${res.status}`);
+        }
+        return res;
+      }, {
+        retries: 3,
+        onFailedAttempt: error => {
+          console.warn(`[API Client] Retrying failed request to ${endpoint}...`, error);
+        }
+      });
 
       // Handle 401 Unauthorized — but only redirect to /login when the user is
       // already authenticated (i.e. the session/token expired mid-session).
-      // Auth endpoints (/auth/*) return 401 for wrong password / invalid OTP;
-      // those errors must be surfaced to the form, not trigger a redirect.
       if (response.status === 401 && !endpoint.startsWith("/auth/")) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        window.location.href = "/login";
+        window.dispatchEvent(new CustomEvent("session_expired"));
         throw new Error("Unauthorized");
       }
 
@@ -128,6 +159,7 @@ class ApiClient {
     const sessionToken = localStorage.getItem("sessionToken");
     const headers = {
       ...(token && { Authorization: `Bearer ${token}` }),
+      'Idempotency-Key': this.generateIdempotencyKey(),
     };
 
     // Add session token if available
@@ -135,10 +167,21 @@ class ApiClient {
       headers["x-session-token"] = sessionToken;
     }
 
-    const response = await fetch(`${this.baseURL}${endpoint}`, {
-      method: "POST",
-      headers,
-      body: formData,
+    const response = await pRetry(async () => {
+      const res = await fetch(`${this.baseURL}${endpoint}`, {
+        method: "POST",
+        headers,
+        body: formData,
+      });
+      if (res.status >= 502 && res.status <= 504) {
+        throw new Error(`Transient server error: ${res.status}`);
+      }
+      return res;
+    }, {
+      retries: 3,
+      onFailedAttempt: error => {
+        console.warn(`[API Client] Retrying upload to ${endpoint}...`, error);
+      }
     });
 
     // Handle 401 Unauthorized — redirect only for authenticated endpoints,
@@ -146,7 +189,7 @@ class ApiClient {
     if (response.status === 401 && !endpoint.startsWith("/auth/")) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      window.location.href = "/login";
+      window.dispatchEvent(new CustomEvent("session_expired"));
       throw new Error("Unauthorized");
     }
 

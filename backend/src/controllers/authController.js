@@ -12,6 +12,7 @@ import {
 } from "../utils/sessionUtils.js";
 import logger, { reqContext } from "../utils/logger.js";
 import { tracedQuery } from "../utils/tracing.js";
+import { z } from "zod";
 dotenv.config();
 
 const OTP_EXPIRY_MIN = Number(process.env.OTP_EXPIRY_MIN || 5);
@@ -25,6 +26,25 @@ const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "")
   .filter(Boolean);
 
 export async function register(req, res) {
+  const RegisterSchema = z.object({
+    email: z.string().email("Invalid email format").min(1),
+    password: z.string().regex(/^(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/, "Password must be at least 8 characters and include at least one number and one special character"),
+    name: z.string().optional(),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+    department: z.string().optional(),
+    course: z.string().optional(),
+    year: z.string().optional(),
+    section: z.string().optional(),
+    rollNumber: z.string().optional(),
+    phone: z.string().optional(),
+  });
+
+  const parsed = RegisterSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ message: parsed.error.errors[0].message });
+  }
+
   const {
     email,
     password,
@@ -37,19 +57,7 @@ export async function register(req, res) {
     section,
     rollNumber,
     phone,
-  } = req.body;
-  if (!email || !password)
-    return res.status(400).json({ message: "Email and password required" });
-
-  // Password policy: min 8 chars, at least one digit, at least one special char
-  const passwordPolicy =
-    /^(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
-  if (!passwordPolicy.test(password)) {
-    return res.status(400).json({
-      message:
-        "Password must be at least 8 characters and include at least one number and one special character",
-    });
-  }
+  } = parsed.data;
 
   const emailLower = email.toLowerCase();
   const fullName = (name || "").trim() || null;
@@ -85,61 +93,56 @@ export async function register(req, res) {
     if (existing.length) {
       const userRow = existing[0];
       if (!userRow.is_verified) {
-        // A pending (unverified) record already exists for this email. Do
-        // NOT overwrite its password/role/profile from this new, unproven
-        // request — that let anyone re-submit registration for someone
-        // else's pending email and silently take over the account once the
-        // real user completed OTP verification (VULN-0003). The only
-        // legitimate action here is resending an OTP to the same address;
-        // fall through to OTP (re)issuance below without touching the
-        // stored credential.
+        // A pending (unverified) record already exists for this email.
       } else {
         return res.status(400).json({ message: "Email already registered" });
       }
     }
 
-    // Only create a new user row when none exists yet. A pending row is left
-    // untouched — its stored password/role/profile are never modified here.
-    if (!existing.length) {
-      const hashed = await bcrypt.hash(password, 10);
-      try {
-        await tracedQuery(
-          pool,
-          "INSERT INTO users (email, password_hash, role, profile_details, full_name) VALUES ($1, $2, $3, $4, $5)",
-          [emailLower, hashed, role, JSON.stringify(profileDetails), fullName],
-        );
-      } catch (e) {
-        // unique violation
-        if (e && e.code === "23505") {
-          return res.status(400).json({ message: "Email already registered" });
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE");
+
+      if (!existing.length) {
+        const hashed = await bcrypt.hash(password, 10);
+        try {
+          await client.query(
+            "INSERT INTO users (email, password_hash, role, profile_details, full_name) VALUES ($1, $2, $3, $4, $5)",
+            [emailLower, hashed, role, JSON.stringify(profileDetails), fullName]
+          );
+        } catch (e) {
+          if (e && e.code === "23505") {
+            await client.query("ROLLBACK");
+            return res.status(400).json({ message: "Email already registered" });
+          }
+          throw e;
         }
-        throw e;
       }
+
+      const { rows: priorOtpRows } = await client.query(
+        "SELECT attempts FROM otp_verifications WHERE email=$1",
+        [emailLower]
+      );
+      const priorAttempts = priorOtpRows[0]?.attempts ?? 0;
+
+      const otp = generateOTP();
+      
+      await client.query("DELETE FROM otp_verifications WHERE email=$1", [emailLower]);
+      await client.query(
+        `INSERT INTO otp_verifications (email, otp_code, expires_at, attempts) 
+         VALUES ($1, $2, NOW() + INTERVAL '${OTP_EXPIRY_MIN} minutes', $3)`,
+        [emailLower, otp, priorAttempts]
+      );
+
+      await client.query("COMMIT");
+      await sendOTPEmail(emailLower, otp);
+
+    } catch (txErr) {
+      await client.query("ROLLBACK");
+      throw txErr;
+    } finally {
+      client.release();
     }
-
-    // Generate OTP and save. Preserve any existing failed-attempt count for
-    // this email across re-registration/resend instead of resetting it —
-    // otherwise repeated re-registration requests reset the lockout counter
-    // and extend the OTP brute-force window (VULN-0003 remediation #2).
-    const { rows: priorOtpRows } = await tracedQuery(
-      pool,
-      "SELECT attempts FROM otp_verifications WHERE email=$1",
-      [emailLower],
-    );
-    const priorAttempts = priorOtpRows[0]?.attempts ?? 0;
-
-    const otp = generateOTP();
-    const expiresAt = getExpiryDate(OTP_EXPIRY_MIN);
-    await tracedQuery(pool, "DELETE FROM otp_verifications WHERE email=$1", [
-      emailLower,
-    ]);
-    await tracedQuery(
-      pool,
-      "INSERT INTO otp_verifications (email, otp_code, expires_at, attempts) VALUES ($1, $2, $3, $4)",
-      [emailLower, otp, expiresAt, priorAttempts],
-    );
-
-    await sendOTPEmail(emailLower, otp);
 
     return res.json({
       message: `OTP sent to ${emailLower}`,
@@ -758,7 +761,23 @@ export async function updateProfile(req, res) {
     const emailLower = (req.user?.email || "").toLowerCase();
     if (!emailLower) return res.status(401).json({ message: "Unauthorized" });
 
-    const { name, fullName, phone, rollNumber, designation, department, employee_id, contact_number } = req.body || {};
+    const UpdateProfileSchema = z.object({
+      name: z.string().optional(),
+      fullName: z.string().optional(),
+      phone: z.string().optional(),
+      rollNumber: z.string().optional(),
+      designation: z.string().optional(),
+      department: z.string().optional(),
+      employee_id: z.string().optional(),
+      contact_number: z.string().optional(),
+    });
+
+    const parsed = UpdateProfileSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Invalid profile data format" });
+    }
+
+    const { name, fullName, phone, rollNumber, designation, department, employee_id, contact_number } = parsed.data;
     const nameValue = name || fullName;
 
     // Get current profile_details

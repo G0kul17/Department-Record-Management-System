@@ -41,7 +41,7 @@ export default function AdminStudentsBatchUpload() {
               Add Students Batch
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Upload a single CSV or Excel file containing student registration details.
+              Upload a single CSV file containing student registration details.
             </p>
           </div>
         </div>
@@ -69,9 +69,9 @@ export default function AdminStudentsBatchUpload() {
 
         <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-5 w-full">
           <UploadDropzone
-            label="Upload CSV or Excel Dataset"
-            subtitle="Only .csv or .xlsx files are allowed (Max size 25MB)"
-            accept=".csv,.xlsx"
+            label="Upload CSV Dataset"
+            subtitle="Only .csv files are allowed (Max size 25MB)"
+            accept=".csv"
             maxSizeMB={25}
             selectedFile={file}
             onFileSelected={(f) => setFile(f)}

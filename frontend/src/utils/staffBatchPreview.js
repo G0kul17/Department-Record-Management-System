@@ -105,13 +105,11 @@ export async function generateStaffPreview(file) {
   const name = (file.name || "").toLowerCase();
   let rows;
 
-  if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
-    rows = await parseXlsx(file);
-  } else if (name.endsWith(".csv")) {
+  if (name.endsWith(".csv")) {
     const text = await file.text();
     rows = parseCsvToRows(text);
   } else {
-    throw new Error("Unsupported file type. Please upload .csv or .xlsx");
+    throw new Error("Unsupported file type. Please upload a .csv file");
   }
 
   if (!rows.length) {

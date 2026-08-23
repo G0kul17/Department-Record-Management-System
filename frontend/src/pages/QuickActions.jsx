@@ -120,7 +120,7 @@ export default function QuickActions({ embedded = false }) {
     {
       key: "studentsBatch",
       title: "Add Students Batch",
-      desc: "Upload CSV/Excel to add students in bulk",
+      desc: "Upload CSV to add students in bulk",
       icon: FaUserPlus,
       mode: "upload",
       category: "students",

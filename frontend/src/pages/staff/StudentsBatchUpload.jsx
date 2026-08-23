@@ -40,7 +40,7 @@ export default function StudentsBatchUpload() {
               Add Students Batch
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-              Upload CSV or Excel spreadsheets to import student records in bulk.
+              Upload CSV spreadsheets to import student records in bulk.
             </p>
           </div>
         </div>
@@ -68,9 +68,9 @@ export default function StudentsBatchUpload() {
 
         <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-sm space-y-6">
           <UploadDropzone
-            label="Upload CSV or Excel"
-            subtitle="Only .csv or .xlsx files are allowed"
-            accept=".csv,.xlsx"
+            label="Upload CSV File"
+            subtitle="Only .csv files are allowed"
+            accept=".csv"
             maxSizeMB={25}
             selectedFile={file}
             onFileSelected={(f) => setFile(f)}

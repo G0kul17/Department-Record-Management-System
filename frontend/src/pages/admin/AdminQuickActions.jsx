@@ -54,13 +54,13 @@ export default function AdminQuickActions() {
     {
       key: "studentsBatch",
       title: "Add Students Batch",
-      desc: "Upload CSV/Excel to add students in bulk",
+      desc: "Upload CSV to add students in bulk",
       icon: FaUserGraduate,
     },
     {
       key: "staffBatch",
       title: "Staff Batch Upload",
-      desc: "Upload CSV/Excel to create staff accounts in bulk",
+      desc: "Upload CSV to create staff accounts in bulk",
       icon: FaUserTie,
     },
     {

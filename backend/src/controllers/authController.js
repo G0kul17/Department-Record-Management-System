@@ -126,12 +126,12 @@ export async function register(req, res) {
       const priorAttempts = priorOtpRows[0]?.attempts ?? 0;
 
       const otp = generateOTP();
+      const expiresAt = getExpiryDate(OTP_EXPIRY_MIN);
       
       await client.query("DELETE FROM otp_verifications WHERE email=$1", [emailLower]);
       await client.query(
-        `INSERT INTO otp_verifications (email, otp_code, expires_at, attempts) 
-         VALUES ($1, $2, NOW() + INTERVAL '${OTP_EXPIRY_MIN} minutes', $3)`,
-        [emailLower, otp, priorAttempts]
+        "INSERT INTO otp_verifications (email, otp_code, expires_at, attempts) VALUES ($1, $2, $3, $4)",
+        [emailLower, otp, expiresAt, priorAttempts]
       );
 
       await client.query("COMMIT");

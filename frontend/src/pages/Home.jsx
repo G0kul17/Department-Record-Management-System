@@ -170,7 +170,7 @@ export default function Home({ hideAtAGlance = false }) {
     <>
       <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-white to-slate-50">
         {/* Hero Section with Glowing Wavy Lines & Modern Aesthetics */}
-        <div className="relative w-full overflow-hidden bg-[#04081e] px-4 sm:px-6 lg:px-12 py-12 sm:py-16 md:py-22 text-white shadow-2xl">
+        <div className="relative w-full overflow-hidden bg-[#04081e] px-3 sm:px-6 lg:px-12 py-8 sm:py-14 md:py-20 text-white shadow-2xl">
           {/* Ambient Top Left Glow & Wavy Neon Lines Background */}
           <div className="pointer-events-none absolute inset-0 overflow-hidden select-none z-0">
             {/* Top-Left Ambient Blue Glow */}
@@ -239,17 +239,17 @@ export default function Home({ hideAtAGlance = false }) {
             </svg>
           </div>
 
-          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
             {/* Left Column: Headline & Action */}
-            <div className={`space-y-5 flex flex-col justify-center ${user?.role === "admin" ? "lg:col-span-12 text-center md:text-left max-w-3xl" : "lg:col-span-6 xl:col-span-6 text-center md:text-left"}`}>
+            <div className={`space-y-4 sm:space-y-5 flex flex-col justify-center ${user?.role === "admin" ? "lg:col-span-12 text-center md:text-left max-w-3xl" : "lg:col-span-6 xl:col-span-6 text-center md:text-left"}`}>
               {/* Top Pill Badge */}
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-950/40 px-4 py-1.5 text-xs font-semibold text-blue-300 tracking-wide self-center md:self-start shadow-[0_0_15px_rgba(59,130,246,0.15)] backdrop-blur-md">
-                <span className="h-2 w-2 rounded-full bg-blue-400 animate-pulse shadow-[0_0_8px_#3b82f6]" />
-                Department Records Management System
+              <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-950/40 px-3 sm:px-4 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold text-blue-300 tracking-wide self-center md:self-start shadow-[0_0_15px_rgba(59,130,246,0.15)] backdrop-blur-md max-w-full truncate">
+                <span className="h-2 w-2 rounded-full bg-blue-400 animate-pulse shadow-[0_0_8px_#3b82f6] flex-shrink-0" />
+                <span className="truncate">Department Records Management System</span>
               </div>
 
               {/* Main Headline */}
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+              <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight break-words">
                 Sona College of{" "}
                 <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
                   Technology
@@ -257,54 +257,54 @@ export default function Home({ hideAtAGlance = false }) {
               </h1>
 
               {/* Subtitle */}
-              <p className="text-slate-300 text-sm sm:text-base md:text-lg max-w-2xl mx-auto md:mx-0 font-medium leading-relaxed">
+              <p className="text-slate-300 text-xs sm:text-base md:text-lg max-w-2xl mx-auto md:mx-0 font-medium leading-relaxed">
                 Your central hub for academic records, achievements, projects and events.
               </p>
 
               {/* Action Button */}
-              <div className="pt-2 flex justify-center md:justify-start">
+              <div className="pt-1 sm:pt-2 flex justify-center md:justify-start">
                 <button
                   type="button"
                   onClick={goToQuickActions}
-                  className="inline-flex items-center gap-2.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold px-7 py-3.5 text-sm sm:text-base shadow-[0_0_25px_rgba(37,99,235,0.45)] hover:shadow-[0_0_35px_rgba(37,99,235,0.75)] hover:scale-105 transition-all duration-300 cursor-pointer"
+                  className="inline-flex items-center gap-2 sm:gap-2.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold px-5 sm:px-7 py-2.5 sm:py-3.5 text-xs sm:text-base shadow-[0_0_25px_rgba(37,99,235,0.45)] hover:shadow-[0_0_35px_rgba(37,99,235,0.75)] hover:scale-105 transition-all duration-300 cursor-pointer"
                 >
                   <span>Explore Records</span>
-                  <FaChevronRight className="w-3.5 h-3.5" />
+                  <FaChevronRight className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                 </button>
               </div>
             </div>
 
             {/* Right Column: At a Glance Dashboard Cards (Staff and Student Only) */}
             {user && user.role !== "admin" && !hideAtAGlance && (
-              <div className="lg:col-span-6 xl:col-span-6">
-                <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-5 sm:p-7 shadow-2xl backdrop-blur-md space-y-4">
+              <div className="lg:col-span-6 xl:col-span-6 w-full">
+                <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-4 sm:p-6 md:p-7 shadow-2xl backdrop-blur-md space-y-3.5 sm:space-y-4">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                    <h2 className="text-[11px] sm:text-xs font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                       <span>At a Glance Overview</span>
                     </h2>
-                    <span className="rounded-full bg-blue-500/10 border border-blue-400/20 px-2.5 py-0.5 text-[11px] font-extrabold text-blue-300">
+                    <span className="rounded-full bg-blue-500/10 border border-blue-400/20 px-2.5 py-0.5 text-[10px] sm:text-[11px] font-extrabold text-blue-300">
                       Live Stats
                     </span>
                   </div>
 
                   <div
-                    className={`grid gap-3 sm:gap-4 ${(user?.role === "staff" || user?.role === "admin") ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"}`}
+                    className={`grid gap-2 sm:gap-3.5 ${(user?.role === "staff" || user?.role === "admin") ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"}`}
                   >
                     {/* Projects tile */}
                     <button
                       type="button"
                       onClick={() => nav("/projects/approved")}
-                      className="group rounded-2xl p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-blue-400/80 hover:shadow-md hover:shadow-blue-500/10 flex flex-col justify-between cursor-pointer space-y-3"
+                      className="group rounded-2xl p-3 sm:p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-blue-400/80 hover:shadow-md hover:shadow-blue-500/10 flex flex-col justify-between cursor-pointer space-y-2 sm:space-y-3 min-w-0"
                     >
-                      <div className="flex items-center gap-2.5">
-                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/30 flex-shrink-0 group-hover:scale-105 transition-transform">
-                          <FaFolder className="w-4 h-4" />
+                      <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                        <span className="flex h-7.5 w-7.5 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/30 flex-shrink-0 group-hover:scale-105 transition-transform">
+                          <FaFolder className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </span>
-                        <span className="text-xs font-extrabold text-slate-200 uppercase tracking-wider">
+                        <span className="text-[10px] sm:text-xs font-extrabold text-slate-200 uppercase tracking-wider truncate">
                           Projects
                         </span>
                       </div>
-                      <div className="text-2xl sm:text-3xl font-black text-white group-hover:text-blue-400 transition-colors">
+                      <div className="text-xl sm:text-2xl md:text-3xl font-black text-white group-hover:text-blue-400 transition-colors">
                         {user?.role === "staff"
                           ? staffProjCount === null ? "—" : staffProjCount
                           : projCount === null ? "—" : projCount}
@@ -315,17 +315,17 @@ export default function Home({ hideAtAGlance = false }) {
                     <button
                       type="button"
                       onClick={() => nav("/achievements/approved")}
-                      className="group rounded-2xl p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-amber-400/80 hover:shadow-md hover:shadow-amber-500/10 flex flex-col justify-between cursor-pointer space-y-3"
+                      className="group rounded-2xl p-3 sm:p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-blue-400/80 hover:shadow-md hover:shadow-blue-500/10 flex flex-col justify-between cursor-pointer space-y-2 sm:space-y-3 min-w-0"
                     >
-                      <div className="flex items-center gap-2.5">
-                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500 text-white shadow-md shadow-amber-500/30 flex-shrink-0 group-hover:scale-105 transition-transform">
-                          <FaTrophy className="w-4 h-4" />
+                      <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                        <span className="flex h-7.5 w-7.5 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-600/25 flex-shrink-0 group-hover:scale-105 transition-transform">
+                          <FaTrophy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </span>
-                        <span className="text-xs font-extrabold text-slate-200 uppercase tracking-wider">
+                        <span className="text-[10px] sm:text-xs font-extrabold text-slate-200 uppercase tracking-wider truncate">
                           Achievements
                         </span>
                       </div>
-                      <div className="text-2xl sm:text-3xl font-black text-white group-hover:text-amber-400 transition-colors">
+                      <div className="text-xl sm:text-2xl md:text-3xl font-black text-white group-hover:text-blue-400 transition-colors">
                         {user?.role === "staff" ? (staffAchCount === null ? "—" : staffAchCount) : (achCount === null ? "—" : achCount)}
                       </div>
                     </button>
@@ -336,17 +336,17 @@ export default function Home({ hideAtAGlance = false }) {
                         <button
                           type="button"
                           onClick={() => nav("/admin/students")}
-                          className="group rounded-2xl p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-emerald-400/80 hover:shadow-md hover:shadow-emerald-500/10 flex flex-col justify-between cursor-pointer space-y-3"
+                          className="group rounded-2xl p-3 sm:p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-blue-400/80 hover:shadow-md hover:shadow-blue-500/10 flex flex-col justify-between cursor-pointer space-y-2 sm:space-y-3 min-w-0"
                         >
-                          <div className="flex items-center gap-2.5">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-md shadow-emerald-500/30 flex-shrink-0 group-hover:scale-105 transition-transform">
-                              <FaUserGraduate className="w-4 h-4" />
+                          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                            <span className="flex h-7.5 w-7.5 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-600/25 flex-shrink-0 group-hover:scale-105 transition-transform">
+                              <FaUserGraduate className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </span>
-                            <span className="text-xs font-extrabold text-slate-200 uppercase tracking-wider">
+                            <span className="text-[10px] sm:text-xs font-extrabold text-slate-200 uppercase tracking-wider truncate">
                               Students
                             </span>
                           </div>
-                          <div className="text-2xl sm:text-3xl font-black text-white group-hover:text-emerald-400 transition-colors">
+                          <div className="text-xl sm:text-2xl md:text-3xl font-black text-white group-hover:text-blue-400 transition-colors">
                             {studentCount === null ? "—" : studentCount}
                           </div>
                         </button>
@@ -354,17 +354,17 @@ export default function Home({ hideAtAGlance = false }) {
                         <button
                           type="button"
                           onClick={() => nav("/admin/staff")}
-                          className="group rounded-2xl p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-indigo-400/80 hover:shadow-md hover:shadow-indigo-500/10 flex flex-col justify-between cursor-pointer space-y-3"
+                          className="group rounded-2xl p-3 sm:p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-blue-400/80 hover:shadow-md hover:shadow-blue-500/10 flex flex-col justify-between cursor-pointer space-y-2 sm:space-y-3 min-w-0"
                         >
-                          <div className="flex items-center gap-2.5">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-500/30 flex-shrink-0 group-hover:scale-105 transition-transform">
-                              <FaUserTie className="w-4 h-4" />
+                          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                            <span className="flex h-7.5 w-7.5 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-600/25 flex-shrink-0 group-hover:scale-105 transition-transform">
+                              <FaUserTie className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </span>
-                            <span className="text-xs font-extrabold text-slate-200 uppercase tracking-wider">
+                            <span className="text-[10px] sm:text-xs font-extrabold text-slate-200 uppercase tracking-wider truncate">
                               Staff
                             </span>
                           </div>
-                          <div className="text-2xl sm:text-3xl font-black text-white group-hover:text-indigo-400 transition-colors">
+                          <div className="text-xl sm:text-2xl md:text-3xl font-black text-white group-hover:text-blue-400 transition-colors">
                             {staffCount === null ? "—" : staffCount}
                           </div>
                         </button>
@@ -372,17 +372,17 @@ export default function Home({ hideAtAGlance = false }) {
                         <button
                           type="button"
                           onClick={() => nav("/events")}
-                          className="group rounded-2xl p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-rose-400/80 hover:shadow-md hover:shadow-rose-500/10 flex flex-col justify-between cursor-pointer space-y-3"
+                          className="group rounded-2xl p-3 sm:p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-blue-400/80 hover:shadow-md hover:shadow-blue-500/10 flex flex-col justify-between cursor-pointer space-y-2 sm:space-y-3 min-w-0"
                         >
-                          <div className="flex items-center gap-2.5">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-500 text-white shadow-md shadow-rose-500/30 flex-shrink-0 group-hover:scale-105 transition-transform">
-                              <FaCalendarAlt className="w-4 h-4" />
+                          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                            <span className="flex h-7.5 w-7.5 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-600/25 flex-shrink-0 group-hover:scale-105 transition-transform">
+                              <FaCalendarAlt className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </span>
-                            <span className="text-xs font-extrabold text-slate-200 uppercase tracking-wider">
+                            <span className="text-[10px] sm:text-xs font-extrabold text-slate-200 uppercase tracking-wider truncate">
                               Events
                             </span>
                           </div>
-                          <div className="text-2xl sm:text-3xl font-black text-white group-hover:text-rose-400 transition-colors">
+                          <div className="text-xl sm:text-2xl md:text-3xl font-black text-white group-hover:text-blue-400 transition-colors">
                             {eventCount === null ? "—" : eventCount}
                           </div>
                         </button>
@@ -390,17 +390,17 @@ export default function Home({ hideAtAGlance = false }) {
                         <button
                           type="button"
                           onClick={() => nav("/faculty-research-approved")}
-                          className="group rounded-2xl p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-orange-400/80 hover:shadow-md hover:shadow-orange-500/10 flex flex-col justify-between cursor-pointer space-y-3"
+                          className="group rounded-2xl p-3 sm:p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-blue-400/80 hover:shadow-md hover:shadow-blue-500/10 flex flex-col justify-between cursor-pointer space-y-2 sm:space-y-3 min-w-0"
                         >
-                          <div className="flex items-center gap-2.5">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500 text-white shadow-md shadow-orange-500/30 flex-shrink-0 group-hover:scale-105 transition-transform">
-                              <FaFlask className="w-4 h-4" />
+                          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                            <span className="flex h-7.5 w-7.5 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-600/25 flex-shrink-0 group-hover:scale-105 transition-transform">
+                              <FaFlask className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </span>
-                            <span className="text-xs font-extrabold text-slate-200 uppercase tracking-wider">
+                            <span className="text-[10px] sm:text-xs font-extrabold text-slate-200 uppercase tracking-wider truncate">
                               Research
                             </span>
                           </div>
-                          <div className="text-2xl sm:text-3xl font-black text-white group-hover:text-orange-400 transition-colors">
+                          <div className="text-xl sm:text-2xl md:text-3xl font-black text-white group-hover:text-blue-400 transition-colors">
                             {researchCount === null ? "—" : researchCount}
                           </div>
                         </button>
@@ -408,17 +408,17 @@ export default function Home({ hideAtAGlance = false }) {
                         <button
                           type="button"
                           onClick={() => nav("/faculty-consultancy-approved")}
-                          className="group rounded-2xl p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-cyan-400/80 hover:shadow-md hover:shadow-cyan-500/10 flex flex-col justify-between cursor-pointer space-y-3"
+                          className="group rounded-2xl p-3 sm:p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-cyan-400/80 hover:shadow-md hover:shadow-cyan-500/10 flex flex-col justify-between cursor-pointer space-y-2 sm:space-y-3 min-w-0"
                         >
-                          <div className="flex items-center gap-2.5">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-600 text-white shadow-md shadow-cyan-500/30 flex-shrink-0 group-hover:scale-105 transition-transform">
-                              <FaBriefcase className="w-4 h-4" />
+                          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                            <span className="flex h-7.5 w-7.5 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-cyan-600 text-white shadow-md shadow-cyan-500/30 flex-shrink-0 group-hover:scale-105 transition-transform">
+                              <FaBriefcase className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </span>
-                            <span className="text-xs font-extrabold text-slate-200 uppercase tracking-wider">
+                            <span className="text-[10px] sm:text-xs font-extrabold text-slate-200 uppercase tracking-wider truncate">
                               Consultancy
                             </span>
                           </div>
-                          <div className="text-2xl sm:text-3xl font-black text-white group-hover:text-cyan-400 transition-colors">
+                          <div className="text-xl sm:text-2xl md:text-3xl font-black text-white group-hover:text-cyan-400 transition-colors">
                             {consultancyCount === null ? "—" : consultancyCount}
                           </div>
                         </button>
@@ -426,17 +426,17 @@ export default function Home({ hideAtAGlance = false }) {
                         <button
                           type="button"
                           onClick={() => nav("/faculty-participation-approved")}
-                          className="group rounded-2xl p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-purple-400/80 hover:shadow-md hover:shadow-purple-500/10 flex flex-col justify-between cursor-pointer space-y-3"
+                          className="group rounded-2xl p-3 sm:p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-blue-400/80 hover:shadow-md hover:shadow-blue-500/10 flex flex-col justify-between cursor-pointer space-y-2 sm:space-y-3 min-w-0"
                         >
-                          <div className="flex items-center gap-2.5">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-600 text-white shadow-md shadow-purple-500/30 flex-shrink-0 group-hover:scale-105 transition-transform">
-                              <FaUsers className="w-4 h-4" />
+                          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                            <span className="flex h-7.5 w-7.5 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-600/25 flex-shrink-0 group-hover:scale-105 transition-transform">
+                              <FaUsers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </span>
-                            <span className="text-xs font-extrabold text-slate-200 uppercase tracking-wider">
+                            <span className="text-[10px] sm:text-xs font-extrabold text-slate-200 uppercase tracking-wider truncate">
                               Participation
                             </span>
                           </div>
-                          <div className="text-2xl sm:text-3xl font-black text-white group-hover:text-purple-400 transition-colors">
+                          <div className="text-xl sm:text-2xl md:text-3xl font-black text-white group-hover:text-blue-400 transition-colors">
                             {participationCount === null ? "—" : participationCount}
                           </div>
                         </button>
@@ -449,17 +449,17 @@ export default function Home({ hideAtAGlance = false }) {
                         <button
                           type="button"
                           onClick={() => nav("/faculty-participation-approved")}
-                          className="group rounded-2xl p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-purple-400/80 hover:shadow-md hover:shadow-purple-500/10 flex flex-col justify-between cursor-pointer space-y-3"
+                          className="group rounded-2xl p-3 sm:p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-blue-400/80 hover:shadow-md hover:shadow-blue-500/10 flex flex-col justify-between cursor-pointer space-y-2 sm:space-y-3 min-w-0"
                         >
-                          <div className="flex items-center gap-2.5">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-600 text-white shadow-md shadow-purple-500/30 flex-shrink-0 group-hover:scale-105 transition-transform">
-                              <FaUsers className="w-4 h-4" />
+                          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                            <span className="flex h-7.5 w-7.5 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-600/25 flex-shrink-0 group-hover:scale-105 transition-transform">
+                              <FaUsers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </span>
-                            <span className="text-xs font-extrabold text-slate-200 uppercase tracking-wider">
+                            <span className="text-[10px] sm:text-xs font-extrabold text-slate-200 uppercase tracking-wider truncate">
                               Participation
                             </span>
                           </div>
-                          <div className="text-2xl sm:text-3xl font-black text-white group-hover:text-purple-400 transition-colors">
+                          <div className="text-xl sm:text-2xl md:text-3xl font-black text-white group-hover:text-blue-400 transition-colors">
                             {staffPartCount === null ? "—" : staffPartCount}
                           </div>
                         </button>
@@ -467,17 +467,17 @@ export default function Home({ hideAtAGlance = false }) {
                         <button
                           type="button"
                           onClick={() => nav("/faculty-research-approved")}
-                          className="group rounded-2xl p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-orange-400/80 hover:shadow-md hover:shadow-orange-500/10 flex flex-col justify-between cursor-pointer space-y-3"
+                          className="group rounded-2xl p-3 sm:p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-blue-400/80 hover:shadow-md hover:shadow-blue-500/10 flex flex-col justify-between cursor-pointer space-y-2 sm:space-y-3 min-w-0"
                         >
-                          <div className="flex items-center gap-2.5">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500 text-white shadow-md shadow-orange-500/30 flex-shrink-0 group-hover:scale-105 transition-transform">
-                              <FaFlask className="w-4 h-4" />
+                          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                            <span className="flex h-7.5 w-7.5 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-600/25 flex-shrink-0 group-hover:scale-105 transition-transform">
+                              <FaFlask className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </span>
-                            <span className="text-xs font-extrabold text-slate-200 uppercase tracking-wider">
+                            <span className="text-[10px] sm:text-xs font-extrabold text-slate-200 uppercase tracking-wider truncate">
                               Research
                             </span>
                           </div>
-                          <div className="text-2xl sm:text-3xl font-black text-white group-hover:text-orange-400 transition-colors">
+                          <div className="text-xl sm:text-2xl md:text-3xl font-black text-white group-hover:text-blue-400 transition-colors">
                             {staffResCount === null ? "—" : staffResCount}
                           </div>
                         </button>
@@ -485,17 +485,17 @@ export default function Home({ hideAtAGlance = false }) {
                         <button
                           type="button"
                           onClick={() => nav("/faculty-consultancy-approved")}
-                          className="group rounded-2xl p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-cyan-400/80 hover:shadow-md hover:shadow-cyan-500/10 flex flex-col justify-between cursor-pointer space-y-3"
+                          className="group rounded-2xl p-3 sm:p-4 bg-slate-800/80 hover:bg-slate-800 transition-all duration-200 text-left border border-slate-700/80 hover:border-blue-400/80 hover:shadow-md hover:shadow-blue-500/10 flex flex-col justify-between cursor-pointer space-y-2 sm:space-y-3 min-w-0"
                         >
-                          <div className="flex items-center gap-2.5">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-600 text-white shadow-md shadow-cyan-500/30 flex-shrink-0 group-hover:scale-105 transition-transform">
-                              <FaBriefcase className="w-4 h-4" />
+                          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                            <span className="flex h-7.5 w-7.5 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-600/25 flex-shrink-0 group-hover:scale-105 transition-transform">
+                              <FaBriefcase className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                             </span>
-                            <span className="text-xs font-extrabold text-slate-200 uppercase tracking-wider">
+                            <span className="text-[10px] sm:text-xs font-extrabold text-slate-200 uppercase tracking-wider truncate">
                               Consultancy
                             </span>
                           </div>
-                          <div className="text-2xl sm:text-3xl font-black text-white group-hover:text-cyan-400 transition-colors">
+                          <div className="text-xl sm:text-2xl md:text-3xl font-black text-white group-hover:text-blue-400 transition-colors">
                             {staffConsCount === null ? "—" : staffConsCount}
                           </div>
                         </button>
@@ -516,16 +516,16 @@ export default function Home({ hideAtAGlance = false }) {
           {/* Section header */}
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800/40">
                 <FaCalendarAlt className="w-4 h-4" />
               </span>
-              <h2 className="text-sm sm:text-base font-bold uppercase tracking-widest text-slate-800">
+              <h2 className="text-sm sm:text-base font-bold uppercase tracking-widest text-slate-800 dark:text-slate-200">
                 Latest Events & Announcements
               </h2>
             </div>
             <a
               href="/events"
-              className="inline-flex items-center gap-1.5 text-sm font-bold text-blue-600 hover:text-blue-700 transition"
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 transition"
             >
               View all events
               <FaChevronRight className="w-3 h-3" />
@@ -549,10 +549,10 @@ export default function Home({ hideAtAGlance = false }) {
         >
           {/* Section header */}
           <div className="flex items-center gap-2.5 mb-5 sm:mb-6">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800/40">
                 <FaFolder className="w-4 h-4" />
               </span>
-              <h2 className="text-sm sm:text-base font-bold uppercase tracking-widest text-slate-800">
+              <h2 className="text-sm sm:text-base font-bold uppercase tracking-widest text-slate-800 dark:text-slate-200">
                 Recent Projects
               </h2>
             </div>
@@ -566,10 +566,10 @@ export default function Home({ hideAtAGlance = false }) {
         >
           {/* Section header */}
           <div className="flex items-center gap-2.5 mb-5 sm:mb-6">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800/40">
                 <FaTrophy className="w-4 h-4" />
               </span>
-              <h2 className="text-sm sm:text-base font-bold uppercase tracking-widest text-slate-800">
+              <h2 className="text-sm sm:text-base font-bold uppercase tracking-widest text-slate-800 dark:text-slate-200">
                 Recent Achievements
               </h2>
             </div>

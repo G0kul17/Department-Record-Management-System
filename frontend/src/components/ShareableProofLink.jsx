@@ -1,16 +1,13 @@
 import React, { useState } from "react";
-import { Link2, CheckCircle } from "lucide-react";
+import { FaLink, FaCheck } from "react-icons/fa";
 
 export default function ShareableProofLink({ type, id, filename, className = "" }) {
   const [copied, setCopied] = useState(false);
 
-  // Still need filename just to know if there's a proof attached, though for some 
-  // records like achievements without proof we might still want to share the card. 
-  // Let's rely on type and id for the URL.
   if (!type || !id) return null;
 
-  const handleCopy = () => {
-    // Construct the new public URL
+  const handleCopy = (e) => {
+    e.stopPropagation();
     const publicUrl = `${window.location.origin}/share/${type}/${id}`;
     navigator.clipboard.writeText(publicUrl);
     setCopied(true);
@@ -19,25 +16,27 @@ export default function ShareableProofLink({ type, id, filename, className = "" 
 
   return (
     <button
+      type="button"
       onClick={handleCopy}
-      className={`inline-flex items-center space-x-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-extrabold rounded-lg transition-all duration-200 cursor-pointer select-none whitespace-nowrap ${
         copied
-          ? "bg-green-50 text-green-700 border border-green-200"
-          : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+          ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 shadow-xs scale-105"
+          : "bg-blue-50/80 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200/80 dark:border-blue-800/60 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white hover:border-blue-600 dark:hover:border-blue-600 hover:shadow-sm hover:shadow-blue-500/25 active:scale-95"
       } ${className}`}
       title="Copy public shareable link"
     >
       {copied ? (
         <>
-          <CheckCircle className="w-4 h-4 text-green-500" />
+          <FaCheck className="w-2.5 h-2.5 text-emerald-600 dark:text-emerald-400 animate-bounce" />
           <span>Link Copied!</span>
         </>
       ) : (
         <>
-          <Link2 className="w-4 h-4 text-gray-500" />
+          <FaLink className="w-2.5 h-2.5 opacity-80 group-hover:opacity-100" />
           <span>Share Link</span>
         </>
       )}
     </button>
   );
 }
+

@@ -204,12 +204,12 @@ export default function ReportGenerator() {
   }, [mode]);
 
   const datasetHub = [
-    { key: "achievements", title: "Achievements", icon: FaTrophy, color: "bg-amber-100 text-amber-600 border-amber-200", activeBg: "bg-amber-50 border-amber-500 ring-2 ring-amber-500/20" },
-    { key: "projects", title: "Projects", icon: FaRocket, color: "bg-blue-100 text-blue-600 border-blue-200", activeBg: "bg-blue-50 border-blue-500 ring-2 ring-blue-500/20" },
-    { key: "participation", title: "Faculty Participation", icon: FaGraduationCap, color: "bg-purple-100 text-purple-600 border-purple-200", activeBg: "bg-purple-50 border-purple-500 ring-2 ring-purple-500/20" },
-    { key: "research", title: "Faculty Research", icon: FaFlask, color: "bg-emerald-100 text-emerald-600 border-emerald-200", activeBg: "bg-emerald-50 border-emerald-500 ring-2 ring-emerald-500/20" },
-    { key: "consultancy", title: "Faculty Consultancy", icon: FaBriefcase, color: "bg-cyan-100 text-cyan-600 border-cyan-200", activeBg: "bg-cyan-50 border-cyan-500 ring-2 ring-cyan-500/20" },
-    { key: "hackathons", title: "Hackathons", icon: FaBolt, color: "bg-indigo-100 text-indigo-600 border-indigo-200", activeBg: "bg-indigo-50 border-indigo-500 ring-2 ring-indigo-500/20" },
+    { key: "achievements", title: "Achievements", icon: FaTrophy, color: "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-200/60 dark:border-blue-800/40", activeBg: "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/25" },
+    { key: "projects", title: "Projects", icon: FaRocket, color: "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-200/60 dark:border-blue-800/40", activeBg: "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/25" },
+    { key: "participation", title: "Faculty Participation", icon: FaGraduationCap, color: "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-200/60 dark:border-blue-800/40", activeBg: "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/25" },
+    { key: "research", title: "Faculty Research", icon: FaFlask, color: "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-200/60 dark:border-blue-800/40", activeBg: "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/25" },
+    { key: "consultancy", title: "Faculty Consultancy", icon: FaBriefcase, color: "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-200/60 dark:border-blue-800/40", activeBg: "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/25" },
+    { key: "hackathons", title: "Hackathons", icon: FaBolt, color: "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-200/60 dark:border-blue-800/40", activeBg: "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/25" },
   ];
 
   const titleOptions = useMemo(() => {
@@ -541,15 +541,15 @@ export default function ReportGenerator() {
         </div>
 
         {/* Header Title Box */}
-        <div className="flex items-center gap-3.5 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm w-full">
-          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-100 text-cyan-600 shadow-xs flex-shrink-0">
+        <div className="flex items-center gap-3.5 bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs w-full">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-600/25 flex-shrink-0">
             <FaFileExport className="w-5 h-5" />
           </span>
           <div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Export Records Studio
             </h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
               Filter, customize columns, preview live datasets, and export official reports in Excel or CSV.
             </p>
           </div>
@@ -805,7 +805,7 @@ export default function ReportGenerator() {
                 type="button"
                 onClick={handleExport}
                 disabled={filteredItems.length === 0}
-                className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 px-6 py-2 text-xs font-extrabold text-white shadow-md shadow-cyan-500/20 transition disabled:opacity-50 cursor-pointer"
+                className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 px-6 py-2 text-xs font-extrabold text-white shadow-md shadow-blue-600/25 transition disabled:opacity-50 cursor-pointer"
               >
                 <FaDownload className="w-3.5 h-3.5" />
                 Export {exportFormat.toUpperCase()}

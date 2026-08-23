@@ -110,23 +110,23 @@ export default function TopAchieversAnnouncement() {
         <div>
           <button
             onClick={() => nav("/quick-actions")}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-800 shadow-sm hover:bg-slate-100 transition cursor-pointer"
+            className="inline-flex items-center gap-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 px-4 py-2 text-xs font-extrabold text-slate-700 dark:text-slate-200 shadow-xs hover:border-blue-500/50 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer"
           >
-            <FaArrowLeft className="w-3.5 h-3.5 text-slate-600" />
+            <FaArrowLeft className="w-3.5 h-3.5" />
             Back to Quick Actions
           </button>
         </div>
 
         {/* Header Title Box */}
-        <div className="flex items-center gap-4 bg-white rounded-3xl p-6 border border-slate-200/90 shadow-sm">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 shadow-sm flex-shrink-0">
-            <FaStar className="w-6 h-6" />
+        <div className="flex items-center gap-4 bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-xs">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-600/25 flex-shrink-0">
+            <FaStar className="w-5 h-5" />
           </span>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Top Achievers Announcements
             </h1>
-            <p className="text-sm text-slate-500 font-medium mt-0.5">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
               Send targeted announcements and invitations to top department achievers.
             </p>
           </div>
@@ -240,7 +240,7 @@ export default function TopAchieversAnnouncement() {
               <button
                 type="submit"
                 disabled={!canSubmit || submitting}
-                className="inline-flex items-center gap-2 rounded-xl bg-rose-600 hover:bg-rose-700 px-6 py-2.5 text-xs font-extrabold text-white shadow-md shadow-rose-500/20 transition disabled:opacity-50 cursor-pointer"
+                className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 px-6 py-2.5 text-xs font-extrabold text-white shadow-md shadow-blue-600/25 transition disabled:opacity-50 cursor-pointer"
               >
                 <FaPaperPlane className="w-3.5 h-3.5" />
                 {submitting ? "Sending..." : "Send Announcement"}

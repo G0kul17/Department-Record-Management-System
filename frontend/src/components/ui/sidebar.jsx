@@ -86,16 +86,20 @@ export function SidebarDemo() {
 export const Logo = () => {
   return (
     <a
-      href="#"
-      className="relative z-20 flex items-center space-x-2 py-1 text-sm font-normal text-black"
+      href="/"
+      className="relative z-20 flex items-center space-x-2 py-1 text-sm font-normal"
     >
-      <div className="h-5 w-6 shrink-0 rounded-tl-lg rounded-tr-sm rounded-br-lg rounded-bl-sm bg-black dark:bg-white" />
+      <img
+        src="/drms-logo.png"
+        alt="DRMS Logo"
+        className="h-8 w-8 object-contain rounded-lg flex-shrink-0 drop-shadow-sm"
+      />
       <motion.span
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="font-medium whitespace-pre text-black dark:text-white"
+        className="font-extrabold whitespace-pre text-slate-900 dark:text-white tracking-tight"
       >
-        Acet Labs
+        DRMS
       </motion.span>
     </a>
   );
@@ -103,10 +107,14 @@ export const Logo = () => {
 export const LogoIcon = () => {
   return (
     <a
-      href="#"
-      className="relative z-20 flex items-center space-x-2 py-1 text-sm font-normal text-black"
+      href="/"
+      className="relative z-20 flex items-center space-x-2 py-1 text-sm font-normal"
     >
-      <div className="h-5 w-6 shrink-0 rounded-tl-lg rounded-tr-sm rounded-br-lg rounded-bl-sm bg-black dark:bg-white" />
+      <img
+        src="/drms-logo.png"
+        alt="DRMS Logo"
+        className="h-8 w-8 object-contain rounded-lg flex-shrink-0 drop-shadow-sm"
+      />
     </a>
   );
 };

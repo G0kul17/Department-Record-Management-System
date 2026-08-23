@@ -191,25 +191,25 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
             >
               {/* #2 Rank Card (Silver - Left on 3-col layout) */}
               {top2 && (
-                <div className={top3 ? "order-2 sm:order-1" : "order-2"}>
-                  <div className="relative rounded-2xl border border-slate-400/30 bg-gradient-to-b from-slate-800/80 via-slate-900 to-slate-950 p-2.5 shadow-md text-center space-y-2 hover:border-slate-300/60 transition-all duration-200 group">
-                    <div className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-slate-200 to-slate-400 text-slate-950 text-[10px] font-black shadow-xs mx-auto">
+                <div className={`${top3 ? "order-2 sm:order-1" : "order-2"} min-w-0`}>
+                  <div className="relative rounded-2xl border border-slate-400/30 bg-gradient-to-b from-slate-800/80 via-slate-900 to-slate-950 p-2 sm:p-2.5 shadow-md text-center space-y-1.5 sm:space-y-2 hover:border-slate-300/60 transition-all duration-200 group min-w-0">
+                    <div className="inline-flex h-4.5 w-4.5 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-gradient-to-br from-slate-200 to-slate-400 text-slate-950 text-[9px] sm:text-[10px] font-black shadow-xs mx-auto">
                       #2
                     </div>
-                    <div className="relative mx-auto h-10 w-10 rounded-xl bg-slate-800 border border-slate-300/50 flex items-center justify-center text-white text-sm font-extrabold shadow-xs group-hover:scale-105 transition-transform">
+                    <div className="relative mx-auto h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-slate-800 border border-slate-300/50 flex items-center justify-center text-white text-xs sm:text-sm font-extrabold shadow-xs group-hover:scale-105 transition-transform">
                       {(top2.name || "U")[0].toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <h4 className="text-xs font-extrabold text-white truncate px-1">
+                      <h4 className="text-[11px] sm:text-xs font-extrabold text-white truncate px-0.5">
                         {top2.name || "Unknown"}
                       </h4>
-                      <p className="text-[10px] text-slate-400 truncate mt-0.5 px-1">
+                      <p className="text-[9px] sm:text-[10px] text-slate-400 truncate mt-0.5 px-0.5">
                         {top2.email}
                       </p>
                     </div>
                     <div>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-800 border border-slate-400/30 px-2 py-0.5 text-[10px] font-black text-slate-200 shadow-xs">
-                        <FaStar className="w-2.5 h-2.5 text-slate-300" />
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-800 border border-slate-400/30 px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-black text-slate-200 shadow-xs">
+                        <FaStar className="w-2 sm:w-2.5 h-2 sm:h-2.5 text-slate-300" />
                         {top2.achievement_count}
                       </span>
                     </div>
@@ -219,32 +219,32 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
 
               {/* #1 Rank Card (Gold Crown - Center - Highest Elevation) */}
               {top1 && (
-                <div className={top3 ? "order-1 sm:order-2 -mt-3" : "order-1"}>
-                  <div className="relative rounded-2xl border-2 border-amber-400/70 bg-gradient-to-b from-amber-500/20 via-slate-900 to-slate-950 p-3 shadow-[0_0_20px_rgba(245,158,11,0.2)] text-center space-y-2 hover:border-amber-300 transition-all duration-200 group">
+                <div className={`${top3 ? "order-1 sm:order-2 -mt-2 sm:-mt-3" : "order-1"} min-w-0`}>
+                  <div className="relative rounded-2xl border-2 border-amber-400/70 bg-gradient-to-b from-amber-500/20 via-slate-900 to-slate-950 p-2 sm:p-3 shadow-[0_0_20px_rgba(245,158,11,0.2)] text-center space-y-1.5 sm:space-y-2 hover:border-amber-300 transition-all duration-200 group min-w-0">
                     {/* Floating Gold Crown Icon */}
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-950 px-2.5 py-0.5 rounded-full text-[9px] font-black flex items-center gap-1 shadow-md">
-                      <FaCrown className="w-2.5 h-2.5 text-slate-950" />
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-950 px-2 py-0.2 rounded-full text-[8px] sm:text-[9px] font-black flex items-center gap-1 shadow-md">
+                      <FaCrown className="w-2 sm:w-2.5 h-2 sm:h-2.5 text-slate-950" />
                       1st
                     </div>
 
-                    <div className="relative mx-auto mt-1.5 h-12 w-12 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-600 p-0.5 shadow-md group-hover:scale-105 transition-transform">
-                      <div className="h-full w-full rounded-[10px] bg-slate-950 flex items-center justify-center text-amber-300 text-base font-black">
+                    <div className="relative mx-auto mt-1 sm:mt-1.5 h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-600 p-0.5 shadow-md group-hover:scale-105 transition-transform">
+                      <div className="h-full w-full rounded-[10px] bg-slate-950 flex items-center justify-center text-amber-300 text-sm sm:text-base font-black">
                         {(top1.name || "U")[0].toUpperCase()}
                       </div>
                     </div>
 
                     <div className="min-w-0">
-                      <h4 className="text-xs font-black text-amber-300 truncate px-1">
+                      <h4 className="text-[11px] sm:text-xs font-black text-amber-300 truncate px-0.5">
                         {top1.name || "Unknown"}
                       </h4>
-                      <p className="text-[10px] text-slate-300 truncate mt-0.5 font-medium px-1">
+                      <p className="text-[9px] sm:text-[10px] text-slate-300 truncate mt-0.5 font-medium px-0.5">
                         {top1.email}
                       </p>
                     </div>
 
                     <div>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/20 border border-amber-400/50 px-2.5 py-0.5 text-[10px] font-black text-amber-300 shadow-xs">
-                        <FaTrophy className="w-2.5 h-2.5 text-amber-400" />
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-400/20 border border-amber-400/50 px-1.5 sm:px-2.5 py-0.5 text-[9px] sm:text-[10px] font-black text-amber-300 shadow-xs">
+                        <FaTrophy className="w-2 sm:w-2.5 h-2 sm:h-2.5 text-amber-400" />
                         {top1.achievement_count}
                       </span>
                     </div>
@@ -254,25 +254,25 @@ export default function AchievementsLeaderboard({ limit = 10 }) {
 
               {/* #3 Rank Card (Bronze - Right on desktop) */}
               {top3 && (
-                <div className="order-3 sm:order-3">
-                  <div className="relative rounded-2xl border border-amber-700/40 bg-gradient-to-b from-amber-800/20 via-slate-900 to-slate-950 p-2.5 shadow-md text-center space-y-2 hover:border-amber-600/60 transition-all duration-200 group">
-                    <div className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-amber-600 to-amber-800 text-white text-[10px] font-black shadow-xs mx-auto">
+                <div className="order-3 sm:order-3 min-w-0">
+                  <div className="relative rounded-2xl border border-amber-700/40 bg-gradient-to-b from-amber-800/20 via-slate-900 to-slate-950 p-2 sm:p-2.5 shadow-md text-center space-y-1.5 sm:space-y-2 hover:border-amber-600/60 transition-all duration-200 group min-w-0">
+                    <div className="inline-flex h-4.5 w-4.5 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-gradient-to-br from-amber-600 to-amber-800 text-white text-[9px] sm:text-[10px] font-black shadow-xs mx-auto">
                       #3
                     </div>
-                    <div className="relative mx-auto h-10 w-10 rounded-xl bg-slate-800 border border-amber-700/50 flex items-center justify-center text-amber-400 text-sm font-extrabold shadow-xs group-hover:scale-105 transition-transform">
+                    <div className="relative mx-auto h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-slate-800 border border-amber-700/50 flex items-center justify-center text-amber-400 text-xs sm:text-sm font-extrabold shadow-xs group-hover:scale-105 transition-transform">
                       {(top3.name || "U")[0].toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <h4 className="text-xs font-extrabold text-white truncate px-1">
+                      <h4 className="text-[11px] sm:text-xs font-extrabold text-white truncate px-0.5">
                         {top3.name || "Unknown"}
                       </h4>
-                      <p className="text-[10px] text-slate-400 truncate mt-0.5 px-1">
+                      <p className="text-[9px] sm:text-[10px] text-slate-400 truncate mt-0.5 px-0.5">
                         {top3.email}
                       </p>
                     </div>
                     <div>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-800 border border-amber-700/30 px-2 py-0.5 text-[10px] font-black text-amber-400 shadow-xs">
-                        <FaStar className="w-2.5 h-2.5 text-amber-500" />
+                      <span className="inline-flex items-center gap-1 rounded-full bg-slate-800 border border-amber-700/30 px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-black text-amber-400 shadow-xs">
+                        <FaStar className="w-2 sm:w-2.5 h-2 sm:h-2.5 text-amber-500" />
                         {top3.achievement_count}
                       </span>
                     </div>

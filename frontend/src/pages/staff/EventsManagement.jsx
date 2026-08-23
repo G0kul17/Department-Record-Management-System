@@ -106,24 +106,24 @@ export default function EventsManagement() {
         {/* Top Navigation */}
         <div>
           <button
-            onClick={() => navigate(backTarget)}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 shadow-xs hover:bg-slate-100 transition cursor-pointer"
+            onClick={() => navigate(userRole === "admin" ? "/admin/quick-actions" : "/quick-actions")}
+            className="inline-flex items-center gap-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 px-4 py-2 text-xs font-extrabold text-slate-700 dark:text-slate-200 shadow-xs hover:border-blue-500/50 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer"
           >
-            <FaArrowLeft className="w-3 h-3 text-slate-600" />
+            <FaArrowLeft className="w-3.5 h-3.5" />
             {backText}
           </button>
         </div>
 
         {/* Header Title Box */}
-        <div className="flex items-center gap-3.5 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm w-full">
-          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100 text-orange-600 shadow-xs flex-shrink-0">
+        <div className="flex items-center gap-3.5 bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs w-full">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-600/25 flex-shrink-0">
             <FaCalendarAlt className="w-5 h-5" />
           </span>
           <div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Upload Department Events
             </h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
               Create and publish new workshops, hackathons, guest lectures, and symposiums.
             </p>
           </div>
@@ -143,13 +143,7 @@ export default function EventsManagement() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 w-full">
-          {/* Main Event Form Card */}
-          <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-6 shadow-sm space-y-4">
-            <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2 pb-2 border-b border-slate-100">
-              <FaPlusCircle className="text-orange-500 w-4 h-4" />
-              Event Details & Specifications
-            </h2>
-
+          <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-5 sm:p-7 shadow-xs">
             <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
               <div>
                 <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wider mb-1">
@@ -260,7 +254,7 @@ export default function EventsManagement() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="inline-flex items-center gap-2 rounded-lg bg-orange-600 hover:bg-orange-700 px-6 py-2.5 text-xs font-extrabold text-white shadow-md shadow-orange-500/20 transition disabled:opacity-50 cursor-pointer"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 px-6 py-2.5 text-xs font-extrabold text-white shadow-md shadow-blue-600/25 transition disabled:opacity-50 cursor-pointer"
                 >
                   <FaPlusCircle className="w-3.5 h-3.5" />
                   {submitting ? "Publishing Event..." : "Publish Event"}
@@ -271,16 +265,16 @@ export default function EventsManagement() {
 
           {/* Upcoming Events Sidebar */}
           <aside className="lg:col-span-4">
-            <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-sm space-y-3.5">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-xs space-y-3.5">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-orange-500 animate-pulse" />
-                  <h3 className="text-sm font-extrabold text-slate-900">Upcoming Events</h3>
+                  <span className="h-2.5 w-2.5 rounded-full bg-blue-600 animate-pulse" />
+                  <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Upcoming Events</h3>
                 </div>
                 <button
                   onClick={load}
                   disabled={loading}
-                  className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-orange-600 hover:text-orange-700 bg-orange-50 px-2.5 py-1 rounded-full border border-orange-200 transition cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-blue-600 dark:text-blue-400 hover:text-blue-700 bg-blue-50 dark:bg-blue-950/40 px-2.5 py-1 rounded-full border border-blue-100 dark:border-blue-800/40 transition cursor-pointer"
                 >
                   <FaSync className={`w-2.5 h-2.5 ${loading ? "animate-spin" : ""}`} />
                   Refresh

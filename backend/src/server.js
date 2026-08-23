@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import { rateLimit } from "express-rate-limit";
 import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
@@ -9,6 +10,7 @@ import staffRoutes from "./routes/staffRoutes.js";
 import eventPublicRoutes from "./routes/eventPublicRoutes.js"; // public events list
 import eventRoutes from "./routes/eventRoutes.js"; // staff/admin event management
 import adminRoutes from "./routes/adminRoutes.js";
+import publicRecordRoutes from "./routes/publicRecordRoutes.js";
 import facultyParticipationRoutes from "./routes/facultyParticipationRoutes.js";
 import facultyResearchRoutes from "./routes/facultyResearchRoutes.js";
 import facultyConsultancyRoutes from "./routes/facultyConsultancyRoutes.js";
@@ -27,6 +29,7 @@ import { requireAuth } from "./middleware/authMiddleware.js";
 import { requireRole } from "./middleware/roleAuth.js";
 import { verifyToken } from "./utils/tokenUtils.js";
 import { requestLogger } from "./middleware/requestLogger.js";
+import { requireIdempotency } from "./middleware/idempotencyMiddleware.js";
 import { startMetricsFlusher } from "./utils/metricsBuffer.js";
 import { startHealthMonitor, getHealthStatus } from "./utils/healthMonitor.js";
 import logger, { reqContext } from "./utils/logger.js";
@@ -38,11 +41,32 @@ const app = express();
 // Trust the first proxy (Nginx) so req.ip returns the real client IP
 // from the X-Forwarded-For header instead of the internal proxy address.
 app.set("trust proxy", 1);
-app.use(helmet());
+const isProd = process.env.NODE_ENV === "production";
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  xFrameOptions: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      // In production, strictly disallow unsafe-inline and unsafe-eval
+      scriptSrc: isProd 
+        ? ["'self'"] 
+        : ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      styleSrc: isProd 
+        ? ["'self'"] 
+        : ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "blob:", "*"],
+      frameAncestors: ["*", "http://localhost:3000", "http://127.0.0.1:3000"]
+    }
+  }
+}));
 app.use(express.json());
 
 // Attach correlation ID and emit ECS-structured HTTP log events for every request.
 app.use(requestLogger);
+
+// Enforce idempotency on mutation requests
+app.use(requireIdempotency);
 
 // ============================================================================
 // CORS CONFIGURATION - Environment-Based Strategy
@@ -143,7 +167,12 @@ const FILE_STORAGE_PATH = process.env.FILE_STORAGE_PATH || "./uploads";
 // Authenticated file serving — replaces the public /uploads static route.
 // Accepts Bearer token in Authorization header OR ?token= query param
 // (query param is needed for <img src> / <a href> browser-native requests).
-app.get("/api/files/:filename", (req, res) => {
+const fileLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { message: "Too many file requests. Please try again later." }
+});
+app.get("/api/files/:filename", fileLimiter, (req, res) => {
   // Allow browser-native cross-origin rendering for authenticated file URLs.
   // Without this, Helmet's default CORP same-origin policy blocks <img src>
   // from a different frontend origin (e.g., localhost:5173 -> localhost:5000).
@@ -178,6 +207,41 @@ app.get("/api/files/:filename", (req, res) => {
   }
   res.sendFile(filePath);
 });
+
+// Public file serving — allows unauthenticated access for shareable links.
+app.get("/api/public/files/:filename", (req, res) => {
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  res.removeHeader("Content-Security-Policy");
+  res.removeHeader("X-Frame-Options");
+
+  const uploadsDir = path.resolve(FILE_STORAGE_PATH);
+  const filePath = path.resolve(path.join(uploadsDir, req.params.filename));
+  if (!filePath.startsWith(uploadsDir + path.sep)) {
+    return res.status(400).json({ message: "Invalid file path" });
+  }
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ message: "File not found" });
+  }
+  
+  // Optional force download
+  if (req.query.download === 'true') {
+    const safeName = path.basename(filePath);
+    res.setHeader("Content-Disposition", 'attachment; filename="' + safeName + '"');
+    return res.sendFile(filePath);
+  }
+
+  // Force download for anything that is not meant to be rendered inline --
+  const inlineExts = new Set([".pdf", ".png", ".jpg", ".jpeg", ".gif"]);
+  const ext = path.extname(filePath).toLowerCase();
+  if (!inlineExts.has(ext)) {
+    const safeName = path.basename(filePath);
+    res.setHeader("Content-Disposition", 'attachment; filename="' + safeName + '"');
+  }
+  res.sendFile(filePath);
+});
+
+// Public records API - used for shareable cards
+app.use("/api/public/records", publicRecordRoutes);
 
 // after app.use('/api/auth', authRoutes);
 app.use("/api/staff", staffRoutes);

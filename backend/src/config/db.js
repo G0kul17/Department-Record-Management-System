@@ -1,9 +1,18 @@
 // src/config/db.js
 import pkg from "pg";
 import dotenv from "dotenv";
+import { z } from "zod";
 import logger from "../utils/logger.js";
 dotenv.config();
 const { Pool } = pkg;
+
+const EnvSchema = z.object({
+  DB_USER: z.string().min(1, "DB_USER is required"),
+  DB_HOST: z.string().min(1, "DB_HOST is required"),
+  DB_NAME: z.string().min(1, "DB_NAME is required"),
+  DB_PASS: z.string().min(1, "DB_PASS is required"),
+});
+const envVars = EnvSchema.parse(process.env);
 
 // ============================================================================
 // DATABASE CONNECTION POOL MANAGEMENT
@@ -39,10 +48,10 @@ const defaults = IS_PRODUCTION
 // Parse pool configuration from environment variables
 const poolConfig = {
   // Basic connection parameters
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASS,
+  user: envVars.DB_USER,
+  host: envVars.DB_HOST,
+  database: envVars.DB_NAME,
+  password: envVars.DB_PASS,
   port: Number(process.env.DB_PORT || 5432),
 
   // Connection pool parameters
@@ -123,6 +132,14 @@ pool.on("error", (err, client) => {
     "db.pool.total_errors": poolStats.totalErrors,
     "db.error.critical": criticalErrors.includes(err.code),
   });
+  
+  if (criticalErrors.includes(err.code)) {
+    logger.error("DB Pool fatally compromised. Triggering graceful shutdown.");
+    // Wait slightly to flush logs, then gracefully exit
+    setTimeout(() => {
+      process.kill(process.pid, 'SIGTERM');
+    }, 100);
+  }
 });
 
 // Track connection acquisition

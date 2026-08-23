@@ -174,12 +174,12 @@ export default function UploadExtracurricular() {
               Select category
             </option>
             <option value="achievements">Achievement</option>
-            <option value="projects">Projects</option>
-            <option value="faculty_research">Faculty Research</option>
             <option value="faculty_consultancy">Faculty Consultancy</option>
             <option value="faculty_participations">
               Faculty Participation
             </option>
+            <option value="faculty_research">Faculty Research</option>
+            <option value="projects">Projects</option>
           </select>
           {dataType && (
             <div className="mt-2 text-[11px] text-slate-600 dark:text-slate-300">

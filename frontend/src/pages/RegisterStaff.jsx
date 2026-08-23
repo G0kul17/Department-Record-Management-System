@@ -140,11 +140,11 @@ const RegisterStaff = () => {
                 className="border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select Department</option>
-                <option value="B.Tech Information Technology">
-                  B.Tech Information Technology
-                </option>
                 <option value="B.Tech Artificial Intelligence and Data Science">
                   B.Tech Artificial Intelligence and Data Science
+                </option>
+                <option value="B.Tech Information Technology">
+                  B.Tech Information Technology
                 </option>
               </select>
             </div>

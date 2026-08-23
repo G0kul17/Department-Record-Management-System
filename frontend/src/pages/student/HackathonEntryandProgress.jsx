@@ -39,16 +39,16 @@ import {
 import RecordLoader from "../../components/ui/RecordLoader";
 
 const progressOptions = [
+  "Completed",
+  "Finalist",
+  "Not shortlisted",
   "Registered",
   "Round 1 Qualified",
   "Round 2 Qualified",
   "Round 3 Qualified",
-  "Finalist",
-  "Winner",
   "Runner-up",
   "Shortlisted",
-  "Completed",
-  "Not shortlisted",
+  "Winner",
 ];
 
 export default function HackathonEntryandProgress() {
@@ -461,23 +461,23 @@ export default function HackathonEntryandProgress() {
         <div>
           <button
             onClick={() => nav("/quick-actions")}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 shadow-xs hover:bg-slate-100 transition cursor-pointer"
+            className="inline-flex items-center gap-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 px-4 py-2 text-xs font-extrabold text-slate-700 dark:text-slate-200 shadow-xs hover:border-blue-500/50 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer"
           >
-            <FaArrowLeft className="w-3 h-3 text-slate-600" />
+            <FaArrowLeft className="w-3.5 h-3.5" />
             Back to Quick Actions
           </button>
         </div>
 
         {/* Header Title Box */}
-        <div className="flex items-center gap-3.5 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm w-full">
-          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100 text-orange-600 shadow-xs flex-shrink-0">
+        <div className="flex items-center gap-3.5 bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs w-full">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-600/25 flex-shrink-0">
             <FaRocket className="w-5 h-5" />
           </span>
           <div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Hackathon Entry & Progress Tracking
             </h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
               Submit your hackathon details, track verification status, and generate On-Duty letters.
             </p>
           </div>

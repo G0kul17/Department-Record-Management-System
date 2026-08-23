@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/axiosClient";
 import { useAuth } from "../../hooks/useAuth";
@@ -93,9 +93,9 @@ export default function Achievements() {
     setMessage("");
     setSuccess(false);
     try {
-      if (!certificate || !eventPhotos || !proof) {
+      if (!certificate || !eventPhotos) {
         throw new Error(
-          "Please upload certificate, event photos, and thumbnail proofs."
+          "Please upload certificate and event photos."
         );
       }
 
@@ -160,23 +160,23 @@ export default function Achievements() {
         <div>
           <button
             onClick={() => nav("/quick-actions")}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 shadow-xs hover:bg-slate-100 transition cursor-pointer"
+            className="inline-flex items-center gap-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 px-4 py-2 text-xs font-extrabold text-slate-700 dark:text-slate-200 shadow-xs hover:border-blue-500/50 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer"
           >
-            <FaArrowLeft className="w-3 h-3 text-slate-600" />
+            <FaArrowLeft className="w-3.5 h-3.5" />
             Back to Quick Actions
           </button>
         </div>
 
         {/* Header Title Card */}
-        <div className="flex items-center gap-3.5 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm w-full">
-          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#2563eb] text-white shadow-md shadow-blue-500/20 flex-shrink-0">
+        <div className="flex items-center gap-3.5 bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs w-full">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-600/25 flex-shrink-0">
             <FaTrophy className="w-5 h-5" />
           </span>
           <div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Add Achievement
             </h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
               Submit your paper, hackathon, coding competition or certification award.
             </p>
           </div>
@@ -353,7 +353,7 @@ export default function Achievements() {
                   Upload Documents
                 </h3>
                 <p className="text-xs text-slate-500 font-medium">
-                  All files are mandatory
+                  Certificate and Event Photos are mandatory
                 </p>
               </div>
 
@@ -378,7 +378,6 @@ export default function Achievements() {
 
                 <FilePickerCard
                   title="Thumbnail"
-                  required
                   badgeBg="bg-amber-100 text-amber-600"
                   icon={FaImage}
                   selectedFile={proof}
@@ -436,128 +435,123 @@ export default function Achievements() {
               </button>
             </div>
           </form>
-
-          {/* Right Column: My Submissions Panel */}
-          <div className="lg:col-span-5 xl:col-span-4 bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-4 flex flex-col justify-between h-full">
-            <div>
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200">
-                    <FaTrophy className="w-4 h-4" />
-                  </span>
-                  <h3 className="text-lg font-extrabold text-slate-900">
-                    My Submissions
-                  </h3>
-                </div>
-
+          {/* Right Sidebar: Recent Submissions */}
+          <aside className="lg:col-span-4">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <h3 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                  <FaTrophy className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  Your Achievements
+                </h3>
                 <button
                   type="button"
                   onClick={loadMine}
                   disabled={loadingMine}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-[#bfdbfe] bg-[#eff6ff] hover:bg-[#dbeafe] text-[#2563eb] px-3.5 py-1.5 text-xs font-extrabold shadow-sm transition disabled:opacity-50 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 dark:border-blue-800/40 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 px-3 py-1 text-xs font-extrabold transition cursor-pointer"
                 >
                   <FaSyncAlt className={`w-3 h-3 ${loadingMine ? "animate-spin" : ""}`} />
                   {loadingMine ? "Refreshing..." : "Refresh"}
                 </button>
               </div>
 
-              <div className="space-y-3.5">
-                {list.length === 0 && (
-                  <div className="text-center py-12 text-slate-500 text-sm font-semibold">
-                    No achievements submitted yet.
-                  </div>
-                )}
+              {loadingMine ? (
+                <div className="py-8 text-center text-xs font-bold text-slate-400">
+                  Loading achievements...
+                </div>
+              ) : list.length === 0 ? (
+                <div className="py-8 text-center text-xs font-bold text-slate-400">
+                  No achievement records uploaded yet.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {pagedList.map((a) => {
+                    const isApproved =
+                      (a.verification_status || "").toLowerCase() === "approved" ||
+                      a.verified === true;
+                    const isRejected =
+                      (a.verification_status || "").toLowerCase() === "rejected";
 
-                {pagedList.map((a) => {
-                  const isApproved =
-                    (a.verification_status || "").toLowerCase() === "approved" ||
-                    a.verified === true;
-                  const isRejected =
-                    (a.verification_status || "").toLowerCase() === "rejected";
-
-                  return (
-                    <div
-                      key={a.id}
-                      className="rounded-2xl border border-slate-200/90 p-4 bg-white hover:border-blue-300 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-3"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-100 text-purple-600 shadow-sm flex-shrink-0">
-                          <FaTrophy className="w-5 h-5" />
-                        </div>
-                        <div className="min-w-0">
-                          <h4 className="text-sm font-extrabold text-slate-900 truncate">
-                            {a.title}
-                          </h4>
-                          <p className="text-xs text-slate-500 font-semibold truncate">
-                            {a.issuer || "Department"}
-                          </p>
-                          {a.date_of_award && (
-                            <p className="text-[11px] text-slate-400 font-bold mt-0.5">
-                              Awarded: {new Date(a.date_of_award).toLocaleDateString()}
+                    return (
+                      <div
+                        key={a.id}
+                        className="rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 bg-white dark:bg-slate-900 hover:border-blue-500/50 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-3"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-600/25 flex-shrink-0">
+                            <FaTrophy className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="text-sm font-extrabold text-slate-900 dark:text-white truncate">
+                              {a.title}
+                            </h4>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold truncate">
+                              {a.issuer || "Department"}
                             </p>
+                            {a.date_of_award && (
+                              <p className="text-[11px] text-slate-400 font-bold mt-0.5">
+                                Awarded: {new Date(a.date_of_award).toLocaleDateString()}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setPreviewModal({ open: true, item: a })}
+                            className="inline-flex items-center gap-1.5 rounded-2xl border border-blue-200 dark:border-blue-800/40 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 text-blue-600 px-3.5 py-1 text-xs font-extrabold shadow-xs transition cursor-pointer"
+                          >
+                            <FaEye className="w-3 h-3 text-blue-600" />
+                            View
+                          </button>
+
+                          {isApproved ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 px-3 py-0.5 text-xs font-extrabold text-emerald-700 dark:text-emerald-300 shadow-xs">
+                              <FaCheck className="w-2.5 h-2.5" /> Approved
+                            </span>
+                          ) : isRejected ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/40 px-3 py-0.5 text-xs font-extrabold text-rose-700 dark:text-rose-300 shadow-xs">
+                              <FaTimesCircle className="w-2.5 h-2.5" /> Rejected
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40 px-3 py-0.5 text-xs font-extrabold text-amber-700 dark:text-amber-300 shadow-xs">
+                              <FaClock className="w-2.5 h-2.5" /> Pending
+                            </span>
                           )}
                         </div>
                       </div>
+                    );
+                  })}
+                </div>
+              )}
 
-                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                        {/* High-contrast Crisp View Button */}
-                        <button
-                          type="button"
-                          onClick={() => setPreviewModal({ open: true, item: a })}
-                          className="inline-flex items-center gap-1.5 rounded-xl border border-[#bae6fd] bg-[#f0f9ff] hover:bg-[#e0f2fe] text-[#0284c7] px-3.5 py-1 text-xs font-extrabold shadow-sm transition cursor-pointer"
-                        >
-                          <FaEye className="w-3 h-3 text-[#0284c7]" />
-                          View
-                        </button>
-
-                        {/* High-contrast Status Badges */}
-                        {isApproved ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-[#ecfdf5] border border-[#a7f3d0] px-3 py-0.5 text-xs font-extrabold text-[#047857] shadow-sm">
-                            <FaCheck className="w-2.5 h-2.5 text-[#047857]" /> Approved
-                          </span>
-                        ) : isRejected ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-[#fff1f2] border border-[#fecdd3] px-3 py-0.5 text-xs font-extrabold text-[#be123c] shadow-sm">
-                            <FaTimesCircle className="w-2.5 h-2.5 text-[#be123c]" /> Rejected
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-[#fffbeb] border border-[#fde68a] px-3 py-0.5 text-xs font-extrabold text-[#b45309] shadow-sm">
-                            <FaClock className="w-2.5 h-2.5 text-[#b45309]" /> Pending
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              {/* Pagination controls */}
+              {list.length > perPage && (
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-300">
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="inline-flex items-center gap-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5 hover:bg-slate-100 font-bold text-slate-800 dark:text-slate-200 disabled:opacity-40 transition cursor-pointer"
+                  >
+                    <FaChevronLeft className="w-3 h-3" /> Prev
+                  </button>
+                  <span>
+                    Page {page} of {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="inline-flex items-center gap-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5 hover:bg-slate-100 font-bold text-slate-800 dark:text-slate-200 disabled:opacity-40 transition cursor-pointer"
+                  >
+                    Next <FaChevronRight className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
             </div>
-
-            {/* Pagination controls */}
-            {list.length > perPage && (
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-600">
-                <button
-                  type="button"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="inline-flex items-center gap-1 rounded-xl border border-slate-300 bg-white px-3 py-1.5 hover:bg-slate-100 font-bold text-slate-800 disabled:opacity-40 transition cursor-pointer"
-                >
-                  <FaChevronLeft className="w-3 h-3" /> Prev
-                </button>
-                <span>
-                  Page {page} of {totalPages}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  className="inline-flex items-center gap-1 rounded-xl border border-slate-300 bg-white px-3 py-1.5 hover:bg-slate-100 font-bold text-slate-800 disabled:opacity-40 transition cursor-pointer"
-                >
-                  Next <FaChevronRight className="w-3 h-3" />
-                </button>
-              </div>
-            )}
-          </div>
+          </aside>
         </div>
-      </div>
 
       {/* Achievement Preview Modal */}
       {previewModal.open && (
@@ -689,19 +683,15 @@ export default function Achievements() {
         </div>
       )}
     </div>
+  </div>
   );
 }
 
 // File Picker Subcomponent with high contrast
-function FilePickerCard({
-  title,
-  required,
-  badgeBg,
-  icon: Icon,
-  selectedFile,
-  onSelect,
-}) {
-  const fileInputRef = React.useRef(null);
+function FilePickerCard(props) {
+  const { title, required, badgeBg, icon, selectedFile, onSelect } = props;
+  const Icon = icon;
+  const fileInputRef = useRef(null);
 
   return (
     <div

@@ -50,36 +50,36 @@ export default function ProjectsRecentGrid({ limit = 6 }) {
                 <a
                   key={p.id}
                   href={href}
-                  className="flex rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group"
+                  className="flex rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group min-w-0"
                 >
                   {/* Left: icon panel */}
-                  <div className="w-28 flex-shrink-0 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-                    <FaCode className="w-9 h-9 text-blue-500" />
+                  <div className="w-20 sm:w-28 flex-shrink-0 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+                    <FaCode className="w-7 h-7 sm:w-9 sm:h-9 text-blue-500" />
                   </div>
 
                   {/* Right: details */}
-                  <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
+                  <div className="flex-1 p-3 sm:p-4 flex flex-col justify-between min-w-0">
                     <div>
                       <p className="text-[10px] font-bold tracking-widest text-blue-600 uppercase mb-1">
                         Project
                       </p>
-                      <p className="text-sm font-bold text-slate-900 line-clamp-2 leading-snug mb-0.5">
+                      <p className="text-xs sm:text-sm font-bold text-slate-900 line-clamp-2 leading-snug mb-0.5">
                         {caption}
                       </p>
                       {author && (
-                        <p className="text-xs text-slate-500 line-clamp-1 mb-2">
+                        <p className="text-[11px] sm:text-xs text-slate-500 line-clamp-1 mb-1.5 sm:mb-2">
                           By {author}
                         </p>
                       )}
                       {description && (
-                        <p className="text-xs text-slate-600 line-clamp-2 mb-3">
+                        <p className="text-[11px] sm:text-xs text-slate-600 line-clamp-2 mb-2 sm:mb-3">
                           {description}
                         </p>
                       )}
                     </div>
-                    <span className="inline-flex items-center gap-1.5 self-start rounded-lg bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 group-hover:bg-slate-700 transition">
+                    <span className="inline-flex items-center gap-1.5 self-start rounded-xl bg-blue-600 text-white text-[11px] sm:text-xs font-semibold px-2.5 sm:px-3 py-1 sm:py-1.5 group-hover:bg-blue-700 transition shadow-sm">
                       View Details
-                      <FaChevronRight className="w-2.5 h-2.5" />
+                      <FaChevronRight className="w-2 sm:w-2.5 h-2 sm:h-2.5" />
                     </span>
                   </div>
                 </a>

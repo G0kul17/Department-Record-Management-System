@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import apiClient from "../api/axiosClient";
 import AttachmentPreview from "../components/AttachmentPreview";
 import CustomSelect from "../components/ui/CustomSelect";
+import ShareableProofLink from "../components/ShareableProofLink";
 import { generateAcademicYears } from "../utils/academicYears";
 import {
   FaBriefcase,
@@ -13,6 +14,7 @@ import {
   FaUsers,
   FaCalendarAlt,
 } from "react-icons/fa";
+import { calculateDuration } from "../utils/duration";
 
 export default function FacultyConsultancyApproved() {
   const nav = useNavigate();
@@ -82,34 +84,34 @@ export default function FacultyConsultancyApproved() {
         <div>
           <button
             onClick={() => nav("/")}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 shadow-xs hover:bg-slate-100 transition cursor-pointer"
+            className="inline-flex items-center gap-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 px-4 py-2 text-xs font-extrabold text-slate-700 dark:text-slate-200 shadow-xs hover:border-blue-500/50 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer"
           >
-            <FaArrowLeft className="w-3 h-3 text-slate-600" />
+            <FaArrowLeft className="w-3.5 h-3.5" />
             Back to Home
           </button>
         </div>
 
         {/* Header Title Box */}
-        <div className="flex items-center gap-3.5 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm w-full">
-          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-cyan-100 text-cyan-600 shadow-xs flex-shrink-0">
+        <div className="flex items-center gap-3.5 bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-xs w-full">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-600/25 flex-shrink-0">
             <FaBriefcase className="w-5 h-5" />
           </span>
           <div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Faculty Consultancy Projects
             </h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
               Verified corporate consulting, industry projects, and advisory services.
             </p>
           </div>
         </div>
 
         {/* Search & Filter Card */}
-        <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-6 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-xs">
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
             {/* Search Input */}
             <div className="sm:col-span-8 space-y-1.5">
-              <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+              <label className="block text-xs font-extrabold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
                 Search Consultancy
               </label>
               <div className="relative flex items-center">
@@ -121,15 +123,15 @@ export default function FacultyConsultancyApproved() {
                     setQ(e.target.value);
                     setPage(1);
                   }}
-                  placeholder="Search by faculty, team members, agency..."
-                  className="w-full rounded-xl border border-slate-300 pl-9 pr-3.5 py-2.5 text-sm font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 focus:border-cyan-600 shadow-sm"
+                  placeholder="Search by faculty, company agency, team members..."
+                  className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 pl-9 pr-3.5 py-2.5 text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 shadow-xs"
                 />
               </div>
             </div>
 
             {/* Academic Year Filter */}
             <div className="sm:col-span-4 space-y-1.5">
-              <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+              <label className="block text-xs font-extrabold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
                 Academic Year
               </label>
               <CustomSelect
@@ -140,30 +142,24 @@ export default function FacultyConsultancyApproved() {
                   setPage(1);
                 }}
                 placeholder="All Years"
+                buttonClassName="rounded-2xl border-slate-200 dark:border-slate-800 py-2.5 text-slate-900 dark:text-white font-semibold text-xs"
               />
             </div>
           </div>
         </div>
 
-        {/* Count Indicator */}
-        <div className="flex items-center justify-between px-1">
-          <p className="text-xs font-bold text-slate-500">
-            Showing {pageItems.length} of {filtered.length} consultancy projects
-          </p>
-        </div>
-
-        {/* Loading State */}
+        {/* Content Container */}
         {loading ? (
-          <div className="bg-white rounded-3xl border border-slate-200/90 p-12 text-center shadow-sm space-y-3">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600 mx-auto" />
-            <p className="text-xs font-bold text-slate-600">Loading consultancy projects...</p>
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-12 text-center shadow-xs space-y-3">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
+            <p className="text-xs font-bold text-slate-600 dark:text-slate-300">Loading consultancy records...</p>
           </div>
         ) : pageItems.length === 0 ? (
-          <div className="bg-white rounded-3xl border border-slate-200/90 p-12 text-center shadow-sm space-y-2">
-            <h3 className="text-base font-extrabold text-slate-900">
-              No consultancy projects found
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-12 text-center shadow-xs space-y-2">
+            <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+              No consultancy records found
             </h3>
-            <p className="text-xs text-slate-500 font-medium">
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
               {q ? "Try adjusting your search criteria" : "No approved faculty consultancy records available yet."}
             </p>
           </div>
@@ -172,26 +168,26 @@ export default function FacultyConsultancyApproved() {
             {pageItems.map((item) => (
               <div
                 key={item.id}
-                className="group rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm hover:shadow-md hover:border-cyan-400 hover:shadow-cyan-500/10 transition-all duration-200 space-y-4 flex flex-col justify-between"
+                className="group rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xs hover:shadow-lg hover:shadow-blue-600/10 hover:border-blue-500/50 hover:-translate-y-0.5 transition-all duration-200 space-y-4 flex flex-col justify-between"
               >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-600 border border-cyan-100 flex-shrink-0 shadow-sm">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800/40 flex-shrink-0 shadow-xs">
                         <FaBriefcase className="w-5 h-5" />
                       </span>
                       <div>
-                        <h3 className="text-base font-extrabold text-slate-900 group-hover:text-cyan-600 transition-colors line-clamp-1">
+                        <h3 className="text-base font-extrabold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
                           {item.agency || "Corporate Consultancy"}
                         </h3>
-                        <p className="text-xs font-bold text-slate-500">
+                        <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
                           {item.faculty_name || "Faculty Lead"}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50/70 p-3 rounded-2xl border border-slate-100 font-semibold text-slate-600">
+                  <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50/70 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 font-semibold text-slate-600 dark:text-slate-300">
                     {item.team_members && (
                       <div className="col-span-2">
                         <span className="text-[10px] uppercase font-extrabold text-slate-400 block">Team Members</span>
@@ -204,17 +200,17 @@ export default function FacultyConsultancyApproved() {
                         ₹{Number(item.amount).toLocaleString()}
                       </div>
                     )}
-                    {item.duration && (
+                    {(item.duration || (item.start_date && item.end_date)) && (
                       <div>
                         <span className="text-[10px] uppercase font-extrabold text-slate-400 block">Duration</span>
-                        {item.duration}
+                        {item.duration || calculateDuration(item.start_date, item.end_date)}
                       </div>
                     )}
                   </div>
                 </div>
 
                 {item.proof_filename && (
-                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 flex-wrap">
                     <button
                       type="button"
                       onClick={() =>
@@ -224,11 +220,12 @@ export default function FacultyConsultancyApproved() {
                             item.proof_original_name || item.proof_filename,
                         })
                       }
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 px-3 py-1.5 text-xs font-extrabold text-cyan-700 transition cursor-pointer"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800/40 px-3 py-1.5 text-xs font-extrabold text-blue-700 dark:text-blue-300 transition cursor-pointer"
                     >
                       <FaFileAlt className="w-3.5 h-3.5" />
                       View Consultancy Proof
                     </button>
+                    <ShareableProofLink type="consultancy" id={item.id} filename={item.proof_filename} />
                   </div>
                 )}
               </div>

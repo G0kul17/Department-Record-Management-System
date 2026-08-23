@@ -3,7 +3,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Mocks must be declared before the imports that depend on them.
 
 vi.mock("../../config/db.js", () => ({
-  default: { query: vi.fn() },
+  default: {
+    query: vi.fn(),
+    connect: vi.fn(),
+  },
 }));
 
 vi.mock("../../services/mailService.js", () => ({
@@ -76,6 +79,15 @@ beforeEach(() => {
   sendOTPEmail.mockResolvedValue(undefined);
   createSession.mockResolvedValue({ session_token: "sess-abc" });
   signToken.mockReturnValue("signed.jwt.token");
+  pool.connect.mockResolvedValue({
+    query: vi.fn().mockImplementation((sql, params) => {
+      if (/BEGIN|COMMIT|ROLLBACK/i.test(sql)) {
+        return Promise.resolve({ rows: [] });
+      }
+      return pool.query(sql, params);
+    }),
+    release: vi.fn(),
+  });
 });
 
 // ── verifyOTP ──────────────────────────────────────────────────────────────────

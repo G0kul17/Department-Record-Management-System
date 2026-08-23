@@ -85,10 +85,10 @@ export default function UploadDropzone({
         onClick={openPicker}
         role="button"
         aria-label="File upload dropzone"
-        className={`relative cursor-pointer rounded-xl border-2 border-dashed p-4 sm:p-6 transition ${
+        className={`relative cursor-pointer rounded-2xl border-2 border-dashed p-4 sm:p-6 transition ${
           isDragOver
-            ? "border-sky-400 bg-sky-50"
-            : "border-slate-300 hover:border-sky-300 bg-white"
+            ? "border-blue-500 bg-blue-50/70 dark:bg-blue-950/40"
+            : "border-slate-200 dark:border-slate-800 hover:border-blue-500/60 bg-white dark:bg-slate-900"
         }`}
       >
         <input
@@ -103,7 +103,7 @@ export default function UploadDropzone({
         />
         <div className="flex flex-col items-center justify-center gap-2 text-center">
           {/* Icon */}
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-sky-100 text-sky-600">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-600/25">
             <svg
               width="24"
               height="24"
@@ -127,8 +127,8 @@ export default function UploadDropzone({
               />
             </svg>
           </div>
-          <p className="text-sm">
-            <span className="text-sky-700 font-medium underline">
+          <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200">
+            <span className="text-blue-600 dark:text-blue-400 font-extrabold underline">
               Click to Upload
             </span>{" "}
             or drag and drop

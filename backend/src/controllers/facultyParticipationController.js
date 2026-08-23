@@ -155,6 +155,11 @@ export const createFacultyParticipation = async (req, res) => {
         .json({ message: "Faculty participation added", data: rows[0] });
     } catch (err) {
       await client.query("ROLLBACK");
+      if (req.file && req.file.path) {
+        fs.unlink(req.file.path, (unlinkErr) => {
+          if (unlinkErr) logger.error("Failed to delete orphaned file", { unlinkErr, file: req.file.path });
+        });
+      }
       throw err;
     } finally {
       client.release();

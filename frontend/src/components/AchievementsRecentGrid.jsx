@@ -78,10 +78,10 @@ export default function AchievementsRecentGrid({ limit = 6 }) {
                 <a
                   key={a.id}
                   href={href}
-                  className="flex rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group"
+                  className="flex rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group min-w-0"
                 >
                   {/* Left: image panel */}
-                  <div className="w-28 flex-shrink-0 bg-gradient-to-br from-yellow-50 to-amber-100 flex items-center justify-center overflow-hidden">
+                  <div className="w-20 sm:w-28 flex-shrink-0 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center overflow-hidden">
                     {imgUrl ? (
                       <img
                         src={imgUrl}
@@ -90,41 +90,41 @@ export default function AchievementsRecentGrid({ limit = 6 }) {
                         loading="lazy"
                       />
                     ) : (
-                      <FaTrophy className="w-9 h-9 text-amber-500" />
+                      <FaTrophy className="w-7 h-7 sm:w-9 sm:h-9 text-blue-600" />
                     )}
                   </div>
 
                   {/* Right: details */}
-                  <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
+                  <div className="flex-1 p-3 sm:p-4 flex flex-col justify-between min-w-0">
                     <div>
                       <p className="text-[10px] font-bold tracking-widest text-blue-600 uppercase mb-1">
                         Achievement
                       </p>
-                      <p className="text-sm font-bold text-slate-900 line-clamp-2 leading-snug mb-0.5">
+                      <p className="text-xs sm:text-sm font-bold text-slate-900 line-clamp-2 leading-snug mb-0.5">
                         {caption}
                       </p>
                       {author && (
-                        <p className="text-xs text-slate-500 line-clamp-1 mb-2">
+                        <p className="text-[11px] sm:text-xs text-slate-500 line-clamp-1 mb-1.5 sm:mb-2">
                           By {author}
                         </p>
                       )}
                       {/* Approved badge */}
                       {isApproved && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-green-50 border border-green-200 text-green-700 text-[10px] font-semibold px-2 py-0.5 mb-1.5">
-                          <FaCheckCircle className="w-2.5 h-2.5 text-green-600" />
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-semibold px-2 py-0.5 mb-1.5">
+                          <FaCheckCircle className="w-2.5 h-2.5 text-emerald-600" />
                           Approved
                         </span>
                       )}
                       {/* Awarded date */}
                       {awardedDate && (
-                        <p className="text-[10px] text-slate-500 mb-2">
-                          Awarded on: {formatDate(awardedDate)}
+                        <p className="text-[10px] text-slate-500 mb-2 truncate">
+                          Awarded: {formatDate(awardedDate)}
                         </p>
                       )}
                     </div>
-                    <span className="inline-flex items-center gap-1.5 self-start rounded-lg border border-slate-200 bg-white text-slate-800 text-xs font-semibold px-3 py-1.5 group-hover:bg-slate-50 shadow-sm transition">
+                    <span className="inline-flex items-center gap-1.5 self-start rounded-xl bg-blue-600 text-white text-[11px] sm:text-xs font-semibold px-2.5 sm:px-3 py-1 sm:py-1.5 group-hover:bg-blue-700 shadow-sm transition">
                       View Details
-                      <FaChevronRight className="w-2.5 h-2.5 text-slate-600" />
+                      <FaChevronRight className="w-2 sm:w-2.5 h-2 sm:h-2.5" />
                     </span>
                   </div>
                 </a>

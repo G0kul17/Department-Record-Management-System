@@ -1,0 +1,24 @@
+# FAANG Remediation Complete
+
+I have successfully resolved all the critical security and architecture vulnerabilities identified in the audit report.
+
+## 1. Authentication Fortification
+- **Zod Validation**: Replaced manual payload validation in `authController.js` with strict `zod` schemas for both `/register` and `/updateProfile`.
+- **Atomic Transactions**: Wrapped the user creation and OTP generation SQL blocks inside a `SERIALIZABLE` isolation level transaction (`BEGIN`/`COMMIT`/`ROLLBACK`). This eliminates the race condition (N+1 vulnerability) when registering duplicate emails.
+
+## 2. File Artifact Cleanup
+- **Rollback Hook**: Added an asynchronous `fs.unlink()` check inside the database transaction `catch` block in `facultyParticipationController.js`. If a database insertion fails (e.g. constraints), the physical file uploaded by Multer is now cleanly purged, preventing hidden storage leaks over time.
+
+## 3. Database Resiliency
+- **Strict Startup Checks**: Applied `zod` to validate core `process.env` credentials before spinning up the `pg.Pool`.
+- **Self-Healing Pool**: Modified the `pool.on("error")` handler to trap fatal network partitions (like `ECONNREFUSED` or `ECONNRESET`) and cleanly trigger a `SIGTERM` so orchestration systems (like Docker or PM2) can automatically spin up a fresh connection pool rather than hanging indefinitely.
+
+## 4. API Rate Limiting
+- **IO Exhaustion Protection**: Installed `express-rate-limit` and mounted it strictly on the authenticated `/api/files/:filename` route, capping requests at 100 per 15 minutes.
+
+## 5. Client Resilience (Frontend)
+- **Exponential Backoff**: Wrapped the native browser `fetch` API in `axiosClient.js` with the `p-retry` package. If the backend throws a 502/503/504 error, the frontend will automatically retry up to 3 times before failing the request.
+- **Graceful Token Expiration**: Replaced the aggressive hard-redirect `window.location.href = "/login"` inside the 401 interceptor with a custom DOM event (`session_expired`). The `App.jsx` router now listens for this event globally and triggers a friendly alert dialog before cleanly navigating the React router to `/login`, avoiding the destruction of unsaved form state.
+
+## Next Steps
+All targeted backend and frontend code has been hardened to enterprise standards. Your local dev servers are still running (`npm run dev`) and Vite has hot-reloaded the changes.

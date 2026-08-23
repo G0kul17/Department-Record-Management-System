@@ -11,6 +11,7 @@ import {
   updateProfile,
   logout,
   updateProfilePhoto,
+  getStaffNames,
 } from "../controllers/authController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 import { upload } from "../config/upload.js";
@@ -57,5 +58,8 @@ router.post(
   upload.single("avatar"),
   updateProfilePhoto,
 );
+
+// Staff names list for auto-suggestion (accessible to any logged-in user)
+router.get("/staff-names", requireAuth, getStaffNames);
 
 export default router;

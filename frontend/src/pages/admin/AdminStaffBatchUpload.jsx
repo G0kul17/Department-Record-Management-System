@@ -41,7 +41,7 @@ export default function AdminStaffBatchUpload() {
               Staff Batch Upload
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Upload a single CSV or Excel file to register faculty and staff members in bulk.
+              Upload a single CSV file to register faculty and staff members in bulk.
             </p>
           </div>
         </div>
@@ -69,9 +69,9 @@ export default function AdminStaffBatchUpload() {
 
         <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-5 w-full">
           <UploadDropzone
-            label="Upload Staff CSV or Excel File"
-            subtitle="Only .csv, .xlsx, or .xls files are allowed (Max size 25MB)"
-            accept=".csv,.xlsx,.xls"
+            label="Upload Staff CSV File"
+            subtitle="Only .csv files are allowed (Max size 25MB)"
+            accept=".csv"
             maxSizeMB={25}
             selectedFile={file}
             onFileSelected={(f) => setFile(f)}

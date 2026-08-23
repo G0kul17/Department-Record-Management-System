@@ -233,92 +233,92 @@ function OverviewPanel({ user }) {
         </div>
 
         <div className="lg:col-span-1">
-          <div className="rounded-2xl border border-slate-700/60 bg-[#131b2e] p-5 shadow-2xl h-full backdrop-blur-md">
-            <h2 className="text-lg font-bold text-white mb-4 tracking-tight">
+          <div className="rounded-2xl border border-slate-700/60 bg-[#131b2e] p-4 sm:p-5 shadow-2xl h-full backdrop-blur-md">
+            <h2 className="text-base sm:text-lg font-bold text-white mb-3 sm:mb-4 tracking-tight">
               At a Glance
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
               <button
                 onClick={() => navigate("/projects/approved")}
-                className="group rounded-xl p-3.5 bg-[#1e2942]/90 hover:bg-[#253252] transition-all duration-200 text-left border border-slate-700/60 hover:border-blue-500/60 flex flex-col justify-between"
+                className="group rounded-xl p-2.5 sm:p-3.5 bg-[#1e2942]/90 hover:bg-[#253252] transition-all duration-200 text-left border border-slate-700/60 hover:border-blue-500/60 flex flex-col justify-between min-w-0"
               >
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-8.5 w-8.5 items-center justify-center rounded-lg bg-blue-600 text-white shadow-md flex-shrink-0">
-                    <FaFolder className="w-4 h-4" />
+                <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                  <div className="flex h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 items-center justify-center rounded-lg bg-blue-600 text-white shadow-md flex-shrink-0">
+                    <FaFolder className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
-                  <div className="text-[11px] font-bold text-slate-200 uppercase tracking-wider whitespace-normal leading-tight">
+                  <div className="text-[10px] sm:text-[11px] font-bold text-slate-200 uppercase tracking-wider truncate">
                     Projects
                   </div>
                 </div>
-                <div className="mt-3 text-2xl font-extrabold text-white group-hover:text-blue-400 transition-colors">
+                <div className="mt-2 sm:mt-3 text-xl sm:text-2xl font-extrabold text-white group-hover:text-blue-400 transition-colors">
                   {projCount === null ? "—" : projCount}
                 </div>
               </button>
 
               <button
                 onClick={() => navigate("/achievements/approved")}
-                className="group rounded-xl p-3.5 bg-[#1e2942]/90 hover:bg-[#253252] transition-all duration-200 text-left border border-slate-700/60 hover:border-amber-500/60 flex flex-col justify-between"
+                className="group rounded-xl p-2.5 sm:p-3.5 bg-[#1e2942]/90 hover:bg-[#253252] transition-all duration-200 text-left border border-slate-700/60 hover:border-blue-500/60 flex flex-col justify-between cursor-pointer min-w-0"
               >
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-8.5 w-8.5 items-center justify-center rounded-lg bg-amber-500 text-white shadow-md flex-shrink-0">
-                    <FaTrophy className="w-4 h-4" />
+                <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                  <div className="flex h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 items-center justify-center rounded-lg bg-blue-600 text-white shadow-md shadow-blue-600/25 flex-shrink-0">
+                    <FaTrophy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
-                  <div className="text-[11px] font-bold text-slate-200 uppercase tracking-wider whitespace-normal leading-tight">
+                  <div className="text-[10px] sm:text-[11px] font-bold text-slate-200 uppercase tracking-wider truncate">
                     Achievements
                   </div>
                 </div>
-                <div className="mt-3 text-2xl font-extrabold text-white group-hover:text-amber-400 transition-colors">
+                <div className="mt-2 sm:mt-3 text-xl sm:text-2xl font-extrabold text-white group-hover:text-blue-400 transition-colors">
                   {achCount === null ? "—" : achCount}
                 </div>
               </button>
 
               <button
                 onClick={() => navigate("/faculty-participation-approved")}
-                className="group rounded-xl p-3.5 bg-[#1e2942]/90 hover:bg-[#253252] transition-all duration-200 text-left border border-slate-700/60 hover:border-purple-500/60 flex flex-col justify-between cursor-pointer"
+                className="group rounded-xl p-2.5 sm:p-3.5 bg-[#1e2942]/90 hover:bg-[#253252] transition-all duration-200 text-left border border-slate-700/60 hover:border-blue-500/60 flex flex-col justify-between cursor-pointer min-w-0"
               >
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-8.5 w-8.5 items-center justify-center rounded-lg bg-purple-600 text-white shadow-md flex-shrink-0">
-                    <FaUsers className="w-4 h-4" />
+                <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                  <div className="flex h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 items-center justify-center rounded-lg bg-blue-600 text-white shadow-md shadow-blue-600/25 flex-shrink-0">
+                    <FaUsers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
-                  <div className="text-[11px] font-bold text-slate-200 uppercase tracking-wider whitespace-normal leading-tight">
+                  <div className="text-[10px] sm:text-[11px] font-bold text-slate-200 uppercase tracking-wider truncate">
                     Participation
                   </div>
                 </div>
-                <div className="mt-3 text-2xl font-extrabold text-white group-hover:text-purple-400 transition-colors">
+                <div className="mt-2 sm:mt-3 text-xl sm:text-2xl font-extrabold text-white group-hover:text-blue-400 transition-colors">
                   {partCount === null ? "—" : partCount}
                 </div>
               </button>
 
               <button
                 onClick={() => navigate("/faculty-research-approved")}
-                className="group rounded-xl p-3.5 bg-[#1e2942]/90 hover:bg-[#253252] transition-all duration-200 text-left border border-slate-700/60 hover:border-orange-500/60 flex flex-col justify-between cursor-pointer"
+                className="group rounded-xl p-2.5 sm:p-3.5 bg-[#1e2942]/90 hover:bg-[#253252] transition-all duration-200 text-left border border-slate-700/60 hover:border-blue-500/60 flex flex-col justify-between cursor-pointer min-w-0"
               >
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-8.5 w-8.5 items-center justify-center rounded-lg bg-orange-500 text-white shadow-md flex-shrink-0">
-                    <FaFlask className="w-4 h-4" />
+                <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                  <div className="flex h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 items-center justify-center rounded-lg bg-blue-600 text-white shadow-md shadow-blue-600/25 flex-shrink-0">
+                    <FaFlask className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
-                  <div className="text-[11px] font-bold text-slate-200 uppercase tracking-wider whitespace-normal leading-tight">
+                  <div className="text-[10px] sm:text-[11px] font-bold text-slate-200 uppercase tracking-wider truncate">
                     Research
                   </div>
                 </div>
-                <div className="mt-3 text-2xl font-extrabold text-white group-hover:text-orange-400 transition-colors">
+                <div className="mt-2 sm:mt-3 text-xl sm:text-2xl font-extrabold text-white group-hover:text-blue-400 transition-colors">
                   {resCount === null ? "—" : resCount}
                 </div>
               </button>
 
               <button
                 onClick={() => navigate("/faculty-consultancy-approved")}
-                className="group rounded-xl p-3.5 bg-[#1e2942]/90 hover:bg-[#253252] transition-all duration-200 text-left border border-slate-700/60 hover:border-cyan-500/60 flex flex-col justify-between cursor-pointer"
+                className="group rounded-xl p-2.5 sm:p-3.5 bg-[#1e2942]/90 hover:bg-[#253252] transition-all duration-200 text-left border border-slate-700/60 hover:border-blue-500/60 flex flex-col justify-between cursor-pointer min-w-0"
               >
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-8.5 w-8.5 items-center justify-center rounded-lg bg-cyan-600 text-white shadow-md flex-shrink-0">
-                    <FaBriefcase className="w-4 h-4" />
+                <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+                  <div className="flex h-7.5 w-7.5 sm:h-8.5 sm:w-8.5 items-center justify-center rounded-lg bg-blue-600 text-white shadow-md shadow-blue-600/25 flex-shrink-0">
+                    <FaBriefcase className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
-                  <div className="text-[11px] font-bold text-slate-200 uppercase tracking-wider whitespace-normal leading-tight">
+                  <div className="text-[10px] sm:text-[11px] font-bold text-slate-200 uppercase tracking-wider truncate">
                     Consultancy
                   </div>
                 </div>
-                <div className="mt-3 text-2xl font-extrabold text-white group-hover:text-cyan-400 transition-colors">
+                <div className="mt-2 sm:mt-3 text-xl sm:text-2xl font-extrabold text-white group-hover:text-blue-400 transition-colors">
                   {consCount === null ? "—" : consCount}
                 </div>
               </button>

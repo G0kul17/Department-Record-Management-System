@@ -1,5 +1,5 @@
-import React, { Suspense } from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import React, { Suspense, useEffect } from "react";
+import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import BackButton from "./components/BackButton";
 
@@ -134,6 +134,8 @@ const FacultyParticipationApproved = React.lazy(
 const ProjectDetail = React.lazy(() => import("./pages/ProjectDetail"));
 const AchievementDetail = React.lazy(() => import("./pages/AchievementDetail"));
 const Profile = React.lazy(() => import("./pages/Profile"));
+const PublicProofViewer = React.lazy(() => import("./pages/PublicProofViewer"));
+const PublicRecordViewer = React.lazy(() => import("./pages/PublicRecordViewer"));
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./hooks/useAuth";
@@ -152,6 +154,19 @@ function RoleRedirect() {
 
 export default function App() {
   const location = useLocation();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      // Show an alert or modal if you had one, but here we gracefully fallback to alert + navigate
+      alert("Your session has expired due to security reasons or inactivity. Please log in again to continue.");
+      navigate("/login");
+    };
+    
+    window.addEventListener("session_expired", handleSessionExpired);
+    return () => window.removeEventListener("session_expired", handleSessionExpired);
+  }, [navigate]);
+
   const path = (location?.pathname || "/").replace(/\/+$/, "") || "/";
   const hideBackButton =
     path === "/" ||
@@ -335,6 +350,8 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/public/proof/:filename" element={<PublicProofViewer />} />
+          <Route path="/share/:type/:id" element={<PublicRecordViewer />} />
           <Route path="/login" element={<Login />} />
           <Route path="/verify-otp" element={<VerifyOtp />} />
           <Route path="/register-student" element={<RegisterStudent />} />

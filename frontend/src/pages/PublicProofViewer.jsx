@@ -16,7 +16,8 @@ export default function PublicProofViewer() {
   const [error, setError] = useState(false);
 
   // Construct the public API URL
-  const publicApiUrl = `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/public/files/${filename}`;
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+  const publicApiUrl = `${API_BASE_URL}/public/files/${filename}`;
   const downloadUrl = `${publicApiUrl}?download=true`;
 
   const handleCopyLink = () => {

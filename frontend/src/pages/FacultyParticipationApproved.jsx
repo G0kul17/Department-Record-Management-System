@@ -14,6 +14,7 @@ import {
   FaCalendarAlt,
   FaChalkboardTeacher,
 } from "react-icons/fa";
+import { calculateDuration } from "../utils/duration";
 
 export default function FacultyParticipationApproved() {
   const nav = useNavigate();
@@ -189,14 +190,24 @@ export default function FacultyParticipationApproved() {
                   <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50/70 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 font-semibold text-slate-600 dark:text-slate-300">
                     {item.start_date && (
                       <div>
-                        <span className="text-[10px] uppercase font-extrabold text-slate-400 block">Start Date</span>
+                        <span className="text-[10px] uppercase font-extrabold text-slate-400 flex items-center gap-1">
+                          <FaCalendarAlt className="w-2.5 h-2.5 text-blue-500" /> Start Date
+                        </span>
                         {new Date(item.start_date).toLocaleDateString()}
                       </div>
                     )}
                     {item.end_date && (
                       <div>
-                        <span className="text-[10px] uppercase font-extrabold text-slate-400 block">End Date</span>
+                        <span className="text-[10px] uppercase font-extrabold text-slate-400 flex items-center gap-1">
+                          <FaCalendarAlt className="w-2.5 h-2.5 text-purple-500" /> End Date
+                        </span>
                         {new Date(item.end_date).toLocaleDateString()}
+                      </div>
+                    )}
+                    {(item.duration || (item.start_date && item.end_date)) && (
+                      <div className="col-span-2">
+                        <span className="text-[10px] uppercase font-extrabold text-slate-400 block">Duration</span>
+                        {item.duration || calculateDuration(item.start_date, item.end_date)}
                       </div>
                     )}
                     {item.conducted_by && (

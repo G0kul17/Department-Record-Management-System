@@ -385,7 +385,15 @@ export async function login(req, res) {
       [emailLower, otp, expiresAt],
     );
 
-    await sendOTPEmail(emailLower, otp);
+    try {
+      await sendOTPEmail(emailLower, otp);
+    } catch (mailErr) {
+      logger.error("Failed to send login OTP email", { mailErr, ...reqContext(req) });
+      return res.status(400).json({
+        message: "Failed to send verification OTP email. Please check your network and try again in a moment.",
+        trace_id: req.correlationId,
+      });
+    }
 
     return res.json({ message: "Login OTP sent to email" });
   } catch (err) {
@@ -393,7 +401,7 @@ export async function login(req, res) {
     const payload =
       process.env.NODE_ENV !== "production"
         ? {
-            message: "Server error",
+            message: err?.message || "Server error",
             trace_id: req.correlationId,
             error: String(err.message || err),
           }

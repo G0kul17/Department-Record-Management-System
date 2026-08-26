@@ -306,6 +306,26 @@ textarea::placeholder {
   color: #94a3b8; /* slate-400 */
 }
 
+/* Ensure calendar picker indicator is clearly visible, styled, and clickable */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.8;
+  filter: invert(0.2);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.9);
+  opacity: 0.85;
+}
+.dark input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
 /* Glitter outline + sheen effect for neutral cards */
 @keyframes card-sheen {
   0% {

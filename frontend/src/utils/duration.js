@@ -35,6 +35,9 @@ function formatDays(totalDays) {
   
   let days = totalDays;
   
+  const years = Math.floor(days / 365);
+  days %= 365;
+
   const months = Math.floor(days / 30);
   days %= 30;
   
@@ -43,6 +46,10 @@ function formatDays(totalDays) {
   
   const parts = [];
   
+  if (years > 0) {
+    parts.push(`${years} ${years === 1 ? 'year' : 'years'}`);
+  }
+
   if (months > 0) {
     parts.push(`${months} ${months === 1 ? 'month' : 'months'}`);
   }

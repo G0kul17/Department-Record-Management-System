@@ -34,8 +34,6 @@ export default function QuickActions({ embedded = false }) {
   const isStaff = user?.role === "staff";
   const isAdmin = user?.role === "admin";
   const isStudent = user?.role === "student";
-
-  const [activeTab, setActiveTab] = useState("all"); // 'all' | 'students' | 'faculty' | 'research' | 'department'
   const [activeStaffMode, setActiveStaffMode] = useState("all"); // 'all' | 'upload' | 'verify' | 'export'
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -256,9 +254,7 @@ export default function QuickActions({ embedded = false }) {
 
   const visibleStudentActions = filterBySearch(
     studentActionsList.filter(
-      (a) =>
-        (activeStaffMode === "all" || a.mode === activeStaffMode) &&
-        (activeTab === "all" || activeTab === a.category)
+      (a) => activeStaffMode === "all" || a.mode === activeStaffMode
     )
   );
 
@@ -266,9 +262,7 @@ export default function QuickActions({ embedded = false }) {
     ? []
     : filterBySearch(
         facultyActions.filter(
-          (a) =>
-            (activeStaffMode === "all" || a.mode === activeStaffMode) &&
-            (activeTab === "all" || activeTab === a.category)
+          (a) => activeStaffMode === "all" || a.mode === activeStaffMode
         )
       );
 
@@ -276,9 +270,7 @@ export default function QuickActions({ embedded = false }) {
     ? []
     : filterBySearch(
         departmentActions.filter(
-          (a) =>
-            (activeStaffMode === "all" || a.mode === activeStaffMode) &&
-            (activeTab === "all" || activeTab === a.category)
+          (a) => activeStaffMode === "all" || a.mode === activeStaffMode
         )
       );
 
@@ -286,9 +278,7 @@ export default function QuickActions({ embedded = false }) {
     ? []
     : filterBySearch(
         verifyActions.filter(
-          (a) =>
-            (activeStaffMode === "all" || a.mode === activeStaffMode) &&
-            (activeTab === "all" || activeTab === a.category)
+          (a) => activeStaffMode === "all" || a.mode === activeStaffMode
         )
       );
 
@@ -296,9 +286,7 @@ export default function QuickActions({ embedded = false }) {
     ? []
     : filterBySearch(
         exportActions.filter(
-          (a) =>
-            (activeStaffMode === "all" || a.mode === activeStaffMode) &&
-            (activeTab === "all" || activeTab === a.category)
+          (a) => activeStaffMode === "all" || a.mode === activeStaffMode
         )
       );
 
@@ -351,6 +339,18 @@ export default function QuickActions({ embedded = false }) {
             {!isStudent && (
               <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/90 p-1 rounded-2xl border border-slate-200/80 dark:border-slate-700/80">
                 <button
+                  onClick={() => setActiveStaffMode("all")}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    activeStaffMode === "all"
+                      ? "bg-blue-600 text-white shadow-sm shadow-blue-600/25"
+                      : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  <FaThLarge className="w-3.5 h-3.5" />
+                  All
+                </button>
+
+                <button
                   onClick={() => setActiveStaffMode("upload")}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     activeStaffMode === "upload"
@@ -385,87 +385,10 @@ export default function QuickActions({ embedded = false }) {
                   <FaFileExport className="w-3.5 h-3.5" />
                   Export
                 </button>
-
-                <button
-                  onClick={() => setActiveStaffMode("all")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    activeStaffMode === "all"
-                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs"
-                      : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-                  }`}
-                >
-                  <FaEllipsisH className="w-3.5 h-3.5 text-slate-400" />
-                  More
-                </button>
               </div>
             )}
           </div>
         </div>
-
-        {/* Sub-Nav Category Filter Tabs (Staff/Admin only) */}
-        {!isStudent && (
-          <div className="inline-flex flex-wrap items-center gap-1.5 bg-white dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
-            <button
-              onClick={() => setActiveTab("all")}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === "all"
-                  ? "bg-blue-600 text-white shadow-sm shadow-blue-600/25"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <FaThLarge className="w-3.5 h-3.5" />
-              All Actions
-            </button>
-
-            <button
-              onClick={() => setActiveTab("students")}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === "students"
-                  ? "bg-blue-600 text-white shadow-sm shadow-blue-600/25"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <FaUserGraduate className="w-3.5 h-3.5" />
-              Students
-            </button>
-
-            <button
-              onClick={() => setActiveTab("faculty")}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === "faculty"
-                  ? "bg-blue-600 text-white shadow-sm shadow-blue-600/25"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <FaUserTie className="w-3.5 h-3.5" />
-              Faculty
-            </button>
-
-            <button
-              onClick={() => setActiveTab("research")}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === "research"
-                  ? "bg-blue-600 text-white shadow-sm shadow-blue-600/25"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <FaFlask className="w-3.5 h-3.5" />
-              Research
-            </button>
-
-            <button
-              onClick={() => setActiveTab("department")}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === "department"
-                  ? "bg-blue-600 text-white shadow-sm shadow-blue-600/25"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
-              }`}
-            >
-              <FaBuilding className="w-3.5 h-3.5" />
-              Department
-            </button>
-          </div>
-        )}
 
         {/* Categorized Action Sections */}
         <div className="space-y-6">

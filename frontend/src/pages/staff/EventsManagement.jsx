@@ -106,7 +106,7 @@ export default function EventsManagement() {
         {/* Top Navigation */}
         <div>
           <button
-            onClick={() => navigate(userRole === "admin" ? "/admin/quick-actions" : "/quick-actions")}
+            onClick={() => navigate(backTarget)}
             className="inline-flex items-center gap-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 px-4 py-2 text-xs font-extrabold text-slate-700 dark:text-slate-200 shadow-xs hover:border-blue-500/50 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer"
           >
             <FaArrowLeft className="w-3.5 h-3.5" />

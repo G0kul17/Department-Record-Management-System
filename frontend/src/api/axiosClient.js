@@ -117,9 +117,12 @@ class ApiClient {
       return data;
     } catch (error) {
       console.error("API Error:", error);
-      // Replace browser-internal network errors with a friendly message.
+      // Replace browser-internal network errors or transient errors with friendly messages.
       if (error.message === "Failed to fetch" || error instanceof TypeError) {
         throw new Error("Unable to reach the server. Please check your connection.");
+      }
+      if (typeof error.message === "string" && error.message.startsWith("Transient server error:")) {
+        throw new Error("The server is temporarily busy or unavailable. Please try again in a moment.");
       }
       throw error;
     }

@@ -23,6 +23,7 @@ export const createFacultyParticipationSchema = Joi.object({
   title: short.required(),
   start_date: dateStr.required(),
   publications_type: optShort,
+  duration: optShort,
   end_date: optDateStr,
   conducted_by: optShort,
   details: optLong,

@@ -5,6 +5,7 @@ export default function CustomSelect({
   onChange,
   options,
   placeholder = "Select",
+  showPlaceholderOption = true,
   className = "",
   buttonClassName = "",
   menuClassName = "",
@@ -20,9 +21,24 @@ export default function CustomSelect({
     typeof opt === "string" ? { value: opt, label: opt } : opt,
   );
 
+  const isCustomOption = (item) => {
+    const val = String(item?.value ?? "").trim().toLowerCase();
+    const lab = String(item?.label ?? item?.value ?? "").trim().toLowerCase();
+    return (
+      val === "__custom__" ||
+      val === "__custom" ||
+      val === "other" ||
+      val === "others" ||
+      lab.startsWith("+") ||
+      lab.includes("custom") ||
+      lab === "other" ||
+      lab === "others"
+    );
+  };
+
   const sortedOptions = [...normalizedOptions].sort((a, b) => {
-    const isCustomA = a.value === "__custom__" || String(a.label || a.value).toLowerCase() === "other" || String(a.label || a.value).toLowerCase() === "others";
-    const isCustomB = b.value === "__custom__" || String(b.label || b.value).toLowerCase() === "other" || String(b.label || b.value).toLowerCase() === "others";
+    const isCustomA = isCustomOption(a);
+    const isCustomB = isCustomOption(b);
     if (isCustomA && !isCustomB) return 1;
     if (!isCustomA && isCustomB) return -1;
 
@@ -74,18 +90,20 @@ export default function CustomSelect({
         <div
           className={`absolute left-0 right-0 mt-2 max-h-56 overflow-auto rounded-md border border-slate-200 bg-white shadow-lg z-20 ${menuClassName}`}
         >
-          <button
-            type="button"
-            onClick={() => {
-              onChange("");
-              setOpen(false);
-            }}
-            className={`w-full px-3 py-2 text-left text-sm text-black hover:text-black ${
-              value === "" ? "bg-sky-200" : "hover:bg-slate-100"
-            } ${itemClassName}`}
-          >
-            {placeholder}
-          </button>
+          {showPlaceholderOption && placeholder && (
+            <button
+              type="button"
+              onClick={() => {
+                onChange("");
+                setOpen(false);
+              }}
+              className={`w-full px-3 py-2 text-left text-sm text-black hover:text-black ${
+                value === "" ? "bg-sky-200" : "hover:bg-slate-100"
+              } ${itemClassName}`}
+            >
+              {placeholder}
+            </button>
+          )}
           {sortedOptions.map((opt) => (
             <button
               key={opt.value}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/axiosClient";
 import CustomSelect from "../../components/ui/CustomSelect";
+import { loadAchievementTypes } from "../../utils/achievementTypes";
 import { FaTasks, FaArrowLeft, FaSync, FaPlus, FaTrashAlt, FaSearch } from "react-icons/fa";
 
 export default function AdminStaffCoordinators() {
@@ -15,6 +16,7 @@ export default function AdminStaffCoordinators() {
   const [query, setQuery] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [activityType, setActivityType] = useState("");
+  const [customActivityType, setCustomActivityType] = useState("");
   const [staffId, setStaffId] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -22,19 +24,37 @@ export default function AdminStaffCoordinators() {
     setLoading(true);
     setError(null);
     try {
-      const [mapRes, staffRes, typesRes] = await Promise.all([
+      const [mapRes, staffRes, typesRes, achievementsList] = await Promise.all([
         apiClient.get("/activity-coordinators"),
         apiClient.get("/admin/users"),
         apiClient.get("/activity-coordinators/types"),
+        loadAchievementTypes(),
       ]);
       const maps = mapRes.mappings || mapRes || [];
       const staff = (staffRes.users || []).filter(
         (u) => u.role === "staff" || u.role === "admin"
       );
-      const types = typesRes.activityTypes || typesRes || [];
+      const backendTypes = typesRes.activityTypes || typesRes || [];
+
+      // Combine defaults + custom added achievements + existing activity types
+      const seen = new Set();
+      const combined = [];
+      for (const item of [...achievementsList, ...backendTypes]) {
+        if (!item) continue;
+        const trimmed = String(item).trim();
+        const lower = trimmed.toLowerCase();
+        if (!seen.has(lower) && lower !== "achievement") {
+          seen.add(lower);
+          combined.push(trimmed);
+        }
+      }
+
+      // Sort in ascending order
+      combined.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base", numeric: true }));
+
       setMappings(maps);
       setStaffList(staff);
-      setActivityTypes(types);
+      setActivityTypes(combined);
     } catch (e) {
       setError(e.message || "Failed to load data");
     } finally {
@@ -47,7 +67,8 @@ export default function AdminStaffCoordinators() {
   }, []);
 
   const handleAdd = async () => {
-    if (!activityType.trim() || !staffId) {
+    const finalActivityType = activityType === "__custom" ? customActivityType.trim() : activityType.trim();
+    if (!finalActivityType || !staffId) {
       setError("Please provide activity type and staff member");
       return;
     }
@@ -55,12 +76,13 @@ export default function AdminStaffCoordinators() {
     setError(null);
     try {
       await apiClient.post("/activity-coordinators", {
-        activityType: activityType.trim(),
+        activityType: finalActivityType,
         staffId: Number(staffId),
       });
       setSuccess("Coordinator added successfully");
       setShowModal(false);
       setActivityType("");
+      setCustomActivityType("");
       setStaffId("");
       await load();
       setTimeout(() => setSuccess(null), 2000);
@@ -110,7 +132,7 @@ export default function AdminStaffCoordinators() {
         {/* Header Title Box */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm w-full">
           <div className="flex items-center gap-3.5">
-            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-purple-600 shadow-xs flex-shrink-0">
+            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 shadow-xs flex-shrink-0">
               <FaTasks className="w-5 h-5" />
             </span>
             <div>
@@ -127,7 +149,7 @@ export default function AdminStaffCoordinators() {
             <button
               onClick={load}
               disabled={loading}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-purple-200 bg-purple-50 px-3.5 py-2 text-xs font-extrabold text-purple-700 hover:bg-purple-100 transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2 text-xs font-extrabold text-blue-700 hover:bg-blue-100 transition cursor-pointer"
             >
               <FaSync className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} />
               Refresh
@@ -135,7 +157,7 @@ export default function AdminStaffCoordinators() {
 
             <button
               onClick={() => setShowModal(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 px-5 py-2 text-xs font-extrabold text-white shadow-md shadow-purple-500/20 transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-5 py-2 text-xs font-extrabold text-white shadow-md shadow-blue-500/20 transition cursor-pointer"
             >
               <FaPlus className="w-3 h-3" />
               Add Coordinator
@@ -163,7 +185,7 @@ export default function AdminStaffCoordinators() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search activity, staff name or email..."
-                className="w-full rounded-xl border border-slate-300 pl-9 pr-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-600 shadow-xs"
+                className="w-full rounded-xl border border-slate-300 pl-9 pr-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-600 shadow-xs"
               />
             </div>
             <span className="text-xs font-extrabold text-slate-500">
@@ -184,13 +206,13 @@ export default function AdminStaffCoordinators() {
               filtered.map((m) => (
                 <div
                   key={m.id}
-                  className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 hover:bg-white hover:shadow-xs hover:border-purple-300 transition-all flex items-center justify-between gap-3"
+                  className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 hover:bg-white hover:shadow-xs hover:border-blue-300 transition-all flex items-center justify-between gap-3"
                 >
                   <div className="min-w-0">
                     <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider truncate">
                       {m.activity_type || "(Unspecified)"}
                     </h3>
-                    <p className="text-xs font-bold text-purple-700 mt-0.5 truncate">
+                    <p className="text-xs font-bold text-blue-700 mt-0.5 truncate">
                       {m.staff_name}
                     </p>
                     <p className="text-[11px] text-slate-500 font-medium truncate">
@@ -228,7 +250,7 @@ export default function AdminStaffCoordinators() {
                     onChange={(value) => setActivityType(value)}
                     options={[
                       ...activityTypes,
-                      { value: "__custom", label: "+ Custom Activity" },
+                      { value: "__custom", label: "+ Custom Achievement" },
                     ]}
                     placeholder="Select activity type"
                     buttonClassName="rounded-xl border-slate-300 text-xs font-semibold py-2"
@@ -236,9 +258,10 @@ export default function AdminStaffCoordinators() {
                   {activityType === "__custom" && (
                     <input
                       autoFocus
-                      onChange={(e) => setActivityType(e.target.value)}
-                      placeholder="Type custom activity name..."
-                      className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                      value={customActivityType}
+                      onChange={(e) => setCustomActivityType(e.target.value)}
+                      placeholder="Type custom achievement name..."
+                      className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                     />
                   )}
                 </div>
@@ -266,6 +289,7 @@ export default function AdminStaffCoordinators() {
                   onClick={() => {
                     setShowModal(false);
                     setActivityType("");
+                    setCustomActivityType("");
                     setStaffId("");
                     setError(null);
                   }}
@@ -275,8 +299,13 @@ export default function AdminStaffCoordinators() {
                 </button>
                 <button
                   onClick={handleAdd}
-                  disabled={submitting || !activityType.trim() || !staffId}
-                  className="flex-1 rounded-xl px-4 py-2.5 text-xs font-extrabold text-white bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-500/20 transition disabled:opacity-50 cursor-pointer"
+                  disabled={
+                    submitting ||
+                    !activityType.trim() ||
+                    (activityType === "__custom" && !customActivityType.trim()) ||
+                    !staffId
+                  }
+                  className="flex-1 rounded-xl px-4 py-2.5 text-xs font-extrabold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/20 transition disabled:opacity-50 cursor-pointer"
                 >
                   {submitting ? "Adding..." : "Assign Coordinator"}
                 </button>

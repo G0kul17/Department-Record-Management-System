@@ -18,6 +18,7 @@ export const createFacultyParticipation = async (req, res) => {
       title,
       start_date,
       end_date,
+      duration,
       conducted_by,
       details,
       // Publications fields (optional unless type_of_event === 'Others')
@@ -85,7 +86,7 @@ export const createFacultyParticipation = async (req, res) => {
       const q = `
         INSERT INTO faculty_participations
       (faculty_name, department, type_of_event, publications_type, mode_of_training,
-       title, start_date, end_date, conducted_by, details,
+       title, start_date, end_date, duration, conducted_by, details,
        claiming_faculty_name, publication_indexing, authors_list, paper_title, journal_name,
        volume_no, issue_no, page_or_doi, issn_or_isbn, pub_month_year,
        citations_count, paper_url, journal_home_url, publisher, impact_factor,
@@ -93,13 +94,13 @@ export const createFacultyParticipation = async (req, res) => {
        publication_domain, coauthors_students,
        proof_file_id, created_by)
       VALUES ($1,$2,$3,$4,$5,
-              $6,$7,$8,$9,$10,
-              $11,$12,$13,$14,$15,
-              $16,$17,$18,$19,$20,
-              $21,$22,$23,$24,$25,
-              $26,$27,$28,$29,$30,
-              $31,$32,
-              $33,$34)
+              $6,$7,$8,$9,$10,$11,
+              $12,$13,$14,$15,$16,
+              $17,$18,$19,$20,$21,
+              $22,$23,$24,$25,$26,
+              $27,$28,$29,$30,$31,
+              $32,$33,
+              $34,$35)
       RETURNING *`;
 
     const values = [
@@ -111,6 +112,7 @@ export const createFacultyParticipation = async (req, res) => {
       title,
       start_date,
       end_date || null,
+      duration || null,
       conducted_by || null,
       details || null,
       claiming_faculty_name || null,
@@ -184,6 +186,7 @@ export const updateFacultyParticipation = async (req, res) => {
       title,
       start_date,
       end_date,
+      duration,
       conducted_by,
       details,
       // Publications fields
@@ -238,33 +241,34 @@ export const updateFacultyParticipation = async (req, res) => {
           title = COALESCE($6, title),
           start_date = COALESCE($7, start_date),
           end_date = COALESCE($8, end_date),
-          conducted_by = COALESCE($9, conducted_by),
-          details = COALESCE($10, details),
-          claiming_faculty_name = COALESCE($11, claiming_faculty_name),
-          publication_indexing = COALESCE($12, publication_indexing),
-          authors_list = COALESCE($13, authors_list),
-          paper_title = COALESCE($14, paper_title),
-          journal_name = COALESCE($15, journal_name),
-          volume_no = COALESCE($16, volume_no),
-          issue_no = COALESCE($17, issue_no),
-          page_or_doi = COALESCE($18, page_or_doi),
-          issn_or_isbn = COALESCE($19, issn_or_isbn),
-          pub_month_year = COALESCE($20, pub_month_year),
-          citations_count = COALESCE($21, citations_count),
-          paper_url = COALESCE($22, paper_url),
-          journal_home_url = COALESCE($23, journal_home_url),
-          publisher = COALESCE($24, publisher),
-          impact_factor = COALESCE($25, impact_factor),
-          indexed_in_db = COALESCE($26, indexed_in_db),
-          full_paper_drive_link = COALESCE($27, full_paper_drive_link),
-          first_page_drive_link = COALESCE($28, first_page_drive_link),
-          sdg_mapping = COALESCE($29, sdg_mapping),
-          joint_publication_with = COALESCE($30, joint_publication_with),
-          publication_domain = COALESCE($31, publication_domain),
-          coauthors_students = COALESCE($32, coauthors_students),
-          proof_file_id = COALESCE($33, proof_file_id),
+          duration = COALESCE($9, duration),
+          conducted_by = COALESCE($10, conducted_by),
+          details = COALESCE($11, details),
+          claiming_faculty_name = COALESCE($12, claiming_faculty_name),
+          publication_indexing = COALESCE($13, publication_indexing),
+          authors_list = COALESCE($14, authors_list),
+          paper_title = COALESCE($15, paper_title),
+          journal_name = COALESCE($16, journal_name),
+          volume_no = COALESCE($17, volume_no),
+          issue_no = COALESCE($18, issue_no),
+          page_or_doi = COALESCE($19, page_or_doi),
+          issn_or_isbn = COALESCE($20, issn_or_isbn),
+          pub_month_year = COALESCE($21, pub_month_year),
+          citations_count = COALESCE($22, citations_count),
+          paper_url = COALESCE($23, paper_url),
+          journal_home_url = COALESCE($24, journal_home_url),
+          publisher = COALESCE($25, publisher),
+          impact_factor = COALESCE($26, impact_factor),
+          indexed_in_db = COALESCE($27, indexed_in_db),
+          full_paper_drive_link = COALESCE($28, full_paper_drive_link),
+          first_page_drive_link = COALESCE($29, first_page_drive_link),
+          sdg_mapping = COALESCE($30, sdg_mapping),
+          joint_publication_with = COALESCE($31, joint_publication_with),
+          publication_domain = COALESCE($32, publication_domain),
+          coauthors_students = COALESCE($33, coauthors_students),
+          proof_file_id = COALESCE($34, proof_file_id),
           updated_at = NOW()
-      WHERE id=$34
+      WHERE id=$35
       RETURNING *`;
 
       const { rows } = await tracedQuery(client, q, [
@@ -276,6 +280,7 @@ export const updateFacultyParticipation = async (req, res) => {
         title,
         start_date,
         end_date,
+        duration,
         conducted_by,
         details,
         claiming_faculty_name,
@@ -468,6 +473,99 @@ export const getFacultyParticipationsCount = async (req, res) => {
   } catch (err) {
     logger.error("Faculty participation controller error", { err,
       ...reqContext(req) });
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ========== FACULTY EVENT TYPES MANAGEMENT ==========
+export const getFacultyEventTypes = async (req, res) => {
+  try {
+    const { rows } = await tracedQuery(
+      pool,
+      `SELECT name FROM faculty_event_types WHERE is_active = TRUE ORDER BY LOWER(name)`
+    );
+    return res.json({ eventTypes: rows.map((r) => r.name) });
+  } catch (err) {
+    logger.error("Faculty participation controller error", {
+      err,
+      ...reqContext(req),
+    });
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const createFacultyEventType = async (req, res) => {
+  const { name } = req.body || {};
+  const eventName = typeof name === "string" ? name.trim() : "";
+
+  if (!eventName) {
+    return res.status(400).json({ message: "name is required" });
+  }
+
+  try {
+    const existing = await tracedQuery(
+      pool,
+      `SELECT id, name, is_active FROM faculty_event_types WHERE LOWER(TRIM(name)) = LOWER(TRIM($1)) LIMIT 1`,
+      [eventName]
+    );
+
+    if (existing.rows.length) {
+      const row = existing.rows[0];
+      if (row.is_active) {
+        return res.status(409).json({ message: "Faculty event type already exists" });
+      }
+
+      const reactivated = await tracedQuery(
+        pool,
+        `UPDATE faculty_event_types SET is_active = TRUE WHERE id = $1 RETURNING id, name, created_at`,
+        [row.id]
+      );
+      return res.status(200).json({ eventType: reactivated.rows[0] });
+    }
+
+    const { rows } = await tracedQuery(
+      pool,
+      `INSERT INTO faculty_event_types (name) VALUES ($1) RETURNING id, name, created_at`,
+      [eventName]
+    );
+    return res.status(201).json({ eventType: rows[0] });
+  } catch (err) {
+    if (err?.code === "23505") {
+      return res.status(409).json({ message: "Faculty event type already exists" });
+    }
+    logger.error("Faculty participation controller error", {
+      err,
+      ...reqContext(req),
+    });
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const deleteFacultyEventType = async (req, res) => {
+  const rawName = req.params?.name || "";
+  const eventName = decodeURIComponent(rawName).trim();
+
+  if (!eventName) {
+    return res.status(400).json({ message: "name is required" });
+  }
+
+  try {
+    const result = await tracedQuery(
+      pool,
+      `UPDATE faculty_event_types SET is_active = FALSE WHERE LOWER(TRIM(name)) = LOWER(TRIM($1)) RETURNING id, name`,
+      [eventName]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({ message: "Faculty event type not found" });
+    }
+
+    return res.json({ message: "Faculty event type deleted", name: result.rows[0].name });
+  } catch (err) {
+    logger.error("Faculty participation controller error", {
+      err,
+      ...reqContext(req),
+    });
     return res.status(500).json({ message: "Server error" });
   }
 };

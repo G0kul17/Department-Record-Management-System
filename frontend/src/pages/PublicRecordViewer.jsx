@@ -12,7 +12,8 @@ import {
   FaCopy,
   FaFileAlt,
   FaExclamationCircle,
-  FaSpinner
+  FaSpinner,
+  FaCalendarAlt
 } from "react-icons/fa";
 
 export default function PublicRecordViewer() {
@@ -31,7 +32,7 @@ export default function PublicRecordViewer() {
         // Note: this must point to the new public endpoint we created
         const res = await apiClient.get(`/public/records/${type}/${id}`);
         if (!mounted) return;
-        setRecord(res.data);
+        setRecord(res?.data || res);
       } catch (err) {
         if (!mounted) return;
         console.error(err);
@@ -136,17 +137,25 @@ export default function PublicRecordViewer() {
           </div>
         </div>
         
-        <button
-          onClick={handleCopyLink}
-          className={`flex items-center space-x-2 px-4 py-2 text-xs font-extrabold rounded-xl transition-colors border shadow-sm ${
-            copied
-              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-              : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
-          }`}
-        >
-          {copied ? <FaCheckCircle className="w-4 h-4 text-emerald-500" /> : <FaCopy className="w-4 h-4" />}
-          <span>{copied ? "Link Copied!" : "Copy Link"}</span>
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={handleCopyLink}
+            className={`flex items-center space-x-2 px-4 py-2 text-xs font-extrabold rounded-xl transition-colors border shadow-sm cursor-pointer ${
+              copied
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
+            }`}
+          >
+            {copied ? <FaCheckCircle className="w-4 h-4 text-emerald-500" /> : <FaCopy className="w-4 h-4" />}
+            <span>{copied ? "Link Copied!" : "Copy Link"}</span>
+          </button>
+          <a
+            href="/login"
+            className="flex items-center space-x-1.5 px-4 py-2 text-xs font-extrabold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-sm"
+          >
+            <span>Login</span>
+          </a>
+        </div>
       </header>
 
       {/* Main Content */}
@@ -216,10 +225,18 @@ export default function PublicRecordViewer() {
                   )}
                   {record.start_date && (
                     <div className="space-y-1">
-                      <span className="text-[10px] uppercase font-extrabold text-slate-400">Date</span>
+                      <span className="text-[10px] uppercase font-extrabold text-slate-400 flex items-center gap-1">
+                        <FaCalendarAlt className="w-2.5 h-2.5 text-blue-500" /> Date
+                      </span>
                       <p className="text-sm font-bold text-slate-800">
                         {new Date(record.start_date).toLocaleDateString()} {record.end_date && `- ${new Date(record.end_date).toLocaleDateString()}`}
                       </p>
+                    </div>
+                  )}
+                  {(record.duration || (record.start_date && record.end_date)) && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] uppercase font-extrabold text-slate-400">Duration</span>
+                      <p className="text-sm font-bold text-slate-800">{record.duration || calculateDuration(record.start_date, record.end_date)}</p>
                     </div>
                   )}
                   {record.conducted_by && (
@@ -264,7 +281,9 @@ export default function PublicRecordViewer() {
                   )}
                   {record.date && (
                     <div className="space-y-1">
-                      <span className="text-[10px] uppercase font-extrabold text-slate-400">Date</span>
+                      <span className="text-[10px] uppercase font-extrabold text-slate-400 flex items-center gap-1">
+                        <FaCalendarAlt className="w-2.5 h-2.5 text-blue-500" /> Date
+                      </span>
                       <p className="text-sm font-bold text-slate-800">{new Date(record.date).toLocaleDateString()}</p>
                     </div>
                   )}

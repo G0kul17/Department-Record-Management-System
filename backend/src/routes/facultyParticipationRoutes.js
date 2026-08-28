@@ -8,6 +8,9 @@ import {
   deleteFacultyParticipation,
   listFacultyParticipations,
   getFacultyParticipationsCount,
+  getFacultyEventTypes,
+  createFacultyEventType,
+  deleteFacultyEventType,
 } from "../controllers/facultyParticipationController.js";
 import { validate } from "../middleware/validate.js";
 import {
@@ -19,6 +22,11 @@ const router = express.Router();
 
 // Only staff & admin can access
 router.use(requireAuth, requireRole(["staff", "admin"]));
+
+// Event Types routes
+router.get("/event-types", getFacultyEventTypes);
+router.post("/event-types", requireRole(["admin"]), createFacultyEventType);
+router.delete("/event-types/:name", requireRole(["admin"]), deleteFacultyEventType);
 
 // multer first (populates req.body from form fields), then validate
 router.post("/", uploadFacultyProof.single("proof"), validate(createFacultyParticipationSchema), createFacultyParticipation);

@@ -51,6 +51,9 @@ const AdminBulkExportPage = React.lazy(
 const AdminCustomAchievements = React.lazy(
   () => import("./pages/admin/AdminCustomAchievements"),
 );
+const AdminFacultyEventsManagement = React.lazy(
+  () => import("./pages/admin/AdminFacultyEventsManagement"),
+);
 const BulkExportPage = React.lazy(() => import("./pages/staff/BulkExportPage"));
 const TopAchieversAnnouncement = React.lazy(
   () => import("./pages/staff/TopAchieversAnnouncement"),
@@ -184,8 +187,10 @@ export default function App() {
     path.startsWith("/verify") ||
     path.startsWith("/upload") ||
     path.startsWith("/top-achievers") ||
-    path.startsWith("/bulk-export");
-  // Hide navbar from auth pages
+    path.startsWith("/bulk-export") ||
+    path.startsWith("/share") ||
+    path.startsWith("/public");
+  // Hide navbar from auth pages and public share pages
   const authRoutes = [
     "/login",
     "/verify-otp",
@@ -196,7 +201,8 @@ export default function App() {
     "/reset",
     "/reset-password",
   ];
-  const hideNavbar = authRoutes.includes(path);
+  const isPublicShare = path.startsWith("/share") || path.startsWith("/public");
+  const hideNavbar = authRoutes.includes(path) || isPublicShare;
   // Show Back button on all non-dashboard routes (admin routes will render local Back inside pages)
   const showBackButton = !hideBackButton;
   return (
@@ -504,6 +510,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminCustomAchievements />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/custom-faculty-events"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminFacultyEventsManagement />
               </ProtectedRoute>
             }
           />

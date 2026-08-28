@@ -101,7 +101,7 @@ export default function AdminUsersManagement() {
         {/* Header Title Box */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm w-full">
           <div className="flex items-center gap-3.5">
-            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-100 text-rose-600 shadow-xs flex-shrink-0">
+            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 shadow-xs flex-shrink-0">
               <FaUserCog className="w-5 h-5" />
             </span>
             <div>
@@ -118,14 +118,14 @@ export default function AdminUsersManagement() {
             <button
               onClick={load}
               disabled={loading}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2 text-xs font-extrabold text-rose-700 hover:bg-rose-100 transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2 text-xs font-extrabold text-blue-700 hover:bg-blue-100 transition cursor-pointer"
             >
               <FaSync className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} />
               Refresh
             </button>
             <button
               onClick={() => nav("/register-student")}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 px-4 py-2 text-xs font-extrabold text-white shadow-md shadow-rose-500/20 transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2 text-xs font-extrabold text-white shadow-md shadow-blue-500/20 transition cursor-pointer"
             >
               <FaUserPlus className="w-3 h-3" />
               Register Student
@@ -156,7 +156,7 @@ export default function AdminUsersManagement() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search name or email..."
-                  className="w-full rounded-xl border border-slate-300 pl-9 pr-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30 focus:border-rose-600 shadow-xs"
+                  className="w-full rounded-xl border border-slate-300 pl-9 pr-3.5 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-600 shadow-xs"
                 />
               </div>
 
@@ -217,7 +217,7 @@ export default function AdminUsersManagement() {
                   </tr>
                 )}
                 {paginatedUsers.map((u) => (
-                  <tr key={u.id} className="hover:bg-rose-50/20 transition-colors">
+                  <tr key={u.id} className="hover:bg-blue-50/20 transition-colors">
                     <td className="px-4 py-3 font-semibold text-slate-900">{u.email}</td>
                     <td className="px-4 py-3 font-bold text-slate-700">{u.full_name || "—"}</td>
                     <td className="px-4 py-3">
@@ -286,7 +286,7 @@ export default function AdminUsersManagement() {
                       setPageSize(Number(e.target.value));
                       setCurrentPage(1);
                     }}
-                    className="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-extrabold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 transition cursor-pointer shadow-xs"
+                    className="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-extrabold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition cursor-pointer shadow-xs"
                   >
                     <option value={10}>10 per page</option>
                     <option value={25}>25 per page</option>
@@ -329,7 +329,7 @@ export default function AdminUsersManagement() {
                             onClick={() => setCurrentPage(p)}
                             className={`h-8 w-8 rounded-lg text-xs font-extrabold transition cursor-pointer ${
                               currentPage === p
-                                ? "bg-rose-600 text-white shadow-xs"
+                                ? "bg-blue-600 text-white shadow-xs shadow-blue-600/25"
                                 : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-100"
                             }`}
                           >

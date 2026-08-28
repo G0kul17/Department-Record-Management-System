@@ -13,6 +13,7 @@ import {
   FaUserCog,
   FaTasks,
   FaStar,
+  FaAward,
   FaChevronRight,
   FaInfoCircle,
   FaShieldAlt,
@@ -41,6 +42,7 @@ export default function AdminQuickActions() {
     if (key === "bulkExport") return nav("/admin/bulk-export");
     if (key === "manageUsers") return nav("/admin/users");
     if (key === "activityCoordinators") return nav("/admin/activity-coordinators");
+    if (key === "customFacultyEvents") return nav("/admin/custom-faculty-events");
     return nav("/");
   };
 
@@ -104,6 +106,12 @@ export default function AdminQuickActions() {
       title: "Add Custom Achievements",
       desc: "Create new achievement titles for forms and mappings",
       icon: FaStar,
+    },
+    {
+      key: "customFacultyEvents",
+      title: "Add Faculty Participation Events",
+      desc: "Create and manage custom event types for faculty participation",
+      icon: FaAward,
     },
   ];
 

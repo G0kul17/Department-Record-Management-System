@@ -33,7 +33,7 @@ export default function AdminStaffBatchUpload() {
 
         {/* Header Title Box */}
         <div className="flex items-center gap-3.5 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm w-full">
-          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 text-violet-600 shadow-xs flex-shrink-0">
+          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600 shadow-xs flex-shrink-0">
             <FaUserTie className="w-5 h-5" />
           </span>
           <div>
@@ -121,7 +121,7 @@ export default function AdminStaffBatchUpload() {
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
               }}
-              className="inline-flex items-center gap-1.5 text-xs font-extrabold text-violet-600 hover:underline"
+              className="inline-flex items-center gap-1.5 text-xs font-extrabold text-blue-600 hover:underline"
             >
               <FaFileDownload className="w-3 h-3" />
               Download Sample CSV Template
@@ -157,7 +157,7 @@ export default function AdminStaffBatchUpload() {
                     setPreviewing(false);
                   }
                 }}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-violet-300 bg-violet-50 px-4 py-2 text-xs font-extrabold text-violet-700 hover:bg-violet-100 transition cursor-pointer disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-blue-300 bg-blue-50 px-4 py-2 text-xs font-extrabold text-blue-700 hover:bg-blue-100 transition cursor-pointer disabled:opacity-50"
               >
                 <FaEye className="w-3 h-3" />
                 {previewing ? "Generating..." : "Generate Preview"}
@@ -202,7 +202,7 @@ export default function AdminStaffBatchUpload() {
                     setSubmitting(false);
                   }
                 }}
-                className="inline-flex items-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 px-6 py-2 text-xs font-extrabold text-white shadow-md shadow-violet-500/20 transition disabled:opacity-50 cursor-pointer"
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-2 text-xs font-extrabold text-white shadow-md shadow-blue-500/20 transition disabled:opacity-50 cursor-pointer"
               >
                 <FaCloudUploadAlt className="w-3.5 h-3.5" />
                 {submitting ? "Uploading..." : "Upload Staff Batch"}
@@ -251,7 +251,7 @@ export default function AdminStaffBatchUpload() {
                       const issue = preview.rowIssues.find((r) => r.index === idx);
                       const errs = issue?.errors || {};
                       return (
-                        <tr key={idx} className="hover:bg-violet-50/30 transition-colors">
+                        <tr key={idx} className="hover:bg-blue-50/30 transition-colors">
                           {preview.headers.map((h) => (
                             <td
                               key={h}

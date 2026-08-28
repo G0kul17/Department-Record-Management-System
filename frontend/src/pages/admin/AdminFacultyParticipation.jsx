@@ -1,21 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import apiClient from "../../api/axiosClient";
 import SuccessModal from "../../components/ui/SuccessModal";
 import BackButton from "../../components/BackButton";
 import UploadDropzone from "../../components/ui/UploadDropzone";
 import RecordLoader from "../../components/ui/RecordLoader";
 import StaffNameInput from "../../components/ui/StaffNameInput";
+import { calculateDuration } from "../../utils/duration";
+import { loadFacultyEventTypes, DEFAULT_FACULTY_EVENT_TYPES } from "../../utils/facultyEventTypes";
+import { FaCalendarAlt } from "react-icons/fa";
 
 export default function AdminFacultyParticipation() {
+  const [eventTypes, setEventTypes] = useState(DEFAULT_FACULTY_EVENT_TYPES);
   const [form, setForm] = useState({
     faculty_name: "",
-    department: "",
+    department: "B.Tech Information Technology",
     type_of_event: "",
     publications_type: "",
     mode_of_training: "",
     title: "",
     start_date: "",
     end_date: "",
+    duration: "",
     conducted_by: "",
     details: "",
     // Journal Publications specific fields
@@ -48,7 +53,29 @@ export default function AdminFacultyParticipation() {
   const [errorDetails, setErrorDetails] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const update = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const types = await loadFacultyEventTypes();
+      if (mounted && types && types.length) {
+        setEventTypes(types);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const update = (k) => (e) => {
+    const val = e.target.value;
+    setForm((prev) => {
+      const next = { ...prev, [k]: val };
+      if (k === "start_date" || k === "end_date") {
+        next.duration = calculateDuration(next.start_date, next.end_date);
+      }
+      return next;
+    });
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -64,12 +91,13 @@ export default function AdminFacultyParticipation() {
       setShowSuccess(true);
       setForm({
         faculty_name: "",
-        department: "",
+        department: "B.Tech Information Technology",
         type_of_event: "",
         mode_of_training: "",
         title: "",
         start_date: "",
         end_date: "",
+        duration: "",
         conducted_by: "",
         details: "",
         publications_type: "",
@@ -171,12 +199,11 @@ export default function AdminFacultyParticipation() {
                 onChange={update("department")}
                 required
               >
-                <option value="">Select Department</option>
-                <option value="B.Tech Artificial Intelligence and Data Science">
-                  B.Tech Artificial Intelligence and Data Science
-                </option>
                 <option value="B.Tech Information Technology">
                   B.Tech Information Technology
+                </option>
+                <option value="B.Tech Artificial Intelligence and Data Science">
+                  B.Tech Artificial Intelligence and Data Science
                 </option>
               </select>
             </div>
@@ -210,22 +237,26 @@ export default function AdminFacultyParticipation() {
                 required
               >
                 <option value="">Select Type</option>
-                <option value="Certification">Certification</option>
-                <option value="Conference Presentation">Conference Presentation</option>
-                <option value="Conference Publications">Conference Publications</option>
-                <option value="FDP">FDP</option>
-                <option value="Hackathon">Hackathon</option>
-                <option value="Industrial Training">Industrial Training</option>
-                <option value="Journal Publications">Journal Publications</option>
-                <option value="NPTEL - FDP">NPTEL - FDP</option>
-                <option value="NPTEL Certification">NPTEL Certification</option>
-                <option value="Professional Development Course">Professional Development Course</option>
-                <option value="Resource Person">Resource Person</option>
-                <option value="Reviewer">Reviewer</option>
-                <option value="Seminar">Seminar</option>
-                <option value="STTP">STTP</option>
-                <option value="Webinar">Webinar</option>
-                <option value="Workshop">Workshop</option>
+                {eventTypes.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                Participation Mode <span className="text-red-600">*</span>
+              </label>
+              <select
+                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
+                value={form.mode_of_training}
+                onChange={update("mode_of_training")}
+                required
+              >
+                <option value="">Select Mode</option>
+                <option value="Offline">Offline</option>
+                <option value="Online">Online</option>
               </select>
             </div>
             {form.type_of_event === "Journal Publications" && (
@@ -775,21 +806,6 @@ export default function AdminFacultyParticipation() {
               )}
             <div>
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                Mode of Training <span className="text-red-600">*</span>
-              </label>
-              <select
-                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
-                value={form.mode_of_training}
-                onChange={update("mode_of_training")}
-                required
-              >
-                <option value="">Select Mode</option>
-                <option value="Offline">Offline</option>
-                <option value="Online">Online</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
                 Title <span className="text-red-600">*</span>
               </label>
               <input
@@ -799,10 +815,22 @@ export default function AdminFacultyParticipation() {
                 required
               />
             </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                Duration <span className="text-red-600">*</span>
+              </label>
+              <input
+                className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 cursor-not-allowed text-slate-700 dark:text-slate-200 font-medium"
+                value={form.duration}
+                readOnly
+                placeholder="Calculated automatically"
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  Start Date <span className="text-red-600">*</span>
+                <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                  <FaCalendarAlt className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                  <span>Start Date</span> <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="date"
@@ -813,8 +841,9 @@ export default function AdminFacultyParticipation() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  End Date <span className="text-red-600">*</span>
+                <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                  <FaCalendarAlt className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                  <span>End Date</span> <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="date"

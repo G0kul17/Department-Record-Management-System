@@ -309,11 +309,20 @@ export async function uploadFilesToProject(req, res) {
     if (!Number.isInteger(projectId) || Number.isNaN(projectId)) {
       return res.status(400).json({ message: "Invalid project id" });
     }
-    const projectQ = await tracedQuery(pool, "SELECT id FROM projects WHERE id=$1", [
+    const projectQ = await tracedQuery(pool, "SELECT id, created_by FROM projects WHERE id=$1", [
       projectId,
     ]);
     if (!projectQ.rows.length)
       return res.status(404).json({ message: "Project not found" });
+
+    // Authorization: students may only attach files to their own projects.
+    // Staff and admin may attach files to any project.
+    const requesterId = req.user?.id;
+    const requesterRole = req.user?.role;
+    const projectOwnerId = projectQ.rows[0].created_by;
+    if (requesterRole === "student" && requesterId !== projectOwnerId) {
+      return res.status(403).json({ message: "Forbidden: you can only upload files to your own projects" });
+    }
 
     const fieldFiles = req.files || {};
     const srsFiles = Array.isArray(fieldFiles.srs_document)

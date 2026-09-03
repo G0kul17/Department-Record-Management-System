@@ -3,12 +3,17 @@ import fs from "fs";
 import path from "path";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
-import xlsx from "xlsx";
+// P1-2: Replace xlsx with exceljs
+import ExcelJS from "exceljs";
 import csvParser from "csv-parser";
 import { sendMail } from "../config/mailer.js";
 import { staffWelcomeEmail } from "../utils/emailTemplates.js";
 import logger, { reqContext } from "../utils/logger.js";
 import { tracedExternalCall, tracedQuery } from "../utils/tracing.js";
+
+// P2-3: Parser complexity limits
+const MAX_UPLOAD_ROWS = 5000;
+const MAX_UPLOAD_COLS = 50;
 
 /* ================= HELPERS ================= */
 
@@ -22,10 +27,27 @@ const parseCSV = (filePath) =>
       .on("error", reject);
   });
 
-const parseExcel = (filePath) => {
-  const workbook = xlsx.readFile(filePath);
-  const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  return xlsx.utils.sheet_to_json(sheet, { raw: false, defval: "" });
+const parseExcel = async (filePath) => {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(filePath);
+  const worksheet = workbook.worksheets[0];
+  if (!worksheet) return [];
+  const rows = [];
+  let headers = [];
+  worksheet.eachRow((row, rowNumber) => {
+    const values = row.values.slice(1);
+    if (rowNumber === 1) {
+      headers = values.map((v) => (v == null ? "" : String(v).trim()));
+    } else {
+      const obj = {};
+      headers.forEach((h, i) => {
+        const cell = values[i];
+        obj[h] = cell == null ? "" : String(cell).trim();
+      });
+      rows.push(obj);
+    }
+  });
+  return rows;
 };
 
 const normalizeKey = (key) =>
@@ -95,13 +117,21 @@ export const uploadStaffBatch = async (req, res) => {
     let rows = [];
 
     if (ext === ".csv") rows = await parseCSV(req.file.path);
-    else if (ext === ".xlsx" || ext === ".xls") rows = parseExcel(req.file.path);
+    else if (ext === ".xlsx" || ext === ".xls") rows = await parseExcel(req.file.path);
     else {
       return res.status(400).json({ message: "Only CSV or Excel allowed" });
     }
 
     if (!rows.length) {
       return res.status(400).json({ message: "Uploaded file is empty" });
+    }
+
+    // P2-3: Complexity caps
+    if (rows.length > MAX_UPLOAD_ROWS) {
+      return res.status(400).json({ message: `File exceeds maximum row limit of ${MAX_UPLOAD_ROWS} rows.` });
+    }
+    if (Object.keys(rows[0] || {}).length > MAX_UPLOAD_COLS) {
+      return res.status(400).json({ message: `File exceeds maximum column limit of ${MAX_UPLOAD_COLS} columns.` });
     }
 
     logger.debug("Staff batch upload: first row headers", {

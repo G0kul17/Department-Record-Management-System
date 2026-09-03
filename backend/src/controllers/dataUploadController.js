@@ -1,13 +1,21 @@
 import pool from "../config/db.js";
 import fs from "fs";
 import path from "path";
-import * as XLSX from "xlsx";
+// P1-2: Replace xlsx (prototype-pollution/ReDoS CVEs, no upstream fix reported)
+// with exceljs which is already present as a dependency (used by bulkExport).
+import ExcelJS from "exceljs";
 import csvParser from "csv-parser";
 import logger, { reqContext } from "../utils/logger.js";
 import { requireActivityTypeByName } from "../utils/activityTypeUtils.js";
 import { tracedQuery } from "../utils/tracing.js";
 
-// Utility: Parse CSV
+// P2-3: Hard limits for uploaded spreadsheets.
+// A file can stay under the byte limit while containing enormous row/column counts
+// (e.g. via repeated values). These caps bound CPU/memory regardless of file size.
+const MAX_UPLOAD_ROWS = 5000;
+const MAX_UPLOAD_COLS = 50;
+
+// Utility: Parse CSV — rows are pushed one at a time via stream (low memory).
 const parseCSV = (filePath) =>
   new Promise((resolve, reject) => {
     const rows = [];
@@ -18,14 +26,32 @@ const parseCSV = (filePath) =>
       .on("error", reject);
   });
 
-// Utility: Parse Excel
-const parseExcel = (filePath) => {
-  const workbook = XLSX.readFile(filePath);
-  const sheetName = workbook.SheetNames[0];
-  return XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
-    raw: false,
-    defval: "",
+// Utility: Parse Excel using exceljs (replaces xlsx — P1-2).
+// Reads only the first worksheet; rejects files with complexity beyond the caps.
+const parseExcel = async (filePath) => {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.readFile(filePath);
+
+  const worksheet = workbook.worksheets[0];
+  if (!worksheet) return [];
+
+  // Extract header row and data rows into plain objects.
+  const rows = [];
+  let headers = [];
+  worksheet.eachRow((row, rowNumber) => {
+    const values = row.values.slice(1); // exceljs row.values[0] is always undefined
+    if (rowNumber === 1) {
+      headers = values.map((v) => (v == null ? "" : String(v).trim()));
+    } else {
+      const obj = {};
+      headers.forEach((h, i) => {
+        const cell = values[i];
+        obj[h] = cell == null ? "" : String(cell).trim();
+      });
+      rows.push(obj);
+    }
   });
+  return rows;
 };
 
 // Normalize column names for matching
@@ -110,7 +136,7 @@ export const uploadDataFile = async (req, res) => {
     if (ext === ".csv") {
       parsedRows = await parseCSV(filePath);
     } else if (ext === ".xlsx") {
-      parsedRows = parseExcel(filePath);
+      parsedRows = await parseExcel(filePath);
     } else {
       fs.unlink(filePath, () => {});
       return res.status(400).json({ message: "Only CSV and Excel allowed" });
@@ -119,6 +145,18 @@ export const uploadDataFile = async (req, res) => {
     if (!parsedRows.length) {
       fs.unlink(filePath, () => {});
       return res.status(400).json({ message: "No data found in file" });
+    }
+
+    // P2-3: Reject files that exceed complexity bounds even if they pass the
+    // byte-size limit. This prevents CPU/memory exhaustion from crafted files.
+    if (parsedRows.length > MAX_UPLOAD_ROWS) {
+      fs.unlink(filePath, () => {});
+      return res.status(400).json({ message: `File exceeds maximum row limit of ${MAX_UPLOAD_ROWS} rows.` });
+    }
+    const colCount = Object.keys(parsedRows[0] || {}).length;
+    if (colCount > MAX_UPLOAD_COLS) {
+      fs.unlink(filePath, () => {});
+      return res.status(400).json({ message: `File exceeds maximum column limit of ${MAX_UPLOAD_COLS} columns.` });
     }
 
     const columns = Object.keys(parsedRows[0]);

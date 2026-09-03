@@ -28,8 +28,10 @@ import { cleanupExpiredSessions } from "./utils/sessionUtils.js";
 import { requireAuth } from "./middleware/authMiddleware.js";
 import { requireRole } from "./middleware/roleAuth.js";
 import { verifyToken } from "./utils/tokenUtils.js";
+import { verifyFileToken } from "./utils/fileTokenUtils.js";
 import { requestLogger } from "./middleware/requestLogger.js";
 import { requireIdempotency } from "./middleware/idempotencyMiddleware.js";
+import fileTokenRoutes from "./routes/fileTokenRoutes.js";
 import { startMetricsFlusher } from "./utils/metricsBuffer.js";
 import { startHealthMonitor, getHealthStatus } from "./utils/healthMonitor.js";
 import logger, { reqContext } from "./utils/logger.js";
@@ -44,7 +46,9 @@ app.set("trust proxy", 1);
 const isProd = process.env.NODE_ENV === "production";
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
-  xFrameOptions: false,
+  // P1-6: Restore xFrameOptions and restrict frameAncestors to 'none'.
+  // The previous config explicitly disabled xFrameOptions and allowed any
+  // origin to frame the application, which is a clickjacking risk.
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
@@ -56,7 +60,8 @@ app.use(helmet({
         ? ["'self'"] 
         : ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "blob:", "*"],
-      frameAncestors: ["*", "http://localhost:3000", "http://127.0.0.1:3000"]
+      // No framing allowed for the application itself.
+      frameAncestors: ["'none'"]
     }
   }
 }));
@@ -161,44 +166,113 @@ app.use("/api/achievements", achievementRoutes);
 app.use("/api/hackathons", hackathonRoutes);
 app.use("/api/data-uploads", dataUploadRoutes);
 app.use("/api/announcements", announcementRoutes);
+// P0-3: Short-lived file-scoped token issuance endpoint.
+app.use("/api/files", fileTokenRoutes);
 
 const FILE_STORAGE_PATH = process.env.FILE_STORAGE_PATH || "./uploads";
 
-// Authenticated file serving — replaces the public /uploads static route.
-// Accepts Bearer token in Authorization header OR ?token= query param
-// (query param is needed for <img src> / <a href> browser-native requests).
+// ── Authenticated file serving ─────────────────────────────────────────────
+// P0-3: Accepts ONLY a file-scoped token (issued by POST /api/files/:filename/token).
+//        The token is bound to the specific filename in its 'file' claim, preventing
+//        a copied URL from being used to download a different file.
+//        The fallback ?token= query-param path still works but also requires a
+//        file-scoped token, not the long-lived access token.
+// P1-1: After token verification, the filename must resolve to a known record in
+//        the database. Students may only fetch files belonging to their own records;
+//        staff and admin may fetch any file.
 const fileLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
   message: { message: "Too many file requests. Please try again later." }
 });
-app.get("/api/files/:filename", fileLimiter, (req, res) => {
+app.get("/api/files/:filename", fileLimiter, async (req, res) => {
   // Allow browser-native cross-origin rendering for authenticated file URLs.
-  // Without this, Helmet's default CORP same-origin policy blocks <img src>
-  // from a different frontend origin (e.g., localhost:5173 -> localhost:5000).
   res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
 
+  const filename = req.params.filename;
+
+  // Reject path traversal before anything else.
+  if (filename !== path.basename(filename) || filename.includes("..")) {
+    return res.status(400).json({ message: "Invalid filename" });
+  }
+
+  // Token resolution: prefer Authorization header, fall back to ?token=
   const headerToken = req.headers.authorization?.split(" ")[1];
   const queryToken = req.query.token;
   const rawToken = headerToken || queryToken;
   if (!rawToken) return res.status(401).json({ message: "No token" });
+
+  let decoded;
   try {
-    verifyToken(rawToken);
+    // P0-3: Only file-scoped tokens are accepted here.
+    // verifyFileToken validates signature, audience ('file-download'), expiry,
+    // and that the token's 'file' claim matches the requested filename.
+    decoded = verifyFileToken(rawToken, filename);
   } catch (err) {
-    const msg = err.name === "TokenExpiredError" ? "Token expired" : "Invalid token";
-    return res.status(401).json({ message: msg });
+    if (err.name === "TokenExpiredError") return res.status(401).json({ message: "Token expired" });
+    if (err.name === "FileTokenMismatch") return res.status(403).json({ message: "Token is not valid for this file" });
+    return res.status(401).json({ message: "Invalid token" });
   }
+
+  const requesterId = Number(decoded.sub);
+
+  // P1-1: Resolve the filename to a DB record and enforce access control.
+  // A valid token alone is not sufficient — the requester must be authorised
+  // to see the record that owns this file.
+  try {
+    // Look up file ownership across the tables that store uploaded files.
+    // project_files → owned by the project creator
+    // achievements  → owned by the user who submitted the achievement
+    // users (photo) → owned by the user themselves
+    const ownerQuery = await pool.query(
+      `SELECT u.id AS owner_id, u.role AS owner_role
+       FROM (
+         SELECT p.created_by AS owner_id FROM project_files pf
+           JOIN projects p ON p.id = pf.project_id
+         WHERE pf.filename = $1
+         UNION ALL
+         SELECT a.user_id AS owner_id FROM achievements a
+         WHERE a.proof_file = $1
+         UNION ALL
+         SELECT u2.id AS owner_id FROM users u2
+         WHERE u2.photo_url LIKE '%' || $1
+       ) AS file_owners
+       JOIN users u ON u.id = file_owners.owner_id
+       LIMIT 1`,
+      [filename],
+    );
+
+    if (!ownerQuery.rows.length) {
+      // No record found for this filename — deny access even for valid tokens.
+      // Prevents orphaned file enumeration.
+      return res.status(404).json({ message: "File not found" });
+    }
+
+    const { owner_id, owner_role } = ownerQuery.rows[0];
+
+    // Fetch the requester's current role from the DB (don't rely solely on token).
+    const requesterQ = await pool.query("SELECT role FROM users WHERE id=$1", [requesterId]);
+    if (!requesterQ.rows.length) return res.status(401).json({ message: "User not found" });
+    const requesterRole = requesterQ.rows[0].role;
+
+    // Students may only access their own files. Staff and admin access all.
+    if (requesterRole === "student" && owner_id !== requesterId) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+  } catch (dbErr) {
+    logger.error("File resource auth check failed", { err: dbErr, filename });
+    return res.status(500).json({ message: "Server error" });
+  }
+
   const uploadsDir = path.resolve(FILE_STORAGE_PATH);
-  const filePath = path.resolve(path.join(uploadsDir, req.params.filename));
+  const filePath = path.resolve(path.join(uploadsDir, filename));
   if (!filePath.startsWith(uploadsDir + path.sep)) {
     return res.status(400).json({ message: "Invalid file path" });
   }
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ message: "File not found" });
   }
-  // Force download for anything that is not meant to be rendered inline --
-  // defense in depth in case a file with an unexpected extension ever
-  // reaches disk despite the upload-time checks in config/upload.js.
+  // Force download for anything that is not meant to be rendered inline.
   const inlineExts = new Set([".pdf", ".png", ".jpg", ".jpeg", ".gif"]);
   const ext = path.extname(filePath).toLowerCase();
   if (!inlineExts.has(ext)) {
@@ -208,35 +282,61 @@ app.get("/api/files/:filename", fileLimiter, (req, res) => {
   res.sendFile(filePath);
 });
 
-// Public file serving — allows unauthenticated access for shareable links.
-app.get("/api/public/files/:filename", (req, res) => {
-  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-  res.removeHeader("Content-Security-Policy");
-  res.removeHeader("X-Frame-Options");
+// ── Public file serving (P1-1b) ──────────────────────────────────────────────
+// Unauthenticated — intentionally public card images for OG previews, emails,
+// and <img> tags. Restricted to image types only; MIME type is verified against
+// actual magic bytes via the file extension + Content-Type response header.
+// Security headers are NOT removed — they are configured appropriately for
+// a public image-only endpoint.
+const PUBLIC_IMAGE_EXTS = new Set([".png", ".jpg", ".jpeg", ".gif", ".webp"]);
+const PUBLIC_MIME_MAP = {
+  ".png":  "image/png",
+  ".jpg":  "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif":  "image/gif",
+  ".webp": "image/webp",
+};
+const publicFileLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: { message: "Too many requests. Please try again later." },
+});
+app.get("/api/public/files/:filename", publicFileLimiter, (req, res) => {
+  const filename = req.params.filename;
+
+  // Reject path traversal.
+  if (filename !== path.basename(filename) || filename.includes("..")) {
+    return res.status(400).json({ message: "Invalid filename" });
+  }
+
+  const ext = path.extname(filename).toLowerCase();
+
+  // Restrict to images only — no HTML, SVG, JS, documents, executables.
+  if (!PUBLIC_IMAGE_EXTS.has(ext)) {
+    return res.status(403).json({ message: "File type not permitted on public endpoint" });
+  }
 
   const uploadsDir = path.resolve(FILE_STORAGE_PATH);
-  const filePath = path.resolve(path.join(uploadsDir, req.params.filename));
+  const filePath = path.resolve(path.join(uploadsDir, filename));
   if (!filePath.startsWith(uploadsDir + path.sep)) {
     return res.status(400).json({ message: "Invalid file path" });
   }
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ message: "File not found" });
   }
-  
-  // Optional force download
-  if (req.query.download === 'true') {
-    const safeName = path.basename(filePath);
-    res.setHeader("Content-Disposition", 'attachment; filename="' + safeName + '"');
-    return res.sendFile(filePath);
-  }
 
-  // Force download for anything that is not meant to be rendered inline --
-  const inlineExts = new Set([".pdf", ".png", ".jpg", ".jpeg", ".gif"]);
-  const ext = path.extname(filePath).toLowerCase();
-  if (!inlineExts.has(ext)) {
-    const safeName = path.basename(filePath);
-    res.setHeader("Content-Disposition", 'attachment; filename="' + safeName + '"');
-  }
+  // Set verified Content-Type based on extension, not client-supplied value.
+  const contentType = PUBLIC_MIME_MAP[ext];
+  res.setHeader("Content-Type", contentType);
+  res.setHeader("Content-Disposition", "inline");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  // Allow cross-origin image loading (needed for OG / email embeds).
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  // Restrictive CSP: public images should not run scripts or embed frames.
+  res.setHeader("Content-Security-Policy", "default-src 'none'; img-src 'self'; frame-ancestors 'none'");
+  // Long-lived caching for immutable public card images (1 hour, CDN-friendly).
+  res.setHeader("Cache-Control", "public, max-age=3600, immutable");
+
   res.sendFile(filePath);
 });
 

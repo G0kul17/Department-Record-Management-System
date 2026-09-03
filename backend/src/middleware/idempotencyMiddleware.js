@@ -7,17 +7,37 @@ const idempotencyCache = new LRUCache({
   ttl: 1000 * 60 * 60 * 24, 
 });
 
+/**
+ * Builds a compound cache key that scopes the raw Idempotency-Key header value
+ * to the authenticated user, HTTP method, and request route. This prevents:
+ *   - A key from user A being replayed to return user B's cached response.
+ *   - The same key on a different route/method returning a wrong cached response.
+ *
+ * NOTE: For multi-instance deployments, replace the LRUCache with a shared
+ * Redis store (e.g. via ioredis) so retries that hit a different instance
+ * are still deduplicated correctly.
+ */
+function buildCacheKey(req, rawKey) {
+  const userId = req.user?.id ?? "anon";
+  const method = req.method;
+  // req.route.path is set after the router resolves the route; fall back to
+  // req.path for middleware-level access (before route matching).
+  const routePath = req.route?.path ?? req.path ?? "unknown";
+  return `${userId}:${method}:${routePath}:${rawKey}`;
+}
+
 export const requireIdempotency = (req, res, next) => {
   if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
-    const key = req.headers['idempotency-key'];
-    if (!key) {
-      // In a strict FAANG environment, we would block requests missing the key:
+    const rawKey = req.headers['idempotency-key'];
+    if (!rawKey) {
+      // In a strict environment, block requests missing the key:
       // return res.status(400).json({ message: "Idempotency-Key header is required" });
-      // But for backward compatibility with older clients, we'll just log a warning and pass through.
+      // For backward compatibility we log a warning and pass through.
       logger.warn("Missing Idempotency-Key header on mutation request", { url: req.originalUrl, method: req.method });
       return next();
     }
 
+    const key = buildCacheKey(req, rawKey);
     const cachedResponse = idempotencyCache.get(key);
     if (cachedResponse) {
       logger.info("Idempotent request detected. Returning cached response.", { key, url: req.originalUrl });

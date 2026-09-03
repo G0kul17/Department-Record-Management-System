@@ -17,6 +17,11 @@ import { requireAuth } from "../middleware/authMiddleware.js";
 import { upload } from "../config/upload.js";
 import { validate } from "../middleware/validate.js";
 import {
+  registrationLimiter,
+  loginLimiter,
+  otpLimiter,
+} from "../middleware/authRateLimiter.js";
+import {
   registerSchema,
   verifyOtpSchema,
   loginSchema,
@@ -38,13 +43,13 @@ const router = express.Router();
  * - /logout -> invalidate session
  */
 
-router.post("/register", validate(registerSchema), register);
-router.post("/verify", validate(verifyOtpSchema), verifyOTP);
-router.post("/login", validate(loginSchema), login);
-router.post("/login-verify", validate(verifyOtpSchema), loginVerifyOTP);
-router.post("/forgot", validate(forgotSchema), initiateForgotPassword);
-router.post("/forgot-verify", validate(verifyOtpSchema), forgotVerifyOTP);
-router.post("/reset", validate(resetPasswordSchema), resetPassword);
+router.post("/register", registrationLimiter, validate(registerSchema), register);
+router.post("/verify", otpLimiter, validate(verifyOtpSchema), verifyOTP);
+router.post("/login", loginLimiter, validate(loginSchema), login);
+router.post("/login-verify", otpLimiter, validate(verifyOtpSchema), loginVerifyOTP);
+router.post("/forgot", otpLimiter, validate(forgotSchema), initiateForgotPassword);
+router.post("/forgot-verify", otpLimiter, validate(verifyOtpSchema), forgotVerifyOTP);
+router.post("/reset", otpLimiter, validate(resetPasswordSchema), resetPassword);
 router.post("/logout", requireAuth, logout);
 
 // Profile endpoints for logged-in users

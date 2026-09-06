@@ -1,27 +1,33 @@
 import React, { useEffect, useState } from "react";
-import { getFileUrl } from "../utils/fileUrl";
-
-function makeFileUrl(file) {
-  if (!file) return null;
-  if (file.url && typeof file.url === "string") return file.url;
-  if (file.filename) return getFileUrl(file.filename);
-  return null;
-}
+import { getFileUrl, getAuthenticatedFileUrl } from "../utils/fileUrl";
 
 export default function AttachmentPreview({ file, onClose }) {
   if (!file) return null;
+  const [authUrl, setAuthUrl] = useState(() => (file.url && typeof file.url === "string" ? file.url : getFileUrl(file.filename)));
   const [blobUrl, setBlobUrl] = useState(null);
   const [fetchError, setFetchError] = useState(null);
 
-  const url = makeFileUrl(file);
+  const filename = file.filename;
   const name = file.original_name || file.name || file.filename || "attachment";
   const ext = (name.split(".").pop() || "").toLowerCase();
 
   useEffect(() => {
     let mounted = true;
+    if (filename && (!file.url || typeof file.url !== "string")) {
+      getAuthenticatedFileUrl(filename).then((u) => {
+        if (mounted && u) setAuthUrl(u);
+      });
+    }
+    return () => {
+      mounted = false;
+    };
+  }, [filename, file.url]);
+
+  useEffect(() => {
+    let mounted = true;
     let ac = new AbortController();
     async function fetchAsBlob() {
-      if (!url) return;
+      if (!authUrl) return;
       // Only attempt blob fetch for types that may be previewed
       const previewableExts = [
         "pdf",
@@ -42,7 +48,15 @@ export default function AttachmentPreview({ file, onClose }) {
       ];
       if (previewableExts.indexOf(ext) === -1) return;
       try {
-        const res = await fetch(url, { signal: ac.signal });
+        let res = await fetch(authUrl, { signal: ac.signal });
+        // Handle token expiry: if 401, force refresh file token and retry once
+        if (res.status === 401 && filename) {
+          const freshUrl = await getAuthenticatedFileUrl(filename, true);
+          if (freshUrl && mounted) {
+            setAuthUrl(freshUrl);
+            res = await fetch(freshUrl, { signal: ac.signal });
+          }
+        }
         if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
         const blob = await res.blob();
         const bUrl = URL.createObjectURL(blob);
@@ -52,8 +66,9 @@ export default function AttachmentPreview({ file, onClose }) {
           URL.revokeObjectURL(bUrl);
         }
       } catch (err) {
-        if (mounted) setFetchError(err.message || String(err));
-        // swallow — fallback to original url
+        if (err.name !== "AbortError" && mounted) {
+          setFetchError(err.message || String(err));
+        }
       }
     }
     fetchAsBlob();
@@ -65,9 +80,10 @@ export default function AttachmentPreview({ file, onClose }) {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [url, ext]);
+  }, [authUrl, ext]);
 
-  const previewUrl = blobUrl || url;
+  const url = authUrl;
+  const previewUrl = blobUrl || authUrl;
 
   const renderContent = () => {
     if (!previewUrl)

@@ -20,9 +20,11 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
 
-const FILE_TOKEN_SECRET =
-  process.env.FILE_TOKEN_SECRET ||
-  "f8K2mQ7vR4xN9pL3wT6yH1cZ5sB8dF0gJ2uE7aV9kX4nM6qP1rW3tY8hC5zL0sA7";
+const FILE_TOKEN_SECRET = process.env.FILE_TOKEN_SECRET;
+
+if (!FILE_TOKEN_SECRET) {
+  throw new Error("FATAL: FILE_TOKEN_SECRET environment variable is required.");
+}
 
 const FILE_TOKEN_AUDIENCE = "file-download";
 const FILE_TOKEN_ISSUER = "drms-api";

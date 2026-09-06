@@ -227,15 +227,52 @@ app.get("/api/files/:filename", fileLimiter, async (req, res) => {
     const ownerQuery = await pool.query(
       `SELECT u.id AS owner_id, u.role AS owner_role
        FROM (
+         SELECT pf.uploaded_by AS owner_id FROM project_files pf
+         WHERE pf.filename = $1 AND pf.uploaded_by IS NOT NULL
+         UNION ALL
          SELECT p.created_by AS owner_id FROM project_files pf
            JOIN projects p ON p.id = pf.project_id
-         WHERE pf.filename = $1
+         WHERE pf.filename = $1 AND p.created_by IS NOT NULL
          UNION ALL
          SELECT a.user_id AS owner_id FROM achievements a
-         WHERE a.proof_file = $1
+           JOIN project_files pf ON (pf.id = a.proof_file_id OR pf.id = a.certificate_file_id OR pf.id = a.event_photos_file_id)
+         WHERE pf.filename = $1 AND a.user_id IS NOT NULL
+         UNION ALL
+         SELECT fp.created_by AS owner_id FROM faculty_participations fp
+           JOIN project_files pf ON pf.id = fp.proof_file_id
+         WHERE pf.filename = $1 AND fp.created_by IS NOT NULL
+         UNION ALL
+         SELECT fr.created_by AS owner_id FROM faculty_research fr
+           JOIN project_files pf ON pf.id = fr.proof_file_id
+         WHERE pf.filename = $1 AND fr.created_by IS NOT NULL
+         UNION ALL
+         SELECT fc.created_by AS owner_id FROM faculty_consultancy fc
+           JOIN project_files pf ON pf.id = fc.proof_file_id
+         WHERE pf.filename = $1 AND fc.created_by IS NOT NULL
+         UNION ALL
+         SELECT sa.created_by AS owner_id FROM staff_announcements sa
+           JOIN project_files pf ON pf.id = sa.brochure_file_id
+         WHERE pf.filename = $1 AND sa.created_by IS NOT NULL
+         UNION ALL
+         SELECT h.user_id AS owner_id FROM hackathons h
+           JOIN project_files pf ON pf.id = h.proof_file_id
+         WHERE pf.filename = $1 AND h.user_id IS NOT NULL
+         UNION ALL
+         SELECT e.organizer_id AS owner_id FROM events e
+         WHERE (e.thumbnail_filename = $1 OR e.attachments::text LIKE '%' || $1)
+           AND e.organizer_id IS NOT NULL
+         UNION ALL
+         SELECT su.uploaded_by AS owner_id FROM staff_uploads_with_document su
+         WHERE (su.stored_filename = $1 OR su.documents::text LIKE '%' || $1)
+           AND su.uploaded_by IS NOT NULL
          UNION ALL
          SELECT u2.id AS owner_id FROM users u2
-         WHERE u2.photo_url LIKE '%' || $1
+         WHERE (
+           u2.profile_details->>'photo_url' LIKE '%' || $1
+           OR u2.profile_details->>'avatar_url' LIKE '%' || $1
+           OR u2.profile_details->>'image_url' LIKE '%' || $1
+           OR u2.profile_details->>'profile_pic' LIKE '%' || $1
+         )
        ) AS file_owners
        JOIN users u ON u.id = file_owners.owner_id
        LIMIT 1`,
@@ -256,7 +293,7 @@ app.get("/api/files/:filename", fileLimiter, async (req, res) => {
     const requesterRole = requesterQ.rows[0].role;
 
     // Students may only access their own files. Staff and admin access all.
-    if (requesterRole === "student" && owner_id !== requesterId) {
+    if (requesterRole === "student" && Number(owner_id) !== Number(requesterId)) {
       return res.status(403).json({ message: "Access denied" });
     }
   } catch (dbErr) {

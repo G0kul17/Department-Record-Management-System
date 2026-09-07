@@ -79,8 +79,12 @@ export async function verifySession(sessionToken) {
 }
 
 /**
- * Extend session expiration by updating last_accessed_at
- * This will refresh the session when user is active
+ * Extend session expiration by updating last_accessed_at.
+ * The new expires_at is LEAST(created_at + 30 days, NOW() + 7 days) so:
+ *   - A session max-ages out 30 days after it was created, regardless of activity
+ *     (prevents a stolen session from being kept alive indefinitely).
+ *   - An idle session still expires within 7 days of the last authenticated request.
+ * P2-1 fix: separates idle timeout from absolute session lifetime.
  * @param {string} sessionToken - The session token
  * @returns {Promise<object|null>} - The updated session object
  */
@@ -89,7 +93,10 @@ export async function extendSession(sessionToken) {
     const { rows } = await tracedQuery(pool, 
       `UPDATE user_sessions
        SET last_accessed_at = CURRENT_TIMESTAMP,
-           expires_at = CURRENT_TIMESTAMP + INTERVAL '90 days'
+           expires_at = LEAST(
+             created_at + INTERVAL '30 days',
+             CURRENT_TIMESTAMP + INTERVAL '7 days'
+           )
        WHERE session_token = $1 AND is_active = true AND expires_at > CURRENT_TIMESTAMP
        RETURNING id, user_id, session_token, created_at, expires_at, last_accessed_at, is_active`,
       [sessionToken]

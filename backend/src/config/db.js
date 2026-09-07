@@ -120,27 +120,33 @@ pool.on("error", (err, client) => {
 
   const criticalErrors = [
     "ECONNREFUSED", // Database not running
-    "ENOTFOUND", // Invalid host
-    "ETIMEDOUT", // Connection timeout
-    "ECONNRESET", // Connection reset
+    "ENOTFOUND",   // Invalid host
+    "ETIMEDOUT",   // Connection timeout
+    "ECONNRESET",  // Connection reset
   ];
 
-  const level = criticalErrors.includes(err.code) ? "error" : "warn";
+  const isCritical = criticalErrors.includes(err.code);
+  const level = isCritical ? "error" : "warn";
   logger[level]("Unexpected database client error", {
     err,
     "db.error.code": err.code,
     "db.pool.total_errors": poolStats.totalErrors,
-    "db.error.critical": criticalErrors.includes(err.code),
+    "db.error.critical": isCritical,
   });
-  
-  if (criticalErrors.includes(err.code)) {
-    logger.error("DB Pool fatally compromised. Triggering graceful shutdown.");
-    // Wait slightly to flush logs, then gracefully exit
-    setTimeout(() => {
-      process.kill(process.pid, 'SIGTERM');
-    }, 100);
+
+  // P2-2: Do NOT send SIGTERM on transient connection errors.
+  // A brief ECONNREFUSED / ETIMEDOUT during a network blip would have killed
+  // the entire process and all in-flight requests. Let the orchestrator
+  // (PM2, Kubernetes, systemd) decide whether and when to restart.
+  // The /health endpoint already exposes pool health for readiness probes.
+  if (isCritical) {
+    logger.error(
+      "DB pool critical error detected — process stays up; orchestrator will restart if health probe fails.",
+      { "db.error.code": err.code, "db.pool.total_errors": poolStats.totalErrors },
+    );
   }
 });
+
 
 // Track connection acquisition
 pool.on("acquire", (client) => {

@@ -659,20 +659,34 @@ export async function resetPassword(req, res) {
 
   const emailLower = String(email).trim().toLowerCase();
   const otpClean = String(otp).trim();
+
+  // Use a transaction with SELECT FOR UPDATE so two simultaneous reset requests
+  // cannot both observe the same valid OTP row before either deletes it.
+  // Only one request will acquire the row lock; the other will block and then
+  // find the row already deleted when it proceeds.
+  let client;
   try {
+    client = await pool.connect();
+    await client.query("BEGIN");
+
     const { rows } = await tracedQuery(
-      pool,
-      "SELECT * FROM otp_verifications WHERE email=$1",
+      client,
+      "SELECT * FROM otp_verifications WHERE email=$1 FOR UPDATE",
       [emailLower],
     );
-    if (!rows.length) return res.status(401).json({ message: "Invalid OTP" });
+
+    if (!rows.length) {
+      await client.query("ROLLBACK");
+      return res.status(401).json({ message: "Invalid OTP" });
+    }
 
     const otpRow = rows[0];
 
     if (otpRow.attempts >= 5) {
-      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [
+      await tracedQuery(client, "DELETE FROM otp_verifications WHERE id=$1", [
         otpRow.id,
       ]);
+      await client.query("COMMIT");
       return res
         .status(429)
         .json({
@@ -681,18 +695,20 @@ export async function resetPassword(req, res) {
     }
 
     if (new Date() > otpRow.expires_at) {
-      await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [
+      await tracedQuery(client, "DELETE FROM otp_verifications WHERE id=$1", [
         otpRow.id,
       ]);
+      await client.query("COMMIT");
       return res.status(401).json({ message: "OTP expired" });
     }
 
     if (otpRow.otp_code.trim() !== otpClean) {
       await tracedQuery(
-        pool,
+        client,
         "UPDATE otp_verifications SET attempts = attempts + 1 WHERE id=$1",
         [otpRow.id],
       );
+      await client.query("COMMIT");
       return res.status(401).json({ message: "Invalid OTP" });
     }
 
@@ -700,15 +716,17 @@ export async function resetPassword(req, res) {
     // Only reset password for verified accounts — unverified users must go
     // through the registration + email-verification flow instead.
     const { rows: updated } = await tracedQuery(
-      pool,
+      client,
       "UPDATE users SET password_hash=$1 WHERE email=$2 AND is_verified=true RETURNING id",
       [hashed, emailLower],
     );
 
-    // Consume the OTP regardless of outcome to prevent replay
-    await tracedQuery(pool, "DELETE FROM otp_verifications WHERE id=$1", [
+    // Atomically consume the OTP in the same transaction as the password update.
+    await tracedQuery(client, "DELETE FROM otp_verifications WHERE id=$1", [
       otpRow.id,
     ]);
+
+    await client.query("COMMIT");
 
     if (!updated.length) {
       return res.status(401).json({ message: "Invalid OTP" });
@@ -717,12 +735,18 @@ export async function resetPassword(req, res) {
     await invalidateAllUserSessions(updated[0].id);
     return res.json({ message: "Password updated" });
   } catch (err) {
+    if (client) {
+      try { await client.query("ROLLBACK"); } catch { /* ignore rollback errors */ }
+    }
     logger.error("Auth resetPassword error", { err, ...reqContext(req) });
     return res
       .status(500)
       .json({ message: "Server error", trace_id: req.correlationId });
+  } finally {
+    if (client) client.release();
   }
 }
+
 
 // Get current user's profile
 export async function getProfile(req, res) {

@@ -79,12 +79,19 @@ export async function verifySession(sessionToken) {
 }
 
 /**
- * Extend session expiration by updating last_accessed_at.
- * The new expires_at is LEAST(created_at + 30 days, NOW() + 7 days) so:
- *   - A session max-ages out 30 days after it was created, regardless of activity
- *     (prevents a stolen session from being kept alive indefinitely).
- *   - An idle session still expires within 7 days of the last authenticated request.
- * P2-1 fix: separates idle timeout from absolute session lifetime.
+ * Extend session expiration using a 90-day sliding window.
+ *
+ * Every authenticated request resets the idle clock:
+ *   expires_at = LEAST(created_at + 90 days, NOW() + 90 days)
+ *
+ * Behaviour:
+ *   - If you use the app regularly, the session stays alive (up to 90 days
+ *     from when it was first created with OTP).
+ *   - If you stop using the app for 90 days straight, expires_at drops
+ *     below CURRENT_TIMESTAMP and the next login requires OTP again.
+ *
+ * This matches the SESSION_DURATION_DAYS = 90 constant used at creation time.
+ *
  * @param {string} sessionToken - The session token
  * @returns {Promise<object|null>} - The updated session object
  */
@@ -94,8 +101,8 @@ export async function extendSession(sessionToken) {
       `UPDATE user_sessions
        SET last_accessed_at = CURRENT_TIMESTAMP,
            expires_at = LEAST(
-             created_at + INTERVAL '30 days',
-             CURRENT_TIMESTAMP + INTERVAL '7 days'
+             created_at + INTERVAL '${SESSION_DURATION_DAYS} days',
+             CURRENT_TIMESTAMP + INTERVAL '${SESSION_DURATION_DAYS} days'
            )
        WHERE session_token = $1 AND is_active = true AND expires_at > CURRENT_TIMESTAMP
        RETURNING id, user_id, session_token, created_at, expires_at, last_accessed_at, is_active`,

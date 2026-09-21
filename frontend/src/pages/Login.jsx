@@ -1,5 +1,5 @@
-﻿import React, { useEffect, useState } from "react";
-import { Link, useNavigate, Navigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import InputField from "../components/InputField";
 import apiClient from "../api/axiosClient";
@@ -18,6 +18,9 @@ const Login = () => {
   const [timeLeft, setTimeLeft] = useState(0);
   const { login, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  // True when the user was redirected here because their session expired
+  const sessionExpired = location.state?.sessionExpired === true;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -46,17 +49,23 @@ const Login = () => {
         return;
       }
 
-      // Check if user has an active session (90-day login)
+      // Check if user has an active session (90-day session-based login)
       if (resp?.sessionActive === true && resp?.token) {
-        // Session is active, login directly without OTP
+        // Session is active, login directly without OTP.
+        // Persist the session token so all subsequent requests include
+        // the x-session-token header — without it the session is never
+        // extended and OTP is required again after each JWT expiry (6 h).
+        const sessionTokenValue = resp.sessionToken || null;
         login(
           {
             email: formData.email,
             role: resp.role,
+            id: resp.id,
             fullName: resp.fullName,
             photoUrl: resp.photoUrl,
           },
           resp.token,
+          sessionTokenValue,
         );
         setIsLoginSuccess(true);
         const dest = resp.role === "admin" ? "/admin" : "/";
@@ -87,17 +96,18 @@ const Login = () => {
         otp,
       });
       if (data?.token && data?.role) {
-        // Store session token in localStorage for future requests
-        localStorage.setItem("sessionToken", data.sessionToken || "");
-
         login(
           {
             email: formData.email,
             role: data.role,
+            id: data.id,
             fullName: data.fullName,
             photoUrl: data.photoUrl,
           },
           data.token,
+          // Pass session token through context so it is saved to
+          // localStorage and sent on every subsequent request.
+          data.sessionToken || null,
         );
         setIsLoginSuccess(true);
         const dest = data.role === "admin" ? "/admin" : "/";
@@ -154,6 +164,18 @@ const Login = () => {
               : "Enter your email and password to access your account."
           }
         >
+          {/* Session-expired banner — shown when redirected from a 401 */}
+          {sessionExpired && (
+            <div
+              role="alert"
+              className="mb-5 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+            >
+              <span className="mt-0.5 text-base">⚠️</span>
+              <span>
+                Your session has expired due to inactivity. Please sign in again to continue.
+              </span>
+            </div>
+          )}
           <ErrorMessage error={error} className="mb-5 rounded-xl" />
 
           {!otpSent ? (

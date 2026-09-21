@@ -12,6 +12,14 @@ if (import.meta.env?.VITE_APP_ENV === "development") {
   console.log("[API Client] Base URL:", API_BASE_URL);
 }
 
+// De-duplication guard: only dispatch session_expired once per page session,
+// even if multiple in-flight API calls all return 401 simultaneously.
+// Reset by dispatching a 'session_restored' event (done in app.jsx on login).
+let sessionExpiredDispatched = false;
+window.addEventListener("session_restored", () => {
+  sessionExpiredDispatched = false;
+});
+
 class ApiClient {
   constructor(baseURL) {
     this.baseURL = baseURL;
@@ -82,7 +90,14 @@ class ApiClient {
       if (response.status === 401 && !endpoint.startsWith("/auth/")) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        window.dispatchEvent(new CustomEvent("session_expired"));
+        // Also clear the session token so it is not re-sent on future requests
+        localStorage.removeItem("sessionToken");
+        // Guard: dispatch the event only once even if multiple concurrent
+        // requests all 401 at the same time (e.g. dashboard on mount).
+        if (!sessionExpiredDispatched) {
+          sessionExpiredDispatched = true;
+          window.dispatchEvent(new CustomEvent("session_expired"));
+        }
         throw new Error("Unauthorized");
       }
 
@@ -192,7 +207,12 @@ class ApiClient {
     if (response.status === 401 && !endpoint.startsWith("/auth/")) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      window.dispatchEvent(new CustomEvent("session_expired"));
+      // Also clear the session token so it is not re-sent on future requests
+      localStorage.removeItem("sessionToken");
+      if (!sessionExpiredDispatched) {
+        sessionExpiredDispatched = true;
+        window.dispatchEvent(new CustomEvent("session_expired"));
+      }
       throw new Error("Unauthorized");
     }
 

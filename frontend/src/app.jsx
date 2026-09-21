@@ -161,14 +161,23 @@ export default function App() {
   
   useEffect(() => {
     const handleSessionExpired = () => {
-      // Show an alert or modal if you had one, but here we gracefully fallback to alert + navigate
-      alert("Your session has expired due to security reasons or inactivity. Please log in again to continue.");
-      navigate("/login");
+      // Navigate to login with state flag instead of blocking alert().
+      // Login.jsx reads location.state.sessionExpired to show an inline banner.
+      navigate("/login", { state: { sessionExpired: true } });
     };
     
     window.addEventListener("session_expired", handleSessionExpired);
     return () => window.removeEventListener("session_expired", handleSessionExpired);
   }, [navigate]);
+
+  // Dispatch 'session_restored' whenever the user successfully navigates away
+  // from /login (i.e. after a fresh login). This resets the de-duplication
+  // guard in axiosClient so future 401s are handled correctly.
+  useEffect(() => {
+    if (location.pathname !== "/login") {
+      window.dispatchEvent(new CustomEvent("session_restored"));
+    }
+  }, [location.pathname]);
 
   const path = (location?.pathname || "/").replace(/\/+$/, "") || "/";
   const hideBackButton =

@@ -6,11 +6,13 @@ import logger from "../utils/logger.js";
 dotenv.config();
 const { Pool } = pkg;
 
+const isTestEnv = process.env.NODE_ENV === "test";
+
 const EnvSchema = z.object({
-  DB_USER: z.string().min(1, "DB_USER is required"),
-  DB_HOST: z.string().min(1, "DB_HOST is required"),
-  DB_NAME: z.string().min(1, "DB_NAME is required"),
-  DB_PASS: z.string().min(1, "DB_PASS is required"),
+  DB_USER: isTestEnv ? z.string().default("postgres") : z.string().min(1, "DB_USER is required"),
+  DB_HOST: isTestEnv ? z.string().default("localhost") : z.string().min(1, "DB_HOST is required"),
+  DB_NAME: isTestEnv ? z.string().default("drms_test_db") : z.string().min(1, "DB_NAME is required"),
+  DB_PASS: isTestEnv ? z.string().default("postgres_test_password") : z.string().min(1, "DB_PASS is required"),
 });
 const envVars = EnvSchema.parse(process.env);
 

@@ -19,8 +19,9 @@ router.use(requireAuth, requireRole(["staff", "admin"]));
 
 router.post("/", upload.single("proof"), validate(createConsultancySchema), createConsultancy);
 router.put("/:id", upload.single("proof"), validate(updateConsultancySchema), updateConsultancy);
-router.delete("/:id", deleteConsultancy);
+router.delete("/:id", requireRole(["admin"]), deleteConsultancy);
 router.get("/count", getFacultyConsultancyCount);
 router.get("/", listConsultancy);
 
 export default router;
+

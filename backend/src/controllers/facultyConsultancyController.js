@@ -189,29 +189,66 @@ export const updateConsultancy = async (req, res) => {
 
 // ========== DELETE CONSULTANCY ==========
 export const deleteConsultancy = async (req, res) => {
+  const client = await pool.connect();
   try {
     const id = Number(req.params.id);
-    const userId = req.user?.id;
-    const userRole = req.user?.role;
-
-    const { rowCount } = await tracedQuery(pool, 
-      "DELETE FROM faculty_consultancy WHERE id=$1 AND (created_by=$2 OR $3='admin')",
-      [id, userId, userRole],
-    );
-
-    if (rowCount === 0) {
-      const { rows } = await tracedQuery(pool, "SELECT id FROM faculty_consultancy WHERE id=$1", [id]);
-      if (!rows.length) return res.status(404).json({ message: "Consultancy record not found" });
-      return res.status(403).json({ message: "Forbidden: you do not own this record" });
+    if (!Number.isInteger(id) || Number.isNaN(id)) {
+      client.release();
+      return res.status(400).json({ message: "Invalid consultancy id" });
     }
 
+    const { rows } = await tracedQuery(
+      client,
+      "SELECT id, proof_file_id FROM faculty_consultancy WHERE id = $1",
+      [id],
+    );
+    if (!rows.length) {
+      client.release();
+      return res.status(404).json({ message: "Consultancy record not found" });
+    }
+
+    const proofFileId = rows[0].proof_file_id;
+    let filenameToDelete = null;
+    if (proofFileId) {
+      const { rows: fileRows } = await tracedQuery(
+        client,
+        "SELECT filename FROM project_files WHERE id = $1",
+        [proofFileId],
+      );
+      if (fileRows.length) filenameToDelete = fileRows[0].filename;
+    }
+
+    await client.query("BEGIN");
+    await tracedQuery(client, "DELETE FROM faculty_consultancy WHERE id = $1", [id]);
+    if (proofFileId) {
+      await tracedQuery(client, "DELETE FROM project_files WHERE id = $1", [proofFileId]);
+    }
+    await client.query("COMMIT");
+
+    if (filenameToDelete) {
+      try {
+        const uploadsDir = path.resolve(process.env.FILE_STORAGE_PATH || "./uploads");
+        const filePath = path.resolve(uploadsDir, filenameToDelete);
+        if (filePath.startsWith(uploadsDir + path.sep) && fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (unlinkErr) {
+        logger.warn("Failed to unlink consultancy proof file", { err: unlinkErr, filename: filenameToDelete });
+      }
+    }
+
+    logger.info("Faculty consultancy deleted by admin", { consultancyId: id, ...reqContext(req) });
     return res.json({ message: "Deleted successfully" });
   } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
     logger.error("Faculty consultancy controller error", { err,
       ...reqContext(req) });
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
+  } finally {
+    client.release();
   }
 };
+
 
 // ========== LIST CONSULTANCY ==========
 export const listConsultancy = async (req, res) => {

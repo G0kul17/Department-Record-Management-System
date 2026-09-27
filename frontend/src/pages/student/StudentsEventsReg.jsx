@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 import EventCard from "../../components/EventCard";
 import CustomSelect from "../../components/ui/CustomSelect";
 import apiClient from "../../api/axiosClient";
+import ConfirmDeleteModal from "../../components/ui/ConfirmDeleteModal";
 import { generateAcademicYears } from "../../utils/academicYears";
 import { getFileUrl } from "../../utils/fileUrl";
 import {
@@ -17,10 +19,30 @@ import {
 export default function Events() {
   const { id } = useParams();
   const nav = useNavigate();
+  const { user } = useAuth();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [query, setQuery] = useState("");
   const [academicYear, setAcademicYear] = useState("");
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget?.id) return;
+    const eventId = deleteTarget.id;
+    setDeletingId(eventId);
+    try {
+      await apiClient.delete(`/events/${eventId}`);
+      setEvents((prev) => prev.filter((e) => e.id !== eventId));
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error("Failed to delete event:", err);
+      alert(err?.response?.data?.message || "Failed to delete event. Please try again.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
 
   const academicYearOptions = useMemo(() => generateAcademicYears(), []);
 
@@ -327,11 +349,25 @@ export default function Events() {
                 grant={null}
                 eventUrl={ev.event_url}
                 to={ev.event_url ? undefined : `/events/${ev.id}`}
+                canDelete={user?.role === "admin"}
+                isDeleting={deletingId === ev.id}
+                onDelete={() => setDeleteTarget(ev)}
               />
             ))}
           </div>
         )}
+
+        <ConfirmDeleteModal
+          isOpen={Boolean(deleteTarget)}
+          title="Delete Event"
+          itemTitle={deleteTarget?.title}
+          message="Are you sure you want to permanently delete this event? This will also delete all event files and student registrations."
+          isDeleting={Boolean(deletingId)}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={handleConfirmDelete}
+        />
       </div>
     </div>
   );
 }
+

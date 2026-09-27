@@ -723,7 +723,6 @@ export async function deleteProject(req, res) {
       [id],
     );
     if (!projRows.length) {
-      client.release();
       return res.status(404).json({ message: "Project not found" });
     }
 

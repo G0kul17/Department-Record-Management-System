@@ -649,7 +649,6 @@ export async function deleteAchievement(req, res) {
       [id],
     );
     if (!achRows.length) {
-      client.release();
       return res.status(404).json({ message: "Achievement not found" });
     }
 

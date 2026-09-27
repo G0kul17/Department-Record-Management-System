@@ -217,21 +217,19 @@ export const updateResearch = async (req, res) => {
 
 // ========== DELETE RESEARCH ==========
 export const deleteResearch = async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || Number.isNaN(id)) {
+    return res.status(400).json({ message: "Invalid research id" });
+  }
+
   const client = await pool.connect();
   try {
-    const id = Number(req.params.id);
-    if (!Number.isInteger(id) || Number.isNaN(id)) {
-      client.release();
-      return res.status(400).json({ message: "Invalid research id" });
-    }
-
     const { rows } = await tracedQuery(
       client,
       "SELECT id, proof_file_id FROM faculty_research WHERE id = $1",
       [id],
     );
     if (!rows.length) {
-      client.release();
       return res.status(404).json({ message: "Research record not found" });
     }
 

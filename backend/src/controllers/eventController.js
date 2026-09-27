@@ -1,4 +1,5 @@
-// eventController.js
+import fs from "fs";
+import path from "path";
 import pool from "../config/db.js";
 import { upload } from "../config/upload.js";
 import logger, { reqContext } from "../utils/logger.js";
@@ -171,21 +172,19 @@ export async function updateEvent(req, res) {
 
 // Delete event
 export async function deleteEvent(req, res) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || Number.isNaN(id)) {
+    return res.status(400).json({ message: "Invalid event id" });
+  }
+
   const client = await pool.connect();
   try {
-    const id = Number(req.params.id);
-    if (!Number.isInteger(id) || Number.isNaN(id)) {
-      client.release();
-      return res.status(400).json({ message: "Invalid event id" });
-    }
-
     const { rows } = await tracedQuery(
       client,
       "SELECT id, thumbnail_filename, attachments FROM events WHERE id = $1",
       [id],
     );
     if (!rows.length) {
-      client.release();
       return res.status(404).json({ message: "Event not found" });
     }
 
@@ -210,14 +209,8 @@ export async function deleteEvent(req, res) {
     }
 
     await client.query("BEGIN");
-    // If event_registrations table exists, delete references
-    try {
-      await tracedQuery(client, "DELETE FROM event_registrations WHERE event_id = $1", [id]);
-    } catch (_) {}
     // If achievements reference events(id), set event_id = NULL
-    try {
-      await tracedQuery(client, "UPDATE achievements SET event_id = NULL WHERE event_id = $1", [id]);
-    } catch (_) {}
+    await tracedQuery(client, "UPDATE achievements SET event_id = NULL WHERE event_id = $1", [id]);
     await tracedQuery(client, "DELETE FROM events WHERE id = $1", [id]);
     await client.query("COMMIT");
 

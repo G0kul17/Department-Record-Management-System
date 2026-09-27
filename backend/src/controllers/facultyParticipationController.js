@@ -339,21 +339,19 @@ export const updateFacultyParticipation = async (req, res) => {
 
 // ========== DELETE PARTICIPATION ==========
 export const deleteFacultyParticipation = async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || Number.isNaN(id)) {
+    return res.status(400).json({ message: "Invalid participation id" });
+  }
+
   const client = await pool.connect();
   try {
-    const id = Number(req.params.id);
-    if (!Number.isInteger(id) || Number.isNaN(id)) {
-      client.release();
-      return res.status(400).json({ message: "Invalid participation id" });
-    }
-
     const { rows } = await tracedQuery(
       client,
       "SELECT id, proof_file_id FROM faculty_participations WHERE id = $1",
       [id],
     );
     if (!rows.length) {
-      client.release();
       return res.status(404).json({ message: "Participation not found" });
     }
 

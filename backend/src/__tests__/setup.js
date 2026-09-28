@@ -1,3 +1,5 @@
+import nodeCrypto from "crypto";
+
 // Global test environment setup
 // Must run before any module imports that check env vars at module load time
 process.env.NODE_ENV = "test";
@@ -8,6 +10,10 @@ process.env.DB_HOST = process.env.DB_HOST || "localhost";
 process.env.DB_NAME = process.env.DB_NAME || "drms_test_db";
 process.env.DB_PASS = process.env.DB_PASS || "postgres_test_password";
 process.env.DB_PORT = process.env.DB_PORT || "5432";
+
+if (typeof globalThis.crypto === "undefined") {
+  globalThis.crypto = nodeCrypto.webcrypto || nodeCrypto;
+}
 
 // Browser / DOM mock environment for frontend integration tests in vitest
 if (typeof globalThis.window === "undefined") {

@@ -20,6 +20,8 @@ import {
   invalidateSession,
   invalidateAllUserSessions,
   cleanupExpiredSessions,
+  SESSION_MAX_AGE_DAYS,
+  SESSION_IDLE_DAYS,
 } from "../../utils/sessionUtils.js";
 
 beforeEach(() => {
@@ -27,6 +29,13 @@ beforeEach(() => {
 });
 
 describe("sessionUtils — pure functions", () => {
+  describe("session constants", () => {
+    it("enforces max age of 30 days and idle expiry within 7 days", () => {
+      expect(SESSION_MAX_AGE_DAYS).toBe(30);
+      expect(SESSION_IDLE_DAYS).toBe(7);
+    });
+  });
+
   describe("generateSessionToken", () => {
     it("returns a 64-character hexadecimal string", () => {
       const token = generateSessionToken();
@@ -44,12 +53,39 @@ describe("sessionUtils — pure functions", () => {
       expect(getSessionExpiryDate()).toBeInstanceOf(Date);
     });
 
-    it("returns a date approximately 90 days in the future", () => {
+    it("returns a date approximately 7 days (idle window) in the future", () => {
       const now = Date.now();
       const expiry = getSessionExpiryDate().getTime();
-      const ninetyDaysMs = 90 * 24 * 60 * 60 * 1000;
-      expect(expiry).toBeGreaterThanOrEqual(now + ninetyDaysMs - 1000);
-      expect(expiry).toBeLessThanOrEqual(now + ninetyDaysMs + 1000);
+      const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+      expect(expiry).toBeGreaterThanOrEqual(now + sevenDaysMs - 1000);
+      expect(expiry).toBeLessThanOrEqual(now + sevenDaysMs + 1000);
+    });
+  });
+
+  describe("session boundary expiry calculation logic", () => {
+    it("expires an idle session within 7 days even when created_at is only 8 days old", () => {
+      const createdAt = new Date("2026-09-01T00:00:00Z");
+      const lastAccess = new Date("2026-09-01T00:00:00Z");
+      const currentTime = new Date("2026-09-09T00:00:00Z"); // 8 days later without activity
+
+      const maxExpiry = new Date(createdAt.getTime() + 30 * 24 * 60 * 60 * 1000); // Sep 31
+      const idleExpiry = new Date(lastAccess.getTime() + 7 * 24 * 60 * 60 * 1000); // Sep 8
+
+      const effectiveExpiry = new Date(Math.min(maxExpiry.getTime(), idleExpiry.getTime()));
+      expect(currentTime.getTime()).toBeGreaterThan(effectiveExpiry.getTime()); // Expired due to 7-day idle limit
+    });
+
+    it("caps active session extension to exactly 30 days from created_at", () => {
+      const createdAt = new Date("2026-09-01T00:00:00Z");
+      const activeAtDay28 = new Date("2026-09-29T00:00:00Z");
+
+      const maxExpiry = new Date(createdAt.getTime() + 30 * 24 * 60 * 60 * 1000); // Oct 1
+      const slidingIdleExpiry = new Date(activeAtDay28.getTime() + 7 * 24 * 60 * 60 * 1000); // Oct 6
+
+      // LEAST(created_at + 30 days, current_time + 7 days)
+      const effectiveExpiry = new Date(Math.min(maxExpiry.getTime(), slidingIdleExpiry.getTime()));
+      expect(effectiveExpiry.toISOString()).toBe(maxExpiry.toISOString()); // Capped at 30 days
+      expect(effectiveExpiry.getTime()).toBeLessThan(slidingIdleExpiry.getTime());
     });
   });
 });
@@ -60,7 +96,7 @@ describe("sessionUtils — DB functions (pool mocked)", () => {
     user_id: 42,
     session_token: "abc",
     created_at: new Date(),
-    expires_at: new Date(Date.now() + 90 * 86400 * 1000),
+    expires_at: new Date(Date.now() + 7 * 86400 * 1000),
     last_accessed_at: new Date(),
     is_active: true,
   };
@@ -124,10 +160,13 @@ describe("sessionUtils — DB functions (pool mocked)", () => {
   });
 
   describe("extendSession", () => {
-    it("returns the updated session when token is valid", async () => {
+    it("returns the updated session when token is valid and uses LEAST with 30 and 7 day intervals", async () => {
       pool.query.mockResolvedValueOnce({ rows: [mockSession] });
       const result = await extendSession("valid-token");
       expect(result).toEqual(mockSession);
+      const [sql] = pool.query.mock.calls[0];
+      expect(sql).toContain("INTERVAL '30 days'");
+      expect(sql).toContain("INTERVAL '7 days'");
     });
 
     it("returns null when token is not found or inactive", async () => {

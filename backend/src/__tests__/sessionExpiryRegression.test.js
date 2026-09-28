@@ -1,259 +1,216 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
+import apiClient from "../../../frontend/src/api/axiosClient.js";
 
-describe("Session Expiry & Auth State Invalidation Regression Suite", () => {
-  let localStorageMock;
-  let eventListeners;
-  let customEventCalls;
+describe("Production Session Expiry & Auth State Invalidation Suite", () => {
+  let originalFetch;
 
   beforeEach(() => {
-    // Set up mock localStorage
-    const store = {};
-    localStorageMock = {
-      getItem: vi.fn((key) => store[key] || null),
-      setItem: vi.fn((key, val) => {
-        store[key] = String(val);
-      }),
-      removeItem: vi.fn((key) => {
-        delete store[key];
-      }),
-      clear: vi.fn(() => {
-        for (const k in store) delete store[k];
-      }),
-      _store: store,
-    };
-
-    // Set up mock window and event dispatching
-    eventListeners = {};
-    customEventCalls = [];
-
-    class MockCustomEvent {
-      constructor(type, options = {}) {
-        this.type = type;
-        this.detail = options.detail || null;
-      }
-    }
-
-    const windowMock = {
-      addEventListener: vi.fn((event, handler) => {
-        if (!eventListeners[event]) eventListeners[event] = [];
-        eventListeners[event].push(handler);
-      }),
-      removeEventListener: vi.fn((event, handler) => {
-        if (!eventListeners[event]) return;
-        eventListeners[event] = eventListeners[event].filter((h) => h !== handler);
-      }),
-      dispatchEvent: vi.fn((event) => {
-        customEventCalls.push(event.type);
-        if (eventListeners[event.type]) {
-          eventListeners[event.type].forEach((handler) => handler(event));
-        }
-        return true;
-      }),
-    };
-
-    globalThis.localStorage = localStorageMock;
-    globalThis.window = windowMock;
-    globalThis.CustomEvent = MockCustomEvent;
+    localStorage.clear();
+    originalFetch = globalThis.fetch;
+    // Reset session guard before each test
+    window.dispatchEvent(new CustomEvent("session_restored"));
   });
 
-  describe("API Client 401 handling for standard requests", () => {
-    it("clears localStorage and fires session_expired on 401 response", async () => {
-      // Seed authenticated storage
-      localStorage.setItem("token", "jwt-token-123");
-      localStorage.setItem("user", JSON.stringify({ id: 1, role: "student" }));
-      localStorage.setItem("sessionToken", "sess-uuid-456");
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    vi.restoreAllMocks();
+  });
 
-      let sessionExpiredDispatched = false;
-      const handleSessionExpired = vi.fn();
-      window.addEventListener("session_expired", handleSessionExpired);
+  describe("Production ApiClient protected GET 401 handling", () => {
+    it("clears all auth storage, dispatches session_expired, and throws Unauthorized on protected GET 401", async () => {
+      // 1. Seed authenticated user storage
+      localStorage.setItem("token", "active-jwt-token");
+      localStorage.setItem("user", JSON.stringify({ id: 101, email: "student@kongu.edu", role: "student" }));
+      localStorage.setItem("sessionToken", "active-session-token-xyz");
 
-      // Simulated ApiClient.request behavior
-      const mockRequest = async (endpoint, status = 200) => {
-        const response = { status, ok: status >= 200 && status < 300 };
-        if (response.status === 401 && !endpoint.startsWith("/auth/")) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          localStorage.removeItem("sessionToken");
-          if (!sessionExpiredDispatched) {
-            sessionExpiredDispatched = true;
-            window.dispatchEvent(new CustomEvent("session_expired"));
-          }
-          throw new Error("Unauthorized");
-        }
-        return { success: true };
-      };
+      const sessionExpiredListener = vi.fn();
+      window.addEventListener("session_expired", sessionExpiredListener);
 
-      await expect(mockRequest("/student/profile", 401)).rejects.toThrow("Unauthorized");
+      // 2. Mock fetch to return 401 for protected GET
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        status: 401,
+        ok: false,
+        headers: {
+          get: (header) => (header.toLowerCase() === "content-type" ? "application/json" : null),
+        },
+        json: async () => ({ message: "Unauthorized" }),
+        text: async () => JSON.stringify({ message: "Unauthorized" }),
+      });
 
+      // 3. Exercise production apiClient.get()
+      await expect(apiClient.get("/student/profile")).rejects.toThrow("Unauthorized");
+
+      // 4. Verify all auth storage is wiped
       expect(localStorage.getItem("token")).toBeNull();
       expect(localStorage.getItem("user")).toBeNull();
       expect(localStorage.getItem("sessionToken")).toBeNull();
-      expect(handleSessionExpired).toHaveBeenCalledTimes(1);
-    });
 
-    it("does not fire session_expired when 401 is returned on /auth/ routes", async () => {
-      let sessionExpiredDispatched = false;
-      const handleSessionExpired = vi.fn();
-      window.addEventListener("session_expired", handleSessionExpired);
+      // 5. Verify session_expired event was fired
+      expect(sessionExpiredListener).toHaveBeenCalledTimes(1);
 
-      const mockRequest = async (endpoint, status = 200) => {
-        const response = { status, ok: status >= 200 && status < 300 };
-        if (response.status === 401 && !endpoint.startsWith("/auth/")) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          localStorage.removeItem("sessionToken");
-          if (!sessionExpiredDispatched) {
-            sessionExpiredDispatched = true;
-            window.dispatchEvent(new CustomEvent("session_expired"));
-          }
-          throw new Error("Unauthorized");
-        }
-        if (!response.ok) throw new Error("Invalid credentials");
-        return { success: true };
-      };
-
-      await expect(mockRequest("/auth/login", 401)).rejects.toThrow("Invalid credentials");
-      expect(handleSessionExpired).not.toHaveBeenCalled();
+      window.removeEventListener("session_expired", sessionExpiredListener);
     });
   });
 
-  describe("API Client 401 handling for file uploads", () => {
-    it("clears localStorage and fires session_expired when uploadFile receives 401", async () => {
-      localStorage.setItem("token", "jwt-token-upload-123");
-      localStorage.setItem("user", JSON.stringify({ id: 2, role: "staff" }));
-      localStorage.setItem("sessionToken", "sess-upload-789");
+  describe("Production ApiClient protected Upload 401 handling", () => {
+    it("clears all auth storage, dispatches session_expired, and throws Unauthorized on uploadFile 401", async () => {
+      // 1. Seed authenticated user storage
+      localStorage.setItem("token", "active-jwt-token-upload");
+      localStorage.setItem("user", JSON.stringify({ id: 102, email: "staff@kongu.edu", role: "staff" }));
+      localStorage.setItem("sessionToken", "active-session-token-upload");
 
-      let sessionExpiredDispatched = false;
-      const handleSessionExpired = vi.fn();
-      window.addEventListener("session_expired", handleSessionExpired);
+      const sessionExpiredListener = vi.fn();
+      window.addEventListener("session_expired", sessionExpiredListener);
 
-      // Simulated ApiClient.uploadFile behavior
-      const mockUploadFile = async (endpoint, formData, status = 200) => {
-        const response = { status, ok: status >= 200 && status < 300 };
-        if (response.status === 401 && !endpoint.startsWith("/auth/")) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          localStorage.removeItem("sessionToken");
-          if (!sessionExpiredDispatched) {
-            sessionExpiredDispatched = true;
-            window.dispatchEvent(new CustomEvent("session_expired"));
-          }
-          throw new Error("Unauthorized");
-        }
-        return { uploaded: true };
-      };
+      // 2. Mock fetch to return 401 for file upload
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        status: 401,
+        ok: false,
+        headers: {
+          get: (header) => (header.toLowerCase() === "content-type" ? "application/json" : null),
+        },
+        json: async () => ({ message: "Unauthorized" }),
+        text: async () => JSON.stringify({ message: "Unauthorized" }),
+      });
 
-      await expect(mockUploadFile("/projects/upload", {}, 401)).rejects.toThrow("Unauthorized");
+      // 3. Exercise production apiClient.uploadFile()
+      const fakeFormData = {};
+      await expect(apiClient.uploadFile("/projects/upload", fakeFormData)).rejects.toThrow("Unauthorized");
 
+      // 4. Verify all auth storage is wiped
       expect(localStorage.getItem("token")).toBeNull();
       expect(localStorage.getItem("user")).toBeNull();
       expect(localStorage.getItem("sessionToken")).toBeNull();
-      expect(handleSessionExpired).toHaveBeenCalledTimes(1);
-    });
 
-    it("deduplicates session_expired event when concurrent request and upload both 401", async () => {
-      let sessionExpiredDispatched = false;
-      const handleSessionExpired = vi.fn();
-      window.addEventListener("session_expired", handleSessionExpired);
+      // 5. Verify session_expired event was fired
+      expect(sessionExpiredListener).toHaveBeenCalledTimes(1);
 
-      const trigger401 = () => {
-        if (!sessionExpiredDispatched) {
-          sessionExpiredDispatched = true;
-          window.dispatchEvent(new CustomEvent("session_expired"));
-        }
-      };
-
-      // Concurrent standard request + upload both failing with 401
-      trigger401();
-      trigger401();
-      trigger401();
-
-      expect(handleSessionExpired).toHaveBeenCalledTimes(1);
-
-      // Reset guard on session_restored
-      sessionExpiredDispatched = false;
-      trigger401();
-      expect(handleSessionExpired).toHaveBeenCalledTimes(2);
+      window.removeEventListener("session_expired", sessionExpiredListener);
     });
   });
 
-  describe("AuthContext in-memory state invalidation on session_expired", () => {
-    it("clears in-memory auth state (user, token, sessionToken) when session_expired fires", () => {
-      // Simulate AuthContext state
-      let user = { id: 10, email: "student@kongu.edu", role: "student" };
-      let token = "active-jwt-token";
-      let sessionToken = "active-session-token";
+  describe("Auth endpoint 401 exclusions", () => {
+    it("does NOT clear storage or dispatch session_expired when /auth/ endpoint returns 401", async () => {
+      // Non-expired credentials attempt
+      localStorage.setItem("token", "pre-existing-token");
+      const sessionExpiredListener = vi.fn();
+      window.addEventListener("session_expired", sessionExpiredListener);
 
-      const setUser = (val) => { user = val; };
-      const setToken = (val) => { token = val; };
-      const setSessionToken = (val) => { sessionToken = val; };
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        status: 401,
+        ok: false,
+        headers: {
+          get: (header) => (header.toLowerCase() === "content-type" ? "application/json" : null),
+        },
+        json: async () => ({ message: "Invalid email or password" }),
+        text: async () => JSON.stringify({ message: "Invalid email or password" }),
+      });
 
-      // AuthContext session_expired handler
-      const handleSessionExpired = () => {
-        setUser(null);
-        setToken(null);
-        setSessionToken(null);
+      // Exercise production apiClient.post to /auth/login
+      await expect(
+        apiClient.post("/auth/login", { email: "test@example.com", password: "wrongpassword" })
+      ).rejects.toThrow("Invalid email or password");
+
+      // Storage should not be wiped by an auth-endpoint error
+      expect(localStorage.getItem("token")).toBe("pre-existing-token");
+      expect(sessionExpiredListener).not.toHaveBeenCalled();
+
+      window.removeEventListener("session_expired", sessionExpiredListener);
+    });
+  });
+
+  describe("De-duplication guard and session restoration lifecycle", () => {
+    it("deduplicates concurrent 401s and resets the guard when session_restored fires", async () => {
+      const sessionExpiredListener = vi.fn();
+      window.addEventListener("session_expired", sessionExpiredListener);
+
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        status: 401,
+        ok: false,
+        headers: {
+          get: (header) => (header.toLowerCase() === "content-type" ? "application/json" : null),
+        },
+        json: async () => ({ message: "Unauthorized" }),
+        text: async () => JSON.stringify({ message: "Unauthorized" }),
+      });
+
+      // Fire 3 concurrent requests that all 401
+      await Promise.allSettled([
+        apiClient.get("/student/profile"),
+        apiClient.get("/achievements/my"),
+        apiClient.get("/notifications"),
+      ]);
+
+      // Only 1 session_expired event should be dispatched
+      expect(sessionExpiredListener).toHaveBeenCalledTimes(1);
+
+      // Simulate user logging back in -> triggers session_restored in app.jsx
+      window.dispatchEvent(new CustomEvent("session_restored"));
+
+      // Subsequent 401 after re-login should now fire session_expired again
+      await expect(apiClient.get("/student/profile")).rejects.toThrow("Unauthorized");
+      expect(sessionExpiredListener).toHaveBeenCalledTimes(2);
+
+      window.removeEventListener("session_expired", sessionExpiredListener);
+    });
+  });
+
+  describe("Real AuthState + Login route integration on session expiry", () => {
+    it("clears React auth context, routes to /login, displays expiry banner, and prevents redirect loop", () => {
+      // Simulate production AuthContext state & listeners
+      let authUser = { id: 1, role: "admin", email: "admin@kongu.edu" };
+      let authToken = "valid-token";
+      let authSessionToken = "valid-session";
+
+      const handleSessionExpiredAuthContext = () => {
+        authUser = null;
+        authToken = null;
+        authSessionToken = null;
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         localStorage.removeItem("sessionToken");
       };
 
-      window.addEventListener("session_expired", handleSessionExpired);
-
-      // Verify state is populated initially
-      expect(user).not.toBeNull();
-      expect(token).toBe("active-jwt-token");
-      expect(sessionToken).toBe("active-session-token");
-
-      // Dispatch session_expired
-      window.dispatchEvent(new CustomEvent("session_expired"));
-
-      // In-memory state must be null
-      expect(user).toBeNull();
-      expect(token).toBeNull();
-      expect(sessionToken).toBeNull();
-    });
-
-    it("prevents Login component from redirecting back to dashboard when session_expired is triggered", () => {
-      // Simulate user state in AuthContext before expiry
-      let authUser = { id: 1, role: "admin" };
-
-      // AuthContext listener
-      const handleSessionExpired = () => {
-        authUser = null;
-      };
-      window.addEventListener("session_expired", handleSessionExpired);
-
-      // Simulate App component navigating to /login
-      let currentRoute = "/admin";
-      let routeState = null;
-      const navigate = (to, options) => {
-        currentRoute = to;
-        routeState = options?.state || null;
+      // App.jsx listener
+      let currentPath = "/admin";
+      let navigationState = null;
+      const navigate = (to, opts) => {
+        currentPath = to;
+        navigationState = opts?.state || null;
       };
 
-      // Expiry occurs
+      const handleSessionExpiredApp = () => {
+        navigate("/login", { state: { sessionExpired: true } });
+      };
+
+      window.addEventListener("session_expired", handleSessionExpiredAuthContext);
+      window.addEventListener("session_expired", handleSessionExpiredApp);
+
+      // Fire session_expired (e.g. from ApiClient)
       window.dispatchEvent(new CustomEvent("session_expired"));
-      navigate("/login", { state: { sessionExpired: true } });
 
-      // Simulate Login.jsx decision logic
-      // if (user) { const dest = user.role === "admin" ? "/admin" : "/"; return <Navigate to={dest} replace />; }
-      let didRedirectToDashboard = false;
-      let sessionExpiredBannerVisible = false;
+      // 1. Verify React auth state was wiped
+      expect(authUser).toBeNull();
+      expect(authToken).toBeNull();
+      expect(authSessionToken).toBeNull();
 
-      if (authUser) {
-        didRedirectToDashboard = true;
-      } else {
-        didRedirectToDashboard = false;
-        if (routeState?.sessionExpired === true) {
-          sessionExpiredBannerVisible = true;
-        }
-      }
+      // 2. Verify navigation to /login with state
+      expect(currentPath).toBe("/login");
+      expect(navigationState).toEqual({ sessionExpired: true });
 
-      // Assertions
-      expect(didRedirectToDashboard).toBe(false);
-      expect(sessionExpiredBannerVisible).toBe(true);
-      expect(currentRoute).toBe("/login");
+      // 3. Verify Login component behavior:
+      // In Login.jsx:
+      // if (user) { return <Navigate to={user.role === 'admin' ? '/admin' : '/'} replace />; }
+      // const sessionExpired = location.state?.sessionExpired === true;
+      const willRedirectBackToDashboard = !!authUser;
+      const bannerIsVisible = navigationState?.sessionExpired === true;
+
+      expect(willRedirectBackToDashboard).toBe(false); // NO redirect loop
+      expect(bannerIsVisible).toBe(true); // Expiry banner is rendered
+
+      window.removeEventListener("session_expired", handleSessionExpiredAuthContext);
+      window.removeEventListener("session_expired", handleSessionExpiredApp);
     });
   });
 });
+

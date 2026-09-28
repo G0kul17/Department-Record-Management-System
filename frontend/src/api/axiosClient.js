@@ -12,6 +12,14 @@ if (import.meta.env?.VITE_APP_ENV === "development") {
   console.log("[API Client] Base URL:", API_BASE_URL);
 }
 
+// De-duplication guard: only dispatch session_expired once per page session,
+// even if multiple in-flight API calls all return 401 simultaneously.
+// Reset by dispatching a 'session_restored' event (done in app.jsx on login).
+let sessionExpiredDispatched = false;
+window.addEventListener("session_restored", () => {
+  sessionExpiredDispatched = false;
+});
+
 class ApiClient {
   constructor(baseURL) {
     this.baseURL = baseURL;
@@ -33,14 +41,24 @@ class ApiClient {
     return headers;
   }
 
-  // Generates a random UUID (fallback for older browsers)
+  // Generates a random UUID (safe across browser and test environments)
   generateIdempotencyKey() {
-    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-      return crypto.randomUUID();
+    if (typeof crypto !== 'undefined') {
+      if (typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+      }
+      if (typeof crypto.getRandomValues === 'function') {
+        return '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, c =>
+          (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16)
+        );
+      }
     }
-    return '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, c =>
-      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-    );
+    // Safe Math.random fallback when web crypto is unavailable
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
   }
 
   async request(endpoint, options = {}) {
@@ -82,7 +100,14 @@ class ApiClient {
       if (response.status === 401 && !endpoint.startsWith("/auth/")) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        window.dispatchEvent(new CustomEvent("session_expired"));
+        // Also clear the session token so it is not re-sent on future requests
+        localStorage.removeItem("sessionToken");
+        // Guard: dispatch the event only once even if multiple concurrent
+        // requests all 401 at the same time (e.g. dashboard on mount).
+        if (!sessionExpiredDispatched) {
+          sessionExpiredDispatched = true;
+          window.dispatchEvent(new CustomEvent("session_expired"));
+        }
         throw new Error("Unauthorized");
       }
 
@@ -192,7 +217,12 @@ class ApiClient {
     if (response.status === 401 && !endpoint.startsWith("/auth/")) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      window.dispatchEvent(new CustomEvent("session_expired"));
+      // Also clear the session token so it is not re-sent on future requests
+      localStorage.removeItem("sessionToken");
+      if (!sessionExpiredDispatched) {
+        sessionExpiredDispatched = true;
+        window.dispatchEvent(new CustomEvent("session_expired"));
+      }
       throw new Error("Unauthorized");
     }
 

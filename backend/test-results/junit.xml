@@ -1,414 +1,669 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuites name="vitest tests" tests="180" failures="0" errors="0" time="3.84">
-    <testsuite name="src/__tests__/projectFileAuth.test.js" timestamp="2026-09-06T05:46:21.682Z" hostname="DHARUN-MD" tests="5" failures="0" errors="0" skipped="0" time="0.0061928">
-        <testcase classname="src/__tests__/projectFileAuth.test.js" name="P0-1: Project file upload ownership check &gt; student requester &gt; DENY: student uploads to another student&apos;s project" time="0.0022982">
+<testsuites name="vitest tests" tests="213" failures="0" errors="0" time="8.502">
+    <testsuite name="src/__tests__/deleteHandlersRegression.test.js" timestamp="2026-09-28T17:18:20.973Z" hostname="DHARUN-MD" tests="25" failures="0" errors="0" skipped="0" time="0.2357733">
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; RBAC Role Guard for Delete Endpoints &gt; allows admin user to proceed to delete handler" time="0.0111067">
         </testcase>
-        <testcase classname="src/__tests__/projectFileAuth.test.js" name="P0-1: Project file upload ownership check &gt; student requester &gt; ALLOW: student uploads to their own project" time="0.0004358">
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; RBAC Role Guard for Delete Endpoints &gt; denies student user with 403 Forbidden" time="0.0091973">
         </testcase>
-        <testcase classname="src/__tests__/projectFileAuth.test.js" name="P0-1: Project file upload ownership check &gt; staff requester &gt; ALLOW: staff uploads to any project regardless of owner" time="0.0005047">
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; RBAC Role Guard for Delete Endpoints &gt; denies staff user with 403 Forbidden" time="0.0024284">
         </testcase>
-        <testcase classname="src/__tests__/projectFileAuth.test.js" name="P0-1: Project file upload ownership check &gt; staff requester &gt; ALLOW: staff uploads to their own project" time="0.0003113">
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; RBAC Role Guard for Delete Endpoints &gt; denies unauthenticated request missing role with 401" time="0.0043496">
         </testcase>
-        <testcase classname="src/__tests__/projectFileAuth.test.js" name="P0-1: Project file upload ownership check &gt; admin requester &gt; ALLOW: admin uploads to any project regardless of owner" time="0.0003533">
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; deleteEvent handler &gt; returns 400 for invalid id without connecting to DB pool" time="0.0028518">
         </testcase>
-    </testsuite>
-    <testsuite name="src/__tests__/middleware/authMiddleware.test.js" timestamp="2026-09-06T05:46:21.685Z" hostname="DHARUN-MD" tests="15" failures="0" errors="0" skipped="0" time="0.0394194">
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; no auth headers &gt; returns 401 &apos;No token&apos; when both Authorization and x-session-token are absent" time="0.0076208">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; session-token path &gt; returns 401 &apos;Invalid session&apos; when verifySession returns null" time="0.0024405">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; session-token path &gt; returns 401 &apos;User not found&apos; when session is valid but user not in DB" time="0.0071339">
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; deleteEvent handler &gt; releases client exactly once on 404 Not Found" time="0.0042106">
             <system-out>
-{&quot;@timestamp&quot;:&quot;2026-09-06T05:46:19.641Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
-{&quot;@timestamp&quot;:&quot;2026-09-06T05:46:19.645Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:4.98,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.528Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, thumbnail_filename, attachments FROM events WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.529Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, thumbnail_filename, attachments FROM events WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.67,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
 
             </system-out>
         </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; session-token path &gt; sets req.user, calls next() and extends session on valid session token" time="0.002723">
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; deleteEvent handler &gt; deletes event successfully, unlinks files, and releases client exactly once" time="0.0068254">
             <system-out>
-{&quot;@timestamp&quot;:&quot;2026-09-06T05:46:19.647Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
-{&quot;@timestamp&quot;:&quot;2026-09-06T05:46:19.647Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.5,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.533Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, thumbnail_filename, attachments FROM events WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.533Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, thumbnail_filename, attachments FROM events WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.41,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.534Z&quot;,&quot;db.statement&quot;:&quot;UPDATE achievements SET event_id = NULL WHERE event_id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.534Z&quot;,&quot;db.rows_affected&quot;:1,&quot;db.statement&quot;:&quot;UPDATE achievements SET event_id = NULL WHERE event_id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.25,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.534Z&quot;,&quot;db.statement&quot;:&quot;DELETE FROM events WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.535Z&quot;,&quot;db.rows_affected&quot;:1,&quot;db.statement&quot;:&quot;DELETE FROM events WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.2,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.535Z&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;eventId&quot;:10,&quot;http&quot;:{&quot;request&quot;:{}},&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;Event deleted by admin&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;,&quot;trace&quot;:{},&quot;url&quot;:{},&quot;user&quot;:{&quot;id&quot;:&quot;1&quot;}}
 
             </system-out>
         </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; session-token path &gt; returns 401 when session verification throws" time="0.0030168">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; returns 401 &apos;Invalid token format&apos; when Authorization header has no token after &apos;Bearer &apos;" time="0.002003">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; calls next() and sets req.user for a valid Bearer JWT without sid" time="0.0009482">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; returns 401 &apos;Token expired&apos; for an expired JWT" time="0.001162">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; returns 401 &apos;Invalid token&apos; for a malformed JWT" time="0.0015345">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; returns 401 &apos;Session revoked&apos; when JWT has sid but session is no longer active" time="0.0010053">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; calls next() when JWT has sid and session is still active" time="0.0009814">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="optionalAuth &gt; calls next() without setting req.user when no auth headers are present" time="0.0012577">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="optionalAuth &gt; sets req.user and calls next() for a valid session token" time="0.0018291">
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; deleteEvent handler &gt; rolls back transaction and releases client exactly once on DB error" time="0.0793967">
             <system-out>
-{&quot;@timestamp&quot;:&quot;2026-09-06T05:46:19.662Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
-{&quot;@timestamp&quot;:&quot;2026-09-06T05:46:19.663Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.55,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.540Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, thumbnail_filename, attachments FROM events WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.540Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, thumbnail_filename, attachments FROM events WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.42,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.541Z&quot;,&quot;db.statement&quot;:&quot;UPDATE achievements SET event_id = NULL WHERE event_id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.613Z&quot;,&quot;db.statement&quot;:&quot;UPDATE achievements SET event_id = NULL WHERE event_id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;error&quot;:{&quot;message&quot;:&quot;DB Deadlock&quot;,&quot;stack_trace&quot;:&quot;Error: DB Deadlock\n    at D:\\PROJECTS\\Department-Record-Management-System\\backend\\src\\__tests__\\deleteHandlersRegression.test.js:128:32\n    at file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:146:14\n    at file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:533:11\n    at runWithTimeout (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:39:7)\n    at runTest (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1056:17)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at runSuite (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1262:5)&quot;,&quot;type&quot;:&quot;Error&quot;},&quot;event.duration_ms&quot;:0.58,&quot;log.level&quot;:&quot;error&quot;,&quot;message&quot;:&quot;db.query.error&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.613Z&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;error&quot;:{&quot;message&quot;:&quot;DB Deadlock&quot;,&quot;stack_trace&quot;:&quot;Error: DB Deadlock\n    at D:\\PROJECTS\\Department-Record-Management-System\\backend\\src\\__tests__\\deleteHandlersRegression.test.js:128:32\n    at file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:146:14\n    at file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:533:11\n    at runWithTimeout (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:39:7)\n    at runTest (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1056:17)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at runSuite (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1262:5)&quot;,&quot;type&quot;:&quot;Error&quot;},&quot;http&quot;:{&quot;request&quot;:{}},&quot;log.level&quot;:&quot;error&quot;,&quot;message&quot;:&quot;Event controller error&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;,&quot;trace&quot;:{},&quot;url&quot;:{},&quot;user&quot;:{&quot;id&quot;:&quot;1&quot;}}
 
             </system-out>
         </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="optionalAuth &gt; sets req.user and calls next() for a valid Bearer JWT" time="0.000768">
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; deleteProject handler &gt; returns 400 for invalid id without connecting to DB pool" time="0.0058429">
         </testcase>
-        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="optionalAuth &gt; returns 401 &apos;Token expired&apos; for expired JWT in optionalAuth" time="0.0010749">
-        </testcase>
-    </testsuite>
-    <testsuite name="src/__tests__/middleware/requestLogger.test.js" timestamp="2026-09-06T05:46:21.690Z" hostname="DHARUN-MD" tests="14" failures="0" errors="0" skipped="0" time="0.0314602">
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="request log — url.path &gt; logs the full originalUrl path, not the router-scoped req.path" time="0.0063938">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="request log — url.path &gt; strips query string from url.path" time="0.0017534">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log — url.path &gt; logs the full originalUrl path on finish, not the router-scoped req.path" time="0.0032519">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log — url.path &gt; logs the full path for nested routes like /api/announcements/mine" time="0.0011454">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log — url.path &gt; request and response logs record the same url.path" time="0.0013668">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="abort log — url.path &gt; logs the full originalUrl path when the client disconnects before a response" time="0.0011638">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="correlation ID &gt; reuses a valid client-supplied X-Correlation-ID" time="0.0013253">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="correlation ID &gt; generates a new UUID when the supplied correlation ID is invalid" time="0.0024292">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;200&apos; level for HTTP NaN" time="0.0019122">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;302&apos; level for HTTP NaN" time="0.0014477">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;400&apos; level for HTTP NaN" time="0.0010518">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;404&apos; level for HTTP NaN" time="0.0011791">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;500&apos; level for HTTP NaN" time="0.0009743">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;503&apos; level for HTTP NaN" time="0.00131">
-        </testcase>
-    </testsuite>
-    <testsuite name="src/__tests__/middleware/roleAuth.test.js" timestamp="2026-09-06T05:46:21.693Z" hostname="DHARUN-MD" tests="6" failures="0" errors="0" skipped="0" time="0.0186573">
-        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; calls next() when the user has an allowed role" time="0.0059941">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; returns 403 when the user&apos;s role is not in the allowed list" time="0.0040285">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; returns 401 when req.user is undefined" time="0.001905">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; allows any role listed in the allowed array" time="0.0014176">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; rejects a role not in a multi-role allowed list" time="0.0011878">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; rejects when allowedRoles is empty" time="0.001046">
-        </testcase>
-    </testsuite>
-    <testsuite name="src/__tests__/middleware/validate.test.js" timestamp="2026-09-06T05:46:21.695Z" hostname="DHARUN-MD" tests="7" failures="0" errors="0" skipped="0" time="0.0295586">
-        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; calls next() and replaces req.body with sanitized value on valid input" time="0.0096319">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; returns 400 with errors array on invalid input" time="0.006921">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; collects all validation errors (abortEarly: false)" time="0.0020369">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; strips unknown fields from req.body (stripUnknown: true)" time="0.0029775">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; coerces string numbers to numbers (convert: true)" time="0.0018836">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; handles undefined req.body gracefully (defaults to {})" time="0.0016965">
-        </testcase>
-        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; error details include field path and message" time="0.0011861">
-        </testcase>
-    </testsuite>
-    <testsuite name="src/__tests__/controllers/announcementController.test.js" timestamp="2026-09-06T05:46:21.697Z" hostname="DHARUN-MD" tests="16" failures="0" errors="0" skipped="0" time="0.0349584">
-        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="createAnnouncement &gt; returns 401 when req.user is missing" time="0.0064226">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="createAnnouncement &gt; returns 400 when title is missing" time="0.0017052">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="createAnnouncement &gt; returns 400 when announcement message is missing" time="0.0010065">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="createAnnouncement &gt; returns 400 when recipients list is empty" time="0.0010625">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="createAnnouncement &gt; returns 201 and commits on a successful announcement" time="0.0045231">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="createAnnouncement &gt; returns 500 and calls ROLLBACK when INSERT returns no id" time="0.0013487">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="createAnnouncement &gt; calls ROLLBACK and rethrows when a DB error occurs mid-transaction" time="0.0014483">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="createAnnouncement &gt; inserts a brochure file row when a brochure is uploaded" time="0.0018652">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="createAnnouncement &gt; de-duplicates recipient ids before inserting" time="0.0024342">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="listMyAnnouncements &gt; returns 401 when req.user is missing" time="0.0010429">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="listMyAnnouncements &gt; returns the announcements list for the authenticated user" time="0.001512">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="listMyAnnouncements &gt; uses default limit of 50 when no limit param is supplied" time="0.003139">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="listMyAnnouncements &gt; clamps limit to a maximum of 200 (bug fix)" time="0.0009808">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="listMyAnnouncements &gt; enforces a minimum limit of 1" time="0.0010738">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="listMyAnnouncements &gt; honours a valid limit within the allowed range" time="0.0008448">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="listMyAnnouncements &gt; returns 500 on DB error" time="0.0012348">
-        </testcase>
-    </testsuite>
-    <testsuite name="src/__tests__/controllers/authController.test.js" timestamp="2026-09-06T05:46:21.703Z" hostname="DHARUN-MD" tests="20" failures="0" errors="0" skipped="0" time="0.0865147">
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 400 when email is missing" time="0.0067071">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 400 when otp is missing" time="0.0021867">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 401 when no OTP record exists for the email" time="0.002101">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 429 when the OTP has exceeded 5 attempts" time="0.0016035">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 401 when the OTP is expired" time="0.0019311">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 401 and increments attempts when OTP code is wrong" time="0.0025826">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 500 when user row is missing after successful OTP verification (bug fix)" time="0.0040738">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 200 with a JWT and session token on successful verification" time="0.0018692">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 400 when email is missing" time="0.0022844">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 400 when otp is missing" time="0.001172">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 401 when no OTP record exists" time="0.0012556">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 429 when too many failed OTP attempts" time="0.0015582">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 401 when OTP is expired" time="0.0014378">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 401 for a wrong OTP code" time="0.0019432">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 500 when user row is missing after OTP deletion (bug fix)" time="0.0023487">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 200 with JWT on successful login OTP verification" time="0.0018484">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="register &gt; does not touch the users table when a pending registration already exists" time="0.0307355">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="register &gt; preserves the existing OTP failed-attempt count on re-registration instead of resetting it" time="0.0068647">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="register &gt; rejects registration when the email is already verified" time="0.0034043">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/authController.test.js" name="register &gt; creates a new user row when no existing record matches the email" time="0.0042879">
-        </testcase>
-    </testsuite>
-    <testsuite name="src/__tests__/controllers/hackathonController.test.js" timestamp="2026-09-06T05:46:21.709Z" hostname="DHARUN-MD" tests="11" failures="0" errors="0" skipped="0" time="0.0212046">
-        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — limit / offset clamping &gt; defaults limit to 20 when no limit param is provided" time="0.0043269">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — limit / offset clamping &gt; defaults offset to 0 when no offset param is provided" time="0.0011409">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — limit / offset clamping &gt; uses a valid limit within 1–200 as-is" time="0.0009359">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — limit / offset clamping &gt; clamps limit to 200 when a value above 200 is supplied (bug fix)" time="0.0010847">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — limit / offset clamping &gt; falls back to default limit of 20 when limit=0 is supplied (0 is falsy)" time="0.0010056">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — limit / offset clamping &gt; enforces a minimum limit of 1 for truthy negative values (e.g. limit=-5)" time="0.0009045">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — limit / offset clamping &gt; clamps negative offset to 0 (bug fix)" time="0.0009468">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — limit / offset clamping &gt; uses a positive offset as-is" time="0.0009139">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — limit / offset clamping &gt; falls back to limit=20 when limit is non-numeric" time="0.0013721">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — response shape &gt; returns an object with a hackathons array" time="0.0039915">
-        </testcase>
-        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — response shape &gt; returns 500 on a DB error" time="0.0016662">
-        </testcase>
-    </testsuite>
-    <testsuite name="src/__tests__/services/mailService.test.js" timestamp="2026-09-06T05:46:21.712Z" hostname="DHARUN-MD" tests="1" failures="0" errors="0" skipped="0" time="0.4567431">
-        <testcase classname="src/__tests__/services/mailService.test.js" name="mailService &gt; skips OTP email delivery only when fake-mail mode is enabled" time="0.4547412">
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; deleteProject handler &gt; releases client exactly once on 404 Not Found" time="0.004688">
             <system-out>
-[dotenv@17.2.3] injecting env (23) from .env -- tip: 👥 sync secrets across teammates &amp; machines: https://dotenvx.com/ops
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.625Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, files FROM projects WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.626Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, files FROM projects WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.5,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; deleteProject handler &gt; deletes project, unlinks files, and releases client exactly once on success" time="0.0094908">
+            <system-out>
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.630Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, files FROM projects WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.631Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, files FROM projects WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.6,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.631Z&quot;,&quot;db.statement&quot;:&quot;SELECT filename FROM project_files WHERE project_id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.631Z&quot;,&quot;db.statement&quot;:&quot;SELECT filename FROM project_files WHERE project_id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.26,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.632Z&quot;,&quot;db.statement&quot;:&quot;DELETE FROM project_files WHERE project_id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.632Z&quot;,&quot;db.rows_affected&quot;:1,&quot;db.statement&quot;:&quot;DELETE FROM project_files WHERE project_id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.25,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.632Z&quot;,&quot;db.statement&quot;:&quot;DELETE FROM projects WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.633Z&quot;,&quot;db.rows_affected&quot;:1,&quot;db.statement&quot;:&quot;DELETE FROM projects WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.4,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.634Z&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;http&quot;:{&quot;request&quot;:{}},&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;Project deleted by admin&quot;,&quot;projectId&quot;:1,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;,&quot;trace&quot;:{},&quot;url&quot;:{},&quot;user&quot;:{&quot;id&quot;:&quot;1&quot;}}
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; deleteProject handler &gt; rolls back transaction and releases client exactly once on DB failure" time="0.0072314">
+            <system-out>
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.640Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, files FROM projects WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.640Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, files FROM projects WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.37,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.641Z&quot;,&quot;db.statement&quot;:&quot;SELECT filename FROM project_files WHERE project_id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.641Z&quot;,&quot;db.statement&quot;:&quot;SELECT filename FROM project_files WHERE project_id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.26,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.641Z&quot;,&quot;db.statement&quot;:&quot;DELETE FROM project_files WHERE project_id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.642Z&quot;,&quot;db.statement&quot;:&quot;DELETE FROM project_files WHERE project_id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;error&quot;:{&quot;message&quot;:&quot;Constraint violation&quot;,&quot;stack_trace&quot;:&quot;Error: Constraint violation\n    at D:\\PROJECTS\\Department-Record-Management-System\\backend\\src\\__tests__\\deleteHandlersRegression.test.js:182:32\n    at file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:146:14\n    at file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:533:11\n    at runWithTimeout (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:39:7)\n    at runTest (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1056:17)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at runSuite (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1262:5)&quot;,&quot;type&quot;:&quot;Error&quot;},&quot;event.duration_ms&quot;:0.31,&quot;log.level&quot;:&quot;error&quot;,&quot;message&quot;:&quot;db.query.error&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.643Z&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;error&quot;:{&quot;message&quot;:&quot;Constraint violation&quot;,&quot;stack_trace&quot;:&quot;Error: Constraint violation\n    at D:\\PROJECTS\\Department-Record-Management-System\\backend\\src\\__tests__\\deleteHandlersRegression.test.js:182:32\n    at file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:146:14\n    at file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:533:11\n    at runWithTimeout (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:39:7)\n    at runTest (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1056:17)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at runSuite (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1262:5)&quot;,&quot;type&quot;:&quot;Error&quot;},&quot;http&quot;:{&quot;request&quot;:{}},&quot;log.level&quot;:&quot;error&quot;,&quot;message&quot;:&quot;Project delete error&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;,&quot;trace&quot;:{},&quot;url&quot;:{},&quot;user&quot;:{&quot;id&quot;:&quot;1&quot;}}
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; deleteAchievement handler &gt; returns 400 for invalid id" time="0.004403">
+        </testcase>
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; deleteAchievement handler &gt; releases client exactly once on 404 Not Found" time="0.0039066">
+            <system-out>
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.651Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, proof_file_id, certificate_file_id, event_photos_file_id FROM achievements WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.652Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, proof_file_id, certificate_file_id, event_photos_file_id FROM achievements WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.34,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; deleteAchievement handler &gt; releases client exactly once on successful deletion" time="0.0059258">
+            <system-out>
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.656Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, proof_file_id, certificate_file_id, event_photos_file_id FROM achievements WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.657Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, proof_file_id, certificate_file_id, event_photos_file_id FROM achievements WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.44,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.657Z&quot;,&quot;db.statement&quot;:&quot;DELETE FROM achievements WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.657Z&quot;,&quot;db.rows_affected&quot;:1,&quot;db.statement&quot;:&quot;DELETE FROM achievements WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.13,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.657Z&quot;,&quot;achievementId&quot;:5,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;http&quot;:{&quot;request&quot;:{}},&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;Achievement deleted by admin&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;,&quot;trace&quot;:{},&quot;url&quot;:{},&quot;user&quot;:{&quot;id&quot;:&quot;1&quot;}}
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; deleteAchievement handler &gt; rolls back and releases client exactly once on error" time="0.0050215">
+            <system-out>
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.661Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, proof_file_id, certificate_file_id, event_photos_file_id FROM achievements WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.662Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, proof_file_id, certificate_file_id, event_photos_file_id FROM achievements WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.35,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.662Z&quot;,&quot;db.statement&quot;:&quot;DELETE FROM achievements WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.663Z&quot;,&quot;db.statement&quot;:&quot;DELETE FROM achievements WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;error&quot;:{&quot;message&quot;:&quot;DB error&quot;,&quot;stack_trace&quot;:&quot;Error: DB error\n    at D:\\PROJECTS\\Department-Record-Management-System\\backend\\src\\__tests__\\deleteHandlersRegression.test.js:238:32\n    at file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:146:14\n    at file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:533:11\n    at runWithTimeout (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:39:7)\n    at runTest (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1056:17)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at runSuite (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1262:5)&quot;,&quot;type&quot;:&quot;Error&quot;},&quot;event.duration_ms&quot;:0.15,&quot;log.level&quot;:&quot;error&quot;,&quot;message&quot;:&quot;db.query.error&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.663Z&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;error&quot;:{&quot;message&quot;:&quot;DB error&quot;,&quot;stack_trace&quot;:&quot;Error: DB error\n    at D:\\PROJECTS\\Department-Record-Management-System\\backend\\src\\__tests__\\deleteHandlersRegression.test.js:238:32\n    at file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:146:14\n    at file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:533:11\n    at runWithTimeout (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:39:7)\n    at runTest (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1056:17)\n    at processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at runSuite (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runSuite (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1205:15)\n    at runFiles (file:///D:/PROJECTS/Department-Record-Management-System/backend/node_modules/@vitest/runner/dist/index.js:1262:5)&quot;,&quot;type&quot;:&quot;Error&quot;},&quot;http&quot;:{&quot;request&quot;:{}},&quot;log.level&quot;:&quot;error&quot;,&quot;message&quot;:&quot;Achievement delete error&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;,&quot;trace&quot;:{},&quot;url&quot;:{},&quot;user&quot;:{&quot;id&quot;:&quot;1&quot;}}
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; deleteConsultancy handler &gt; returns 400 for invalid id" time="0.0047835">
+        </testcase>
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; deleteConsultancy handler &gt; releases client exactly once on 404 Not Found" time="0.004974">
+            <system-out>
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.672Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, proof_file_id FROM faculty_consultancy WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.673Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, proof_file_id FROM faculty_consultancy WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.62,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; deleteConsultancy handler &gt; releases client exactly once on successful deletion" time="0.0054728">
+            <system-out>
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.677Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, proof_file_id FROM faculty_consultancy WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.677Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, proof_file_id FROM faculty_consultancy WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.48,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.678Z&quot;,&quot;db.statement&quot;:&quot;DELETE FROM faculty_consultancy WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.678Z&quot;,&quot;db.rows_affected&quot;:1,&quot;db.statement&quot;:&quot;DELETE FROM faculty_consultancy WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.18,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.679Z&quot;,&quot;consultancyId&quot;:7,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;http&quot;:{&quot;request&quot;:{}},&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;Faculty consultancy deleted by admin&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;,&quot;trace&quot;:{},&quot;url&quot;:{},&quot;user&quot;:{&quot;id&quot;:&quot;1&quot;}}
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; deleteFacultyParticipation handler &gt; returns 400 for invalid id" time="0.0063203">
+        </testcase>
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; deleteFacultyParticipation handler &gt; releases client exactly once on 404 Not Found" time="0.0137795">
+            <system-out>
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.698Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, proof_file_id FROM faculty_participations WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.699Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, proof_file_id FROM faculty_participations WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.39,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; deleteFacultyParticipation handler &gt; releases client exactly once on successful deletion" time="0.0136102">
+            <system-out>
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.712Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, proof_file_id FROM faculty_participations WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.712Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, proof_file_id FROM faculty_participations WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.32,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.712Z&quot;,&quot;db.statement&quot;:&quot;DELETE FROM faculty_participations WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.712Z&quot;,&quot;db.rows_affected&quot;:1,&quot;db.statement&quot;:&quot;DELETE FROM faculty_participations WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.18,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.713Z&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;http&quot;:{&quot;request&quot;:{}},&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;Faculty participation deleted by admin&quot;,&quot;participationId&quot;:8,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;,&quot;trace&quot;:{},&quot;url&quot;:{},&quot;user&quot;:{&quot;id&quot;:&quot;1&quot;}}
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; deleteResearch handler &gt; returns 400 for invalid id" time="0.0035471">
+        </testcase>
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; deleteResearch handler &gt; releases client exactly once on 404 Not Found" time="0.0041428">
+            <system-out>
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.721Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, proof_file_id FROM faculty_research WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.721Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, proof_file_id FROM faculty_research WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.37,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/__tests__/deleteHandlersRegression.test.js" name="Destructive Routes &amp; Single Pool Release Comprehensive Test Suite &gt; deleteResearch handler &gt; releases client exactly once on successful deletion" time="0.003615">
+            <system-out>
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.724Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, proof_file_id FROM faculty_research WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.724Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, proof_file_id FROM faculty_research WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.3,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.725Z&quot;,&quot;db.statement&quot;:&quot;DELETE FROM faculty_research WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.725Z&quot;,&quot;db.rows_affected&quot;:1,&quot;db.statement&quot;:&quot;DELETE FROM faculty_research WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.13,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:16.725Z&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;http&quot;:{&quot;request&quot;:{}},&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;Faculty research deleted by admin&quot;,&quot;researchId&quot;:9,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;,&quot;trace&quot;:{},&quot;url&quot;:{},&quot;user&quot;:{&quot;id&quot;:&quot;1&quot;}}
 
             </system-out>
         </testcase>
     </testsuite>
-    <testsuite name="src/__tests__/services/reviewService.test.js" timestamp="2026-09-06T05:46:21.713Z" hostname="DHARUN-MD" tests="23" failures="0" errors="0" skipped="0" time="0.0364609">
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="ReviewError &gt; is an instance of Error" time="0.0028786">
+    <testsuite name="src/__tests__/projectFileAuth.test.js" timestamp="2026-09-28T17:18:20.989Z" hostname="DHARUN-MD" tests="5" failures="0" errors="0" skipped="0" time="0.0126219">
+        <testcase classname="src/__tests__/projectFileAuth.test.js" name="P0-1: Project file upload ownership check &gt; student requester &gt; DENY: student uploads to another student&apos;s project" time="0.0049356">
         </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="ReviewError &gt; stores the HTTP status code" time="0.0009295">
+        <testcase classname="src/__tests__/projectFileAuth.test.js" name="P0-1: Project file upload ownership check &gt; student requester &gt; ALLOW: student uploads to their own project" time="0.0006604">
         </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="ReviewError &gt; stores the message" time="0.0005438">
+        <testcase classname="src/__tests__/projectFileAuth.test.js" name="P0-1: Project file upload ownership check &gt; staff requester &gt; ALLOW: staff uploads to any project regardless of owner" time="0.0005996">
         </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; returns success message on approve" time="0.0034016">
+        <testcase classname="src/__tests__/projectFileAuth.test.js" name="P0-1: Project file upload ownership check &gt; staff requester &gt; ALLOW: staff uploads to their own project" time="0.0004354">
         </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; returns success message on reject" time="0.0009137">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; passes &apos;approved&apos; status to DB on approve action" time="0.0010211">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; passes &apos;rejected&apos; status to DB on reject action" time="0.0012512">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; sends an email notification to the project creator on approve" time="0.0016049">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; sends an email notification on reject" time="0.0014025">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; throws ReviewError(403) when staff is not an activity coordinator" time="0.0029112">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; throws ReviewError(404) when project is not found" time="0.0010993">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; skips email when creator has no email row in the DB" time="0.001385">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; skips email when created_by is null/undefined" time="0.0009217">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; does not throw when email sending fails (logs error instead)" time="0.002288">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; returns success message on approve" time="0.0016436">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; returns success message on reject" time="0.0010365">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; passes &apos;approved&apos; status and verified=true to DB on approve" time="0.0009664">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; passes &apos;rejected&apos; status and verified=false to DB on reject" time="0.0007557">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; sends email to achievement owner on approve" time="0.0008891">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; throws ReviewError(403) when staff is not an activity coordinator" time="0.0008845">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; throws ReviewError(404) when achievement is not found" time="0.0010648">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; does not throw when email sending fails (logs error instead)" time="0.0012555">
-        </testcase>
-        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; uses null for comment when none is provided" time="0.0011646">
+        <testcase classname="src/__tests__/projectFileAuth.test.js" name="P0-1: Project file upload ownership check &gt; admin requester &gt; ALLOW: admin uploads to any project regardless of owner" time="0.000463">
         </testcase>
     </testsuite>
-    <testsuite name="src/__tests__/utils/otpGenerator.test.js" timestamp="2026-09-06T05:46:21.723Z" hostname="DHARUN-MD" tests="9" failures="0" errors="0" skipped="0" time="0.0132257">
-        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; generateOTP &gt; returns a string" time="0.0030615">
+    <testsuite name="src/__tests__/sessionExpiryRegression.test.js" timestamp="2026-09-28T17:18:20.991Z" hostname="DHARUN-MD" tests="5" failures="0" errors="0" skipped="0" time="0.0724209">
+        <testcase classname="src/__tests__/sessionExpiryRegression.test.js" name="Production Session Expiry &amp; Auth State Invalidation Suite &gt; Production ApiClient protected GET 401 handling &gt; clears all auth storage, dispatches session_expired, and throws Unauthorized on protected GET 401" time="0.0472329">
+            <system-err>
+API Error: Error: Unauthorized
+    at ApiClient.request (D:\PROJECTS\Department-Record-Management-System\frontend\src\api\axiosClient.js:111:15)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+    at [90mD:\PROJECTS\Department-Record-Management-System\backend\[39msrc\__tests__\sessionExpiryRegression.test.js:41:7
+    at [90mfile:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:533:5
+    at runTest [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1056:11[90m)[39m
+    at runSuite [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1205:15[90m)[39m
+    at runSuite [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1205:15[90m)[39m
+    at runSuite [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1205:15[90m)[39m
+    at runFiles [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1262:5[90m)[39m
+    at startTests [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1271:3[90m)[39m
+
+            </system-err>
         </testcase>
-        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; generateOTP &gt; returns exactly 6 characters" time="0.0021621">
+        <testcase classname="src/__tests__/sessionExpiryRegression.test.js" name="Production Session Expiry &amp; Auth State Invalidation Suite &gt; Production ApiClient protected Upload 401 handling &gt; clears all auth storage, dispatches session_expired, and throws Unauthorized on uploadFile 401" time="0.0038673">
         </testcase>
-        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; generateOTP &gt; contains only digit characters" time="0.0005435">
+        <testcase classname="src/__tests__/sessionExpiryRegression.test.js" name="Production Session Expiry &amp; Auth State Invalidation Suite &gt; Auth endpoint 401 exclusions &gt; does NOT clear storage or dispatch session_expired when /auth/ endpoint returns 401" time="0.0056219">
+            <system-err>
+API Error: Error: Invalid email or password
+    at ApiClient.request (D:\PROJECTS\Department-Record-Management-System\frontend\src\api\axiosClient.js:135:21)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+    at [90mD:\PROJECTS\Department-Record-Management-System\backend\[39msrc\__tests__\sessionExpiryRegression.test.js:110:7
+    at [90mfile:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:533:5
+    at runTest [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1056:11[90m)[39m
+    at runSuite [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1205:15[90m)[39m
+    at runSuite [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1205:15[90m)[39m
+    at runSuite [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1205:15[90m)[39m
+    at runFiles [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1262:5[90m)[39m
+    at startTests [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1271:3[90m)[39m
+
+            </system-err>
         </testcase>
-        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; generateOTP &gt; is in the range 100000–999999" time="0.0008748">
+        <testcase classname="src/__tests__/sessionExpiryRegression.test.js" name="Production Session Expiry &amp; Auth State Invalidation Suite &gt; De-duplication guard and session restoration lifecycle &gt; deduplicates concurrent 401s and resets the guard when session_restored fires" time="0.0058526">
+            <system-err>
+API Error: Error: Unauthorized
+    at ApiClient.request (D:\PROJECTS\Department-Record-Management-System\frontend\src\api\axiosClient.js:111:15)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+    at async Promise.allSettled (index 0)
+    at [90mD:\PROJECTS\Department-Record-Management-System\backend\[39msrc\__tests__\sessionExpiryRegression.test.js:138:7
+    at [90mfile:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:533:5
+    at runTest [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1056:11[90m)[39m
+    at runSuite [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1205:15[90m)[39m
+    at runSuite [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1205:15[90m)[39m
+    at runSuite [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1205:15[90m)[39m
+    at runFiles [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1262:5[90m)[39m
+API Error: Error: Unauthorized
+    at ApiClient.request (D:\PROJECTS\Department-Record-Management-System\frontend\src\api\axiosClient.js:111:15)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+    at async Promise.allSettled (index 1)
+    at [90mD:\PROJECTS\Department-Record-Management-System\backend\[39msrc\__tests__\sessionExpiryRegression.test.js:138:7
+    at [90mfile:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:533:5
+    at runTest [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1056:11[90m)[39m
+    at runSuite [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1205:15[90m)[39m
+    at runSuite [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1205:15[90m)[39m
+    at runSuite [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1205:15[90m)[39m
+    at runFiles [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1262:5[90m)[39m
+API Error: Error: Unauthorized
+    at ApiClient.request (D:\PROJECTS\Department-Record-Management-System\frontend\src\api\axiosClient.js:111:15)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+    at async Promise.allSettled (index 2)
+    at [90mD:\PROJECTS\Department-Record-Management-System\backend\[39msrc\__tests__\sessionExpiryRegression.test.js:138:7
+    at [90mfile:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:533:5
+    at runTest [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1056:11[90m)[39m
+    at runSuite [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1205:15[90m)[39m
+    at runSuite [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1205:15[90m)[39m
+    at runSuite [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1205:15[90m)[39m
+    at runFiles [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1262:5[90m)[39m
+API Error: Error: Unauthorized
+    at ApiClient.request (D:\PROJECTS\Department-Record-Management-System\frontend\src\api\axiosClient.js:111:15)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+    at [90mD:\PROJECTS\Department-Record-Management-System\backend\[39msrc\__tests__\sessionExpiryRegression.test.js:151:7
+    at [90mfile:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:533:5
+    at runTest [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1056:11[90m)[39m
+    at runSuite [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1205:15[90m)[39m
+    at runSuite [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1205:15[90m)[39m
+    at runSuite [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1205:15[90m)[39m
+    at runFiles [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1262:5[90m)[39m
+    at startTests [90m(file:///D:/PROJECTS/Department-Record-Management-System/backend/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1271:3[90m)[39m
+
+            </system-err>
         </testcase>
-        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; generateOTP &gt; produces different values on repeated calls (probabilistic)" time="0.0009239">
-        </testcase>
-        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; getExpiryDate &gt; returns a Date object" time="0.000779">
-        </testcase>
-        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; getExpiryDate &gt; defaults to 5 minutes from now" time="0.0006507">
-        </testcase>
-        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; getExpiryDate &gt; accepts a custom minutes value" time="0.0005044">
-        </testcase>
-        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; getExpiryDate &gt; returns a date in the future" time="0.0006024">
-        </testcase>
-    </testsuite>
-    <testsuite name="src/__tests__/utils/piiRedaction.test.js" timestamp="2026-09-06T05:46:21.729Z" hostname="DHARUN-MD" tests="6" failures="0" errors="0" skipped="0" time="0.0115055">
-        <testcase classname="src/__tests__/utils/piiRedaction.test.js" name="redactFields &gt; nulls out listed fields present on the row" time="0.0038242">
-        </testcase>
-        <testcase classname="src/__tests__/utils/piiRedaction.test.js" name="redactFields &gt; does not mutate the original row" time="0.0008944">
-        </testcase>
-        <testcase classname="src/__tests__/utils/piiRedaction.test.js" name="redactFields &gt; leaves fields not present on the row untouched" time="0.0006554">
-        </testcase>
-        <testcase classname="src/__tests__/utils/piiRedaction.test.js" name="redactFields &gt; passes through null/undefined rows unchanged" time="0.0008816">
-        </testcase>
-        <testcase classname="src/__tests__/utils/piiRedaction.test.js" name="redactRows &gt; redacts every row when the caller is unauthenticated" time="0.0010733">
-        </testcase>
-        <testcase classname="src/__tests__/utils/piiRedaction.test.js" name="redactRows &gt; returns rows unchanged when the caller is authenticated" time="0.0009952">
-        </testcase>
-    </testsuite>
-    <testsuite name="src/__tests__/utils/queryBuilder.test.js" timestamp="2026-09-06T05:46:21.732Z" hostname="DHARUN-MD" tests="11" failures="0" errors="0" skipped="0" time="0.0146319">
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; build() with only a base returns just the base SQL" time="0.0038394">
-        </testcase>
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; addWhere adds a WHERE clause for a single condition" time="0.0011417">
-        </testcase>
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; multiple addWhere calls are joined with AND" time="0.0006401">
-        </testcase>
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; addJoin inserts a JOIN clause before the WHERE block" time="0.0008702">
-        </testcase>
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; addParam returns sequential placeholders $1, $2, ..." time="0.0007976">
-        </testcase>
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; addParam populates the values array in order" time="0.0007255">
-        </testcase>
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; build(suffix) appends suffix after WHERE" time="0.0005425">
-        </testcase>
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; build(suffix) without WHERE still appends suffix" time="0.0006183">
-        </testcase>
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; addJoin and addWhere return this for fluent chaining" time="0.0007588">
-        </testcase>
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; does not emit WHERE keyword when no conditions added" time="0.0006986">
-        </testcase>
-        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; param placeholders in JOINs and WHEREs reference correct values" time="0.0006698">
-        </testcase>
-    </testsuite>
-    <testsuite name="src/__tests__/utils/sessionUtils.test.js" timestamp="2026-09-06T05:46:21.740Z" hostname="DHARUN-MD" tests="23" failures="0" errors="0" skipped="0" time="0.0302529">
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — pure functions &gt; generateSessionToken &gt; returns a 64-character hexadecimal string" time="0.0028555">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — pure functions &gt; generateSessionToken &gt; returns unique values across consecutive calls" time="0.0013569">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — pure functions &gt; getSessionExpiryDate &gt; returns a Date instance" time="0.0021909">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — pure functions &gt; getSessionExpiryDate &gt; returns a date approximately 90 days in the future" time="0.0006651">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; createSession &gt; calls pool.query and returns the created session row" time="0.0028091">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; createSession &gt; stores null for deviceInfo when not provided" time="0.0008278">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; createSession &gt; serialises deviceInfo as JSON when provided" time="0.000789">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; createSession &gt; propagates DB errors" time="0.0029094">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; verifySession &gt; returns the session row when found" time="0.0010265">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; verifySession &gt; returns null when no matching session exists" time="0.0005847">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; verifySession &gt; propagates DB errors" time="0.0009023">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; extendSession &gt; returns the updated session when token is valid" time="0.0006189">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; extendSession &gt; returns null when token is not found or inactive" time="0.0005656">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; getUserActiveSessions &gt; returns array of active sessions for a user" time="0.0017061">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; getUserActiveSessions &gt; returns empty array when user has no active sessions" time="0.0006814">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; hasValidSession &gt; returns true when a valid session exists" time="0.0007179">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; hasValidSession &gt; returns false when no valid session exists" time="0.0005187">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; invalidateSession &gt; returns true when a session was successfully invalidated" time="0.0005947">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; invalidateSession &gt; returns false when token was not found" time="0.0004779">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; invalidateAllUserSessions &gt; returns the number of sessions invalidated" time="0.0007225">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; invalidateAllUserSessions &gt; returns 0 when user had no sessions" time="0.0006657">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; cleanupExpiredSessions &gt; returns the count of deleted sessions" time="0.0007681">
-        </testcase>
-        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; cleanupExpiredSessions &gt; issues a DELETE query" time="0.0005319">
+        <testcase classname="src/__tests__/sessionExpiryRegression.test.js" name="Production Session Expiry &amp; Auth State Invalidation Suite &gt; Real AuthState + Login route integration on session expiry &gt; clears React auth context, routes to /login, displays expiry banner, and prevents redirect loop" time="0.0057389">
         </testcase>
     </testsuite>
-    <testsuite name="src/__tests__/utils/tokenUtils.test.js" timestamp="2026-09-06T05:46:21.747Z" hostname="DHARUN-MD" tests="8" failures="0" errors="0" skipped="0" time="0.0472435">
-        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; signToken &gt; produces a non-empty JWT string" time="0.0105035">
+    <testsuite name="src/__tests__/controllers/announcementController.test.js" timestamp="2026-09-28T17:18:20.995Z" hostname="DHARUN-MD" tests="16" failures="0" errors="0" skipped="0" time="0.0548662">
+        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="createAnnouncement &gt; returns 401 when req.user is missing" time="0.0129945">
         </testcase>
-        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; signToken &gt; encodes the payload in the token" time="0.0061194">
+        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="createAnnouncement &gt; returns 400 when title is missing" time="0.0019383">
         </testcase>
-        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; signToken &gt; respects a custom expiresIn value" time="0.0041732">
+        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="createAnnouncement &gt; returns 400 when announcement message is missing" time="0.0018358">
         </testcase>
-        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; signToken &gt; defaults expiry to 1 hour" time="0.0036497">
+        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="createAnnouncement &gt; returns 400 when recipients list is empty" time="0.001963">
         </testcase>
-        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; verifyToken &gt; returns the decoded payload for a valid token" time="0.004134">
+        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="createAnnouncement &gt; returns 201 and commits on a successful announcement" time="0.0092624">
         </testcase>
-        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; verifyToken &gt; throws TokenExpiredError for an expired token" time="0.007275">
+        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="createAnnouncement &gt; returns 500 and calls ROLLBACK when INSERT returns no id" time="0.0020515">
         </testcase>
-        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; verifyToken &gt; throws JsonWebTokenError for a tampered token" time="0.0038964">
+        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="createAnnouncement &gt; calls ROLLBACK and rethrows when a DB error occurs mid-transaction" time="0.0023167">
         </testcase>
-        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; verifyToken &gt; throws for a completely invalid string" time="0.0039638">
+        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="createAnnouncement &gt; inserts a brochure file row when a brochure is uploaded" time="0.0029081">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="createAnnouncement &gt; de-duplicates recipient ids before inserting" time="0.0029132">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="listMyAnnouncements &gt; returns 401 when req.user is missing" time="0.0020011">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="listMyAnnouncements &gt; returns the announcements list for the authenticated user" time="0.0022575">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="listMyAnnouncements &gt; uses default limit of 50 when no limit param is supplied" time="0.001417">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="listMyAnnouncements &gt; clamps limit to a maximum of 200 (bug fix)" time="0.0013756">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="listMyAnnouncements &gt; enforces a minimum limit of 1" time="0.0014398">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="listMyAnnouncements &gt; honours a valid limit within the allowed range" time="0.0014812">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/announcementController.test.js" name="listMyAnnouncements &gt; returns 500 on DB error" time="0.0016846">
         </testcase>
     </testsuite>
-    <testsuite name="src/__tests__/validators/urlSchemes.test.js" timestamp="2026-09-06T05:46:21.753Z" hostname="DHARUN-MD" tests="5" failures="0" errors="0" skipped="0" time="0.043098">
-        <testcase classname="src/__tests__/validators/urlSchemes.test.js" name="URL scheme validation &gt; rejects a javascript: github_url on project creation" time="0.0308555">
+    <testsuite name="src/__tests__/controllers/authController.test.js" timestamp="2026-09-28T17:18:21.000Z" hostname="DHARUN-MD" tests="20" failures="0" errors="0" skipped="0" time="0.1383836">
+        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 400 when email is missing" time="0.0144059">
         </testcase>
-        <testcase classname="src/__tests__/validators/urlSchemes.test.js" name="URL scheme validation &gt; accepts a normal https github_url on project creation" time="0.0057393">
+        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 400 when otp is missing" time="0.0024898">
         </testcase>
-        <testcase classname="src/__tests__/validators/urlSchemes.test.js" name="URL scheme validation &gt; rejects a javascript: event_url on event creation" time="0.00101">
+        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 401 when no OTP record exists for the email" time="0.0034242">
         </testcase>
-        <testcase classname="src/__tests__/validators/urlSchemes.test.js" name="URL scheme validation &gt; rejects a javascript: event_url on event update (the actually-exploitable path)" time="0.0010646">
+        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 429 when the OTP has exceeded 5 attempts" time="0.001974">
         </testcase>
-        <testcase classname="src/__tests__/validators/urlSchemes.test.js" name="URL scheme validation &gt; rejects javascript: URLs on every student profile link field" time="0.0019627">
+        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 401 when the OTP is expired" time="0.0018973">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 401 and increments attempts when OTP code is wrong" time="0.0026277">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 500 when user row is missing after successful OTP verification (bug fix)" time="0.0059756">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/authController.test.js" name="verifyOTP &gt; returns 200 with a JWT and session token on successful verification" time="0.0029016">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 400 when email is missing" time="0.0181629">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 400 when otp is missing" time="0.0020741">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 401 when no OTP record exists" time="0.0053135">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 429 when too many failed OTP attempts" time="0.0017806">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 401 when OTP is expired" time="0.0027114">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 401 for a wrong OTP code" time="0.0043606">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 500 when user row is missing after OTP deletion (bug fix)" time="0.0024354">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/authController.test.js" name="loginVerifyOTP &gt; returns 200 with JWT on successful login OTP verification" time="0.0022744">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/authController.test.js" name="register &gt; does not touch the users table when a pending registration already exists" time="0.0298689">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/authController.test.js" name="register &gt; preserves the existing OTP failed-attempt count on re-registration instead of resetting it" time="0.0104671">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/authController.test.js" name="register &gt; rejects registration when the email is already verified" time="0.0057669">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/authController.test.js" name="register &gt; creates a new user row when no existing record matches the email" time="0.0105813">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/controllers/hackathonController.test.js" timestamp="2026-09-28T17:18:21.011Z" hostname="DHARUN-MD" tests="11" failures="0" errors="0" skipped="0" time="0.0334845">
+        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — limit / offset clamping &gt; defaults limit to 20 when no limit param is provided" time="0.0067746">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — limit / offset clamping &gt; defaults offset to 0 when no offset param is provided" time="0.0014004">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — limit / offset clamping &gt; uses a valid limit within 1–200 as-is" time="0.0013111">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — limit / offset clamping &gt; clamps limit to 200 when a value above 200 is supplied (bug fix)" time="0.0022021">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — limit / offset clamping &gt; falls back to default limit of 20 when limit=0 is supplied (0 is falsy)" time="0.0012171">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — limit / offset clamping &gt; enforces a minimum limit of 1 for truthy negative values (e.g. limit=-5)" time="0.0010333">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — limit / offset clamping &gt; clamps negative offset to 0 (bug fix)" time="0.0012279">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — limit / offset clamping &gt; uses a positive offset as-is" time="0.0011433">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — limit / offset clamping &gt; falls back to limit=20 when limit is non-numeric" time="0.0011102">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — response shape &gt; returns an object with a hackathons array" time="0.0093413">
+        </testcase>
+        <testcase classname="src/__tests__/controllers/hackathonController.test.js" name="listHackathons — response shape &gt; returns 500 on a DB error" time="0.0021022">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/middleware/authMiddleware.test.js" timestamp="2026-09-28T17:18:21.015Z" hostname="DHARUN-MD" tests="15" failures="0" errors="0" skipped="0" time="0.0968387">
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; no auth headers &gt; returns 401 &apos;No token&apos; when both Authorization and x-session-token are absent" time="0.0139244">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; session-token path &gt; returns 401 &apos;Invalid session&apos; when verifySession returns null" time="0.0018878">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; session-token path &gt; returns 401 &apos;User not found&apos; when session is valid but user not in DB" time="0.0205269">
+            <system-out>
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:14.012Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:14.020Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:12.13,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; session-token path &gt; sets req.user, calls next() and extends session on valid session token" time="0.0255147">
+            <system-out>
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:14.023Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:14.024Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.39,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; session-token path &gt; returns 401 when session verification throws" time="0.0020896">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; returns 401 &apos;Invalid token format&apos; when Authorization header has no token after &apos;Bearer &apos;" time="0.0024415">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; calls next() and sets req.user for a valid Bearer JWT without sid" time="0.0032909">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; returns 401 &apos;Token expired&apos; for an expired JWT" time="0.0031127">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; returns 401 &apos;Invalid token&apos; for a malformed JWT" time="0.0027863">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; returns 401 &apos;Session revoked&apos; when JWT has sid but session is no longer active" time="0.0026871">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="requireAuth &gt; Bearer token path &gt; calls next() when JWT has sid and session is still active" time="0.0016888">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="optionalAuth &gt; calls next() without setting req.user when no auth headers are present" time="0.0032418">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="optionalAuth &gt; sets req.user and calls next() for a valid session token" time="0.0039738">
+            <system-out>
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:14.071Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;log.level&quot;:&quot;debug&quot;,&quot;message&quot;:&quot;db.query.start&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+{&quot;@timestamp&quot;:&quot;2026-09-28T17:18:14.072Z&quot;,&quot;db.statement&quot;:&quot;SELECT id, role FROM users WHERE id = $1&quot;,&quot;ecs.version&quot;:&quot;8.10.0&quot;,&quot;event.duration_ms&quot;:0.31,&quot;log.level&quot;:&quot;info&quot;,&quot;message&quot;:&quot;db.query.complete&quot;,&quot;service.environment&quot;:&quot;test&quot;,&quot;service.name&quot;:&quot;drms-backend&quot;,&quot;service.version&quot;:&quot;1.0.0&quot;}
+
+            </system-out>
+        </testcase>
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="optionalAuth &gt; sets req.user and calls next() for a valid Bearer JWT" time="0.0013667">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/authMiddleware.test.js" name="optionalAuth &gt; returns 401 &apos;Token expired&apos; for expired JWT in optionalAuth" time="0.0016854">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/middleware/requestLogger.test.js" timestamp="2026-09-28T17:18:21.023Z" hostname="DHARUN-MD" tests="14" failures="0" errors="0" skipped="0" time="0.0444023">
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="request log — url.path &gt; logs the full originalUrl path, not the router-scoped req.path" time="0.0087023">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="request log — url.path &gt; strips query string from url.path" time="0.0016693">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log — url.path &gt; logs the full originalUrl path on finish, not the router-scoped req.path" time="0.0074718">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log — url.path &gt; logs the full path for nested routes like /api/announcements/mine" time="0.0020081">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log — url.path &gt; request and response logs record the same url.path" time="0.0019028">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="abort log — url.path &gt; logs the full originalUrl path when the client disconnects before a response" time="0.0019591">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="correlation ID &gt; reuses a valid client-supplied X-Correlation-ID" time="0.001355">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="correlation ID &gt; generates a new UUID when the supplied correlation ID is invalid" time="0.0032277">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;200&apos; level for HTTP NaN" time="0.0022447">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;302&apos; level for HTTP NaN" time="0.0012494">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;400&apos; level for HTTP NaN" time="0.0013734">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;404&apos; level for HTTP NaN" time="0.0014362">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;500&apos; level for HTTP NaN" time="0.0012589">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/requestLogger.test.js" name="response log level &gt; uses &apos;503&apos; level for HTTP NaN" time="0.0012922">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/middleware/roleAuth.test.js" timestamp="2026-09-28T17:18:21.029Z" hostname="DHARUN-MD" tests="6" failures="0" errors="0" skipped="0" time="0.0250642">
+        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; calls next() when the user has an allowed role" time="0.0087234">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; returns 403 when the user&apos;s role is not in the allowed list" time="0.0059077">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; returns 401 when req.user is undefined" time="0.0019565">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; allows any role listed in the allowed array" time="0.0016436">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; rejects a role not in a multi-role allowed list" time="0.0014387">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/roleAuth.test.js" name="requireRole middleware &gt; rejects when allowedRoles is empty" time="0.001341">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/middleware/validate.test.js" timestamp="2026-09-28T17:18:21.032Z" hostname="DHARUN-MD" tests="7" failures="0" errors="0" skipped="0" time="0.0371763">
+        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; calls next() and replaces req.body with sanitized value on valid input" time="0.0166719">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; returns 400 with errors array on invalid input" time="0.0070017">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; collects all validation errors (abortEarly: false)" time="0.0017665">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; strips unknown fields from req.body (stripUnknown: true)" time="0.0035542">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; coerces string numbers to numbers (convert: true)" time="0.0019503">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; handles undefined req.body gracefully (defaults to {})" time="0.0012334">
+        </testcase>
+        <testcase classname="src/__tests__/middleware/validate.test.js" name="validate middleware &gt; error details include field path and message" time="0.0011639">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/utils/otpGenerator.test.js" timestamp="2026-09-28T17:18:21.037Z" hostname="DHARUN-MD" tests="9" failures="0" errors="0" skipped="0" time="0.0181683">
+        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; generateOTP &gt; returns a string" time="0.0045897">
+        </testcase>
+        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; generateOTP &gt; returns exactly 6 characters" time="0.0030228">
+        </testcase>
+        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; generateOTP &gt; contains only digit characters" time="0.0009969">
+        </testcase>
+        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; generateOTP &gt; is in the range 100000–999999" time="0.0009859">
+        </testcase>
+        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; generateOTP &gt; produces different values on repeated calls (probabilistic)" time="0.0008912">
+        </testcase>
+        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; getExpiryDate &gt; returns a Date object" time="0.0008992">
+        </testcase>
+        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; getExpiryDate &gt; defaults to 5 minutes from now" time="0.0007844">
+        </testcase>
+        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; getExpiryDate &gt; accepts a custom minutes value" time="0.0009418">
+        </testcase>
+        <testcase classname="src/__tests__/utils/otpGenerator.test.js" name="otpGenerator &gt; getExpiryDate &gt; returns a date in the future" time="0.0007706">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/utils/piiRedaction.test.js" timestamp="2026-09-28T17:18:21.044Z" hostname="DHARUN-MD" tests="6" failures="0" errors="0" skipped="0" time="0.0145388">
+        <testcase classname="src/__tests__/utils/piiRedaction.test.js" name="redactFields &gt; nulls out listed fields present on the row" time="0.0054895">
+        </testcase>
+        <testcase classname="src/__tests__/utils/piiRedaction.test.js" name="redactFields &gt; does not mutate the original row" time="0.0013201">
+        </testcase>
+        <testcase classname="src/__tests__/utils/piiRedaction.test.js" name="redactFields &gt; leaves fields not present on the row untouched" time="0.0009152">
+        </testcase>
+        <testcase classname="src/__tests__/utils/piiRedaction.test.js" name="redactFields &gt; passes through null/undefined rows unchanged" time="0.0010039">
+        </testcase>
+        <testcase classname="src/__tests__/utils/piiRedaction.test.js" name="redactRows &gt; redacts every row when the caller is unauthenticated" time="0.0009502">
+        </testcase>
+        <testcase classname="src/__tests__/utils/piiRedaction.test.js" name="redactRows &gt; returns rows unchanged when the caller is authenticated" time="0.000617">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/utils/queryBuilder.test.js" timestamp="2026-09-28T17:18:21.046Z" hostname="DHARUN-MD" tests="11" failures="0" errors="0" skipped="0" time="0.020916">
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; build() with only a base returns just the base SQL" time="0.0057378">
+        </testcase>
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; addWhere adds a WHERE clause for a single condition" time="0.0010266">
+        </testcase>
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; multiple addWhere calls are joined with AND" time="0.0006012">
+        </testcase>
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; addJoin inserts a JOIN clause before the WHERE block" time="0.0032342">
+        </testcase>
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; addParam returns sequential placeholders $1, $2, ..." time="0.0009326">
+        </testcase>
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; addParam populates the values array in order" time="0.0009412">
+        </testcase>
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; build(suffix) appends suffix after WHERE" time="0.0011057">
+        </testcase>
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; build(suffix) without WHERE still appends suffix" time="0.0010869">
+        </testcase>
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; addJoin and addWhere return this for fluent chaining" time="0.0005741">
+        </testcase>
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; does not emit WHERE keyword when no conditions added" time="0.0006743">
+        </testcase>
+        <testcase classname="src/__tests__/utils/queryBuilder.test.js" name="QueryBuilder &gt; param placeholders in JOINs and WHEREs reference correct values" time="0.000982">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/utils/sessionUtils.test.js" timestamp="2026-09-28T17:18:21.049Z" hostname="DHARUN-MD" tests="26" failures="0" errors="0" skipped="0" time="0.0588575">
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — pure functions &gt; session constants &gt; enforces max age of 30 days and idle expiry within 7 days" time="0.0057754">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — pure functions &gt; generateSessionToken &gt; returns a 64-character hexadecimal string" time="0.0017678">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — pure functions &gt; generateSessionToken &gt; returns unique values across consecutive calls" time="0.0014656">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — pure functions &gt; getSessionExpiryDate &gt; returns a Date instance" time="0.0028563">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — pure functions &gt; getSessionExpiryDate &gt; returns a date approximately 7 days (idle window) in the future" time="0.001236">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — pure functions &gt; session boundary expiry calculation logic &gt; expires an idle session within 7 days even when created_at is only 8 days old" time="0.0011602">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — pure functions &gt; session boundary expiry calculation logic &gt; caps active session extension to exactly 30 days from created_at" time="0.0029506">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; createSession &gt; calls pool.query and returns the created session row" time="0.0056335">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; createSession &gt; stores null for deviceInfo when not provided" time="0.0012705">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; createSession &gt; serialises deviceInfo as JSON when provided" time="0.0012157">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; createSession &gt; propagates DB errors" time="0.0053534">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; verifySession &gt; returns the session row when found" time="0.0014109">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; verifySession &gt; returns null when no matching session exists" time="0.0008723">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; verifySession &gt; propagates DB errors" time="0.0016454">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; extendSession &gt; returns the updated session when token is valid and uses LEAST with 30 and 7 day intervals" time="0.0019654">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; extendSession &gt; returns null when token is not found or inactive" time="0.000772">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; getUserActiveSessions &gt; returns array of active sessions for a user" time="0.0025642">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; getUserActiveSessions &gt; returns empty array when user has no active sessions" time="0.0013105">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; hasValidSession &gt; returns true when a valid session exists" time="0.0010516">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; hasValidSession &gt; returns false when no valid session exists" time="0.0008247">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; invalidateSession &gt; returns true when a session was successfully invalidated" time="0.0008769">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; invalidateSession &gt; returns false when token was not found" time="0.0007076">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; invalidateAllUserSessions &gt; returns the number of sessions invalidated" time="0.0008217">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; invalidateAllUserSessions &gt; returns 0 when user had no sessions" time="0.0006261">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; cleanupExpiredSessions &gt; returns the count of deleted sessions" time="0.0009042">
+        </testcase>
+        <testcase classname="src/__tests__/utils/sessionUtils.test.js" name="sessionUtils — DB functions (pool mocked) &gt; cleanupExpiredSessions &gt; issues a DELETE query" time="0.0044769">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/utils/tokenUtils.test.js" timestamp="2026-09-28T17:18:21.060Z" hostname="DHARUN-MD" tests="8" failures="0" errors="0" skipped="0" time="0.1249632">
+        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; signToken &gt; produces a non-empty JWT string" time="0.0715798">
+        </testcase>
+        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; signToken &gt; encodes the payload in the token" time="0.0118785">
+        </testcase>
+        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; signToken &gt; respects a custom expiresIn value" time="0.0070983">
+        </testcase>
+        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; signToken &gt; defaults expiry to 1 hour" time="0.0054534">
+        </testcase>
+        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; verifyToken &gt; returns the decoded payload for a valid token" time="0.0041147">
+        </testcase>
+        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; verifyToken &gt; throws TokenExpiredError for an expired token" time="0.0120314">
+        </testcase>
+        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; verifyToken &gt; throws JsonWebTokenError for a tampered token" time="0.0064043">
+        </testcase>
+        <testcase classname="src/__tests__/utils/tokenUtils.test.js" name="tokenUtils &gt; verifyToken &gt; throws for a completely invalid string" time="0.0013328">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/services/mailService.test.js" timestamp="2026-09-28T17:18:21.062Z" hostname="DHARUN-MD" tests="1" failures="0" errors="0" skipped="0" time="0.9634872">
+        <testcase classname="src/__tests__/services/mailService.test.js" name="mailService &gt; skips OTP email delivery only when fake-mail mode is enabled" time="0.9599357">
+            <system-out>
+[dotenv@17.2.3] injecting env (18) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+
+            </system-out>
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/services/reviewService.test.js" timestamp="2026-09-28T17:18:21.063Z" hostname="DHARUN-MD" tests="23" failures="0" errors="0" skipped="0" time="0.0544304">
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="ReviewError &gt; is an instance of Error" time="0.0047453">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="ReviewError &gt; stores the HTTP status code" time="0.0033031">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="ReviewError &gt; stores the message" time="0.0006813">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; returns success message on approve" time="0.0059934">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; returns success message on reject" time="0.00129">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; passes &apos;approved&apos; status to DB on approve action" time="0.0009835">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; passes &apos;rejected&apos; status to DB on reject action" time="0.0012769">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; sends an email notification to the project creator on approve" time="0.0017905">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; sends an email notification on reject" time="0.0010358">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; throws ReviewError(403) when staff is not an activity coordinator" time="0.0047968">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; throws ReviewError(404) when project is not found" time="0.0013581">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; skips email when creator has no email row in the DB" time="0.0019782">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; skips email when created_by is null/undefined" time="0.0011145">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewProject &gt; does not throw when email sending fails (logs error instead)" time="0.0022629">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; returns success message on approve" time="0.0021491">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; returns success message on reject" time="0.0010978">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; passes &apos;approved&apos; status and verified=true to DB on approve" time="0.0012303">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; passes &apos;rejected&apos; status and verified=false to DB on reject" time="0.0012284">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; sends email to achievement owner on approve" time="0.002193">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; throws ReviewError(403) when staff is not an activity coordinator" time="0.0011807">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; throws ReviewError(404) when achievement is not found" time="0.0013997">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; does not throw when email sending fails (logs error instead)" time="0.002904">
+        </testcase>
+        <testcase classname="src/__tests__/services/reviewService.test.js" name="reviewAchievement &gt; uses null for comment when none is provided" time="0.0016545">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/validators/urlSchemes.test.js" timestamp="2026-09-28T17:18:21.072Z" hostname="DHARUN-MD" tests="5" failures="0" errors="0" skipped="0" time="0.0643863">
+        <testcase classname="src/__tests__/validators/urlSchemes.test.js" name="URL scheme validation &gt; rejects a javascript: github_url on project creation" time="0.0444178">
+        </testcase>
+        <testcase classname="src/__tests__/validators/urlSchemes.test.js" name="URL scheme validation &gt; accepts a normal https github_url on project creation" time="0.0081513">
+        </testcase>
+        <testcase classname="src/__tests__/validators/urlSchemes.test.js" name="URL scheme validation &gt; rejects a javascript: event_url on event creation" time="0.0023208">
+        </testcase>
+        <testcase classname="src/__tests__/validators/urlSchemes.test.js" name="URL scheme validation &gt; rejects a javascript: event_url on event update (the actually-exploitable path)" time="0.0014143">
+        </testcase>
+        <testcase classname="src/__tests__/validators/urlSchemes.test.js" name="URL scheme validation &gt; rejects javascript: URLs on every student profile link field" time="0.0030459">
         </testcase>
     </testsuite>
 </testsuites>

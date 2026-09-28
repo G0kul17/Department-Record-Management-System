@@ -3,7 +3,8 @@ import pool from "../config/db.js";
 import logger from "./logger.js";
 import { tracedQuery } from "./tracing.js";
 
-const SESSION_DURATION_DAYS = 90;
+export const SESSION_MAX_AGE_DAYS = 30;
+export const SESSION_IDLE_DAYS = 7;
 
 /**
  * Generate a random session token
@@ -13,11 +14,11 @@ export function generateSessionToken() {
 }
 
 /**
- * Calculate session expiration date (90 days from now)
+ * Calculate initial session expiration date (7 days idle window from now)
  */
 export function getSessionExpiryDate() {
   const date = new Date();
-  date.setDate(date.getDate() + SESSION_DURATION_DAYS);
+  date.setDate(date.getDate() + SESSION_IDLE_DAYS);
   return date;
 }
 
@@ -79,12 +80,18 @@ export async function verifySession(sessionToken) {
 }
 
 /**
- * Extend session expiration by updating last_accessed_at.
- * The new expires_at is LEAST(created_at + 30 days, NOW() + 7 days) so:
- *   - A session max-ages out 30 days after it was created, regardless of activity
- *     (prevents a stolen session from being kept alive indefinitely).
- *   - An idle session still expires within 7 days of the last authenticated request.
- * P2-1 fix: separates idle timeout from absolute session lifetime.
+ * Extend session expiration using a sliding idle window capped by maximum session age.
+ *
+ * Every authenticated request resets the idle clock:
+ *   expires_at = LEAST(created_at + 30 days, NOW() + 7 days)
+ *
+ * Behaviour:
+ *   - If you use the app regularly, the session stays alive up to 30 days
+ *     from initial creation.
+ *   - If you stop using the app for 7 days straight, expires_at drops
+ *     below CURRENT_TIMESTAMP and the next login requires OTP again.
+ *   - Once created_at + 30 days is reached, the session hard-expires.
+ *
  * @param {string} sessionToken - The session token
  * @returns {Promise<object|null>} - The updated session object
  */
@@ -94,8 +101,8 @@ export async function extendSession(sessionToken) {
       `UPDATE user_sessions
        SET last_accessed_at = CURRENT_TIMESTAMP,
            expires_at = LEAST(
-             created_at + INTERVAL '30 days',
-             CURRENT_TIMESTAMP + INTERVAL '7 days'
+             created_at + INTERVAL '${SESSION_MAX_AGE_DAYS} days',
+             CURRENT_TIMESTAMP + INTERVAL '${SESSION_IDLE_DAYS} days'
            )
        WHERE session_token = $1 AND is_active = true AND expires_at > CURRENT_TIMESTAMP
        RETURNING id, user_id, session_token, created_at, expires_at, last_accessed_at, is_active`,

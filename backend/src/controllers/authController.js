@@ -369,6 +369,11 @@ export async function login(req, res) {
         fullName: profile.full_name || null,
         photoUrl,
         sessionActive: true,
+        // Return the session token so the frontend can persist it to
+        // localStorage and attach it on every subsequent request via
+        // the x-session-token header. Without this the session is never
+        // stored and OTP is required again on every JWT expiry (6 h).
+        sessionToken: latestSession.session_token,
         ...studentProfile,
       });
     }
@@ -521,6 +526,9 @@ export async function loginVerifyOTP(req, res) {
       id: user.id,
       fullName: profile.full_name || null,
       photoUrl,
+      // Return the session token so the frontend can persist it and
+      // send it on all subsequent requests via x-session-token header.
+      sessionToken: session.session_token,
       ...studentProfile,
     });
   } catch (err) {

@@ -7,6 +7,7 @@ import {
   listAchievements,
   verifyAchievement,
   rejectAchievement,
+  deleteAchievement,
   getAchievementsCount,
   getAchievementDetails,
   getAchievementsLeaderboard,
@@ -37,6 +38,14 @@ router.get("/count", getAchievementsCount);
 router.get("/leaderboard", optionalAuth, getAchievementsLeaderboard);
 router.get("/:id", optionalAuth, getAchievementDetails);
 
+// Delete achievement — Admin only
+router.delete(
+  "/:id",
+  requireAuth,
+  requireRole(["admin"]),
+  deleteAchievement,
+);
+
 router.post(
   "/:id/verify",
   requireAuth,
@@ -54,3 +63,4 @@ router.post(
 );
 
 export default router;
+

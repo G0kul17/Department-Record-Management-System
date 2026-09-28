@@ -634,3 +634,69 @@ export async function getAchievementsLeaderboard(req, res) {
     return res.status(500).json({ message: "Server error" });
   }
 }
+
+export async function deleteAchievement(req, res) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || Number.isNaN(id)) {
+    return res.status(400).json({ message: "Invalid achievement id" });
+  }
+
+  const client = await pool.connect();
+  try {
+    const { rows: achRows } = await tracedQuery(
+      client,
+      "SELECT id, proof_file_id, certificate_file_id, event_photos_file_id FROM achievements WHERE id = $1",
+      [id],
+    );
+    if (!achRows.length) {
+      return res.status(404).json({ message: "Achievement not found" });
+    }
+
+    const ach = achRows[0];
+    const fileIds = [
+      ach.proof_file_id,
+      ach.certificate_file_id,
+      ach.event_photos_file_id,
+    ].filter(Boolean);
+
+    const filenamesToDelete = [];
+    if (fileIds.length) {
+      const { rows: fileRows } = await tracedQuery(
+        client,
+        `SELECT filename FROM project_files WHERE id = ANY($1::int[])`,
+        [fileIds],
+      );
+      filenamesToDelete.push(...fileRows.map((r) => r.filename).filter(Boolean));
+    }
+
+    await client.query("BEGIN");
+    await tracedQuery(client, "DELETE FROM achievements WHERE id = $1", [id]);
+    if (fileIds.length) {
+      await tracedQuery(client, "DELETE FROM project_files WHERE id = ANY($1::int[])", [fileIds]);
+    }
+    await client.query("COMMIT");
+
+    // Remove files from disk
+    const uploadsDir = path.resolve(process.env.FILE_STORAGE_PATH || "./uploads");
+    for (const fn of filenamesToDelete) {
+      try {
+        const filePath = path.resolve(uploadsDir, fn);
+        if (filePath.startsWith(uploadsDir + path.sep) && fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (unlinkErr) {
+        logger.warn("Failed to unlink achievement file", { err: unlinkErr, filename: fn });
+      }
+    }
+
+    logger.info("Achievement deleted by admin", { achievementId: id, ...reqContext(req) });
+    return res.json({ message: "Achievement deleted successfully" });
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    logger.error("Achievement delete error", { err, ...reqContext(req) });
+    return res.status(500).json({ message: "Server error" });
+  } finally {
+    client.release();
+  }
+}
+

@@ -1,3 +1,27 @@
+/**
+ * deleteHandlersRegression.test.js  — LEGACY: kept for CI history continuity
+ *
+ * ⚠️  SEPARATION NOTICE
+ * The admin deletion feature has been moved into its own PR so both changes
+ * (auth/session policy + admin deletion UI/API) can be reviewed independently.
+ *
+ * Going forward, use the following files instead:
+ *
+ *   • adminDeletion.test.js
+ *       Unit tests for each delete handler and the RBAC role guard — mocked DB.
+ *       Belongs to:  PR feat/admin-deletion-ui-api
+ *
+ *   • deleteRoutesIntegration.test.js
+ *       Composed-route acceptance tests against a schema initialised from the
+ *       checked-in migrations (pg-mem + supertest).  Satisfies the review
+ *       criterion: "verify the composed delete routes against a database
+ *       initialized from the checked-in migrations."
+ *       Belongs to:  PR feat/admin-deletion-ui-api
+ *
+ * This file is intentionally retained so that `git blame` / PR history
+ * remains traceable.  No new tests should be added here.
+ */
+
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import fs from "fs";
 import { deleteEvent } from "../controllers/eventController.js";

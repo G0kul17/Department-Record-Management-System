@@ -7,6 +7,7 @@ import {
   FaExternalLinkAlt,
   FaEye,
   FaCalendarCheck,
+  FaTrashAlt,
 } from "react-icons/fa";
 
 const COLORS = [
@@ -34,7 +35,11 @@ export default function EventCard({
   eventUrl,
   image,
   attachments,
+  onDelete,
+  canDelete = false,
+  isDeleting = false,
 }) {
+
   const [imgError, setImgError] = useState(false);
   const badgeStyle = color || COLORS[((id || 1) - 1) % COLORS.length];
   const isExternal = typeof eventUrl === "string" && eventUrl.trim().length > 0;
@@ -183,7 +188,7 @@ export default function EventCard({
       </div>
 
       {/* Card Action Row */}
-      <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+      <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
         {grant ? (
           <div className="text-xs font-bold text-slate-700 dark:text-slate-300">
             <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Grant</span>
@@ -195,33 +200,52 @@ export default function EventCard({
           </span>
         )}
 
-        {isExternal ? (
-          <button
-            onClick={handleOpen}
-            className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 text-xs font-extrabold shadow-md shadow-blue-600/25 transition cursor-pointer"
-          >
-            <FaExternalLinkAlt className="w-3 h-3" />
-            Open Link
-          </button>
-        ) : to ? (
-          <Link
-            to={to}
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 text-xs font-extrabold shadow-md shadow-blue-600/25 transition cursor-pointer"
-          >
-            <FaEye className="w-3 h-3" />
-            View Event
-          </Link>
-        ) : (
-          <button
-            onClick={handleOpen}
-            className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 text-xs font-extrabold shadow-md shadow-blue-600/25 transition cursor-pointer"
-          >
-            <FaEye className="w-3 h-3" />
-            View Event
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {canDelete && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onDelete) onDelete();
+              }}
+              disabled={isDeleting}
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800/60 text-rose-600 dark:text-rose-400 font-extrabold px-3 py-1.5 text-xs shadow-xs hover:border-rose-300 transition cursor-pointer disabled:opacity-50"
+              title="Delete Event"
+            >
+              <FaTrashAlt className="w-3 h-3" />
+              {isDeleting ? "Deleting..." : "Delete"}
+            </button>
+          )}
+
+          {isExternal ? (
+            <button
+              onClick={handleOpen}
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 text-xs font-extrabold shadow-md shadow-blue-600/25 transition cursor-pointer"
+            >
+              <FaExternalLinkAlt className="w-3 h-3" />
+              Open Link
+            </button>
+          ) : to ? (
+            <Link
+              to={to}
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 text-xs font-extrabold shadow-md shadow-blue-600/25 transition cursor-pointer"
+            >
+              <FaEye className="w-3 h-3" />
+              View Event
+            </Link>
+          ) : (
+            <button
+              onClick={handleOpen}
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 text-xs font-extrabold shadow-md shadow-blue-600/25 transition cursor-pointer"
+            >
+              <FaEye className="w-3 h-3" />
+              View Event
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
 }
+

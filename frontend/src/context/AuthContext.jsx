@@ -33,6 +33,23 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
+  // Clear in-memory auth state when session expires
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setUser(null);
+      setToken(null);
+      setSessionToken(null);
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("sessionToken");
+    };
+
+    window.addEventListener("session_expired", handleSessionExpired);
+    return () => {
+      window.removeEventListener("session_expired", handleSessionExpired);
+    };
+  }, []);
+
   // Ensure latest profile (including persistent photoUrl) is loaded
   useEffect(() => {
     if (!loading && token) {

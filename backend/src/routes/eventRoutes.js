@@ -36,8 +36,9 @@ router.put(
 router.delete(
   "/:id",
   requireAuth,
-  requireRole(["staff", "admin"]),
+  requireRole(["admin"]),
   deleteEvent,
 );
 
 export default router;
+

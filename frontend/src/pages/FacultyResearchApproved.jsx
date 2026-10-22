@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 import apiClient from "../api/axiosClient";
 import AttachmentPreview from "../components/AttachmentPreview";
 import CustomSelect from "../components/ui/CustomSelect";
+import ConfirmDeleteModal from "../components/ui/ConfirmDeleteModal";
 import ShareableProofLink from "../components/ShareableProofLink";
 import { generateAcademicYears } from "../utils/academicYears";
 import {
@@ -13,18 +15,40 @@ import {
   FaBuilding,
   FaMoneyBillWave,
   FaCalendarAlt,
+  FaTrashAlt,
 } from "react-icons/fa";
 import { calculateDuration } from "../utils/duration";
 
 export default function FacultyResearchApproved() {
   const nav = useNavigate();
+  const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [q, setQ] = useState("");
   const [academicYear, setAcademicYear] = useState("");
   const [page, setPage] = useState(1);
   const [limit] = useState(12);
   const [previewFile, setPreviewFile] = useState(null);
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget?.id) return;
+    const researchId = deleteTarget.id;
+    setDeletingId(researchId);
+    try {
+      await apiClient.delete(`/faculty-research/${researchId}`);
+      setItems((prev) => prev.filter((it) => it.id !== researchId));
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error("Failed to delete research record:", err);
+      alert(err?.response?.data?.message || "Failed to delete research record. Please try again.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+
 
   const academicYearOptions = useMemo(() => generateAcademicYears(), []);
 
@@ -236,27 +260,44 @@ export default function FacultyResearchApproved() {
                   </div>
                 </div>
 
-                {item.proof_filename && (
-                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 flex-wrap">
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {item.proof_filename && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPreviewFile({
+                              filename: item.proof_filename,
+                              original_name:
+                                item.proof_original_name || item.proof_filename,
+                            })
+                          }
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800/40 px-3 py-1.5 text-xs font-extrabold text-blue-700 dark:text-blue-300 transition cursor-pointer"
+                        >
+                          <FaFileAlt className="w-3.5 h-3.5" />
+                          View Research Proof
+                        </button>
+                        <ShareableProofLink type="research" id={item.id} filename={item.proof_filename} />
+                      </>
+                    )}
+                  </div>
+
+                  {user?.role === "admin" && (
                     <button
                       type="button"
-                      onClick={() =>
-                        setPreviewFile({
-                          filename: item.proof_filename,
-                          original_name:
-                            item.proof_original_name || item.proof_filename,
-                        })
-                      }
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800/40 px-3 py-1.5 text-xs font-extrabold text-blue-700 dark:text-blue-300 transition cursor-pointer"
+                      onClick={() => setDeleteTarget(item)}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800/60 text-rose-600 dark:text-rose-400 font-extrabold px-3 py-1.5 text-xs shadow-xs hover:border-rose-300 transition cursor-pointer ml-auto"
+                      title="Delete Research"
                     >
-                      <FaFileAlt className="w-3.5 h-3.5" />
-                      View Research Proof
+                      <FaTrashAlt className="w-3 h-3" />
+                      Delete
                     </button>
-                    <ShareableProofLink type="research" id={item.id} filename={item.proof_filename} />
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             ))}
+
           </div>
         )}
 
@@ -290,6 +331,17 @@ export default function FacultyResearchApproved() {
           onClose={() => setPreviewFile(null)}
         />
       )}
+
+      <ConfirmDeleteModal
+        isOpen={Boolean(deleteTarget)}
+        title="Delete Faculty Research"
+        itemTitle={deleteTarget?.title}
+        message="Are you sure you want to permanently delete this faculty research record? Any attached proposal or grant proof files will also be removed."
+        isDeleting={Boolean(deletingId)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }
+

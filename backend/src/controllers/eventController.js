@@ -1,4 +1,5 @@
-// eventController.js
+import fs from "fs";
+import path from "path";
 import pool from "../config/db.js";
 import { upload } from "../config/upload.js";
 import logger, { reqContext } from "../utils/logger.js";
@@ -171,29 +172,73 @@ export async function updateEvent(req, res) {
 
 // Delete event
 export async function deleteEvent(req, res) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || Number.isNaN(id)) {
+    return res.status(400).json({ message: "Invalid event id" });
+  }
+
+  const client = await pool.connect();
   try {
-    const id = Number(req.params.id);
-    const userId = req.user?.id;
-    const userRole = req.user?.role;
-
-    const { rowCount } = await tracedQuery(pool, 
-      "DELETE FROM events WHERE id=$1 AND (organizer_id=$2 OR $3='admin')",
-      [id, userId, userRole],
+    const { rows } = await tracedQuery(
+      client,
+      "SELECT id, thumbnail_filename, attachments FROM events WHERE id = $1",
+      [id],
     );
-
-    if (rowCount === 0) {
-      const { rows } = await tracedQuery(pool, "SELECT id FROM events WHERE id=$1", [id]);
-      if (!rows.length) return res.status(404).json({ message: "Event not found" });
-      return res.status(403).json({ message: "Forbidden: you do not own this event" });
+    if (!rows.length) {
+      return res.status(404).json({ message: "Event not found" });
     }
 
+    const ev = rows[0];
+    const filenamesToDelete = [];
+    if (ev.thumbnail_filename) {
+      filenamesToDelete.push(ev.thumbnail_filename);
+    }
+    if (ev.attachments) {
+      let atts = ev.attachments;
+      if (typeof atts === "string") {
+        try {
+          atts = JSON.parse(atts);
+        } catch {}
+      }
+      if (Array.isArray(atts)) {
+        for (const a of atts) {
+          const fn = a?.filename || (typeof a === "string" ? a : null);
+          if (fn && !fn.startsWith("http")) filenamesToDelete.push(fn);
+        }
+      }
+    }
+
+    await client.query("BEGIN");
+    // If achievements reference events(id), set event_id = NULL
+    await tracedQuery(client, "UPDATE achievements SET event_id = NULL WHERE event_id = $1", [id]);
+    await tracedQuery(client, "DELETE FROM events WHERE id = $1", [id]);
+    await client.query("COMMIT");
+
+    // Remove files from disk
+    const uploadsDir = path.resolve(process.env.FILE_STORAGE_PATH || "./uploads");
+    for (const fn of filenamesToDelete) {
+      try {
+        const filePath = path.resolve(uploadsDir, fn);
+        if (filePath.startsWith(uploadsDir + path.sep) && fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (unlinkErr) {
+        logger.warn("Failed to unlink event file", { err: unlinkErr, filename: fn });
+      }
+    }
+
+    logger.info("Event deleted by admin", { eventId: id, ...reqContext(req) });
     return res.json({ message: "Event deleted" });
   } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
     logger.error("Event controller error", { err,
       ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
+  } finally {
+    client.release();
   }
 }
+
 
 // List events (public to students and staff)
 export async function listEvents(req, res) {

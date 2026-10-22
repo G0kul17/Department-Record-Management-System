@@ -709,6 +709,78 @@ function detectFileTypeByField(fieldname) {
   return "other";
 }
 
+export async function deleteProject(req, res) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || Number.isNaN(id)) {
+    return res.status(400).json({ message: "Invalid project id" });
+  }
+
+  const client = await pool.connect();
+  try {
+    const { rows: projRows } = await tracedQuery(
+      client,
+      "SELECT id, files FROM projects WHERE id = $1",
+      [id],
+    );
+    if (!projRows.length) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    // Collect all filenames associated with this project to delete from disk
+    const { rows: fileRows } = await tracedQuery(
+      client,
+      "SELECT filename FROM project_files WHERE project_id = $1",
+      [id],
+    );
+    const filenamesToDelete = new Set(fileRows.map((r) => r.filename).filter(Boolean));
+
+    // Also check projects.files if stored as JSONB
+    if (projRows[0].files) {
+      let jsonFiles = projRows[0].files;
+      if (typeof jsonFiles === "string") {
+        try {
+          jsonFiles = JSON.parse(jsonFiles);
+        } catch {}
+      }
+      if (Array.isArray(jsonFiles)) {
+        for (const jf of jsonFiles) {
+          const fn = jf.filename || jf.file || (typeof jf === "string" ? jf : null);
+          if (fn) filenamesToDelete.add(fn);
+        }
+      }
+    }
+
+    await client.query("BEGIN");
+    // Delete files referencing this project
+    await tracedQuery(client, "DELETE FROM project_files WHERE project_id = $1", [id]);
+    // Delete the project
+    await tracedQuery(client, "DELETE FROM projects WHERE id = $1", [id]);
+    await client.query("COMMIT");
+
+    // Remove files from filesystem
+    const uploadsDir = path.resolve(process.env.FILE_STORAGE_PATH || "./uploads");
+    for (const fn of filenamesToDelete) {
+      try {
+        const filePath = path.resolve(uploadsDir, fn);
+        if (filePath.startsWith(uploadsDir + path.sep) && fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (unlinkErr) {
+        logger.warn("Failed to unlink project file", { err: unlinkErr, filename: fn });
+      }
+    }
+
+    logger.info("Project deleted by admin", { projectId: id, ...reqContext(req) });
+    return res.json({ message: "Project deleted successfully" });
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    logger.error("Project delete error", { err, ...reqContext(req) });
+    return res.status(500).json({ message: "Server error" });
+  } finally {
+    client.release();
+  }
+}
+
 export async function getProjectsCount(req, res) {
   try {
     const { verified } = req.query;
@@ -730,3 +802,4 @@ export async function getProjectsCount(req, res) {
     return res.status(500).json({ message: "Server error" });
   }
 }
+

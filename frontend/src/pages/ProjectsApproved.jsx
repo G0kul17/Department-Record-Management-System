@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import apiClient from "../api/axiosClient";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 import AttachmentPreview from "../components/AttachmentPreview";
 import CustomSelect from "../components/ui/CustomSelect";
+import ConfirmDeleteModal from "../components/ui/ConfirmDeleteModal";
 import { generateAcademicYears } from "../utils/academicYears";
 import { getFileUrl } from "../utils/fileUrl";
 import {
@@ -18,18 +20,40 @@ import {
   FaChevronLeft,
   FaChevronRight,
   FaLaptopCode,
+  FaTrashAlt,
 } from "react-icons/fa";
 
 export default function ProjectsApproved() {
   const nav = useNavigate();
+  const { user } = useAuth();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [previewFile, setPreviewFile] = useState(null);
   const [q, setQ] = useState("");
   const [academicYear, setAcademicYear] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [refreshId, setRefreshId] = useState(0);
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget?.id) return;
+    const projectId = deleteTarget.id;
+    setDeletingId(projectId);
+    try {
+      await apiClient.delete(`/projects/${projectId}`);
+      setProjects((prev) => prev.filter((p) => p.id !== projectId));
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error("Failed to delete project:", err);
+      alert(err?.response?.data?.message || "Failed to delete project. Please try again.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+
 
   const academicYearOptions = useMemo(() => generateAcademicYears(), []);
 
@@ -310,21 +334,34 @@ export default function ProjectsApproved() {
                       )}
                     </div>
 
-                    {/* Action Button */}
-                    <div className="flex-shrink-0">
+                    {/* Action Buttons */}
+                    <div className="flex-shrink-0 flex items-center gap-2">
                       <Link
                         to={`/projects/${p.id}`}
                         state={{ project: p }}
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-5 py-2 text-xs shadow-md shadow-blue-500/20 transition"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold px-4 py-2 text-xs shadow-md shadow-blue-500/20 transition"
                       >
                         <FaEye className="w-3.5 h-3.5" />
                         View Details
                       </Link>
+
+                      {user?.role === "admin" && (
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget(p)}
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 font-extrabold px-3.5 py-2 text-xs shadow-xs hover:border-rose-300 transition cursor-pointer"
+                          title="Delete Project"
+                        >
+                          <FaTrashAlt className="w-3 h-3" />
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
               );
             })}
+
           </div>
         )}
 
@@ -355,7 +392,18 @@ export default function ProjectsApproved() {
             onClose={() => setPreviewFile(null)}
           />
         )}
+
+        <ConfirmDeleteModal
+          isOpen={Boolean(deleteTarget)}
+          title="Delete Project"
+          itemTitle={deleteTarget?.title}
+          message="Are you sure you want to permanently delete this project? All associated SRS files and ZIP code archives will also be deleted from the database."
+          isDeleting={Boolean(deletingId)}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={handleConfirmDelete}
+        />
       </div>
     </div>
   );
 }
+

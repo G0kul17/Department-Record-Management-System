@@ -9,6 +9,7 @@ import {
   getProjectDetails,
   verifyProject,
   rejectProject,
+  deleteProject,
   getProjectsCount,
 } from "../controllers/projectController.js";
 import { upload } from "../config/upload.js";
@@ -49,6 +50,14 @@ router.get("/count", getProjectsCount);
 router.get("/", optionalAuth, listProjects);
 router.get("/:id", optionalAuth, getProjectDetails);
 
+// Delete project — Admin only
+router.delete(
+  "/:id",
+  requireAuth,
+  requireRole(["admin"]),
+  deleteProject,
+);
+
 router.post(
   "/:id/verify",
   requireAuth,
@@ -66,3 +75,4 @@ router.post(
 );
 
 export default router;
+

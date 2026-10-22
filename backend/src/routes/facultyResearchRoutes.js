@@ -19,8 +19,9 @@ router.use(requireAuth, requireRole(["staff", "admin"]));
 
 router.post("/", uploadFacultyProof.single("proof"), validate(createResearchSchema), createResearch);
 router.put("/:id", uploadFacultyProof.single("proof"), validate(updateResearchSchema), updateResearch);
-router.delete("/:id", deleteResearch);
+router.delete("/:id", requireRole(["admin"]), deleteResearch);
 router.get("/count", getFacultyResearchCount);
 router.get("/", listResearch);
 
 export default router;
+

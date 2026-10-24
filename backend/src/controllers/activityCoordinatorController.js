@@ -19,7 +19,7 @@ export async function getAllActivityCoordinators(req, res) {
     const { rows } = await pool.query(
       `SELECT ac.id, ac.activity_type_id, at.name AS activity_type, ac.staff_id,
               u.email AS staff_email,
-              u.profile_details->>'full_name' AS staff_name,
+              COALESCE(NULLIF(u.full_name, ''), NULLIF(u.profile_details->>'full_name', ''), NULLIF(TRIM((u.profile_details->>'first_name') || ' ' || (u.profile_details->>'last_name')), ''), u.email) AS staff_name,
               ac.created_at
          FROM activity_coordinators ac
          JOIN activity_types at ON at.id = ac.activity_type_id

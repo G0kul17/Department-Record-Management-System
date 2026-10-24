@@ -1,6 +1,7 @@
 import pool from "../config/db.js";
 import logger, { reqContext } from "../utils/logger.js";
 import { tracedQuery } from "../utils/tracing.js";
+import { logAudit } from "../utils/auditLogger.js";
 import {
   ActivityTypeValidationError,
   requireActivityTypeByName,
@@ -80,6 +81,17 @@ export async function createActivityCoordinator(req, res) {
       [activityTypeRow.id, staffId],
     );
 
+    logAudit({
+      actionType: "coordinator",
+      category: "Coordinator Mapping",
+      itemTitle: `Assigned as ${activityTypeRow.name} Coordinator`,
+      userId: req.user?.id,
+      userName: req.user?.name || req.user?.full_name,
+      userEmail: req.user?.email,
+      userRole: req.user?.role,
+      details: { staffId, activityType: activityTypeRow.name },
+    });
+
     return res.status(201).json({
       mapping: {
         ...rows[0],
@@ -110,6 +122,18 @@ export async function deleteActivityCoordinator(req, res) {
     if (!rows.length) {
       return res.status(404).json({ message: "Mapping not found" });
     }
+
+    logAudit({
+      actionType: "coordinator",
+      category: "Coordinator Mapping",
+      itemTitle: `Removed Coordinator Mapping #${mappingId}`,
+      userId: req.user?.id,
+      userName: req.user?.name || req.user?.full_name,
+      userEmail: req.user?.email,
+      userRole: req.user?.role,
+      details: { mappingId },
+    });
+
     return res.json({ message: "Mapping deleted", id: mappingId });
   } catch (err) {
     logger.error("Activity coordinator controller error", {

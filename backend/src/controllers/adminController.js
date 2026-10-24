@@ -2,6 +2,7 @@ import pool from "../config/db.js";
 import logger, { reqContext } from "../utils/logger.js";
 import { tracedQuery } from "../utils/tracing.js";
 import { invalidateAllUserSessions } from "../utils/sessionUtils.js";
+import { ensureAuditTable } from "../utils/auditLogger.js";
 
 // GET /api/admin/stats
 // Returns total counts for admin dashboard usages
@@ -25,36 +26,135 @@ export async function getAdminStats(req, res) {
   }
 }
 
-// GET /api/admin/users?limit=50&offset=0
-// Returns a page of users and the total count for pagination controls.
-// limit is capped at 100 to prevent accidental full-table fetches.
+// GET /api/admin/users?role=student&page=1&limit=20&search=...
+// Returns a paginated list of users, matching role/search, and the total count.
 export async function listUsers(req, res) {
-  const limit = Math.min(Math.max(1, Number(req.query.limit) || 50), 100);
-  const offset = Math.max(0, Number(req.query.offset) || 0);
+  const role = req.query.role ? String(req.query.role).trim().toLowerCase() : null;
+  const department = req.query.department ? String(req.query.department).trim() : null;
+  const search = (req.query.search || req.query.q || "").trim();
+  const all = req.query.all === "true" || req.query.all === true;
+
+  const conditions = [];
+  const params = [];
+
+  if (role) {
+    params.push(role);
+    conditions.push(`u.role = $${params.length}`);
+  }
+
+  if (department && department.toLowerCase() !== "all") {
+    const deptUpper = department.toUpperCase();
+    if (deptUpper === "ADS") {
+      conditions.push(
+        `(u.department ILIKE '%ads%' OR u.department ILIKE '%artificial intelligence%' OR u.profile_details->>'department' ILIKE '%ads%' OR u.profile_details->>'department' ILIKE '%artificial intelligence%' OR u.email ILIKE '%ads@%')`
+      );
+    } else if (deptUpper === "IT") {
+      conditions.push(
+        `(u.department ILIKE '%it%' OR u.department ILIKE '%information technology%' OR u.profile_details->>'department' ILIKE '%it%' OR u.profile_details->>'department' ILIKE '%information technology%' OR u.email ILIKE '%it@%')`
+      );
+    } else {
+      params.push(`%${department}%`);
+      const p = `$${params.length}`;
+      conditions.push(
+        `(u.department ILIKE ${p} OR u.profile_details->>'department' ILIKE ${p} OR u.profile_details->>'dept' ILIKE ${p})`
+      );
+    }
+  }
+
+  if (search) {
+    params.push(`%${search}%`);
+    const p = `$${params.length}`;
+    conditions.push(
+      `(u.email ILIKE ${p} OR u.full_name ILIKE ${p} OR u.profile_details->>'full_name' ILIKE ${p} OR sp.register_number ILIKE ${p} OR u.roll_number ILIKE ${p} OR u.profile_details->>'register_number' ILIKE ${p})`
+    );
+  }
+
+  const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
   const USER_COLS =
-    "id, email, role, " +
-    "COALESCE(NULLIF(full_name, ''), NULLIF(profile_details->>'full_name', ''), NULLIF(TRIM((profile_details->>'first_name') || ' ' || (profile_details->>'last_name')), '')) AS full_name, " +
-    "is_verified, created_at";
+    "u.id, u.email, u.role, " +
+    "COALESCE(NULLIF(u.full_name, ''), NULLIF(u.profile_details->>'full_name', ''), NULLIF(TRIM((u.profile_details->>'first_name') || ' ' || (u.profile_details->>'last_name')), '')) AS full_name, " +
+    "COALESCE(sp.register_number, u.roll_number, u.profile_details->>'register_number') AS register_number, " +
+    "COALESCE(" +
+    "  CASE " +
+    "    WHEN u.department ILIKE '%ads%' OR u.profile_details->>'department' ILIKE '%ads%' OR u.profile_details->>'department' ILIKE '%artificial intelligence%' OR u.email ILIKE '%ads@%' THEN 'ADS' " +
+    "    WHEN u.department ILIKE '%it%' OR u.profile_details->>'department' ILIKE '%it%' OR u.profile_details->>'department' ILIKE '%information technology%' OR u.email ILIKE '%it@%' THEN 'IT' " +
+    "    ELSE NULL " +
+    "  END, " +
+    "  NULLIF(UPPER(u.department), ''), " +
+    "  NULLIF(UPPER(u.profile_details->>'department'), ''), " +
+    "  NULLIF(UPPER(u.profile_details->>'dept'), ''), " +
+    "  '—'" +
+    ") AS department, " +
+    "u.is_verified, u.created_at";
 
   try {
+    const countSql = `
+      SELECT COUNT(*)::int AS total
+      FROM users u
+      LEFT JOIN student_profiles sp ON sp.user_id = u.id
+      ${whereClause}
+    `;
+
+    if (all) {
+      const [countResult, pageResult] = await Promise.all([
+        tracedQuery(pool, countSql, params),
+        tracedQuery(
+          pool,
+          `SELECT ${USER_COLS} FROM users u LEFT JOIN student_profiles sp ON sp.user_id = u.id ${whereClause} ORDER BY u.created_at DESC`,
+          params,
+        ),
+      ]);
+
+      const total = countResult.rows[0]?.total || 0;
+      return res.json({
+        users: pageResult.rows,
+        total,
+        limit: total,
+        offset: 0,
+        page: 1,
+        totalPages: 1,
+      });
+    }
+
+    const limit = Math.min(Math.max(1, Number(req.query.limit) || 20), 500);
+    const page = Math.max(
+      1,
+      Number(req.query.page) ||
+        (req.query.offset ? Math.floor(Number(req.query.offset) / limit) + 1 : 1)
+    );
+    const offset = req.query.page
+      ? (page - 1) * limit
+      : Math.max(0, Number(req.query.offset) || 0);
+
+    const dataParams = [...params, limit, offset];
+    const dataSql = `
+      SELECT ${USER_COLS}
+      FROM users u
+      LEFT JOIN student_profiles sp ON sp.user_id = u.id
+      ${whereClause}
+      ORDER BY u.created_at DESC
+      LIMIT $${dataParams.length - 1} OFFSET $${dataParams.length}
+    `;
+
     const [countResult, pageResult] = await Promise.all([
-      tracedQuery(pool, "SELECT COUNT(*)::int AS total FROM users"),
-      tracedQuery(pool, 
-        `SELECT ${USER_COLS} FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
-        [limit, offset],
-      ),
+      tracedQuery(pool, countSql, params),
+      tracedQuery(pool, dataSql, dataParams),
     ]);
+
+    const total = countResult.rows[0]?.total || 0;
+    const totalPages = Math.ceil(total / limit) || 1;
 
     return res.json({
       users: pageResult.rows,
-      total: countResult.rows[0].total,
+      total,
       limit,
       offset,
+      page,
+      totalPages,
     });
   } catch (err) {
-    logger.error("Admin controller error", { err,
-      ...reqContext(req) });
+    logger.error("Admin controller error", { err, ...reqContext(req) });
     return res.status(500).json({ message: "Server error" });
   }
 }
@@ -125,10 +225,12 @@ export async function deleteUser(req, res) {
 }
 
 // GET /api/admin/active-logs
-// Returns aggregated real-time upload and approval logs across all modules
+// Returns aggregated real-time upload, approval, rejection, deletion, and coordinator logs across all modules
 export async function getActiveLogs(req, res) {
   try {
     const { period, type } = req.query;
+
+    await ensureAuditTable();
 
     const query = `
       SELECT * FROM (
@@ -165,7 +267,24 @@ export async function getActiveLogs(req, res) {
 
         UNION ALL
 
-        -- 3. Achievement Submissions
+        -- 3. Project Rejections
+        SELECT 
+          'proj_rej_' || p.id AS log_id,
+          'rejection' AS action_type,
+          'Project Rejection' AS category,
+          p.title AS item_title,
+          p.verified_by AS user_id,
+          COALESCE(NULLIF(u.full_name, ''), NULLIF(u.profile_details->>'full_name', ''), u.email) AS user_name,
+          u.email AS user_email,
+          u.role AS user_role,
+          COALESCE(p.verified_at, p.created_at) AS timestamp
+        FROM projects p
+        JOIN users u ON p.verified_by = u.id
+        WHERE p.verification_status = 'rejected'
+
+        UNION ALL
+
+        -- 4. Achievement Submissions
         SELECT 
           'ach_up_' || a.id AS log_id,
           'upload' AS action_type,
@@ -181,7 +300,7 @@ export async function getActiveLogs(req, res) {
 
         UNION ALL
 
-        -- 4. Achievement Approvals
+        -- 5. Achievement Approvals
         SELECT 
           'ach_app_' || a.id AS log_id,
           'approval' AS action_type,
@@ -198,7 +317,74 @@ export async function getActiveLogs(req, res) {
 
         UNION ALL
 
-        -- 5. Faculty Research Submissions
+        -- 6. Achievement Rejections
+        SELECT 
+          'ach_rej_' || a.id AS log_id,
+          'rejection' AS action_type,
+          'Achievement Rejection' AS category,
+          a.title AS item_title,
+          a.verified_by AS user_id,
+          COALESCE(NULLIF(u.full_name, ''), NULLIF(u.profile_details->>'full_name', ''), u.email) AS user_name,
+          u.email AS user_email,
+          u.role AS user_role,
+          COALESCE(a.verified_at, a.created_at) AS timestamp
+        FROM achievements a
+        JOIN users u ON a.verified_by = u.id
+        WHERE a.verification_status = 'rejected'
+
+        UNION ALL
+
+        -- 7. Hackathon Submissions
+        SELECT 
+          'hack_up_' || h.id AS log_id,
+          'upload' AS action_type,
+          'Hackathon' AS category,
+          h.hackathon_name AS item_title,
+          h.user_id AS user_id,
+          COALESCE(NULLIF(u.full_name, ''), NULLIF(u.profile_details->>'full_name', ''), u.email) AS user_name,
+          u.email AS user_email,
+          u.role AS user_role,
+          h.created_at AS timestamp
+        FROM hackathons h
+        JOIN users u ON h.user_id = u.id
+
+        UNION ALL
+
+        -- 8. Hackathon Approvals
+        SELECT 
+          'hack_app_' || h.id AS log_id,
+          'approval' AS action_type,
+          'Hackathon Approval' AS category,
+          h.hackathon_name AS item_title,
+          h.verified_by AS user_id,
+          COALESCE(NULLIF(u.full_name, ''), NULLIF(u.profile_details->>'full_name', ''), u.email) AS user_name,
+          u.email AS user_email,
+          u.role AS user_role,
+          COALESCE(h.verified_at, h.created_at) AS timestamp
+        FROM hackathons h
+        JOIN users u ON h.verified_by = u.id
+        WHERE h.verification_status = 'approved'
+
+        UNION ALL
+
+        -- 9. Hackathon Rejections
+        SELECT 
+          'hack_rej_' || h.id AS log_id,
+          'rejection' AS action_type,
+          'Hackathon Rejection' AS category,
+          h.hackathon_name AS item_title,
+          h.verified_by AS user_id,
+          COALESCE(NULLIF(u.full_name, ''), NULLIF(u.profile_details->>'full_name', ''), u.email) AS user_name,
+          u.email AS user_email,
+          u.role AS user_role,
+          COALESCE(h.verified_at, h.created_at) AS timestamp
+        FROM hackathons h
+        JOIN users u ON h.verified_by = u.id
+        WHERE h.verification_status = 'rejected'
+
+        UNION ALL
+
+        -- 10. Faculty Research Submissions
         SELECT 
           'res_up_' || fr.id AS log_id,
           'upload' AS action_type,
@@ -214,7 +400,7 @@ export async function getActiveLogs(req, res) {
 
         UNION ALL
 
-        -- 6. Faculty Consultancy Submissions
+        -- 11. Faculty Consultancy Submissions
         SELECT 
           'cons_up_' || fc.id AS log_id,
           'upload' AS action_type,
@@ -230,7 +416,7 @@ export async function getActiveLogs(req, res) {
 
         UNION ALL
 
-        -- 7. Faculty Participation Submissions
+        -- 12. Faculty Participation Submissions
         SELECT 
           'part_up_' || fp.id AS log_id,
           'upload' AS action_type,
@@ -246,7 +432,7 @@ export async function getActiveLogs(req, res) {
 
         UNION ALL
 
-        -- 8. Department Event Submissions
+        -- 13. Department Event Submissions
         SELECT 
           'ev_up_' || e.id AS log_id,
           'upload' AS action_type,
@@ -259,9 +445,42 @@ export async function getActiveLogs(req, res) {
           e.created_at AS timestamp
         FROM events e
         JOIN users u ON e.organizer_id = u.id
+
+        UNION ALL
+
+        -- 14. Activity Coordinator Mappings
+        SELECT 
+          'coord_' || ac.id AS log_id,
+          'coordinator' AS action_type,
+          'Coordinator Mapping' AS category,
+          ('Assigned as ' || COALESCE(at.name, 'Activity') || ' Coordinator') AS item_title,
+          ac.staff_id AS user_id,
+          COALESCE(NULLIF(u.full_name, ''), NULLIF(u.profile_details->>'full_name', ''), u.email) AS user_name,
+          u.email AS user_email,
+          u.role AS user_role,
+          ac.created_at AS timestamp
+        FROM activity_coordinators ac
+        JOIN users u ON ac.staff_id = u.id
+        LEFT JOIN activity_types at ON ac.activity_type_id = at.id
+
+        UNION ALL
+
+        -- 15. Audit Logs (Deletions, Batch Uploads, Governance)
+        SELECT 
+          'audit_' || al.id AS log_id,
+          al.action_type,
+          al.category,
+          al.item_title,
+          al.user_id,
+          COALESCE(al.user_name, NULLIF(u.full_name, ''), NULLIF(u.profile_details->>'full_name', ''), u.email, 'Admin') AS user_name,
+          COALESCE(al.user_email, u.email, 'admin@sonatech.ac.in') AS user_email,
+          COALESCE(al.user_role, u.role, 'admin') AS user_role,
+          al.created_at AS timestamp
+        FROM audit_logs al
+        LEFT JOIN users u ON al.user_id = u.id
       ) logs
       ORDER BY timestamp DESC
-      LIMIT 300
+      LIMIT 500
     `;
 
     const { rows } = await tracedQuery(pool, query);

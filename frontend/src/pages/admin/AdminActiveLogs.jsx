@@ -26,6 +26,9 @@ import {
   FaExternalLinkAlt,
   FaChevronLeft,
   FaChevronRight,
+  FaTimesCircle,
+  FaTrashAlt,
+  FaUsers,
 } from "react-icons/fa";
 
 export default function AdminActiveLogs() {
@@ -271,8 +274,12 @@ export default function AdminActiveLogs() {
             <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
               {[
                 { id: "all", label: "All Logs" },
-                { id: "upload", label: "Uploads / Submissions" },
-                { id: "approval", label: "Staff Approvals" },
+                { id: "upload", label: "Uploads" },
+                { id: "approval", label: "Approvals" },
+                { id: "rejection", label: "Rejections" },
+                { id: "deletion", label: "Deletions" },
+                { id: "batch_upload", label: "Batch Uploads" },
+                { id: "coordinator", label: "Coordinators" },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -374,27 +381,62 @@ export default function AdminActiveLogs() {
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
                   {paginatedLogs.map((log) => {
-                    const isUpload = log.action_type === "upload";
                     const isStudent = log.user_role === "student";
                     const isStaff = log.user_role === "staff";
+
+                    const getActionInfo = (type) => {
+                      switch (type) {
+                        case "approval":
+                          return {
+                            label: "Approved",
+                            icon: <FaCheckCircle className="w-3 h-3 text-emerald-600" />,
+                            badgeClass: "bg-emerald-50 text-emerald-700 border border-emerald-200/80",
+                          };
+                        case "rejection":
+                          return {
+                            label: "Rejected",
+                            icon: <FaTimesCircle className="w-3 h-3 text-rose-600" />,
+                            badgeClass: "bg-rose-50 text-rose-700 border border-rose-200/80",
+                          };
+                        case "deletion":
+                          return {
+                            label: "Deleted",
+                            icon: <FaTrashAlt className="w-3 h-3 text-red-600" />,
+                            badgeClass: "bg-red-50 text-red-700 border border-red-200/80",
+                          };
+                        case "batch_upload":
+                          return {
+                            label: "Batch Upload",
+                            icon: <FaUsers className="w-3 h-3 text-purple-600" />,
+                            badgeClass: "bg-purple-50 text-purple-700 border border-purple-200/80",
+                          };
+                        case "coordinator":
+                          return {
+                            label: "Coordinator",
+                            icon: <FaUserTie className="w-3 h-3 text-indigo-600" />,
+                            badgeClass: "bg-indigo-50 text-indigo-700 border border-indigo-200/80",
+                          };
+                        case "upload":
+                        default:
+                          return {
+                            label: "Upload",
+                            icon: <FaCloudUploadAlt className="w-3 h-3 text-blue-600" />,
+                            badgeClass: "bg-blue-50 text-blue-700 border border-blue-200/80",
+                          };
+                      }
+                    };
+
+                    const actionInfo = getActionInfo(log.action_type);
 
                     return (
                       <tr key={log.log_id} className="hover:bg-slate-50/80 transition">
                         {/* Action Badge */}
                         <td className="py-3.5 px-4 whitespace-nowrap">
                           <span
-                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-extrabold shadow-xs ${
-                              isUpload
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200/80"
-                                : "bg-purple-50 text-purple-700 border border-purple-200/80"
-                            }`}
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-extrabold shadow-xs ${actionInfo.badgeClass}`}
                           >
-                            {isUpload ? (
-                              <FaCloudUploadAlt className="w-3 h-3 text-emerald-600" />
-                            ) : (
-                              <FaCheckCircle className="w-3 h-3 text-purple-600" />
-                            )}
-                            {isUpload ? "Upload" : "Approved"}
+                            {actionInfo.icon}
+                            {actionInfo.label}
                           </span>
                         </td>
 

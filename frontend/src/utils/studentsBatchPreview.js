@@ -1,5 +1,5 @@
-// Utility to parse CSV/XLSX student batch files and generate a preview with basic validation
-// Supports: .csv and .xlsx
+// Utility to parse CSV/XLSX/XLS student batch files and generate a preview with basic validation
+// Supports: .csv, .xlsx, and .xls
 
 import * as XLSX from "xlsx";
 
@@ -54,15 +54,37 @@ function parseCsvToRows(text) {
     .filter((r) => r.some((v) => v !== ""));
 }
 
+function formatCellValue(v) {
+  if (v == null) return "";
+  if (typeof v === "number") {
+    if (Number.isSafeInteger(v)) {
+      return BigInt(v).toString();
+    }
+  }
+  let s = String(v).trim();
+  // If scientific notation string e.g. "2.60362104001E+11"
+  if (/^[+-]?\d+(\.\d+)?[eE][+-]?\d+$/i.test(s)) {
+    const n = Number(s);
+    if (!isNaN(n) && Number.isSafeInteger(Math.round(n))) {
+      const expanded = BigInt(Math.round(n)).toString();
+      // Only use expanded if it didn't completely lose precision (e.g. didn't end in many zeroes due to truncation)
+      if (!s.toUpperCase().includes("E+15") || expanded.replace(/0+$/, "").length > 6) {
+        return expanded;
+      }
+    }
+  }
+  return s;
+}
+
 async function parseXlsx(file) {
   const ab = await file.arrayBuffer();
-  const wb = XLSX.read(ab, { type: "array" });
+  const wb = XLSX.read(ab, { type: "array", cellText: false, raw: true });
   const wsName = wb.SheetNames[0];
   const ws = wb.Sheets[wsName];
-  // Use raw headers from the first row
-  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+  // Use raw headers from the first row and raw: true to get accurate full integers
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "", raw: true });
   return rows
-    .map((r) => r.map((v) => String(v ?? "").trim()))
+    .map((r) => r.map((v) => formatCellValue(v)))
     .filter((r) => r.some((v) => v !== ""));
 }
 
@@ -85,9 +107,18 @@ function validateRow(obj) {
   const errs = {};
   const email = obj["College mail"] || "";
   const phone = (obj["Contact number"] || "").replace(/\D/g, "");
+  const regNo = String(obj["Register number"] || "").trim();
+
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   if (!emailOk) errs["College mail"] = "Invalid email";
   if (phone.length !== 10) errs["Contact number"] = "Must be 10 digits";
+
+  if (!regNo) {
+    errs["Register number"] = "Required";
+  } else if (/^[+-]?\d+(\.\d+)?[eE][+-]?\d+$/i.test(regNo) || regNo.includes("E+")) {
+    errs["Register number"] = "Scientific notation detected (Excel format issue). In Excel, format this column as Text or upload as .xlsx";
+  }
+
   for (const k of REQUIRED_HEADERS) {
     if (!String(obj[k] ?? "").trim()) {
       errs[k] = "Required";
@@ -103,9 +134,12 @@ export async function generateStudentsPreview(file) {
   if (name.endsWith(".csv")) {
     const text = await file.text();
     rows = parseCsvToRows(text);
+  } else if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
+    rows = await parseXlsx(file);
   } else {
-    throw new Error("Unsupported file type. Please upload a .csv file");
+    throw new Error("Unsupported file type. Please upload a .csv, .xlsx, or .xls file");
   }
+
   if (!rows.length) {
     return {
       headers: [],
@@ -121,13 +155,35 @@ export async function generateStudentsPreview(file) {
     const obj = {};
     for (const h of REQUIRED_HEADERS) {
       const idx = map[h];
-      obj[h] = idx !== undefined ? (r[idx] ?? "").toString().trim() : "";
+      obj[h] = idx !== undefined ? formatCellValue(r[idx]) : "";
     }
     return obj;
   });
 
+  // Track duplicates within the batch
+  const emailCounts = new Map();
+  const regCounts = new Map();
+  items.forEach((item) => {
+    const em = (item["College mail"] || "").trim().toLowerCase();
+    if (em) emailCounts.set(em, (emailCounts.get(em) || 0) + 1);
+
+    const reg = (item["Register number"] || "").trim().toLowerCase();
+    if (reg) regCounts.set(reg, (regCounts.get(reg) || 0) + 1);
+  });
+
   const rowIssues = items
-    .map((obj, i) => ({ index: i, errors: validateRow(obj) }))
+    .map((obj, i) => {
+      const errors = validateRow(obj);
+      const em = (obj["College mail"] || "").trim().toLowerCase();
+      if (em && emailCounts.get(em) > 1) {
+        errors["College mail"] = `Duplicate email in this file (${obj["College mail"]})`;
+      }
+      const reg = (obj["Register number"] || "").trim().toLowerCase();
+      if (reg && regCounts.get(reg) > 1) {
+        errors["Register number"] = `Duplicate register number (${obj["Register number"]}) across rows`;
+      }
+      return { index: i, errors };
+    })
     .filter((ri) => Object.keys(ri.errors).length > 0);
 
   return {

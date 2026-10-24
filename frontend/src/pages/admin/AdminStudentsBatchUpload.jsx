@@ -41,7 +41,7 @@ export default function AdminStudentsBatchUpload() {
               Add Students Batch
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Upload a single CSV file containing student registration details.
+              Upload a CSV or Excel (.xlsx, .xls) file containing student registration details.
             </p>
           </div>
         </div>
@@ -69,17 +69,34 @@ export default function AdminStudentsBatchUpload() {
 
         <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-5 w-full">
           <UploadDropzone
-            label="Upload CSV Dataset"
-            subtitle="Only .csv files are allowed (Max size 25MB)"
-            accept=".csv"
+            label="Upload Student Dataset (CSV or Excel)"
+            subtitle="Supports .csv, .xlsx, and .xls files (Max size 25MB)"
+            accept=".csv,.xlsx,.xls"
             maxSizeMB={25}
             selectedFile={file}
-            onFileSelected={(f) => setFile(f)}
+            onFileSelected={(f) => {
+              setFile(f);
+              setPreview(null);
+              setMessage("");
+              setValidationErrors([]);
+            }}
           />
+
+          {/* Excel Formatting Warning Box */}
+          <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 text-xs text-amber-900 flex items-start gap-2.5">
+            <span className="text-base flex-shrink-0">💡</span>
+            <div>
+              <span className="font-bold">Important for Excel users:</span> If your student register numbers are long (e.g. 12–16 digits), Excel may automatically display them in scientific notation like <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-[11px]">2.60362E+15</code>.
+              <ul className="list-disc pl-4 mt-1 space-y-0.5 text-amber-800">
+                <li>You can upload your spreadsheet directly as an <strong>Excel file (.xlsx or .xls)</strong> to preserve the full register numbers.</li>
+                <li>Or in Excel, format the <strong>Register number</strong> column as <strong>Text</strong> before saving as CSV.</li>
+              </ul>
+            </div>
+          </div>
 
           <div className="rounded-xl bg-slate-50 border border-slate-200/80 p-4 space-y-2 text-xs">
             <span className="font-extrabold text-slate-800">
-              Required CSV Columns (Exact Header Names):
+              Required Columns (Exact Header Names):
             </span>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-slate-600 font-medium">
               <span className="bg-white border rounded-lg px-2.5 py-1 text-[11px] font-bold">Full name</span>
@@ -96,40 +113,54 @@ export default function AdminStudentsBatchUpload() {
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-            <a
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                const headers = [
-                  [
-                    "Full name",
-                    "First name",
-                    "Last name",
-                    "College mail",
-                    "Register number",
-                    "Contact number",
-                    "Year",
-                    "Dept",
-                    "Course",
-                    "Section",
-                  ],
-                ];
-                const csv = headers.map((r) => r.join(",")).join("\n");
-                const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "students-batch-template.csv";
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-              }}
-              className="inline-flex items-center gap-1.5 text-xs font-extrabold text-blue-600 hover:underline"
-            >
-              <FaFileDownload className="w-3 h-3" />
-              Download Sample CSV Template
-            </a>
+            <div className="flex items-center gap-3">
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const headers = [
+                    [
+                      "Full name",
+                      "First name",
+                      "Last name",
+                      "College mail",
+                      "Register number",
+                      "Contact number",
+                      "Year",
+                      "Dept",
+                      "Course",
+                      "Section",
+                    ],
+                    [
+                      "John Doe",
+                      "John",
+                      "Doe",
+                      "john.23ads@sonatech.ac.in",
+                      "61782323110001",
+                      "9876543210",
+                      "I Year",
+                      "ADS",
+                      "BE",
+                      "ADS-A",
+                    ],
+                  ];
+                  const csv = headers.map((r) => r.join(",")).join("\n");
+                  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "students-batch-template.csv";
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                }}
+                className="inline-flex items-center gap-1.5 text-xs font-extrabold text-blue-600 hover:underline"
+              >
+                <FaFileDownload className="w-3 h-3" />
+                Download Sample Template (.csv)
+              </a>
+            </div>
 
             <div className="flex items-center gap-2.5">
               <button
@@ -171,7 +202,8 @@ export default function AdminStudentsBatchUpload() {
                   !file ||
                   !preview ||
                   submitting ||
-                  (preview?.headerErrors?.length ?? 0) > 0
+                  (preview?.headerErrors?.length ?? 0) > 0 ||
+                  (preview?.rowIssues?.length ?? 0) > 0
                 }
                 onClick={async () => {
                   if (!file) return;

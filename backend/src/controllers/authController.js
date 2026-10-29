@@ -940,14 +940,14 @@ export async function logout(req, res) {
 export async function getStaffNames(req, res) {
   try {
     const query = `
-      SELECT id, email, role,
-      COALESCE(NULLIF(full_name, ''), NULLIF(profile_details->>'full_name', ''), NULLIF(TRIM((profile_details->>'first_name') || ' ' || (profile_details->>'last_name')), ''), email) AS full_name
+      SELECT id, 
+      COALESCE(NULLIF(full_name, ''), NULLIF(profile_details->>'full_name', ''), NULLIF(TRIM((profile_details->>'first_name') || ' ' || (profile_details->>'last_name')), '')) AS full_name
       FROM users
-      WHERE role IN ('staff', 'admin')
+      WHERE role = 'staff'
       ORDER BY full_name ASC
     `;
     const result = await tracedQuery(pool, query);
-    return res.json(result.rows);
+    return res.json(result.rows.filter((row) => row.full_name));
   } catch (err) {
     logger.error("Error fetching staff names", { err, ...reqContext(req) });
     return res.status(500).json({ message: "Server error", trace_id: req.correlationId });

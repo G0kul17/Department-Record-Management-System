@@ -46,17 +46,17 @@ export async function listUsers(req, res) {
     const deptUpper = department.toUpperCase();
     if (deptUpper === "ADS") {
       conditions.push(
-        `(u.department ILIKE '%ads%' OR u.department ILIKE '%artificial intelligence%' OR u.profile_details->>'department' ILIKE '%ads%' OR u.profile_details->>'department' ILIKE '%artificial intelligence%' OR u.email ILIKE '%ads@%')`
+        `(u.profile_details->>'department' ILIKE '%ads%' OR u.profile_details->>'department' ILIKE '%artificial intelligence%' OR u.profile_details->>'dept' ILIKE '%ads%' OR u.email ILIKE '%ads@%')`
       );
     } else if (deptUpper === "IT") {
       conditions.push(
-        `(u.department ILIKE '%it%' OR u.department ILIKE '%information technology%' OR u.profile_details->>'department' ILIKE '%it%' OR u.profile_details->>'department' ILIKE '%information technology%' OR u.email ILIKE '%it@%')`
+        `(u.profile_details->>'department' ILIKE '%it%' OR u.profile_details->>'department' ILIKE '%information technology%' OR u.profile_details->>'dept' ILIKE '%it%' OR u.email ILIKE '%it@%')`
       );
     } else {
       params.push(`%${department}%`);
       const p = `$${params.length}`;
       conditions.push(
-        `(u.department ILIKE ${p} OR u.profile_details->>'department' ILIKE ${p} OR u.profile_details->>'dept' ILIKE ${p})`
+        `(u.profile_details->>'department' ILIKE ${p} OR u.profile_details->>'dept' ILIKE ${p})`
       );
     }
   }
@@ -77,11 +77,10 @@ export async function listUsers(req, res) {
     "COALESCE(sp.register_number, u.roll_number, u.profile_details->>'register_number') AS register_number, " +
     "COALESCE(" +
     "  CASE " +
-    "    WHEN u.department ILIKE '%ads%' OR u.profile_details->>'department' ILIKE '%ads%' OR u.profile_details->>'department' ILIKE '%artificial intelligence%' OR u.email ILIKE '%ads@%' THEN 'ADS' " +
-    "    WHEN u.department ILIKE '%it%' OR u.profile_details->>'department' ILIKE '%it%' OR u.profile_details->>'department' ILIKE '%information technology%' OR u.email ILIKE '%it@%' THEN 'IT' " +
+    "    WHEN u.profile_details->>'department' ILIKE '%ads%' OR u.profile_details->>'department' ILIKE '%artificial intelligence%' OR u.profile_details->>'dept' ILIKE '%ads%' OR u.email ILIKE '%ads@%' THEN 'ADS' " +
+    "    WHEN u.profile_details->>'department' ILIKE '%it%' OR u.profile_details->>'department' ILIKE '%information technology%' OR u.profile_details->>'dept' ILIKE '%it%' OR u.email ILIKE '%it@%' THEN 'IT' " +
     "    ELSE NULL " +
     "  END, " +
-    "  NULLIF(UPPER(u.department), ''), " +
     "  NULLIF(UPPER(u.profile_details->>'department'), ''), " +
     "  NULLIF(UPPER(u.profile_details->>'dept'), ''), " +
     "  '—'" +

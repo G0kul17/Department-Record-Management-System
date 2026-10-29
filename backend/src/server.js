@@ -214,7 +214,8 @@ app.get("/api/files/:filename", fileLimiter, async (req, res) => {
     logger.error("Avatar check failed", { err, filename });
   }
 
-  // Token resolution: prefer Authorization header, fall back to ?token=
+  // Token resolution: strictly file-scoped download token (issued by POST /api/files/:filename/token)
+  // Accepts token from Authorization header or ?token= query parameter.
   const headerToken = req.headers.authorization?.split(" ")[1];
   const queryToken = req.query.token;
   const rawToken = headerToken || queryToken;
@@ -224,26 +225,14 @@ app.get("/api/files/:filename", fileLimiter, async (req, res) => {
   }
 
   let requesterId = null;
-  if (rawToken) {
-    let decoded;
+  if (!isAvatar) {
     try {
-      // P0-3: Try file-scoped token first
-      decoded = verifyFileToken(rawToken, filename);
-    } catch (err) {
-      // Fallback: check if rawToken is a valid session JWT
-      try {
-        const sessionPayload = verifyToken(rawToken);
-        decoded = { sub: String(sessionPayload.id || sessionPayload.userId || sessionPayload.sub) };
-      } catch (sessionErr) {
-        if (!isAvatar) {
-          if (err.name === "TokenExpiredError") return res.status(401).json({ message: "Token expired" });
-          if (err.name === "FileTokenMismatch") return res.status(403).json({ message: "Token is not valid for this file" });
-          return res.status(401).json({ message: "Invalid token" });
-        }
-      }
-    }
-    if (decoded?.sub) {
+      const decoded = verifyFileToken(rawToken, filename);
       requesterId = Number(decoded.sub);
+    } catch (err) {
+      if (err.name === "TokenExpiredError") return res.status(401).json({ message: "Token expired" });
+      if (err.name === "FileTokenMismatch") return res.status(403).json({ message: "Token is not valid for this file" });
+      return res.status(401).json({ message: "Invalid token" });
     }
   }
 
@@ -527,7 +516,9 @@ async function startApplication() {
   }
 }
 
-startApplication();
+if (process.env.NODE_ENV !== "test") {
+  startApplication();
+}
 
 // Global error handler to always return JSON (handles multer/file-filter errors too)
 // Keep this AFTER routes and server start to catch async route errors via next(err)

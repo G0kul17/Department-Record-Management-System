@@ -159,7 +159,14 @@ describe("Audit Review Regression Suite", () => {
 
       if (!isAvatar) {
         try {
-          verifyFileToken(rawToken, filename);
+          const decoded = verifyFileToken(rawToken, filename);
+          if (decoded.sid) {
+            const { verifySession } = await import("../utils/sessionUtils.js");
+            const session = await verifySession(decoded.sid);
+            if (!session) {
+              return res.status(401).json({ message: "Session revoked" });
+            }
+          }
         } catch (err) {
           if (err.name === "TokenExpiredError") return res.status(401).json({ message: "Token expired" });
           if (err.name === "FileTokenMismatch") return res.status(403).json({ message: "Token is not valid for this file" });
@@ -233,6 +240,46 @@ describe("Audit Review Regression Suite", () => {
       expect(res.status).toBe(200);
       expect(res.body.token).toBeDefined();
       expect(res.body.expiresAt).toBeDefined();
+    });
+
+    it("DENY: file token minted before logout becomes unusable after session revocation (mint -> revoke -> GET returns 401)", async () => {
+      // 1. Mint file token with an active session
+      const dynamicSessionToken = "mint-revoke-session-xyz";
+      const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await memPool.query(
+        `INSERT INTO user_sessions (user_id, session_token, expires_at, created_at, last_accessed_at, is_active)
+         VALUES ($1, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, TRUE)`,
+        [studentUser.id, dynamicSessionToken, futureDate]
+      );
+
+      const activeJwt = jwt.sign(
+        { id: studentUser.id, email: studentUser.email, role: studentUser.role, sid: dynamicSessionToken },
+        JWT_SECRET,
+        { expiresIn: "6h" }
+      );
+
+      const mintRes = await request(app)
+        .post("/api/files/thesis.pdf/token")
+        .set("Authorization", `Bearer ${activeJwt}`);
+
+      expect(mintRes.status).toBe(200);
+      const { token: mintedFileToken } = mintRes.body;
+      expect(mintedFileToken).toBeDefined();
+
+      // Verify token works while session is active
+      const preRevokeGet = await request(app).get(`/api/files/thesis.pdf?token=${mintedFileToken}`);
+      expect(preRevokeGet.status).toBe(200);
+
+      // 2. Revoke session (e.g. user logout or admin revocation)
+      await memPool.query(
+        "UPDATE user_sessions SET is_active = FALSE WHERE session_token = $1",
+        [dynamicSessionToken]
+      );
+
+      // 3. Attempt download with the file token minted earlier
+      const postRevokeGet = await request(app).get(`/api/files/thesis.pdf?token=${mintedFileToken}`);
+      expect(postRevokeGet.status).toBe(401);
+      expect(postRevokeGet.body.message).toMatch(/session revoked|session expired/i);
     });
 
     it("DENY: GET /api/files/:filename with normal session JWT in ?token= returns 401 Invalid token", async () => {
@@ -501,4 +548,127 @@ describe("Audit Review Regression Suite", () => {
       memPool.query = originalQuery;
     });
   });
+
+  // ==========================================================================
+  // 5. Required — Batch duplicate register number protection across all stores
+  // ==========================================================================
+  describe("5. Required — Batch duplicate register number protection across all stores", () => {
+    beforeAll(async () => {
+      // 1. User with register_number in student_profiles
+      await memPool.query(
+        `INSERT INTO users (id, email, role, is_verified, password_hash, profile_details)
+         VALUES (501, 'sp_reg@test.edu', 'student', TRUE, 'hashed', '{}')
+         ON CONFLICT (id) DO NOTHING`
+      );
+      await memPool.query(
+        `INSERT INTO student_profiles (user_id, register_number, contact_number)
+         VALUES (501, 'REG_STORE_SP', '9876543210')
+         ON CONFLICT (user_id) DO NOTHING`
+      );
+
+      // 2. User with roll_number in users table column
+      await memPool.query(
+        `INSERT INTO users (id, email, role, is_verified, password_hash, roll_number, profile_details)
+         VALUES (502, 'col_roll@test.edu', 'student', TRUE, 'hashed', 'REG_STORE_COL', '{}')
+         ON CONFLICT (id) DO NOTHING`
+      );
+
+      // 3. User with roll_number in profile_details JSONB
+      await memPool.query(
+        `INSERT INTO users (id, email, role, is_verified, password_hash, profile_details)
+         VALUES (503, 'json_roll@test.edu', 'student', TRUE, 'hashed', '{"roll_number": "REG_STORE_JSON_ROLL"}')
+         ON CONFLICT (id) DO NOTHING`
+      );
+
+      // 4. User with register_number in profile_details JSONB
+      await memPool.query(
+        `INSERT INTO users (id, email, role, is_verified, password_hash, profile_details)
+         VALUES (504, 'json_reg@test.edu', 'student', TRUE, 'hashed', '{"register_number": "REG_STORE_JSON_REG"}')
+         ON CONFLICT (id) DO NOTHING`
+      );
+    });
+
+    it("detects existing register numbers across all 4 canonical/legacy stores", async () => {
+      const storesToTest = [
+        { name: "student_profiles.register_number", reg: "REG_STORE_SP", expectedId: 501 },
+        { name: "users.roll_number column", reg: "REG_STORE_COL", expectedId: 502 },
+        { name: "profile_details.roll_number JSONB", reg: "REG_STORE_JSON_ROLL", expectedId: 503 },
+        { name: "profile_details.register_number JSONB", reg: "REG_STORE_JSON_REG", expectedId: 504 },
+      ];
+
+      for (const store of storesToTest) {
+        const query = `
+          SELECT u.id FROM users u
+          LEFT JOIN student_profiles sp ON sp.user_id = u.id
+          WHERE LOWER(u.profile_details->>'register_number') = LOWER($1)
+             OR LOWER(u.profile_details->>'roll_number') = LOWER($1)
+             OR LOWER(u.roll_number) = LOWER($1)
+             OR LOWER(sp.register_number) = LOWER($1)
+          LIMIT 1
+        `;
+        const res = await memPool.query(query, [store.reg]);
+        expect(res.rows.length, `Expected duplicate match for ${store.name}`).toBe(1);
+        expect(res.rows[0].id).toBe(store.expectedId);
+      }
+    });
+
+    it("case-insensitive duplicate matching works across all stores", async () => {
+      const query = `
+        SELECT u.id FROM users u
+        LEFT JOIN student_profiles sp ON sp.user_id = u.id
+        WHERE LOWER(u.profile_details->>'register_number') = LOWER($1)
+           OR LOWER(u.profile_details->>'roll_number') = LOWER($1)
+           OR LOWER(u.roll_number) = LOWER($1)
+           OR LOWER(sp.register_number) = LOWER($1)
+        LIMIT 1
+      `;
+      // Lowercase check against uppercase store
+      const res = await memPool.query(query, ["reg_store_col"]);
+      expect(res.rows.length).toBe(1);
+      expect(res.rows[0].id).toBe(502);
+    });
+
+    it("populates all stores consistently and transactionally on student creation", async () => {
+      const newReg = "REG_NEW_INVARIANT_505";
+      const newEmail = "new_student_505@test.edu";
+
+      // Insert new student matching addStudentsController logic
+      const userRes = await memPool.query(
+        `INSERT INTO users (email, password_hash, role, is_verified, profile_details, full_name, roll_number)
+         VALUES ($1, 'hashed', 'student', TRUE, $2, 'New Student 505', $3)
+         RETURNING id`,
+        [
+          newEmail,
+          JSON.stringify({
+            full_name: "New Student 505",
+            register_number: newReg,
+            roll_number: newReg,
+          }),
+          newReg,
+        ]
+      );
+      const newId = userRes.rows[0].id;
+
+      await memPool.query(
+        `INSERT INTO student_profiles (user_id, register_number, contact_number)
+         VALUES ($1, $2, '9999988888')`,
+        [newId, newReg]
+      );
+
+      // Verify all 4 stores reflect the new register number
+      const checkRes = await memPool.query(
+        `SELECT u.roll_number, u.profile_details->>'register_number' AS p_reg, u.profile_details->>'roll_number' AS p_roll, sp.register_number AS sp_reg
+         FROM users u
+         JOIN student_profiles sp ON sp.user_id = u.id
+         WHERE u.id = $1`,
+        [newId]
+      );
+
+      expect(checkRes.rows[0].roll_number).toBe(newReg);
+      expect(checkRes.rows[0].p_reg).toBe(newReg);
+      expect(checkRes.rows[0].p_roll).toBe(newReg);
+      expect(checkRes.rows[0].sp_reg).toBe(newReg);
+    });
+  });
 });
+

@@ -1,7 +1,7 @@
 // Utility to parse CSV/XLSX/XLS student batch files and generate a preview with basic validation
 // Supports: .csv, .xlsx, and .xls
 
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
 export const REQUIRED_HEADERS = [
   "Full name",
@@ -56,6 +56,11 @@ function parseCsvToRows(text) {
 
 function formatCellValue(v) {
   if (v == null) return "";
+  if (typeof v === "object" && v !== null) {
+    if (v.text) return String(v.text).trim();
+    if (v.result !== undefined) return formatCellValue(v.result);
+    if (Array.isArray(v.richText)) return v.richText.map((t) => t.text || "").join("").trim();
+  }
   if (typeof v === "number") {
     if (Number.isSafeInteger(v)) {
       return BigInt(v).toString();
@@ -78,14 +83,18 @@ function formatCellValue(v) {
 
 async function parseXlsx(file) {
   const ab = await file.arrayBuffer();
-  const wb = XLSX.read(ab, { type: "array", cellText: false, raw: true });
-  const wsName = wb.SheetNames[0];
-  const ws = wb.Sheets[wsName];
-  // Use raw headers from the first row and raw: true to get accurate full integers
-  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "", raw: true });
-  return rows
-    .map((r) => r.map((v) => formatCellValue(v)))
-    .filter((r) => r.some((v) => v !== ""));
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(ab);
+  const worksheet = workbook.worksheets[0];
+  if (!worksheet) return [];
+
+  const rows = [];
+  worksheet.eachRow({ includeEmpty: false }, (row) => {
+    const values = Array.isArray(row.values) ? row.values.slice(1) : [];
+    rows.push(values.map((v) => formatCellValue(v)));
+  });
+
+  return rows.filter((r) => r.some((v) => v !== ""));
 }
 
 function buildHeaderMap(headerRow) {

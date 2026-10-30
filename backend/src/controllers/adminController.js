@@ -2,7 +2,6 @@ import pool from "../config/db.js";
 import logger, { reqContext } from "../utils/logger.js";
 import { tracedQuery } from "../utils/tracing.js";
 import { invalidateAllUserSessions } from "../utils/sessionUtils.js";
-import { ensureAuditTable } from "../utils/auditLogger.js";
 
 // GET /api/admin/stats
 // Returns total counts for admin dashboard usages
@@ -228,8 +227,6 @@ export async function deleteUser(req, res) {
 export async function getActiveLogs(req, res) {
   try {
     const { period, type } = req.query;
-
-    await ensureAuditTable();
 
     const query = `
       SELECT * FROM (

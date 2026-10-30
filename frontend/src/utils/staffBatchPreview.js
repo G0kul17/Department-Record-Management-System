@@ -1,7 +1,7 @@
 // Utility to parse CSV/XLSX staff batch files and generate a preview with basic validation
 // Supports: .csv and .xlsx
 
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
 export const REQUIRED_HEADERS = [
   "Full name",
@@ -55,13 +55,22 @@ function parseCsvToRows(text) {
 
 async function parseXlsx(file) {
   const ab = await file.arrayBuffer();
-  const wb = XLSX.read(ab, { type: "array" });
-  const wsName = wb.SheetNames[0];
-  const ws = wb.Sheets[wsName];
-  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
-  return rows
-    .map((r) => r.map((v) => String(v ?? "").trim()))
-    .filter((r) => r.some((v) => v !== ""));
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(ab);
+  const worksheet = workbook.worksheets[0];
+  if (!worksheet) return [];
+
+  const rows = [];
+  worksheet.eachRow({ includeEmpty: false }, (row) => {
+    const values = Array.isArray(row.values) ? row.values.slice(1) : [];
+    rows.push(values.map((v) => {
+      if (v == null) return "";
+      if (typeof v === "object" && v.text) return String(v.text).trim();
+      return String(v).trim();
+    }));
+  });
+
+  return rows.filter((r) => r.some((v) => v !== ""));
 }
 
 function buildHeaderMap(headerRow) {

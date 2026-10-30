@@ -288,12 +288,14 @@ export const uploadStudents = async (req, res) => {
         continue;
       }
 
-      // Check if register number is already registered in DB
+      // Check if register number is already registered in DB across all canonical/legacy stores
       const regExists = await tracedQuery(
         client,
         `SELECT u.id FROM users u
          LEFT JOIN student_profiles sp ON sp.user_id = u.id
          WHERE LOWER(u.profile_details->>'register_number') = LOWER($1)
+            OR LOWER(u.profile_details->>'roll_number') = LOWER($1)
+            OR LOWER(u.roll_number) = LOWER($1)
             OR LOWER(sp.register_number) = LOWER($1)
          LIMIT 1`,
         [s.register_number]
@@ -309,8 +311,8 @@ export const uploadStudents = async (req, res) => {
       const resUser = await tracedQuery(client, 
         `
         INSERT INTO users
-        (email, password_hash, role, is_verified, profile_details, full_name)
-        VALUES ($1, $2, 'student', true, $3, $4)
+        (email, password_hash, role, is_verified, profile_details, full_name, roll_number)
+        VALUES ($1, $2, 'student', true, $3, $4, $5)
         RETURNING id
         `,
         [
@@ -321,6 +323,7 @@ export const uploadStudents = async (req, res) => {
             first_name: s.first_name,
             last_name: s.last_name,
             register_number: s.register_number,
+            roll_number: s.register_number,
             contact_number: s.contact_number,
             department: s.department,
             course: s.course,
@@ -328,6 +331,7 @@ export const uploadStudents = async (req, res) => {
             section: s.section,
           }),
           s.full_name || `${s.first_name} ${s.last_name}`.trim(),
+          s.register_number,
         ]
       );
 

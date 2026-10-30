@@ -24,7 +24,7 @@ import announcementRoutes from "./routes/announcementRoutes.js";
 import hackathonRoutes from "./routes/hackathonRoutes.js";
 import pool, { logPoolHealth, getPoolHealth } from "./config/db.js";
 import { verifyFileStorage } from "./config/upload.js";
-import { cleanupExpiredSessions } from "./utils/sessionUtils.js";
+import { cleanupExpiredSessions, verifySession } from "./utils/sessionUtils.js";
 import { requireAuth } from "./middleware/authMiddleware.js";
 import { requireRole } from "./middleware/roleAuth.js";
 import { verifyToken } from "./utils/tokenUtils.js";
@@ -229,6 +229,13 @@ app.get("/api/files/:filename", fileLimiter, async (req, res) => {
     try {
       const decoded = verifyFileToken(rawToken, filename);
       requesterId = Number(decoded.sub);
+
+      if (decoded.sid) {
+        const session = await verifySession(decoded.sid);
+        if (!session) {
+          return res.status(401).json({ message: "Session revoked" });
+        }
+      }
     } catch (err) {
       if (err.name === "TokenExpiredError") return res.status(401).json({ message: "Token expired" });
       if (err.name === "FileTokenMismatch") return res.status(403).json({ message: "Token is not valid for this file" });

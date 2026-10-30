@@ -40,3 +40,12 @@ export async function logAudit({
     });
   }
 }
+
+/**
+ * Backwards compatibility no-op.
+ * Table audit_logs is provisioned via migration 013_audit_logs.sql.
+ */
+export async function ensureAuditTable() {
+  // No-op: Runtime DDL removed in favor of migration 013
+}
+

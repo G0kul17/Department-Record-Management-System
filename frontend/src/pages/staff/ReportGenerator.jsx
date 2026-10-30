@@ -505,25 +505,30 @@ export default function ReportGenerator() {
     setShowPreview(true);
   };
 
-  const handleExport = () => {
-    const listToExport = filteredItems.map((it) => mapItemToRow(it, mode));
-    if (listToExport.length === 0) {
-      alert("No data available to export.");
-      return;
-    }
-    const modeCols = getColumnsForMode(mode);
-    const activeCols = modeCols.filter((c) => selectedColumns.includes(c.key));
+  const handleExport = async () => {
+    try {
+      const listToExport = filteredItems.map((it) => mapItemToRow(it, mode));
+      if (listToExport.length === 0) {
+        alert("No data available to export.");
+        return;
+      }
+      const modeCols = getColumnsForMode(mode);
+      const activeCols = modeCols.filter((c) => selectedColumns.includes(c.key));
 
-    const exportRows = listToExport.map((row) => {
-      const obj = {};
-      activeCols.forEach((c) => {
-        obj[c.header] = row[c.key] !== undefined ? row[c.key] : "";
+      const exportRows = listToExport.map((row) => {
+        const obj = {};
+        activeCols.forEach((c) => {
+          obj[c.header] = row[c.key] !== undefined ? row[c.key] : "";
+        });
+        return obj;
       });
-      return obj;
-    });
 
-    const filename = `${mode}_export_${new Date().toISOString().slice(0, 10)}`;
-    exportToXlsxOrCsv(exportRows, filename, exportFormat);
+      const filename = `${mode}_export_${new Date().toISOString().slice(0, 10)}`;
+      await exportToXlsxOrCsv(exportRows, filename, exportFormat, activeCols);
+    } catch (err) {
+      console.error("Export error:", err);
+      alert("Failed to export data: " + (err.message || "Unknown error"));
+    }
   };
 
   return (

@@ -1,73 +1,166 @@
 // Utility: exportData
-// Uses static imports for `xlsx` and `file-saver` to avoid Vite dynamic import issues.
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
-export async function exportToXlsxOrCsv(filenameBase, rows, columns) {
-  // rows: array of objects
-  // columns: array of { key, header }
-  const makeCsv = () => {
-    const header = columns
-      .map((c) => `"${(c.header || c.key).replace(/"/g, '""')}"`)
-      .join(",");
-    const body = rows
-      .map((r) =>
-        columns
-          .map((c) => {
-            const v = r[c.key] ?? "";
-            const s = typeof v === "string" ? v : String(v);
-            return `"${s.replace(/"/g, '""')}"`;
-          })
-          .join(",")
-      )
-      .join("\n");
-    const csv = [header, body].join("\n");
-    return csv;
+function downloadBlob(blob, filename) {
+  try {
+    if (typeof saveAs === "function") {
+      saveAs(blob, filename);
+      return;
+    }
+  } catch (_) {
+    // fallback below
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+export async function exportToXlsxOrCsv(arg1, arg2, arg3, arg4) {
+  let rows = [];
+  let filenameBase = "export";
+  let columns = [];
+  let format = "xlsx";
+
+  // Flexible argument handling:
+  // Signature A: exportToXlsxOrCsv(rows, filename, format, columns)
+  // Signature B: exportToXlsxOrCsv(filename, rows, columns, format)
+  if (Array.isArray(arg1)) {
+    rows = arg1;
+    if (typeof arg2 === "string" && arg2.trim()) {
+      filenameBase = arg2.trim();
+    }
+    if (typeof arg3 === "string" && arg3.trim()) {
+      format = arg3.trim().toLowerCase();
+    } else if (Array.isArray(arg3)) {
+      columns = arg3;
+    }
+    if (Array.isArray(arg4)) {
+      columns = arg4;
+    } else if (typeof arg4 === "string" && arg4.trim()) {
+      format = arg4.trim().toLowerCase();
+    }
+  } else if (typeof arg1 === "string") {
+    if (arg1.trim()) filenameBase = arg1.trim();
+    if (Array.isArray(arg2)) {
+      rows = arg2;
+    }
+    if (Array.isArray(arg3)) {
+      columns = arg3;
+    } else if (typeof arg3 === "string" && arg3.trim()) {
+      format = arg3.trim().toLowerCase();
+    }
+    if (typeof arg4 === "string" && arg4.trim()) {
+      format = arg4.trim().toLowerCase();
+    } else if (Array.isArray(arg4)) {
+      columns = arg4;
+    }
+  }
+
+  // Deduce columns from rows if columns were not explicitly passed
+  if ((!columns || columns.length === 0) && rows.length > 0) {
+    const keySet = new Set();
+    const detectedKeys = [];
+    rows.forEach((r) => {
+      if (r && typeof r === "object") {
+        Object.keys(r).forEach((k) => {
+          if (!keySet.has(k)) {
+            keySet.add(k);
+            detectedKeys.push(k);
+          }
+        });
+      }
+    });
+    columns = detectedKeys.map((k) => ({ key: k, header: k }));
+  }
+
+  const getCellValue = (r, col) => {
+    if (!r || typeof r !== "object") return "";
+    let val = undefined;
+    if (col.key !== undefined && r[col.key] !== undefined) {
+      val = r[col.key];
+    } else if (col.header !== undefined && r[col.header] !== undefined) {
+      val = r[col.header];
+    }
+    if (val === null || val === undefined) return "";
+    if (typeof val === "object") {
+      if (Array.isArray(val)) return val.join(", ");
+      return JSON.stringify(val);
+    }
+    return val;
   };
 
-  // Try XLSX export first using static imports
+  const cleanFilename = filenameBase.replace(/\.(xlsx|csv)$/i, "");
+
+  const makeCsv = () => {
+    const headerLine = (columns || [])
+      .map((c) => `"${String(c.header || c.key || "").replace(/"/g, '""')}"`)
+      .join(",");
+    const bodyLines = (rows || []).map((r) =>
+      (columns || [])
+        .map((c) => {
+          const v = getCellValue(r, c);
+          const s = typeof v === "string" ? v : String(v);
+          return `"${s.replace(/"/g, '""')}"`;
+        })
+        .join(",")
+    );
+    return [headerLine, ...bodyLines].join("\n");
+  };
+
+  if (format === "csv") {
+    const csv = makeCsv();
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    downloadBlob(blob, `${cleanFilename}.csv`);
+    return { type: "csv" };
+  }
+
+  // Try XLSX export first using ExcelJS
   try {
-    const wsData = [columns.map((c) => c.header || c.key)];
-    rows.forEach((r) => {
-      wsData.push(columns.map((c) => r[c.key] ?? ""));
+    const WorkbookClass =
+      ExcelJS.Workbook ||
+      ExcelJS.default?.Workbook ||
+      (typeof window !== "undefined" && window.ExcelJS?.Workbook);
+    const workbook = new (WorkbookClass || ExcelJS.Workbook)();
+    const worksheet = workbook.addWorksheet("Report");
+
+    worksheet.columns = (columns || []).map((col) => {
+      const headerText = String(col.header || col.key || "Column");
+      return {
+        header: headerText,
+        key: String(col.key || col.header || "col"),
+        width: Math.max(14, headerText.length + 4),
+      };
     });
 
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    // attempt to set header styles (bold) and reasonable column widths
-    try {
-      // set bold for header row
-      for (let c = 0; c < (columns.length || 0); c++) {
-        const cellRef = XLSX.utils.encode_cell({ r: 0, c });
-        if (!ws[cellRef]) continue;
-        ws[cellRef].s = ws[cellRef].s || {};
-        ws[cellRef].s.font = ws[cellRef].s.font || {};
-        ws[cellRef].s.font.bold = true;
-      }
-      // auto column widths (approximate by header length)
-      ws["!cols"] = columns.map((col) => ({
-        wch: Math.max(12, String(col.header || col.key).length + 4),
-      }));
-    } catch (e) {
-      // ignore styling errors; fallback still works
-    }
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Report");
-    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    const blob = new Blob([wbout], { type: "application/octet-stream" });
-    saveAs(blob, `${filenameBase}.xlsx`);
+    // Style the header row
+    worksheet.getRow(1).font = { bold: true };
+
+    (rows || []).forEach((r) => {
+      const rowData = {};
+      (columns || []).forEach((col) => {
+        const colKey = String(col.key || col.header || "col");
+        rowData[colKey] = getCellValue(r, col);
+      });
+      worksheet.addRow(rowData);
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    downloadBlob(blob, `${cleanFilename}.xlsx`);
     return { type: "xlsx" };
   } catch (err) {
-    // fallback: CSV
+    console.error("ExcelJS export failed, falling back to CSV:", err);
     const csv = makeCsv();
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${filenameBase}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    downloadBlob(blob, `${cleanFilename}.csv`);
     return { type: "csv" };
   }
 }

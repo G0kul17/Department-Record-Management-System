@@ -35,11 +35,16 @@ const DEFAULT_TTL_SECS = 300; // 5 minutes
  * @param {number|string} userId - Authenticated user's ID
  * @param {string} filename - Stored filename (basename only, no path)
  * @param {number} [expiresInSecs=300] - Token lifetime in seconds
+ * @param {string} [sid=null] - Session token to bind file token to (revocation awareness)
  * @returns {string} Signed JWT
  */
-export function issueFileToken(userId, filename, expiresInSecs = DEFAULT_TTL_SECS) {
+export function issueFileToken(userId, filename, expiresInSecs = DEFAULT_TTL_SECS, sid = null) {
+  const payload = { sub: String(userId), file: filename };
+  if (sid) {
+    payload.sid = String(sid);
+  }
   return jwt.sign(
-    { sub: String(userId), file: filename },
+    payload,
     FILE_TOKEN_SECRET,
     {
       audience: FILE_TOKEN_AUDIENCE,

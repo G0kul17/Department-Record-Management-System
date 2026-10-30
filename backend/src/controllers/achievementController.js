@@ -11,6 +11,7 @@ import {
   requireActivityTypeByName,
 } from "../utils/activityTypeUtils.js";
 import { redactRows, redactFields } from "../utils/piiRedaction.js";
+import { logAudit } from "../utils/auditLogger.js";
 
 const ACHIEVEMENT_PII_FIELDS = [
   "user_email",
@@ -690,6 +691,16 @@ export async function deleteAchievement(req, res) {
     }
 
     logger.info("Achievement deleted by admin", { achievementId: id, ...reqContext(req) });
+    logAudit({
+      actionType: "deletion",
+      category: "Achievement Deletion",
+      itemTitle: `Deleted Achievement #${id}`,
+      userId: req.user?.id,
+      userName: req.user?.name || req.user?.full_name,
+      userEmail: req.user?.email,
+      userRole: req.user?.role,
+      details: { achievementId: id },
+    });
     return res.json({ message: "Achievement deleted successfully" });
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});

@@ -24,7 +24,7 @@ import announcementRoutes from "./routes/announcementRoutes.js";
 import hackathonRoutes from "./routes/hackathonRoutes.js";
 import pool, { logPoolHealth, getPoolHealth } from "./config/db.js";
 import { verifyFileStorage } from "./config/upload.js";
-import { cleanupExpiredSessions } from "./utils/sessionUtils.js";
+import { cleanupExpiredSessions, verifySession } from "./utils/sessionUtils.js";
 import { requireAuth } from "./middleware/authMiddleware.js";
 import { requireRole } from "./middleware/roleAuth.js";
 import { verifyToken } from "./utils/tokenUtils.js";
@@ -196,109 +196,133 @@ app.get("/api/files/:filename", fileLimiter, async (req, res) => {
     return res.status(400).json({ message: "Invalid filename" });
   }
 
-  // Token resolution: prefer Authorization header, fall back to ?token=
+  // Check if this is an avatar/profile photo (public user profile picture)
+  let isAvatar = false;
+  try {
+    const avatarCheck = await pool.query(
+      `SELECT u.id FROM users u
+       WHERE (
+         u.profile_details->>'photo_url' LIKE '%' || $1
+         OR u.profile_details->>'avatar_url' LIKE '%' || $1
+         OR u.profile_details->>'image_url' LIKE '%' || $1
+         OR u.profile_details->>'profile_pic' LIKE '%' || $1
+       ) LIMIT 1`,
+      [filename],
+    );
+    isAvatar = avatarCheck.rows.length > 0;
+  } catch (err) {
+    logger.error("Avatar check failed", { err, filename });
+  }
+
+  // Token resolution: strictly file-scoped download token (issued by POST /api/files/:filename/token)
+  // Accepts token from Authorization header or ?token= query parameter.
   const headerToken = req.headers.authorization?.split(" ")[1];
   const queryToken = req.query.token;
   const rawToken = headerToken || queryToken;
-  if (!rawToken) return res.status(401).json({ message: "No token" });
 
-  let decoded;
-  try {
-    // P0-3: Only file-scoped tokens are accepted here.
-    // verifyFileToken validates signature, audience ('file-download'), expiry,
-    // and that the token's 'file' claim matches the requested filename.
-    decoded = verifyFileToken(rawToken, filename);
-  } catch (err) {
-    if (err.name === "TokenExpiredError") return res.status(401).json({ message: "Token expired" });
-    if (err.name === "FileTokenMismatch") return res.status(403).json({ message: "Token is not valid for this file" });
-    return res.status(401).json({ message: "Invalid token" });
+  if (!rawToken && !isAvatar) {
+    return res.status(401).json({ message: "No token" });
   }
 
-  const requesterId = Number(decoded.sub);
+  let requesterId = null;
+  if (!isAvatar) {
+    try {
+      const decoded = verifyFileToken(rawToken, filename);
+      requesterId = Number(decoded.sub);
 
-  // P1-1: Resolve the filename to a DB record and enforce access control.
-  // A valid token alone is not sufficient — the requester must be authorised
-  // to see the record that owns this file.
-  try {
-    // Look up file ownership across the tables that store uploaded files.
-    // project_files → owned by the project creator
-    // achievements  → owned by the user who submitted the achievement
-    // users (photo) → owned by the user themselves
-    const ownerQuery = await pool.query(
-      `SELECT u.id AS owner_id, u.role AS owner_role
-       FROM (
-         SELECT pf.uploaded_by AS owner_id FROM project_files pf
-         WHERE pf.filename = $1 AND pf.uploaded_by IS NOT NULL
-         UNION ALL
-         SELECT p.created_by AS owner_id FROM project_files pf
-           JOIN projects p ON p.id = pf.project_id
-         WHERE pf.filename = $1 AND p.created_by IS NOT NULL
-         UNION ALL
-         SELECT a.user_id AS owner_id FROM achievements a
-           JOIN project_files pf ON (pf.id = a.proof_file_id OR pf.id = a.certificate_file_id OR pf.id = a.event_photos_file_id)
-         WHERE pf.filename = $1 AND a.user_id IS NOT NULL
-         UNION ALL
-         SELECT fp.created_by AS owner_id FROM faculty_participations fp
-           JOIN project_files pf ON pf.id = fp.proof_file_id
-         WHERE pf.filename = $1 AND fp.created_by IS NOT NULL
-         UNION ALL
-         SELECT fr.created_by AS owner_id FROM faculty_research fr
-           JOIN project_files pf ON pf.id = fr.proof_file_id
-         WHERE pf.filename = $1 AND fr.created_by IS NOT NULL
-         UNION ALL
-         SELECT fc.created_by AS owner_id FROM faculty_consultancy fc
-           JOIN project_files pf ON pf.id = fc.proof_file_id
-         WHERE pf.filename = $1 AND fc.created_by IS NOT NULL
-         UNION ALL
-         SELECT sa.created_by AS owner_id FROM staff_announcements sa
-           JOIN project_files pf ON pf.id = sa.brochure_file_id
-         WHERE pf.filename = $1 AND sa.created_by IS NOT NULL
-         UNION ALL
-         SELECT h.user_id AS owner_id FROM hackathons h
-           JOIN project_files pf ON pf.id = h.proof_file_id
-         WHERE pf.filename = $1 AND h.user_id IS NOT NULL
-         UNION ALL
-         SELECT e.organizer_id AS owner_id FROM events e
-         WHERE (e.thumbnail_filename = $1 OR e.attachments::text LIKE '%' || $1)
-           AND e.organizer_id IS NOT NULL
-         UNION ALL
-         SELECT su.uploaded_by AS owner_id FROM staff_uploads_with_document su
-         WHERE (su.stored_filename = $1 OR su.documents::text LIKE '%' || $1)
-           AND su.uploaded_by IS NOT NULL
-         UNION ALL
-         SELECT u2.id AS owner_id FROM users u2
-         WHERE (
-           u2.profile_details->>'photo_url' LIKE '%' || $1
-           OR u2.profile_details->>'avatar_url' LIKE '%' || $1
-           OR u2.profile_details->>'image_url' LIKE '%' || $1
-           OR u2.profile_details->>'profile_pic' LIKE '%' || $1
-         )
-       ) AS file_owners
-       JOIN users u ON u.id = file_owners.owner_id
-       LIMIT 1`,
-      [filename],
-    );
-
-    if (!ownerQuery.rows.length) {
-      // No record found for this filename — deny access even for valid tokens.
-      // Prevents orphaned file enumeration.
-      return res.status(404).json({ message: "File not found" });
+      if (decoded.sid) {
+        const session = await verifySession(decoded.sid);
+        if (!session) {
+          return res.status(401).json({ message: "Session revoked" });
+        }
+      }
+    } catch (err) {
+      if (err.name === "TokenExpiredError") return res.status(401).json({ message: "Token expired" });
+      if (err.name === "FileTokenMismatch") return res.status(403).json({ message: "Token is not valid for this file" });
+      return res.status(401).json({ message: "Invalid token" });
     }
+  }
 
-    const { owner_id, owner_role } = ownerQuery.rows[0];
+  // If not a public avatar, enforce ownership & role access control
+  if (!isAvatar) {
+    try {
+      const ownerQuery = await pool.query(
+        `SELECT u.id AS owner_id, u.role AS owner_role
+         FROM (
+           SELECT pf.uploaded_by AS owner_id FROM project_files pf
+           WHERE pf.filename = $1 AND pf.uploaded_by IS NOT NULL
+           UNION ALL
+           SELECT p.created_by AS owner_id FROM project_files pf
+             JOIN projects p ON p.id = pf.project_id
+           WHERE pf.filename = $1 AND p.created_by IS NOT NULL
+           UNION ALL
+           SELECT a.user_id AS owner_id FROM achievements a
+             JOIN project_files pf ON (pf.id = a.proof_file_id OR pf.id = a.certificate_file_id OR pf.id = a.event_photos_file_id)
+           WHERE pf.filename = $1 AND a.user_id IS NOT NULL
+           UNION ALL
+           SELECT fp.created_by AS owner_id FROM faculty_participations fp
+             JOIN project_files pf ON pf.id = fp.proof_file_id
+           WHERE pf.filename = $1 AND fp.created_by IS NOT NULL
+           UNION ALL
+           SELECT fr.created_by AS owner_id FROM faculty_research fr
+             JOIN project_files pf ON pf.id = fr.proof_file_id
+           WHERE pf.filename = $1 AND fr.created_by IS NOT NULL
+           UNION ALL
+           SELECT fc.created_by AS owner_id FROM faculty_consultancy fc
+             JOIN project_files pf ON pf.id = fc.proof_file_id
+           WHERE pf.filename = $1 AND fc.created_by IS NOT NULL
+           UNION ALL
+           SELECT sa.created_by AS owner_id FROM staff_announcements sa
+             JOIN project_files pf ON pf.id = sa.brochure_file_id
+           WHERE pf.filename = $1 AND sa.created_by IS NOT NULL
+           UNION ALL
+           SELECT h.user_id AS owner_id FROM hackathons h
+             JOIN project_files pf ON pf.id = h.proof_file_id
+           WHERE pf.filename = $1 AND h.user_id IS NOT NULL
+           UNION ALL
+           SELECT e.organizer_id AS owner_id FROM events e
+           WHERE (e.thumbnail_filename = $1 OR e.attachments::text LIKE '%' || $1)
+             AND e.organizer_id IS NOT NULL
+           UNION ALL
+           SELECT su.uploaded_by AS owner_id FROM staff_uploads_with_document su
+           WHERE (su.stored_filename = $1 OR su.documents::text LIKE '%' || $1)
+             AND su.uploaded_by IS NOT NULL
+           UNION ALL
+           SELECT u2.id AS owner_id FROM users u2
+           WHERE (
+             u2.profile_details->>'photo_url' LIKE '%' || $1
+             OR u2.profile_details->>'avatar_url' LIKE '%' || $1
+             OR u2.profile_details->>'image_url' LIKE '%' || $1
+             OR u2.profile_details->>'profile_pic' LIKE '%' || $1
+           )
+         ) AS file_owners
+         JOIN users u ON u.id = file_owners.owner_id
+         LIMIT 1`,
+        [filename],
+      );
 
-    // Fetch the requester's current role from the DB (don't rely solely on token).
-    const requesterQ = await pool.query("SELECT role FROM users WHERE id=$1", [requesterId]);
-    if (!requesterQ.rows.length) return res.status(401).json({ message: "User not found" });
-    const requesterRole = requesterQ.rows[0].role;
+      if (!ownerQuery.rows.length) {
+        return res.status(404).json({ message: "File not found" });
+      }
 
-    // Students may only access their own files. Staff and admin access all.
-    if (requesterRole === "student" && Number(owner_id) !== Number(requesterId)) {
-      return res.status(403).json({ message: "Access denied" });
+      const { owner_id } = ownerQuery.rows[0];
+
+      if (!requesterId) {
+        return res.status(401).json({ message: "No token" });
+      }
+
+      const requesterQ = await pool.query("SELECT role FROM users WHERE id=$1", [requesterId]);
+      if (!requesterQ.rows.length) return res.status(401).json({ message: "User not found" });
+      const requesterRole = requesterQ.rows[0].role;
+
+      // Students may only access their own files. Staff and admin access all.
+      if (requesterRole === "student" && Number(owner_id) !== Number(requesterId)) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+    } catch (dbErr) {
+      logger.error("File resource auth check failed", { err: dbErr, filename });
+      return res.status(500).json({ message: "Server error" });
     }
-  } catch (dbErr) {
-    logger.error("File resource auth check failed", { err: dbErr, filename });
-    return res.status(500).json({ message: "Server error" });
   }
 
   const uploadsDir = path.resolve(FILE_STORAGE_PATH);
@@ -499,7 +523,9 @@ async function startApplication() {
   }
 }
 
-startApplication();
+if (process.env.NODE_ENV !== "test") {
+  startApplication();
+}
 
 // Global error handler to always return JSON (handles multer/file-filter errors too)
 // Keep this AFTER routes and server start to catch async route errors via next(err)
@@ -573,5 +599,5 @@ app.use((err, req, res, next) => {
 
   res.status(status).json(body);
 });
-// Active system logs route loaded
-
+// Server startup entrypoint
+export default app;

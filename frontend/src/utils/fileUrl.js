@@ -72,9 +72,15 @@ export async function getFileToken(filename, forceRefresh = false) {
  */
 export function getFileUrl(filename, token) {
   if (!filename) return "";
-  const cleanFilename = String(filename).trim();
+  const raw = String(filename).trim();
+  if (!raw) return "";
+
+  // If already an absolute or blob/data URL, return as-is
+  if (/^(https?:|data:|blob:)/i.test(raw)) return raw;
+
+  const cleanFilename = raw.startsWith("/") ? raw.slice(1) : raw;
   const base = getApiBaseUrl();
-  const url = `${base}/files/${cleanFilename}`;
+  const url = `${base}/files/${encodeURIComponent(cleanFilename)}`;
 
   if (token) return `${url}?token=${encodeURIComponent(token)}`;
 
@@ -88,7 +94,8 @@ export function getFileUrl(filename, token) {
     getFileToken(cleanFilename).catch(() => {});
   }
 
-  return url;
+  // Return empty string when no token is present so browser does not fire 401 requests
+  return "";
 }
 
 /**
@@ -97,18 +104,32 @@ export function getFileUrl(filename, token) {
 export async function getAuthenticatedFileUrl(filename, forceRefresh = false) {
   if (!filename) return "";
   const token = await getFileToken(filename, forceRefresh);
-  return getFileUrl(filename, token);
+  if (!token) return "";
+  const cleanFilename = String(filename).trim().replace(/^\//, "");
+  const base = getApiBaseUrl();
+  return `${base}/files/${encodeURIComponent(cleanFilename)}?token=${encodeURIComponent(token)}`;
 }
 
 /**
  * React hook to reactively load an authenticated file URL.
  */
 export function useFileUrl(filename) {
-  const [url, setUrl] = useState(() => getFileUrl(filename));
+  const [url, setUrl] = useState(() => {
+    if (!filename) return "";
+    const cleanFilename = String(filename).trim().replace(/^\//, "");
+    const cached = tokenCache.get(cleanFilename);
+    if (cached && cached.expiresAtMs - Date.now() > 5000) {
+      return getFileUrl(cleanFilename, cached.token);
+    }
+    return "";
+  });
 
   useEffect(() => {
     let mounted = true;
-    if (!filename) return;
+    if (!filename) {
+      setUrl("");
+      return;
+    }
 
     getAuthenticatedFileUrl(filename).then((authUrl) => {
       if (mounted && authUrl) {
@@ -123,3 +144,4 @@ export function useFileUrl(filename) {
 
   return url;
 }
+

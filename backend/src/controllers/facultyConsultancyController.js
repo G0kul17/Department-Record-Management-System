@@ -5,6 +5,7 @@ import pool from "../config/db.js";
 import { STORAGE_PATH } from "../config/upload.js";
 import logger, { reqContext } from "../utils/logger.js";
 import { tracedQuery } from "../utils/tracing.js";
+import { logAudit } from "../utils/auditLogger.js";
 
 // ========== CREATE CONSULTANCY ==========
 export const createConsultancy = async (req, res) => {
@@ -236,6 +237,16 @@ export const deleteConsultancy = async (req, res) => {
     }
 
     logger.info("Faculty consultancy deleted by admin", { consultancyId: id, ...reqContext(req) });
+    logAudit({
+      actionType: "deletion",
+      category: "Faculty Consultancy Deletion",
+      itemTitle: `Deleted Consultancy #${id}`,
+      userId: req.user?.id,
+      userName: req.user?.name || req.user?.full_name,
+      userEmail: req.user?.email,
+      userRole: req.user?.role,
+      details: { consultancyId: id },
+    });
     return res.json({ message: "Deleted successfully" });
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});

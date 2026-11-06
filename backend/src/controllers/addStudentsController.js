@@ -10,6 +10,7 @@ import { enqueueMail } from "../utils/mailClient.js";
 import { studentWelcomeEmail } from "../utils/emailTemplates.js";
 import logger, { reqContext } from "../utils/logger.js";
 import { tracedQuery } from "../utils/tracing.js";
+import { logAudit } from "../utils/auditLogger.js";
 
 // P2-3: Parser complexity limits
 const MAX_UPLOAD_ROWS = 5000;
@@ -41,8 +42,26 @@ const parseExcel = async (filePath) => {
     } else {
       const obj = {};
       headers.forEach((h, i) => {
-        const cell = values[i];
-        obj[h] = cell == null ? "" : String(cell).trim();
+        let cell = values[i];
+        if (cell != null && typeof cell === "object") {
+          // Prioritize raw unformatted cell.value over cell.text (which Excel formats as scientific notation like "6.17823E+13")
+          cell = cell.value ?? cell.result ?? cell.text ?? "";
+          if (cell != null && typeof cell === "object" && cell.richText) {
+            cell = cell.richText.map((t) => t.text).join("");
+          }
+        }
+        if (typeof cell === "number" && Number.isSafeInteger(Math.round(cell))) {
+          obj[h] = BigInt(Math.round(cell)).toString();
+        } else {
+          let str = cell == null ? "" : String(cell).trim();
+          if (/^[+-]?\d+(\.\d+)?[eE][+-]?\d+$/i.test(str)) {
+            const num = Number(str);
+            if (!isNaN(num) && Number.isSafeInteger(Math.round(num))) {
+              str = BigInt(Math.round(num)).toString();
+            }
+          }
+          obj[h] = str;
+        }
       });
       rows.push(obj);
     }
@@ -143,6 +162,8 @@ export const uploadStudents = async (req, res) => {
 
     const errors = [];
     const validStudents = [];
+    const emailSet = new Set();
+    const regSet = new Set();
 
     rows.forEach((row, index) => {
       const rowNumber = index + 2;
@@ -184,6 +205,37 @@ export const uploadStudents = async (req, res) => {
         return;
       }
 
+      // Check for scientific notation in register number (e.g. 2.60362E+15)
+      const cleanReg = String(register_number).trim();
+      if (/^[+-]?\d+(\.\d+)?[eE][+-]?\d+$/i.test(cleanReg) || cleanReg.toUpperCase().includes("E+")) {
+        errors.push({
+          row: rowNumber,
+          message: `Scientific notation detected in register number (${cleanReg}). Excel converted this number. In Excel, format the column as Text or upload directly as .xlsx.`,
+        });
+        return;
+      }
+
+      // Check duplicates within the uploaded batch
+      const emailLower = email.toLowerCase().trim();
+      if (emailSet.has(emailLower)) {
+        errors.push({
+          row: rowNumber,
+          message: `Duplicate email within file: ${email}`,
+        });
+        return;
+      }
+      emailSet.add(emailLower);
+
+      const regLower = cleanReg.toLowerCase();
+      if (regSet.has(regLower)) {
+        errors.push({
+          row: rowNumber,
+          message: `Duplicate register number within file: ${cleanReg}`,
+        });
+        return;
+      }
+      regSet.add(regLower);
+
       // Relaxed email validation - just check basic format
       const basicEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!basicEmailRegex.test(email)) {
@@ -206,6 +258,7 @@ export const uploadStudents = async (req, res) => {
 
       validStudents.push({
         ...fields,
+        register_number: cleanReg,
         contact_number: cleanedContact, // Use cleaned version
       });
     });
@@ -231,18 +284,36 @@ export const uploadStudents = async (req, res) => {
       ]);
 
       if (exists.rows.length) {
-        skipped.push({ email: s.email, reason: "Already exists" });
+        skipped.push({ email: s.email, reason: "Email already exists" });
+        continue;
+      }
+
+      // Check if register number is already registered in DB across all canonical/legacy stores
+      const regExists = await tracedQuery(
+        client,
+        `SELECT u.id FROM users u
+         LEFT JOIN student_profiles sp ON sp.user_id = u.id
+         WHERE LOWER(u.profile_details->>'register_number') = LOWER($1)
+            OR LOWER(u.profile_details->>'roll_number') = LOWER($1)
+            OR LOWER(u.roll_number) = LOWER($1)
+            OR LOWER(sp.register_number) = LOWER($1)
+         LIMIT 1`,
+        [s.register_number]
+      );
+      if (regExists.rows.length) {
+        skipped.push({ email: s.email, reason: `Register number ${s.register_number} is already in use` });
         continue;
       }
 
       const defaultPassword = crypto.randomBytes(5).toString("hex");
       const hash = await bcrypt.hash(defaultPassword, 10);
 
-      await tracedQuery(client, 
+      const resUser = await tracedQuery(client, 
         `
         INSERT INTO users
-        (email, password_hash, role, is_verified, profile_details, full_name)
-        VALUES ($1, $2, 'student', true, $3, $4)
+        (email, password_hash, role, is_verified, profile_details, full_name, roll_number)
+        VALUES ($1, $2, 'student', true, $3, $4, $5)
+        RETURNING id
         `,
         [
           s.email,
@@ -252,6 +323,7 @@ export const uploadStudents = async (req, res) => {
             first_name: s.first_name,
             last_name: s.last_name,
             register_number: s.register_number,
+            roll_number: s.register_number,
             contact_number: s.contact_number,
             department: s.department,
             course: s.course,
@@ -259,8 +331,22 @@ export const uploadStudents = async (req, res) => {
             section: s.section,
           }),
           s.full_name || `${s.first_name} ${s.last_name}`.trim(),
+          s.register_number,
         ]
       );
+
+      const newUserId = resUser.rows[0]?.id;
+      if (newUserId) {
+        await tracedQuery(
+          client,
+          `INSERT INTO student_profiles (user_id, register_number, contact_number)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (user_id) DO UPDATE SET
+             register_number = EXCLUDED.register_number,
+             contact_number = EXCLUDED.contact_number`,
+          [newUserId, s.register_number, s.contact_number]
+        );
+      }
 
       pendingMails.push({
         to: s.email,
@@ -280,6 +366,17 @@ export const uploadStudents = async (req, res) => {
     for (const mail of pendingMails) {
       enqueueMail(mail);
     }
+
+    logAudit({
+      actionType: "batch_upload",
+      category: "Student Batch Upload",
+      itemTitle: `Uploaded batch of ${created} students (${skipped.length} skipped)`,
+      userId: req.user?.id,
+      userName: req.user?.name || req.user?.full_name,
+      userEmail: req.user?.email,
+      userRole: req.user?.role,
+      details: { created, skippedCount: skipped.length },
+    });
 
     res.json({
       message: "Student upload completed successfully",

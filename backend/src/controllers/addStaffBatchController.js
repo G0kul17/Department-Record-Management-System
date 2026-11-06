@@ -10,6 +10,7 @@ import { sendMail } from "../config/mailer.js";
 import { staffWelcomeEmail } from "../utils/emailTemplates.js";
 import logger, { reqContext } from "../utils/logger.js";
 import { tracedExternalCall, tracedQuery } from "../utils/tracing.js";
+import { logAudit } from "../utils/auditLogger.js";
 
 // P2-3: Parser complexity limits
 const MAX_UPLOAD_ROWS = 5000;
@@ -303,6 +304,17 @@ export const uploadStaffBatch = async (req, res) => {
         });
       }
     }
+
+    logAudit({
+      actionType: "batch_upload",
+      category: "Staff Batch Upload",
+      itemTitle: `Uploaded batch of ${created} staff members (${skipped.length} skipped)`,
+      userId: req.user?.id,
+      userName: req.user?.name || req.user?.full_name,
+      userEmail: req.user?.email,
+      userRole: req.user?.role,
+      details: { created, skippedCount: skipped.length },
+    });
 
     return res.json({
       message: "Staff upload completed successfully",

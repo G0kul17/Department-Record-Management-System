@@ -1,7 +1,25 @@
 import React, { useEffect, useState } from "react";
 import apiClient from "../api/axiosClient";
-import { getFileUrl } from "../utils/fileUrl";
+import { useFileUrl } from "../utils/fileUrl";
 import { FaTrophy, FaCheckCircle, FaChevronRight } from "react-icons/fa";
+
+function AchievementThumbnail({ imageFilename, caption }) {
+  const imgUrl = useFileUrl(imageFilename);
+  const [hasError, setHasError] = useState(false);
+
+  if (imgUrl && !hasError) {
+    return (
+      <img
+        src={imgUrl}
+        alt={caption}
+        className="w-full h-full object-cover"
+        loading="lazy"
+        onError={() => setHasError(true)}
+      />
+    );
+  }
+  return <FaTrophy className="w-7 h-7 sm:w-9 sm:h-9 text-blue-600" />;
+}
 
 // Recent Achievements grid: 3-column, each card has image-left / details-right layout
 export default function AchievementsRecentGrid({ limit = 6 }) {
@@ -63,7 +81,6 @@ export default function AchievementsRecentGrid({ limit = 6 }) {
                 a.certificate_mime?.startsWith("image/") ? a.certificate_filename : null,
                 a.event_photos_mime?.startsWith("image/") ? a.event_photos_filename : null,
               ].find(Boolean);
-              const imgUrl = imageFilename ? getFileUrl(imageFilename) : null;
 
               const isApproved =
                 a.verified === true ||
@@ -82,16 +99,7 @@ export default function AchievementsRecentGrid({ limit = 6 }) {
                 >
                   {/* Left: image panel */}
                   <div className="w-20 sm:w-28 flex-shrink-0 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center overflow-hidden">
-                    {imgUrl ? (
-                      <img
-                        src={imgUrl}
-                        alt={caption}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <FaTrophy className="w-7 h-7 sm:w-9 sm:h-9 text-blue-600" />
-                    )}
+                    <AchievementThumbnail imageFilename={imageFilename} caption={caption} />
                   </div>
 
                   {/* Right: details */}

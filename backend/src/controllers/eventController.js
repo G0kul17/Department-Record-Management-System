@@ -4,6 +4,7 @@ import pool from "../config/db.js";
 import { upload } from "../config/upload.js";
 import logger, { reqContext } from "../utils/logger.js";
 import { tracedQuery } from "../utils/tracing.js";
+import { logAudit } from "../utils/auditLogger.js";
 
 // Create event (staff/admin)
 export async function createEvent(req, res) {
@@ -228,6 +229,16 @@ export async function deleteEvent(req, res) {
     }
 
     logger.info("Event deleted by admin", { eventId: id, ...reqContext(req) });
+    logAudit({
+      actionType: "deletion",
+      category: "Event Deletion",
+      itemTitle: `Deleted Event #${id}`,
+      userId: req.user?.id,
+      userName: req.user?.name || req.user?.full_name,
+      userEmail: req.user?.email,
+      userRole: req.user?.role,
+      details: { eventId: id },
+    });
     return res.json({ message: "Event deleted" });
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});

@@ -32,7 +32,8 @@ router.post("/:filename/token", requireAuth, (req, res) => {
     return res.status(400).json({ message: "Invalid filename" });
   }
 
-  const token = issueFileToken(req.user.id, filename);
+  const sid = req.session?.session_token || req.user?.sid || null;
+  const token = issueFileToken(req.user.id, filename, undefined, sid);
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
   return res.json({ token, expiresAt });

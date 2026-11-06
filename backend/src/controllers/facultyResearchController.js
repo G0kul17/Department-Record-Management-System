@@ -5,6 +5,7 @@ import pool from "../config/db.js";
 import { STORAGE_PATH } from "../config/upload.js";
 import logger, { reqContext } from "../utils/logger.js";
 import { tracedQuery } from "../utils/tracing.js";
+import { logAudit } from "../utils/auditLogger.js";
 
 // ========== CREATE RESEARCH ==========
 export const createResearch = async (req, res) => {
@@ -264,6 +265,16 @@ export const deleteResearch = async (req, res) => {
     }
 
     logger.info("Faculty research deleted by admin", { researchId: id, ...reqContext(req) });
+    logAudit({
+      actionType: "deletion",
+      category: "Faculty Research Deletion",
+      itemTitle: `Deleted Research #${id}`,
+      userId: req.user?.id,
+      userName: req.user?.name || req.user?.full_name,
+      userEmail: req.user?.email,
+      userRole: req.user?.role,
+      details: { researchId: id },
+    });
     return res.json({ message: "Deleted successfully" });
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});

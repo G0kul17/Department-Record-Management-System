@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../../api/axiosClient";
 import CustomSelect from "../../components/ui/CustomSelect";
-import { loadAchievementTypes } from "../../utils/achievementTypes";
+import { loadAchievementTypes, DEFAULT_ACHIEVEMENT_TYPES } from "../../utils/achievementTypes";
 import { FaTasks, FaArrowLeft, FaSync, FaPlus, FaTrashAlt, FaSearch } from "react-icons/fa";
 
 export default function AdminStaffCoordinators() {
@@ -23,43 +23,102 @@ export default function AdminStaffCoordinators() {
   const load = async () => {
     setLoading(true);
     setError(null);
+
+    // 1. Load Staff members (fetch staff + admin roles with fallbacks)
+    let loadedStaff = [];
     try {
-      const [mapRes, staffRes, typesRes, achievementsList] = await Promise.all([
-        apiClient.get("/activity-coordinators"),
-        apiClient.get("/admin/users"),
+      const [staffUsersRes, adminUsersRes] = await Promise.allSettled([
+        apiClient.get("/admin/users?role=staff&all=true"),
+        apiClient.get("/admin/users?role=admin&all=true"),
+      ]);
+
+      const staffUsers = staffUsersRes.status === "fulfilled" ? (staffUsersRes.value?.users || []) : [];
+      const adminUsers = adminUsersRes.status === "fulfilled" ? (adminUsersRes.value?.users || []) : [];
+      const combined = [...staffUsers, ...adminUsers];
+
+      if (combined.length > 0) {
+        const staffMap = new Map();
+        combined.forEach((u) => staffMap.set(String(u.id), u));
+        loadedStaff = Array.from(staffMap.values());
+      } else {
+        const fallback = await apiClient.get("/auth/staff-names");
+        loadedStaff = Array.isArray(fallback) ? fallback : [];
+      }
+    } catch {
+      try {
+        const fallback = await apiClient.get("/auth/staff-names");
+        loadedStaff = Array.isArray(fallback) ? fallback : [];
+      } catch (err) {
+        console.warn("Could not load staff list:", err);
+      }
+    }
+    setStaffList(loadedStaff);
+
+    // 2. Load Mappings
+    try {
+      const mapRes = await apiClient.get("/activity-coordinators");
+      const maps = mapRes?.mappings || mapRes || [];
+      setMappings(Array.isArray(maps) ? maps : []);
+    } catch (err) {
+      console.warn("Could not load activity coordinator mappings:", err);
+    }
+
+    // 3. Load Activity Types (Defaults + Custom + Backend)
+    const seen = new Set();
+    const combinedTypes = [];
+
+    // Pre-populate base defaults so dropdown is NEVER empty even on network glitches
+    const baseDefaults = DEFAULT_ACHIEVEMENT_TYPES || [
+      "Hackathon",
+      "Paper presentation",
+      "Coding competition",
+      "Conference presentation",
+      "Journal publications",
+      "NPTEL certificate",
+      "Internship certificate",
+      "Other MOOC courses",
+      "Sports",
+      "Seminar",
+      "Workshop",
+      "Online certifications",
+      "Extra curricular activities (NSS, NCC, etc.)",
+    ];
+
+    for (const item of baseDefaults) {
+      const trimmed = String(item).trim();
+      const lower = trimmed.toLowerCase();
+      if (!seen.has(lower) && lower !== "achievement") {
+        seen.add(lower);
+        combinedTypes.push(trimmed);
+      }
+    }
+
+    try {
+      const [typesRes, achievementsList] = await Promise.allSettled([
         apiClient.get("/activity-coordinators/types"),
         loadAchievementTypes(),
       ]);
-      const maps = mapRes.mappings || mapRes || [];
-      const staff = (staffRes.users || []).filter(
-        (u) => u.role === "staff" || u.role === "admin"
-      );
-      const backendTypes = typesRes.activityTypes || typesRes || [];
 
-      // Combine defaults + custom added achievements + existing activity types
-      const seen = new Set();
-      const combined = [];
-      for (const item of [...achievementsList, ...backendTypes]) {
+      const backendTypes = typesRes.status === "fulfilled" ? (typesRes.value?.activityTypes || typesRes.value || []) : [];
+      const customAchievements = achievementsList.status === "fulfilled" ? (achievementsList.value || []) : [];
+
+      for (const item of [...customAchievements, ...backendTypes]) {
         if (!item) continue;
         const trimmed = String(item).trim();
         const lower = trimmed.toLowerCase();
         if (!seen.has(lower) && lower !== "achievement") {
           seen.add(lower);
-          combined.push(trimmed);
+          combinedTypes.push(trimmed);
         }
       }
-
-      // Sort in ascending order
-      combined.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base", numeric: true }));
-
-      setMappings(maps);
-      setStaffList(staff);
-      setActivityTypes(combined);
-    } catch (e) {
-      setError(e.message || "Failed to load data");
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.warn("Could not load extended activity types, using defaults:", err);
     }
+
+    combinedTypes.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base", numeric: true }));
+    setActivityTypes(combinedTypes);
+
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -213,7 +272,7 @@ export default function AdminStaffCoordinators() {
                       {m.activity_type || "(Unspecified)"}
                     </h3>
                     <p className="text-xs font-bold text-blue-700 mt-0.5 truncate">
-                      {m.staff_name}
+                      {m.staff_name || m.staff_email || "Staff Coordinator"}
                     </p>
                     <p className="text-[11px] text-slate-500 font-medium truncate">
                       {m.staff_email}
@@ -276,9 +335,18 @@ export default function AdminStaffCoordinators() {
                     onChange={(value) => setStaffId(value)}
                     options={staffList.map((s) => ({
                       value: String(s.id),
-                      label: `${s.full_name} (${s.email})`,
+                      label:
+                        s.email && (s.full_name || s.name)
+                          ? `${s.full_name || s.name} (${s.email})`
+                          : s.full_name || s.name || s.email || `Staff #${s.id}`,
                     }))}
-                    placeholder="Select staff member"
+                    placeholder={
+                      loading
+                        ? "Loading staff members..."
+                        : staffList.length === 0
+                        ? "No staff members found"
+                        : "Select staff member"
+                    }
                     buttonClassName="rounded-xl border-slate-300 text-xs font-semibold py-2"
                   />
                 </div>

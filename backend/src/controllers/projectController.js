@@ -12,6 +12,7 @@ import {
   requireActivityTypeByName,
 } from "../utils/activityTypeUtils.js";
 import { redactRows, redactFields } from "../utils/piiRedaction.js";
+import { logAudit } from "../utils/auditLogger.js";
 
 const PROJECT_PII_FIELDS = [
   "uploader_email",
@@ -771,6 +772,16 @@ export async function deleteProject(req, res) {
     }
 
     logger.info("Project deleted by admin", { projectId: id, ...reqContext(req) });
+    logAudit({
+      actionType: "deletion",
+      category: "Project Deletion",
+      itemTitle: `Deleted Project #${id}`,
+      userId: req.user?.id,
+      userName: req.user?.name || req.user?.full_name,
+      userEmail: req.user?.email,
+      userRole: req.user?.role,
+      details: { projectId: id },
+    });
     return res.json({ message: "Project deleted successfully" });
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});

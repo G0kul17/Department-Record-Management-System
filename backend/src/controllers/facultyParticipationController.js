@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs";
 import logger, { reqContext } from "../utils/logger.js";
 import { tracedQuery } from "../utils/tracing.js";
+import { logAudit } from "../utils/auditLogger.js";
 
 // ========== CREATE PARTICIPATION ==========
 export const createFacultyParticipation = async (req, res) => {
@@ -386,6 +387,16 @@ export const deleteFacultyParticipation = async (req, res) => {
     }
 
     logger.info("Faculty participation deleted by admin", { participationId: id, ...reqContext(req) });
+    logAudit({
+      actionType: "deletion",
+      category: "Faculty Participation Deletion",
+      itemTitle: `Deleted Participation #${id}`,
+      userId: req.user?.id,
+      userName: req.user?.name || req.user?.full_name,
+      userEmail: req.user?.email,
+      userRole: req.user?.role,
+      details: { participationId: id },
+    });
     return res.json({ message: "Deleted successfully" });
   } catch (err) {
     await client.query("ROLLBACK").catch(() => {});

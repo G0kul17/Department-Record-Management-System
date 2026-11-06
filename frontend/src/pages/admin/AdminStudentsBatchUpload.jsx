@@ -41,7 +41,7 @@ export default function AdminStudentsBatchUpload() {
               Add Students Batch
             </h1>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Upload a CSV or Excel (.xlsx, .xls) file containing student registration details.
+              Upload a CSV or Excel (.xlsx) file containing student registration details.
             </p>
           </div>
         </div>
@@ -70,8 +70,8 @@ export default function AdminStudentsBatchUpload() {
         <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-5 w-full">
           <UploadDropzone
             label="Upload Student Dataset (CSV or Excel)"
-            subtitle="Supports .csv, .xlsx, and .xls files (Max size 25MB)"
-            accept=".csv,.xlsx,.xls"
+            subtitle="Supports .csv and .xlsx files (Max size 25MB)"
+            accept=".csv,.xlsx"
             maxSizeMB={25}
             selectedFile={file}
             onFileSelected={(f) => {
@@ -88,7 +88,7 @@ export default function AdminStudentsBatchUpload() {
             <div>
               <span className="font-bold">Important for Excel users:</span> If your student register numbers are long (e.g. 12–16 digits), Excel may automatically display them in scientific notation like <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-[11px]">2.60362E+15</code>.
               <ul className="list-disc pl-4 mt-1 space-y-0.5 text-amber-800">
-                <li>You can upload your spreadsheet directly as an <strong>Excel file (.xlsx or .xls)</strong> to preserve the full register numbers.</li>
+                <li>You can upload your spreadsheet directly as an <strong>Excel file (.xlsx)</strong> to preserve the full register numbers.</li>
                 <li>Or in Excel, format the <strong>Register number</strong> column as <strong>Text</strong> before saving as CSV.</li>
               </ul>
             </div>

@@ -94,8 +94,9 @@ export function getFileUrl(filename, token) {
     getFileToken(cleanFilename).catch(() => {});
   }
 
-  // Return empty string when no token is present so browser does not fire 401 requests
-  return "";
+  // Bare URL: public avatars are served without a token, and callers render
+  // synchronously, so an empty string would leave src/href blank.
+  return url;
 }
 
 /**
@@ -144,4 +145,3 @@ export function useFileUrl(filename) {
 
   return url;
 }
-

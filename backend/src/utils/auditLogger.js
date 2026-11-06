@@ -48,4 +48,3 @@ export async function logAudit({
 export async function ensureAuditTable() {
   // No-op: Runtime DDL removed in favor of migration 013
 }
-

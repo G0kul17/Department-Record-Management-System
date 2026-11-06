@@ -1,5 +1,5 @@
-// Utility to parse CSV/XLSX/XLS student batch files and generate a preview with basic validation
-// Supports: .csv, .xlsx, and .xls
+// Utility to parse CSV/XLSX student batch files and generate a preview with basic validation
+// Supports: .csv and .xlsx
 
 import ExcelJS from "exceljs";
 
@@ -143,10 +143,10 @@ export async function generateStudentsPreview(file) {
   if (name.endsWith(".csv")) {
     const text = await file.text();
     rows = parseCsvToRows(text);
-  } else if (name.endsWith(".xlsx") || name.endsWith(".xls")) {
+  } else if (name.endsWith(".xlsx")) {
     rows = await parseXlsx(file);
   } else {
-    throw new Error("Unsupported file type. Please upload a .csv, .xlsx, or .xls file");
+    throw new Error("Unsupported file type. Please upload a .csv or .xlsx file");
   }
 
   if (!rows.length) {

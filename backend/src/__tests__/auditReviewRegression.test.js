@@ -13,6 +13,7 @@ import { newDb, DataType } from "pg-mem";
 import express from "express";
 import request from "supertest";
 import fs from "fs";
+import os from "os";
 import path from "path";
 import { fileURLToPath } from "url";
 import jwt from "jsonwebtoken";
@@ -41,6 +42,9 @@ vi.mock("../config/db.js", () => {
     closePool: async () => {},
   };
 });
+
+// Never send real mail from the upload controller under test.
+vi.mock("../utils/mailClient.js", () => ({ enqueueMail: vi.fn() }));
 
 // Setup in-memory PostgreSQL instance from checked-in migrations
 async function setupDatabaseFromMigrations() {
@@ -102,8 +106,11 @@ async function setupDatabaseFromMigrations() {
   return memPool;
 }
 
+const FILE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "drms-files-"));
+
 describe("Audit Review Regression Suite", () => {
   let app;
+  let realApp;
   let memPool;
 
   beforeAll(async () => {
@@ -111,71 +118,20 @@ describe("Audit Review Regression Suite", () => {
     latestMemPool = memPool;
 
     // Load actual routes and controller handlers
-    const { default: fileTokenRoutes } = await import("../routes/fileTokenRoutes.js");
     const { default: adminRoutes } = await import("../routes/adminRoutes.js");
     const { default: authRoutes } = await import("../routes/authRoutes.js");
-    const { verifyFileToken } = await import("../utils/fileTokenUtils.js");
 
     app = express();
     app.use(express.json());
 
     // Mount tested routes
-    app.use("/api/files", fileTokenRoutes);
     app.use("/api/admin", adminRoutes);
     app.use("/api/auth", authRoutes);
 
-    // Mount /api/files/:filename using the exact implementation in server.js
-    app.get("/api/files/:filename", async (req, res) => {
-      const filename = req.params.filename;
-
-      if (filename !== path.basename(filename) || filename.includes("..")) {
-        return res.status(400).json({ message: "Invalid filename" });
-      }
-
-      let isAvatar = false;
-      try {
-        const avatarCheck = await memPool.query(
-          `SELECT u.id FROM users u
-           WHERE (
-             u.profile_details->>'photo_url' LIKE '%' || $1
-             OR u.profile_details->>'avatar_url' LIKE '%' || $1
-             OR u.profile_details->>'image_url' LIKE '%' || $1
-             OR u.profile_details->>'profile_pic' LIKE '%' || $1
-           ) LIMIT 1`,
-          [filename]
-        );
-        isAvatar = avatarCheck.rows.length > 0;
-      } catch {
-        // ignore
-      }
-
-      const headerToken = req.headers.authorization?.split(" ")[1];
-      const queryToken = req.query.token;
-      const rawToken = headerToken || queryToken;
-
-      if (!rawToken && !isAvatar) {
-        return res.status(401).json({ message: "No token" });
-      }
-
-      if (!isAvatar) {
-        try {
-          const decoded = verifyFileToken(rawToken, filename);
-          if (decoded.sid) {
-            const { verifySession } = await import("../utils/sessionUtils.js");
-            const session = await verifySession(decoded.sid);
-            if (!session) {
-              return res.status(401).json({ message: "Session revoked" });
-            }
-          }
-        } catch (err) {
-          if (err.name === "TokenExpiredError") return res.status(401).json({ message: "Token expired" });
-          if (err.name === "FileTokenMismatch") return res.status(403).json({ message: "Token is not valid for this file" });
-          return res.status(401).json({ message: "Invalid token" });
-        }
-      }
-
-      return res.status(200).json({ success: true, filename, isAvatar });
-    });
+    // File token minting and downloads (section 1) run against the real
+    // server.js app. FILE_STORAGE_PATH must be set before its first import.
+    process.env.FILE_STORAGE_PATH = FILE_DIR;
+    ({ default: realApp } = await import("../server.js"));
   });
 
   // ==========================================================================
@@ -209,6 +165,16 @@ describe("Audit Review Regression Suite", () => {
          VALUES ($1, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, FALSE)`,
         [studentUser.id, revokedSessionToken, futureDate]
       );
+
+      // Files owned by the student, so the real ownership check passes
+      for (const name of ["report.pdf", "thesis.pdf"]) {
+        await memPool.query(
+          "INSERT INTO project_files (filename, original_name, uploaded_by) VALUES ($1, $1, $2)",
+          [name, studentUser.id]
+        );
+        fs.writeFileSync(path.join(FILE_DIR, name), "%PDF-1.4 test");
+      }
+      fs.writeFileSync(path.join(FILE_DIR, "avatar_user101.jpg"), "jpg");
     });
 
     it("DENY: revoked session cannot obtain a file token via POST /api/files/:filename/token", async () => {
@@ -218,7 +184,7 @@ describe("Audit Review Regression Suite", () => {
         { expiresIn: "6h" }
       );
 
-      const res = await request(app)
+      const res = await request(realApp)
         .post("/api/files/report.pdf/token")
         .set("Authorization", `Bearer ${revokedJwt}`);
 
@@ -233,7 +199,7 @@ describe("Audit Review Regression Suite", () => {
         { expiresIn: "6h" }
       );
 
-      const res = await request(app)
+      const res = await request(realApp)
         .post("/api/files/report.pdf/token")
         .set("Authorization", `Bearer ${activeJwt}`);
 
@@ -258,7 +224,7 @@ describe("Audit Review Regression Suite", () => {
         { expiresIn: "6h" }
       );
 
-      const mintRes = await request(app)
+      const mintRes = await request(realApp)
         .post("/api/files/thesis.pdf/token")
         .set("Authorization", `Bearer ${activeJwt}`);
 
@@ -267,7 +233,7 @@ describe("Audit Review Regression Suite", () => {
       expect(mintedFileToken).toBeDefined();
 
       // Verify token works while session is active
-      const preRevokeGet = await request(app).get(`/api/files/thesis.pdf?token=${mintedFileToken}`);
+      const preRevokeGet = await request(realApp).get(`/api/files/thesis.pdf?token=${mintedFileToken}`);
       expect(preRevokeGet.status).toBe(200);
 
       // 2. Revoke session (e.g. user logout or admin revocation)
@@ -277,7 +243,7 @@ describe("Audit Review Regression Suite", () => {
       );
 
       // 3. Attempt download with the file token minted earlier
-      const postRevokeGet = await request(app).get(`/api/files/thesis.pdf?token=${mintedFileToken}`);
+      const postRevokeGet = await request(realApp).get(`/api/files/thesis.pdf?token=${mintedFileToken}`);
       expect(postRevokeGet.status).toBe(401);
       expect(postRevokeGet.body.message).toMatch(/session revoked|session expired/i);
     });
@@ -289,13 +255,13 @@ describe("Audit Review Regression Suite", () => {
         { expiresIn: "6h" }
       );
 
-      const res = await request(app).get(`/api/files/confidential.pdf?token=${normalJwt}`);
+      const res = await request(realApp).get(`/api/files/confidential.pdf?token=${normalJwt}`);
       expect(res.status).toBe(401);
       expect(res.body.message).toBe("Invalid token");
     });
 
     it("DENY: GET /api/files/:filename without token on non-avatar file returns 401 No token", async () => {
-      const res = await request(app).get("/api/files/confidential.pdf");
+      const res = await request(realApp).get("/api/files/confidential.pdf");
       expect(res.status).toBe(401);
       expect(res.body.message).toBe("No token");
     });
@@ -305,7 +271,7 @@ describe("Audit Review Regression Suite", () => {
       const tokenForFileA = issueFileToken(studentUser.id, "file_a.pdf");
 
       // Attempt to access file_b.pdf using token minted for file_a.pdf
-      const res = await request(app).get(`/api/files/file_b.pdf?token=${tokenForFileA}`);
+      const res = await request(realApp).get(`/api/files/file_b.pdf?token=${tokenForFileA}`);
       expect(res.status).toBe(403);
       expect(res.body.message).toBe("Token is not valid for this file");
     });
@@ -315,7 +281,7 @@ describe("Audit Review Regression Suite", () => {
       // Mint token with 0 seconds expiry
       const expiredToken = issueFileToken(studentUser.id, "report.pdf", -1);
 
-      const res = await request(app).get(`/api/files/report.pdf?token=${expiredToken}`);
+      const res = await request(realApp).get(`/api/files/report.pdf?token=${expiredToken}`);
       expect(res.status).toBe(401);
       expect(res.body.message).toBe("Token expired");
     });
@@ -324,16 +290,16 @@ describe("Audit Review Regression Suite", () => {
       const { issueFileToken } = await import("../utils/fileTokenUtils.js");
       const validToken = issueFileToken(studentUser.id, "report.pdf");
 
-      const res = await request(app).get(`/api/files/report.pdf?token=${validToken}`);
+      const res = await request(realApp).get(`/api/files/report.pdf?token=${validToken}`);
       expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
+      expect(res.headers["content-type"]).toMatch(/application\/pdf/);
     });
 
     it("ALLOW: unauthenticated avatar download bypasses token requirement", async () => {
       // avatar_user101.jpg was seeded in profile_details.photo_url
-      const res = await request(app).get("/api/files/avatar_user101.jpg");
+      const res = await request(realApp).get("/api/files/avatar_user101.jpg");
       expect(res.status).toBe(200);
-      expect(res.body.isAvatar).toBe(true);
+      expect(res.headers["content-type"]).toMatch(/image\/jpeg/);
     });
   });
 
@@ -588,86 +554,87 @@ describe("Audit Review Regression Suite", () => {
       );
     });
 
-    it("detects existing register numbers across all 4 canonical/legacy stores", async () => {
-      const storesToTest = [
-        { name: "student_profiles.register_number", reg: "REG_STORE_SP", expectedId: 501 },
-        { name: "users.roll_number column", reg: "REG_STORE_COL", expectedId: 502 },
-        { name: "profile_details.roll_number JSONB", reg: "REG_STORE_JSON_ROLL", expectedId: 503 },
-        { name: "profile_details.register_number JSONB", reg: "REG_STORE_JSON_REG", expectedId: 504 },
-      ];
-
-      for (const store of storesToTest) {
-        const query = `
-          SELECT u.id FROM users u
-          LEFT JOIN student_profiles sp ON sp.user_id = u.id
-          WHERE LOWER(u.profile_details->>'register_number') = LOWER($1)
-             OR LOWER(u.profile_details->>'roll_number') = LOWER($1)
-             OR LOWER(u.roll_number) = LOWER($1)
-             OR LOWER(sp.register_number) = LOWER($1)
-          LIMIT 1
-        `;
-        const res = await memPool.query(query, [store.reg]);
-        expect(res.rows.length, `Expected duplicate match for ${store.name}`).toBe(1);
-        expect(res.rows[0].id).toBe(store.expectedId);
-      }
-    });
-
-    it("case-insensitive duplicate matching works across all stores", async () => {
-      const query = `
-        SELECT u.id FROM users u
-        LEFT JOIN student_profiles sp ON sp.user_id = u.id
-        WHERE LOWER(u.profile_details->>'register_number') = LOWER($1)
-           OR LOWER(u.profile_details->>'roll_number') = LOWER($1)
-           OR LOWER(u.roll_number) = LOWER($1)
-           OR LOWER(sp.register_number) = LOWER($1)
-        LIMIT 1
-      `;
-      // Lowercase check against uppercase store
-      const res = await memPool.query(query, ["reg_store_col"]);
-      expect(res.rows.length).toBe(1);
-      expect(res.rows[0].id).toBe(502);
-    });
-
-    it("populates all stores consistently and transactionally on student creation", async () => {
-      const newReg = "REG_NEW_INVARIANT_505";
-      const newEmail = "new_student_505@test.edu";
-
-      // Insert new student matching addStudentsController logic
-      const userRes = await memPool.query(
-        `INSERT INTO users (email, password_hash, role, is_verified, profile_details, full_name, roll_number)
-         VALUES ($1, 'hashed', 'student', TRUE, $2, 'New Student 505', $3)
-         RETURNING id`,
+    // Drives the real uploadStudents controller with a CSV on disk.
+    async function uploadCsv(rows) {
+      const { uploadStudents } = await import("../controllers/addStudentsController.js");
+      const file = path.join(FILE_DIR, `students-${Date.now()}-${rows.length}.csv`);
+      fs.writeFileSync(
+        file,
         [
-          newEmail,
-          JSON.stringify({
-            full_name: "New Student 505",
-            register_number: newReg,
-            roll_number: newReg,
-          }),
-          newReg,
-        ]
+          "Full name,First name,Last name,College mail,Register number,Contact number,Year,Dept,Course,Section",
+          ...rows,
+        ].join("\n")
       );
-      const newId = userRes.rows[0].id;
+      const res = {
+        statusCode: 200,
+        body: null,
+        status(code) {
+          this.statusCode = code;
+          return this;
+        },
+        json(body) {
+          this.body = body;
+          return this;
+        },
+      };
+      await uploadStudents({ file: { path: file, originalname: "students.csv" }, user: { id: 1, role: "admin" } }, res);
+      return res;
+    }
 
-      await memPool.query(
-        `INSERT INTO student_profiles (user_id, register_number, contact_number)
-         VALUES ($1, $2, '9999988888')`,
-        [newId, newReg]
-      );
+    const row = (reg, n) =>
+      `Student ${n},Student,S${n},batch${n}@test.edu,${reg},98765432${String(n).padStart(2, "0")},2,IT,BTech,A`;
 
-      // Verify all 4 stores reflect the new register number
+    it("uploadStudents skips register numbers already stored in any of the 4 canonical/legacy stores", async () => {
+      const res = await uploadCsv([
+        row("REG_STORE_SP", 1),
+        row("REG_STORE_COL", 2),
+        row("REG_STORE_JSON_ROLL", 3),
+        row("REG_STORE_JSON_REG", 4),
+      ]);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.created).toBe(0);
+      expect(res.body.skipped.map((s) => s.reason)).toEqual([
+        "Register number REG_STORE_SP is already in use",
+        "Register number REG_STORE_COL is already in use",
+        "Register number REG_STORE_JSON_ROLL is already in use",
+        "Register number REG_STORE_JSON_REG is already in use",
+      ]);
+    });
+
+    it("uploadStudents matches existing register numbers case-insensitively", async () => {
+      const res = await uploadCsv([row("reg_store_col", 5)]);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.created).toBe(0);
+      expect(res.body.skipped).toHaveLength(1);
+    });
+
+    it("uploadStudents writes a new student's register number to every store", async () => {
+      const newReg = "REG_NEW_INVARIANT_505";
+      const res = await uploadCsv([row(newReg, 6)]);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.created).toBe(1);
+
       const checkRes = await memPool.query(
         `SELECT u.roll_number, u.profile_details->>'register_number' AS p_reg, u.profile_details->>'roll_number' AS p_roll, sp.register_number AS sp_reg
          FROM users u
          JOIN student_profiles sp ON sp.user_id = u.id
-         WHERE u.id = $1`,
-        [newId]
+         WHERE u.email = $1`,
+        ["batch6@test.edu"]
       );
 
+      expect(checkRes.rows).toHaveLength(1);
       expect(checkRes.rows[0].roll_number).toBe(newReg);
       expect(checkRes.rows[0].p_reg).toBe(newReg);
       expect(checkRes.rows[0].p_roll).toBe(newReg);
       expect(checkRes.rows[0].sp_reg).toBe(newReg);
+
+      // A second upload of the same register number is now rejected
+      const again = await uploadCsv([row(newReg, 7)]);
+      expect(again.body.created).toBe(0);
+      expect(again.body.skipped).toHaveLength(1);
     });
   });
 });

@@ -1,6 +1,7 @@
 import pool, { getPoolHealth } from "../config/db.js";
 import { getAccessToken, isMailConfigured } from "../config/mailer.js";
-import { STORAGE_PATH, CLAMSCAN_ENABLED, getClamscan } from "../config/upload.js";
+import { STORAGE_PATH, CLAMSCAN_ENABLED } from "../config/upload.js";
+import { pingClamd } from "./clamdPing.js";
 import fs from "fs";
 import path from "path";
 import logger from "./logger.js";
@@ -127,11 +128,12 @@ async function checkClamscan() {
     );
   }
 
-  // getVersion() round-trips the clamd socket without scanning a real file --
-  // the cheapest way to confirm the daemon is actually reachable, not just
-  // that the env flag is on.
-  const clamscan = await getClamscan();
-  await clamscan.getVersion();
+  // A PING over the clamd socket, with its own short timeout, confirms the
+  // daemon is actually reachable, not just that the env flag is on. Do not use
+  // clamscan.getVersion() here: it runs `clamdscan --version` as a child
+  // process that is never killed, so a wedged clamd leaked one process per
+  // check (see utils/clamdPing.js).
+  await pingClamd();
 }
 
 async function checkAuthSecret() {

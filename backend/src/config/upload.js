@@ -7,6 +7,7 @@ import { fileTypeFromFile } from "file-type";
 import NodeClam from "clamscan";
 import dotenv from "dotenv";
 import logger from "../utils/logger.js";
+import { CLAMD_SOCKET } from "../utils/clamdPing.js";
 import { getTraceCtx } from "../utils/traceStore.js";
 dotenv.config();
 
@@ -235,7 +236,7 @@ export function getClamscan() {
   if (!clamscanPromise) {
     clamscanPromise = new NodeClam().init({
       clamdscan: {
-        socket: "/run/clamd.scan/clamd.sock",
+        socket: CLAMD_SOCKET,
         timeout: 60000,
         localFallback: true,
       },
